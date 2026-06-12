@@ -131,7 +131,7 @@ export function Step4Goal({
           onClick={handleGenerate}
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'מפיק דוח...' : 'הפק דוח PDF ←'}
+          {isSubmitting ? 'מחשב שווי...' : 'חשב שווי מורחב ←'}
         </button>
       </div>
 

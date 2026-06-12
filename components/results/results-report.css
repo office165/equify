@@ -26,6 +26,12 @@
   box-sizing: border-box;
 }
 
+.results-report-root a.rr-brand,
+.results-report-root a.rr-btn {
+  color: inherit;
+  text-decoration: none;
+}
+
 .results-report-root {
   position: relative;
   min-height: 100vh;

@@ -30,11 +30,9 @@ import {
 export interface WizardValuationContextValue {
   state: EquifyWizardState;
   step: number;
-  showResults: boolean;
   computed: ValuationComputed;
   scenarios: ValuationScenarios;
   setStep: (step: number) => void;
-  setShowResults: (show: boolean) => void;
   updateProfile: (patch: Partial<EquifyWizardProfile>) => void;
   updateFinancials: (patch: Partial<EquifyWizardFinancials>) => void;
   updateRisk: (patch: Partial<EquifyWizardRisk>) => void;
@@ -78,7 +76,6 @@ export function WizardValuationProvider({
     initialState ?? DEFAULT_EQUIFY_WIZARD_STATE,
   );
   const [step, setStep] = useState(1);
-  const [showResults, setShowResults] = useState(false);
 
   const computed = useMemo(() => computeValuation(buildInputs(state)), [state]);
   const scenarios = useMemo(
@@ -124,18 +121,15 @@ export function WizardValuationProvider({
   const resetWizard = useCallback(() => {
     setState(DEFAULT_EQUIFY_WIZARD_STATE);
     setStep(1);
-    setShowResults(false);
   }, []);
 
   const value = useMemo<WizardValuationContextValue>(
     () => ({
       state,
       step,
-      showResults,
       computed,
       scenarios,
       setStep,
-      setShowResults,
       updateProfile,
       updateFinancials,
       updateRisk,
@@ -153,7 +147,6 @@ export function WizardValuationProvider({
       setGoal,
       setLifecycle,
       setSector,
-      showResults,
       state,
       step,
       updateFinancials,

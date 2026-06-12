@@ -14,14 +14,12 @@ html {
 }
 
 .equify-landing-root {
-  overscroll-behavior-y: none;
   background: var(--ink);
   color: var(--paper);
   font-family: var(--body);
   font-size: 17px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
 
 .equify-landing-root ::selection {
@@ -1456,12 +1454,14 @@ footer {
   justify-content: center;
   gap: 34px;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.35s;
+  transition: opacity 0.35s, visibility 0.35s;
 }
 
 .mmenu.open {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 

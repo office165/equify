@@ -36,7 +36,7 @@ export function EquifyLandingPage() {
 
   return (
     <div
-      className="equify-landing-root relative min-h-[100dvh] overflow-x-clip pb-safe text-right"
+      className="equify-landing-root relative min-h-[100dvh] pb-safe text-right"
       dir="rtl"
       lang="he"
     >

@@ -122,6 +122,7 @@ export function SmartSlider({
   );
 
   const p = pct(value);
+  const trackStyle = { '--p': `${p}%` } as React.CSSProperties;
 
   return (
     <div className="smart-num">
@@ -135,12 +136,12 @@ export function SmartSlider({
       <div
         className="sn-track"
         ref={trackRef}
+        style={trackStyle}
         onPointerDown={handlePointerDownTrack}
         role="presentation"
       >
         <div
           className={fillClassName ? `sn-fill ${fillClassName}` : 'sn-fill'}
-          style={{ width: `${p}%` }}
         />
         <div
           className={`sn-thumb${dragging ? ' dragging' : ''}`}

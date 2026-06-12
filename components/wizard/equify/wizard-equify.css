@@ -100,6 +100,8 @@
   align-items: baseline;
   gap: 6px;
   margin-bottom: 44px;
+  color: inherit;
+  text-decoration: none;
 }
 
 .equify-wizard .logo .lg {
@@ -267,7 +269,8 @@
   flex-direction: column;
   min-height: 100svh;
   position: relative;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .equify-wizard .prog-bar {
@@ -295,6 +298,12 @@
   gap: 16px;
   background: rgba(5, 15, 13, 0.7);
   backdrop-filter: blur(16px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.equify-wizard .topbar.sc {
+  border-color: var(--line);
 }
 
 .equify-wizard .step-badge {
@@ -333,6 +342,22 @@
   padding: clamp(28px, 5vh, 60px) clamp(20px, 4vw, 72px);
   max-width: 820px;
   width: 100%;
+}
+
+.equify-wizard .pane.eqw-enter {
+  animation: eqw-pane-in 0.45s var(--ease) both;
+}
+
+@keyframes eqw-pane-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .equify-wizard .eqw-results {
@@ -498,15 +523,18 @@
   border-radius: 6px;
   background: var(--pine);
   cursor: pointer;
+  --p: 0%;
 }
 
 .equify-wizard .sn-fill {
   position: absolute;
   inset-block: 0;
   inset-inline-start: 0;
+  width: var(--p);
   border-radius: 6px;
   background: linear-gradient(90deg, var(--turq), var(--mint));
   pointer-events: none;
+  transition: width 0.15s var(--ease);
 }
 
 .equify-wizard .sn-fill-conc {
@@ -551,12 +579,38 @@
   border-radius: 30px;
   border: 1.5px solid var(--pine);
   color: var(--dim);
+  transition: 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.equify-wizard .chip::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 194, 184, 0.08);
+  opacity: 0;
+  transition: 0.25s;
+  border-radius: inherit;
+}
+
+.equify-wizard .chip:hover {
+  border-color: var(--soft);
+  color: var(--paper);
+}
+
+.equify-wizard .chip:hover::before {
+  opacity: 1;
 }
 
 .equify-wizard .chip.on {
   border-color: var(--turq);
   color: var(--mint);
   background: rgba(0, 194, 184, 0.1);
+}
+
+.equify-wizard .chip.on::before {
+  opacity: 1;
 }
 
 .equify-wizard .lifecycle {
@@ -570,6 +624,31 @@
   border-radius: 14px;
   padding: 16px 14px;
   text-align: center;
+  cursor: pointer;
+  transition: 0.3s var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.equify-wizard .lc-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  height: 2px;
+  background: var(--turq);
+  transform: scaleX(0);
+  transition: 0.3s;
+}
+
+.equify-wizard .lc-card:hover {
+  border-color: var(--soft);
+  background: rgba(0, 194, 184, 0.04);
+}
+
+.equify-wizard .lc-card:hover::after,
+.equify-wizard .lc-card.on::after {
+  transform: scaleX(1);
 }
 
 .equify-wizard .lc-card.on {
@@ -816,6 +895,9 @@
   padding: 20px 16px;
   text-align: right;
   position: relative;
+  cursor: pointer;
+  transition: 0.3s var(--ease);
+  overflow: hidden;
 }
 
 .equify-wizard .goal-card.on {
@@ -1102,6 +1184,7 @@
 }
 
 .equify-wizard .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -1109,6 +1192,9 @@
   font-size: 16px;
   padding: 15px 32px;
   border-radius: 100px;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s;
 }
 
 .equify-wizard .btn-primary {
@@ -1116,15 +1202,51 @@
   color: var(--ink);
 }
 
+.equify-wizard .btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--mint);
+  transform: translateY(101%);
+  transition: transform 0.45s var(--ease);
+  border-radius: inherit;
+}
+
+.equify-wizard .btn-primary:hover::before {
+  transform: translateY(0);
+}
+
+.equify-wizard .btn-primary:hover {
+  box-shadow: 0 8px 36px rgba(0, 194, 184, 0.35);
+}
+
 .equify-wizard .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.equify-wizard .btn-primary:disabled::before {
+  display: none;
 }
 
 .equify-wizard .btn-ghost {
   background: transparent;
   color: var(--paper);
   border: 1.5px solid var(--line);
+}
+
+.equify-wizard .btn-ghost:hover {
+  border-color: var(--turq);
+  background: rgba(0, 194, 184, 0.06);
+}
+
+.equify-wizard .btn .arr {
+  transition: transform 0.3s var(--ease);
+}
+
+.equify-wizard .btn:hover .arr {
+  transform: translateX(-5px);
 }
 
 .equify-wizard .btn-sm {
@@ -1221,8 +1343,24 @@
 .equify-wizard .rv,
 .equify-wizard .rv-r,
 .equify-wizard .stagger > * {
-  opacity: 1;
-  transform: none;
+  opacity: 0;
+  transform: translateY(22px);
+}
+
+.equify-wizard .eqw-reveal {
+  animation: eqw-reveal 0.7s var(--ease) both;
+}
+
+@keyframes eqw-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 900px) {
@@ -1236,6 +1374,10 @@
     border-inline-end: none;
     border-bottom: 1px solid var(--line);
     padding: 22px 20px 18px;
+  }
+
+  .equify-wizard .logo {
+    margin-bottom: 20px;
   }
 
   .equify-wizard .steps {
@@ -1260,6 +1402,71 @@
     top: 0;
     margin-top: 0;
   }
+
+  .equify-wizard .main {
+    padding-bottom: 76px;
+  }
+
+  .equify-wizard .m-bar {
+    display: flex;
+  }
+}
+
+/* ═══════════════════════ MOBILE STICKY BAR ═══════════════════════ */
+.equify-wizard .m-bar {
+  display: none;
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 300;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(
+    180deg,
+    rgba(5, 15, 13, 0.72),
+    rgba(5, 15, 13, 0.96)
+  );
+  border-top: 1px solid rgba(0, 194, 184, 0.13);
+  backdrop-filter: blur(14px);
+}
+
+.equify-wizard .m-bar-live {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.equify-wizard .m-bar-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+.equify-wizard .m-bar-val {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--mint);
+  direction: ltr;
+  text-align: right;
+}
+
+.equify-wizard .m-bar-step {
+  flex: none;
+  font-size: 13px;
+  color: var(--dim);
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  white-space: nowrap;
+}
+
+.equify-wizard .m-bar-step b {
+  color: var(--mint);
 }
 
 @media (max-width: 640px) {
@@ -1283,5 +1490,17 @@
 @media (prefers-reduced-motion: reduce) {
   .equify-wizard .lv-dot {
     animation: none;
+  }
+
+  .equify-wizard .pane.eqw-enter,
+  .equify-wizard .eqw-reveal {
+    animation: none !important;
+  }
+
+  .equify-wizard .rv,
+  .equify-wizard .rv-r,
+  .equify-wizard .stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

@@ -48,7 +48,11 @@ export function LandingNav({ navRef, menuOpen, onOpenMenu, onCloseMenu }: Landin
         </div>
       </header>
 
-      <div className={`mmenu${menuOpen ? ' open' : ''}`} id="mmenu">
+      <div
+        className={`mmenu${menuOpen ? ' open' : ''}`}
+        id="mmenu"
+        aria-hidden={!menuOpen}
+      >
         <button type="button" className="close" aria-label="סגור" onClick={onCloseMenu}>
           ✕
         </button>
