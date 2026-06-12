@@ -1,0 +1,63 @@
+'use client';
+
+import Link from 'next/link';
+import type { RefObject } from 'react';
+
+interface LandingNavProps {
+  navRef: RefObject<HTMLElement>;
+  menuOpen: boolean;
+  onOpenMenu: () => void;
+  onCloseMenu: () => void;
+}
+
+const NAV_LINKS = [
+  ['#how', 'איך זה עובד'],
+  ['#calc', 'סימולטור שווי'],
+  ['#models', 'המודלים'],
+  ['#price', 'תמחור'],
+  ['#faq', 'שאלות'],
+] as const;
+
+/** ניווט קבוע + תפריט מובייל */
+export function LandingNav({ navRef, menuOpen, onOpenMenu, onCloseMenu }: LandingNavProps) {
+  return (
+    <>
+      <header className="nav" id="nav" ref={navRef}>
+        <div className="wrap nav-in">
+          <Link href="/" className="logo">
+            equify<em>.</em>
+            <small>BY SBC</small>
+          </Link>
+          <nav className="nav-links" aria-label="ניווט ראשי">
+            {NAV_LINKS.map(([href, label]) => (
+              <a key={href} href={href}>
+                {label}
+              </a>
+            ))}
+          </nav>
+          <div className="flex items-center gap-3.5">
+            <Link className="btn magnetic" href="/wizard">
+              התחל הערכה <span className="arr">←</span>
+            </Link>
+            <button type="button" className="burger" aria-label="פתח תפריט" onClick={onOpenMenu}>
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className={`mmenu${menuOpen ? ' open' : ''}`} id="mmenu">
+        <button type="button" className="close" aria-label="סגור" onClick={onCloseMenu}>
+          ✕
+        </button>
+        {NAV_LINKS.map(([href, label]) => (
+          <a key={href} href={href} onClick={onCloseMenu}>
+            {label}
+          </a>
+        ))}
+      </div>
+    </>
+  );
+}

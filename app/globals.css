@@ -1,0 +1,1803 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PDF print compliance — master layout system (docs/pdf-print-architecture.md) */
+@import '../lib/pdf/print/print-compliance.css';
+
+/* WCAG 2.1 AA — Nextronium forest-midnight emerald + neon mint (Equify by SBC) */
+:root {
+  --vb-bg-base: #020504;
+  --vb-bg-elevated: #080f0d;
+  --vb-card-surface: rgba(11, 19, 17, 0.4);
+  --vb-text-primary: #f1f5f9;
+  --vb-text-secondary: #cbd5e1;
+  --vb-text-muted: #94a3b8;
+  --vb-accent: #00f5a0;
+  --vb-accent-secondary: #05d38a;
+  --vb-focus-ring: #00f5a0;
+  --vb-error: #fb7185;
+  --vb-font-scale: 1;
+  --vb-glass-bg: rgba(11, 19, 17, 0.4);
+  --vb-glass-border: rgba(16, 185, 129, 0.1);
+  /* Equify by SBC brand — neon mint gradient lane */
+  --brand-ink: #0f172a;
+  --brand-mint-1: #00f5a0;
+  --brand-mint-2: #05d38a;
+  --brand-mint-hover: #33f7b3;
+  --brand-on-dark: #ffffff;
+  --font-equify: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* Landing — Nextronium emerald canvas */
+  --eq-bg-base: #020504;
+  --eq-bg-elevated: #080f0d;
+  --eq-surface: rgba(11, 19, 17, 0.4);
+  --eq-surface-raised: rgba(11, 19, 17, 0.55);
+  --eq-accent-mint: #00f5a0;
+  --eq-accent-mint-end: #05d38a;
+  --eq-on-mint: #020617;
+  --eq-ink-on-dark: #f8fafc;
+  --eq-muted-on-dark: rgba(203, 213, 225, 0.62);
+  --eq-support-neutral: #e2e8f0;
+  --eq-border-dark: rgba(16, 185, 129, 0.1);
+  --eq-aura-mint: rgba(16, 185, 129, 0.06);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background-color: #020504;
+  }
+
+  body {
+    @apply antialiased;
+    background: linear-gradient(180deg, #020504 0%, #080f0d 100%);
+    background-attachment: fixed;
+    color: var(--vb-text-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--vb-focus-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .nextronium-glass {
+    @apply bg-[#0B1311]/40 backdrop-blur-3xl border border-emerald-500/10;
+    box-shadow: 0 0 40px -15px rgba(16, 185, 129, 0.1);
+  }
+
+  .vb-bento-card {
+    @apply nextronium-glass rounded-3xl;
+  }
+
+  .vb-glass-pane {
+    @apply vb-bento-card;
+    box-shadow: 0 22px 70px 4px rgba(0, 0, 0, 0.56);
+  }
+
+  .vb-glass-plate {
+    @apply vb-bento-card;
+    box-shadow:
+      inset 0 1px 0 rgba(148, 163, 184, 0.06),
+      0 18px 48px -20px rgba(0, 0, 0, 0.65);
+  }
+
+  .vb-space-backdrop {
+    @apply bg-space-midnight;
+    background-attachment: fixed;
+  }
+
+  .vb-cta-primary {
+    @apply bg-gradient-to-r from-[#00F5A0] to-[#05D38A] text-slate-950 font-bold shadow-lg shadow-emerald-500/20 transition;
+    @apply hover:from-[#33f7b3] hover:to-[#1ae89a] hover:shadow-[0_0_32px_-8px_rgba(0,245,160,0.45)];
+  }
+
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .wizard-touch-root,
+  .landing-touch-root {
+    touch-action: manipulation;
+  }
+
+  .wizard-touch-root button,
+  .wizard-touch-root a,
+  .wizard-touch-root input,
+  .wizard-touch-root select,
+  .wizard-touch-root textarea,
+  .landing-touch-root a,
+  .landing-touch-root button {
+    touch-action: manipulation;
+  }
+
+  .eq-viewport-aura {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 0;
+    height: min(70vh, 520px);
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 80% 60% at 50% 100%,
+      var(--eq-aura-mint) 0%,
+      transparent 72%
+    );
+    filter: blur(28px);
+  }
+
+  .vb-fintech-input {
+    @apply w-full rounded-xl border border-slate-800/50 bg-charcoal-900/50 px-4 py-3 text-sm text-slate-100 shadow-inner shadow-black/25 transition-all duration-300;
+    @apply focus:border-mint-400/40 focus:bg-charcoal-900/70 focus:outline-none focus:ring-2 focus:ring-mint-400/20;
+    @apply focus-within:shadow-glow-mint;
+  }
+
+  .vb-mesh-orb {
+    animation: vb-mesh-drift 20s ease-in-out infinite;
+  }
+
+  .vb-mesh-orb-delayed {
+    animation: vb-mesh-drift 26s ease-in-out infinite reverse;
+  }
+
+  .vb-progress-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vb-progress-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.22) 50%,
+      transparent 100%
+    );
+    animation: vb-progress-glint 2.8s ease-in-out infinite;
+  }
+
+  .vb-a11y-fab {
+    animation: vb-fab-pulse 3.5s ease-in-out infinite;
+  }
+
+  .vb-modal-enter {
+    animation: vb-modal-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@layer utilities {
+  .vb-skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[100] focus:rounded-xl focus:border focus:border-mint-400/50 focus:bg-charcoal-900 focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-mint-400;
+  }
+
+  .vb-text-secondary {
+    color: var(--vb-text-secondary);
+  }
+
+  .vb-text-muted {
+    color: var(--vb-text-muted);
+  }
+
+  .valubot-pdf-capture {
+    -webkit-font-smoothing: antialiased;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .valubot-pdf-capturing {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .valubot-pdf-capturing * {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .pdf-card-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+  }
+
+  @media print {
+    .pdf-card-break {
+      display: block;
+    }
+  }
+
+  .pdf-block-contain {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    display: block;
+    width: 100%;
+    position: relative;
+    overflow: visible;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .pdf-block-contain-spaced {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media print {
+    .pdf-block-contain {
+      display: block !important;
+    }
+  }
+
+  h1,
+  h2,
+  h3,
+  .section-header-title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .pdf-section-group {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-column-break-inside: avoid !important;
+    display: block;
+    width: 100%;
+  }
+
+  .confidence-ring {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .confidence-ring__score {
+    line-height: 1;
+    max-width: 70%;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+
+  .confidence-ring__label {
+    line-height: 1.2;
+    max-width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .valubot-pdf-capturing thead {
+    display: table-header-group;
+  }
+
+  .pdf-root-container,
+  .pdf-report-subtree {
+    width: 100%;
+    max-width: 100%;
+    margin-inline: auto;
+    box-sizing: border-box;
+    overflow-x: clip;
+  }
+
+  .pdf-report-subtree > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .pdf-card-contain {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    overflow: visible;
+  }
+
+  .pdf-capture-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    table-layout: fixed;
+  }
+
+  .valubot-pdf-capturing,
+  .pdf-mode {
+    overflow: visible !important;
+  }
+
+  .valubot-pdf-capturing .pdf-root-container,
+  .valubot-pdf-capturing #valubot-report-capture,
+  .pdf-mode .pdf-root-container,
+  .pdf-mode #valubot-report-capture {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+  }
+
+  .valubot-pdf-capturing .pdf-root-container *,
+  .valubot-pdf-capturing #valubot-report-capture *,
+  .pdf-mode .pdf-root-container *,
+  .pdf-mode #valubot-report-capture * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .valubot-pdf-capturing canvas,
+  .valubot-pdf-capturing svg,
+  .pdf-mode canvas,
+  .pdf-mode svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .valubot-pdf-capturing .table-scroll-fade,
+  .pdf-mode .table-scroll-fade {
+    overflow-x: visible !important;
+    max-width: 100% !important;
+  }
+
+  .valubot-pdf-capturing .pdf-report-subtree,
+  .pdf-mode .pdf-report-subtree {
+    transform-origin: top center;
+    contain: layout style;
+  }
+
+  .valubot-pdf-capturing .pdf-report-subtree > *,
+  .pdf-mode .pdf-report-subtree > * {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .valubot-pdf-capturing .grid,
+  .pdf-mode .grid,
+  .valubot-pdf-capturing .flex,
+  .pdf-mode .flex {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .valubot-pdf-capturing .max-w-7xl,
+  .valubot-pdf-capturing .max-w-6xl,
+  .valubot-pdf-capturing .max-w-5xl,
+  .valubot-pdf-capturing .max-w-4xl,
+  .valubot-pdf-capturing .max-w-3xl,
+  .valubot-pdf-capturing .max-w-2xl,
+  .valubot-pdf-capturing .max-w-xl,
+  .pdf-mode .max-w-7xl,
+  .pdf-mode .max-w-6xl,
+  .pdf-mode .max-w-5xl,
+  .pdf-mode .max-w-4xl,
+  .pdf-mode .max-w-3xl,
+  .pdf-mode .max-w-2xl,
+  .pdf-mode .max-w-xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-inline: 0 !important;
+  }
+
+  /* ── PDF / print precision (A4, anti-clipping, page breaks) ── */
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin: 15mm 12mm 15mm 12mm !important;
+    }
+
+    /* Force grid/flex rows into block flow so page-breaks apply reliably */
+    .grid,
+    .flex,
+    .bento-grid,
+    .pdf-card-contain {
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    h1,
+    h2,
+    h3,
+    .section-header-title {
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    .pdf-section-group {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      display: block !important;
+      width: 100% !important;
+    }
+
+    /* Cards & tables — never split across sheets (see print-cut screenshots) */
+    .pdf-card-contain,
+    .metric-card,
+    .diagnostic-block {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      display: block !important;
+      position: relative !important;
+      margin-bottom: 12px !important;
+    }
+
+    tr,
+    table,
+    .bento-grid-item,
+    .pdf-card-break,
+    .chart-wrapper-block {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      position: relative !important;
+      margin-bottom: 12px !important;
+    }
+
+    /* DCF technical appendix — keep totals glued to body */
+    .technical-appendix-table,
+    .technical-appendix-table tr,
+    .pdf-capture-table,
+    .pdf-capture-table tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    html,
+    body,
+    .pdf-root-container {
+      width: 210mm !important;
+      max-width: 210mm !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      font-size: 11pt !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+      height: auto !important;
+      min-height: 0 !important;
+    }
+
+    .ambient-bg,
+    [data-pdf-exclude] {
+      display: none !important;
+    }
+
+    .pdf-root-container,
+    .pdf-report-subtree,
+    #valubot-report-capture,
+    .pdf-print-report {
+      direction: rtl !important;
+      text-align: right;
+      unicode-bidi: embed;
+    }
+
+    .pdf-root-container .overflow-hidden,
+    .pdf-root-container .overflow-x-hidden,
+    .pdf-root-container .overflow-y-hidden,
+    .pdf-root-container .overflow-y-auto,
+    .pdf-report-subtree .overflow-hidden,
+    .pdf-report-subtree .overflow-x-hidden,
+    .pdf-report-subtree .overflow-y-hidden,
+    .pdf-report-subtree .overflow-y-auto,
+    #valubot-report-capture .overflow-hidden,
+    #valubot-report-capture .overflow-x-hidden,
+    #valubot-report-capture .overflow-y-hidden,
+    #valubot-report-capture .overflow-y-auto {
+      overflow: visible !important;
+    }
+
+    .h-screen,
+    .min-h-screen,
+    .h-\[100vh\],
+    .h-80,
+    .h-96,
+    .sm\:h-96,
+    .py-20,
+    .my-32,
+    .pdf-report-subtree [class*='h-['],
+    #valubot-report-capture [class*='h-['] {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+    }
+
+    .pdf-report-subtree .py-20,
+    .pdf-report-subtree .my-32,
+    #valubot-report-capture .py-20,
+    #valubot-report-capture .my-32,
+    .pdf-print-report .py-20,
+    .pdf-print-report .my-32 {
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+    }
+
+    .confidence-ring {
+      width: auto !important;
+      height: auto !important;
+    }
+
+    .confidence-ring svg {
+      width: 88px !important;
+      height: 88px !important;
+      max-width: 88px !important;
+      max-height: 88px !important;
+    }
+
+    .confidence-ring__score {
+      font-size: 1.25rem !important;
+      line-height: 1 !important;
+    }
+
+    .confidence-ring__label {
+      font-size: 7px !important;
+      line-height: 1.15 !important;
+      max-width: 4.5rem !important;
+      white-space: normal !important;
+    }
+
+    .pdf-report-subtree *,
+    #valubot-report-capture *,
+    .pdf-print-report * {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+
+    .chart-wrapper-block,
+    .chart-block-wrapper,
+    .chart-wrapper-block *,
+    .chart-block-wrapper * {
+      max-height: 250px !important;
+    }
+
+    .chart-wrapper-block,
+    .chart-block-wrapper {
+      max-height: 250px !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .chart-wrapper-block canvas,
+    .chart-wrapper-block svg,
+    .chart-wrapper-block .recharts-wrapper,
+    .chart-wrapper-block .recharts-surface,
+    .chart-block-wrapper canvas,
+    .chart-block-wrapper svg,
+    .chart-block-wrapper .recharts-wrapper,
+    .chart-block-wrapper .recharts-surface {
+      max-height: 250px !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    .pdf-card-contain,
+    .bento-grid-item,
+    .vb-bento-card,
+    .chart-wrapper-block,
+    .chart-block-wrapper {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      -webkit-column-break-inside: avoid !important;
+    }
+
+    /* Diagnostic & scenario grids — fluid single-column in print */
+    .pdf-diagnostics-grid,
+    .pdf-scenario-grid {
+      display: flex !important;
+      flex-direction: column !important;
+      flex-wrap: nowrap !important;
+      gap: 0.75rem !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    .pdf-diagnostics-grid > *,
+    .pdf-scenario-grid > * {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      flex: 0 0 auto !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    /* Strip rigid desktop width/min-width inside print tree */
+    .pdf-report-subtree [class*='min-w-'],
+    .pdf-report-subtree [class*='max-w-'],
+    #valubot-report-capture [class*='min-w-'],
+    #valubot-report-capture [class*='max-w-'],
+    .pdf-print-report [class*='min-w-'],
+    .pdf-print-report [class*='max-w-'] {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+
+    .pdf-report-subtree [class*='w-['],
+    #valubot-report-capture [class*='w-['],
+    .pdf-print-report [class*='w-['] {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .pdf-report-subtree .grid,
+    #valubot-report-capture .grid,
+    .pdf-print-report .grid {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      gap: 0.75rem !important;
+    }
+
+    .pdf-report-subtree .grid > *,
+    #valubot-report-capture .grid > *,
+    .pdf-print-report .grid > * {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    .pdf-capture-table th,
+    .pdf-capture-table td {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+    }
+
+    .pdf-card-contain {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+    }
+
+    .pdf-card-break,
+    .pdf-block-contain {
+      width: 100% !important;
+      max-width: 100% !important;
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+    }
+
+    thead {
+      display: table-header-group !important;
+    }
+
+    tr {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    .max-w-7xl,
+    .max-w-6xl,
+    .max-w-5xl,
+    .max-w-4xl,
+    .max-w-3xl,
+    .max-w-2xl,
+    .max-w-xl {
+      max-width: 100% !important;
+      width: 100% !important;
+      padding-inline: 0 !important;
+    }
+
+    .pdf-capture-table {
+      min-width: 0 !important;
+      width: 100% !important;
+      table-layout: fixed !important;
+    }
+
+    #valubot-report-capture {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+    }
+
+    .pdf-capture-host {
+      padding: 0 !important;
+      max-width: 100% !important;
+    }
+  }
+
+  /* Canvas / html2pdf capture — mirror @media print anti-clipping */
+  .valubot-pdf-capturing,
+  .pdf-mode {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  .valubot-pdf-capturing .pdf-root-container,
+  .valubot-pdf-capturing #valubot-report-capture,
+  .valubot-pdf-capturing .pdf-report-subtree,
+  .pdf-mode .pdf-root-container,
+  .pdf-mode #valubot-report-capture,
+  .pdf-mode .pdf-report-subtree {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    direction: rtl !important;
+    text-align: right;
+    unicode-bidi: embed;
+  }
+
+  .valubot-pdf-capturing .overflow-hidden,
+  .valubot-pdf-capturing .overflow-x-hidden,
+  .valubot-pdf-capturing .overflow-y-hidden,
+  .valubot-pdf-capturing .overflow-y-auto,
+  .pdf-mode .overflow-hidden,
+  .pdf-mode .overflow-x-hidden,
+  .pdf-mode .overflow-y-hidden,
+  .pdf-mode .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  .valubot-pdf-capturing .h-screen,
+  .valubot-pdf-capturing .min-h-screen,
+  .valubot-pdf-capturing .h-\[100vh\],
+  .valubot-pdf-capturing .h-80,
+  .valubot-pdf-capturing .h-96,
+  .valubot-pdf-capturing .sm\:h-96,
+  .valubot-pdf-capturing .py-20,
+  .valubot-pdf-capturing .my-32,
+  .pdf-mode .h-screen,
+  .pdf-mode .min-h-screen,
+  .pdf-mode .h-\[100vh\],
+  .pdf-mode .h-80,
+  .pdf-mode .h-96,
+  .pdf-mode .sm\:h-96,
+  .pdf-mode .py-20,
+  .pdf-mode .my-32 {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  .valubot-pdf-capturing .pdf-report-subtree .py-20,
+  .valubot-pdf-capturing .pdf-report-subtree .my-32,
+  .valubot-pdf-capturing #valubot-report-capture .py-20,
+  .valubot-pdf-capturing #valubot-report-capture .my-32,
+  .pdf-mode .pdf-report-subtree .py-20,
+  .pdf-mode .pdf-report-subtree .my-32,
+  .pdf-mode #valubot-report-capture .py-20,
+  .pdf-mode #valubot-report-capture .my-32 {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .valubot-pdf-capturing h1,
+  .valubot-pdf-capturing h2,
+  .valubot-pdf-capturing h3,
+  .valubot-pdf-capturing .section-header-title,
+  .pdf-mode h1,
+  .pdf-mode h2,
+  .pdf-mode h3,
+  .pdf-mode .section-header-title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .valubot-pdf-capturing .pdf-section-group,
+  .pdf-mode .pdf-section-group {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .valubot-pdf-capturing .pdf-card-contain,
+  .valubot-pdf-capturing .metric-card,
+  .valubot-pdf-capturing .diagnostic-block,
+  .pdf-mode .pdf-card-contain,
+  .pdf-mode .metric-card,
+  .pdf-mode .diagnostic-block {
+    display: block !important;
+  }
+
+  .valubot-pdf-capturing .confidence-ring svg,
+  .pdf-mode .confidence-ring svg {
+    width: 88px !important;
+    height: 88px !important;
+    max-width: 88px !important;
+    max-height: 88px !important;
+  }
+
+  .valubot-pdf-capturing .confidence-ring__score,
+  .pdf-mode .confidence-ring__score {
+    font-size: 1.25rem !important;
+    line-height: 1 !important;
+  }
+
+  .valubot-pdf-capturing .confidence-ring__label,
+  .pdf-mode .confidence-ring__label {
+    font-size: 7px !important;
+    line-height: 1.15 !important;
+    max-width: 4.5rem !important;
+    white-space: normal !important;
+  }
+
+  .valubot-pdf-capturing .chart-wrapper-block,
+  .valubot-pdf-capturing .chart-block-wrapper,
+  .pdf-mode .chart-wrapper-block,
+  .pdf-mode .chart-block-wrapper {
+    max-height: 250px !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .valubot-pdf-capturing .chart-wrapper-block canvas,
+  .valubot-pdf-capturing .chart-wrapper-block svg,
+  .valubot-pdf-capturing .chart-wrapper-block .recharts-wrapper,
+  .valubot-pdf-capturing .chart-wrapper-block .recharts-surface,
+  .valubot-pdf-capturing .chart-block-wrapper canvas,
+  .valubot-pdf-capturing .chart-block-wrapper svg,
+  .valubot-pdf-capturing .chart-block-wrapper .recharts-wrapper,
+  .valubot-pdf-capturing .chart-block-wrapper .recharts-surface,
+  .pdf-mode .chart-wrapper-block canvas,
+  .pdf-mode .chart-wrapper-block svg,
+  .pdf-mode .chart-wrapper-block .recharts-wrapper,
+  .pdf-mode .chart-wrapper-block .recharts-surface,
+  .pdf-mode .chart-block-wrapper canvas,
+  .pdf-mode .chart-block-wrapper svg,
+  .pdf-mode .chart-block-wrapper .recharts-wrapper,
+  .pdf-mode .chart-block-wrapper .recharts-surface {
+    max-height: 250px !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .valubot-pdf-capturing .grid,
+  .valubot-pdf-capturing .flex,
+  .valubot-pdf-capturing .bento-grid,
+  .valubot-pdf-capturing .pdf-card-contain,
+  .pdf-mode .grid,
+  .pdf-mode .flex,
+  .pdf-mode .bento-grid,
+  .pdf-mode .pdf-card-contain {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  .valubot-pdf-capturing tr,
+  .valubot-pdf-capturing table,
+  .valubot-pdf-capturing .pdf-card-contain,
+  .valubot-pdf-capturing .metric-card,
+  .valubot-pdf-capturing .diagnostic-block,
+  .valubot-pdf-capturing .bento-grid-item,
+  .valubot-pdf-capturing .pdf-card-break,
+  .valubot-pdf-capturing .vb-bento-card,
+  .valubot-pdf-capturing .chart-wrapper-block,
+  .valubot-pdf-capturing .chart-block-wrapper,
+  .valubot-pdf-capturing .technical-appendix-table,
+  .valubot-pdf-capturing .technical-appendix-table tr,
+  .valubot-pdf-capturing .pdf-capture-table,
+  .valubot-pdf-capturing .pdf-capture-table tr,
+  .pdf-mode tr,
+  .pdf-mode table,
+  .pdf-mode .pdf-card-contain,
+  .pdf-mode .metric-card,
+  .pdf-mode .diagnostic-block,
+  .pdf-mode .bento-grid-item,
+  .pdf-mode .pdf-card-break,
+  .pdf-mode .vb-bento-card,
+  .pdf-mode .chart-wrapper-block,
+  .pdf-mode .chart-block-wrapper,
+  .pdf-mode .technical-appendix-table,
+  .pdf-mode .technical-appendix-table tr,
+  .pdf-mode .pdf-capture-table,
+  .pdf-mode .pdf-capture-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    position: relative !important;
+    margin-bottom: 12px !important;
+    overflow: visible !important;
+  }
+
+  .valubot-pdf-capturing .pdf-diagnostics-grid,
+  .valubot-pdf-capturing .pdf-scenario-grid,
+  .pdf-mode .pdf-diagnostics-grid,
+  .pdf-mode .pdf-scenario-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 0.75rem !important;
+  }
+
+  .valubot-pdf-capturing .pdf-diagnostics-grid > *,
+  .valubot-pdf-capturing .pdf-scenario-grid > *,
+  .pdf-mode .pdf-diagnostics-grid > *,
+  .pdf-mode .pdf-scenario-grid > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .valubot-pdf-capturing thead,
+  .pdf-mode thead {
+    display: table-header-group !important;
+  }
+
+  .valubot-pdf-capturing .pdf-capture-table th,
+  .valubot-pdf-capturing .pdf-capture-table td,
+  .pdf-mode .pdf-capture-table th,
+  .pdf-mode .pdf-capture-table td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* Equify logo — fixed aspect-ratio box prevents CLS */
+  .equify-logo-box {
+    display: block;
+    width: 160px;
+    height: 40px;
+    aspect-ratio: 4 / 1;
+    font-size: 10px;
+    background: transparent;
+    border: none;
+  }
+
+  .equify-logo-box--premium {
+    width: auto;
+    min-width: 200px;
+    height: auto;
+    min-height: 52px;
+    aspect-ratio: auto;
+    font-size: 12px;
+    padding: 0.125rem 0;
+  }
+
+  .equify-logo-box .equify-logo-lockup {
+    height: 100%;
+    width: 100%;
+  }
+
+  @media (max-width: 991px) {
+    .equify-logo-box:not(.equify-logo-box--premium) {
+      width: 140px;
+      height: 35px;
+    }
+
+    .equify-logo-box--premium {
+      min-width: 168px;
+      min-height: 44px;
+      font-size: 11px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .equify-logo-box--compact {
+      width: auto;
+      min-width: 0;
+      max-width: min(168px, 48vw);
+      height: auto;
+      min-height: 30px;
+      aspect-ratio: auto;
+      overflow: visible;
+    }
+
+    .equify-logo-box--compact .equify-logo-lockup {
+      max-width: 100%;
+    }
+
+    .equify-logo-box:not(.equify-logo-box--premium):not(.equify-logo-box--compact) {
+      width: 120px;
+      height: 30px;
+    }
+
+    .equify-logo-box--premium:not(.equify-logo-box--compact) {
+      min-width: 148px;
+      min-height: 40px;
+      font-size: 10px;
+    }
+
+    .equify-logo-box--premium.equify-logo-box--compact {
+      min-width: 0;
+      max-width: min(176px, 52vw);
+      min-height: 32px;
+    }
+  }
+
+  .site-header {
+    min-width: 0;
+  }
+
+  .how-step-glow {
+    background: linear-gradient(165deg, #00f5a0 0%, #10b981 55%, rgba(16, 185, 129, 0.35) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 14px rgba(0, 245, 160, 0.22));
+  }
+
+  .how-step-glow--idle {
+    opacity: 0.42;
+    filter: drop-shadow(0 0 8px rgba(0, 245, 160, 0.12));
+  }
+
+  .how-step-glow--active {
+    opacity: 1;
+    filter: drop-shadow(0 0 18px rgba(0, 245, 160, 0.35));
+  }
+
+  .hero-verdict-stack {
+    min-height: 320px;
+    padding-top: 0.25rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .hero-verdict-stack__peek {
+    position: absolute;
+    inset-inline: 4px;
+    top: 4px;
+    bottom: -4px;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: #0c1210;
+    pointer-events: none;
+  }
+
+  .hero-verdict-card {
+    position: relative;
+    z-index: 1;
+  }
+
+  .pricing-fomo-card {
+    isolation: isolate;
+  }
+
+  .pricing-fomo-fill {
+    position: relative;
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .pricing-fomo-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.28) 50%,
+        transparent 100%
+      );
+      animation: pricing-fomo-shimmer 2.4s ease-in-out infinite;
+    }
+  }
+
+  @keyframes pricing-fomo-shimmer {
+    0% {
+      transform: translateX(-120%);
+    }
+    100% {
+      transform: translateX(220%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pricing-fomo-fill::after {
+      animation: none;
+    }
+  }
+
+  .landing-section,
+  [id^='faq'],
+  [id$='-title'] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  .brand-logo-link {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 2px 4px;
+    background: transparent;
+  }
+
+  .brand-logo-link--premium {
+    min-height: 52px;
+    padding: 6px 12px;
+  }
+
+  .brand-logo-link .logo-arrow-path {
+    transition:
+      transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+      fill 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform-origin: 28px 24px;
+  }
+
+  .brand-logo-link:hover .logo-arrow-path,
+  .brand-logo-link:focus-visible .logo-arrow-path {
+    filter: brightness(1.25) saturate(1.1);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .brand-logo-link:hover .logo-arrow-path,
+    .brand-logo-link:focus-visible .logo-arrow-path {
+      transform: translate(2px, -2px);
+    }
+  }
+
+  .wizard-container {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    padding: 0 16px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .smart-input-shell {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .vb-field-help {
+    touch-action: manipulation;
+  }
+
+  .vb-field-help-panel {
+    box-sizing: border-box;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background-color: rgba(11, 19, 17, 0.96);
+    border: 1px solid rgba(16, 185, 129, 0.18);
+    color: rgb(203 213 225);
+    font-size: 0.75rem;
+    line-height: 1.55;
+    flex-direction: column;
+    backdrop-filter: blur(16px);
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(0, 245, 160, 0.1),
+      0 0 24px rgba(0, 245, 160, 0.08);
+  }
+
+  .vb-field-help-panel--open {
+    animation: vb-help-roll-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes vb-help-roll-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @media (max-width: 639px) {
+    .vb-field-help-panel {
+      max-width: calc(100vw - 24px);
+      width: calc(100vw - 24px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vb-field-help-panel--open {
+      animation: none;
+    }
+  }
+
+  .num-figure,
+  .valubot-mono-figure,
+  .typo-num {
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
+    line-height: 1.15;
+  }
+
+  /* Numeric type scale — one king display; everything else capped */
+  .num-display {
+    font-size: clamp(1.5rem, 8vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    max-width: 100%;
+    overflow: visible;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .num-metric-lg {
+    font-size: 1.875rem;
+    font-weight: 700;
+  }
+
+  .num-metric {
+    font-size: 1.5rem;
+    font-weight: 600;
+    max-width: 100%;
+  }
+
+  .num-metric-sm {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .num-currency-symbol {
+    font-size: 0.6em;
+    font-weight: 400;
+    opacity: 0.55;
+    margin-inline-end: 0.12em;
+    vertical-align: 0.08em;
+  }
+
+  .typo-num {
+    font-size: clamp(1.25rem, 5vw, 2rem);
+  }
+
+  .typo-eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--eq-accent-mint);
+    font-size: 13px;
+  }
+
+  .typo-h2 {
+    font-weight: 800;
+    line-height: 1.05;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    color: var(--eq-ink-on-dark);
+  }
+
+  .typo-body {
+    font-weight: 400;
+    color: var(--eq-muted-on-dark);
+  }
+
+  .landing-headline {
+    font-weight: 800;
+    line-height: 1.05;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    color: var(--eq-ink-on-dark);
+  }
+
+  .landing-stat-card {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .landing-stat-num-wrap {
+    min-width: 0;
+    padding-inline-start: 0;
+    padding-inline-end: 0.25rem;
+  }
+
+  .landing-stat-num {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
+    font-weight: 800;
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .landing-stat-arrow {
+    inset-inline-end: 1rem;
+    inset-block-start: 1rem;
+  }
+
+  .landing-glass-card {
+    @apply nextronium-glass rounded-3xl;
+  }
+
+  .landing-surface {
+    @apply landing-glass-card;
+  }
+
+  .landing-surface-raised {
+    @apply landing-glass-card;
+    box-shadow:
+      0 24px 56px -24px rgba(0, 0, 0, 0.55),
+      inset 0 1px 0 rgba(148, 163, 184, 0.05);
+  }
+
+  /* Legacy alias — mint is text/indicator only, never a solid card fill */
+  .landing-mint-block {
+    @apply landing-glass-card text-[var(--eq-ink-on-dark)];
+  }
+
+  .landing-cta {
+    @apply inline-flex touch-manipulation items-center justify-center gap-2 rounded-full px-8 py-3.5 text-base font-bold text-slate-950 transition-transform duration-200;
+    background-image: linear-gradient(to right, #00f5a0, #05d38a);
+  }
+
+  .landing-cta:hover {
+    transform: translateY(-4px);
+  }
+
+  .landing-card-hover {
+    transition: transform 0.2s ease;
+  }
+
+  .landing-card-hover:hover {
+    transform: translateY(-4px);
+  }
+
+  .showcase-orbit {
+    isolation: isolate;
+  }
+
+  .showcase-orbit-glow {
+    background: radial-gradient(
+      circle at center,
+      rgba(0, 245, 160, 0.08) 0%,
+      transparent 65%
+    );
+  }
+
+  .showcase-orbit-glow--offset {
+    background: radial-gradient(
+      circle at 30% 20%,
+      rgba(16, 185, 129, 0.1) 0%,
+      transparent 55%
+    );
+  }
+
+  .showcase-bento-grid {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .showcase-bento-cell {
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .showcase-bento-cell:hover {
+    border-color: rgba(0, 245, 160, 0.22);
+    box-shadow:
+      0 0 0 1px rgba(0, 245, 160, 0.08),
+      0 24px 48px -24px rgba(0, 0, 0, 0.55);
+  }
+
+  .showcase-kpi-num {
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+      'Courier New', monospace;
+    direction: ltr;
+    unicode-bidi: embed;
+  }
+
+  .showcase-dcf-line {
+    stroke-dasharray: 420;
+    stroke-dashoffset: 420;
+    animation: showcase-dcf-draw 2.8s ease-out forwards;
+  }
+
+  .showcase-wacc-pulse {
+    animation: showcase-wacc-glow 2.4s ease-in-out infinite;
+  }
+
+  @keyframes showcase-dcf-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes showcase-wacc-glow {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 245, 160, 0.12);
+    }
+    50% {
+      box-shadow: 0 0 18px 2px rgba(0, 245, 160, 0.32);
+    }
+  }
+
+  .showcase-multiple-beam {
+    animation: showcase-multiple-beam 3.2s linear infinite;
+  }
+
+  @keyframes showcase-multiple-beam {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    15% {
+      opacity: 0.85;
+    }
+    85% {
+      opacity: 0.85;
+    }
+    100% {
+      transform: translateX(220%);
+      opacity: 0;
+    }
+  }
+
+  .showcase-multiple-cell {
+    animation: showcase-multiple-cell 2.6s ease-in-out infinite;
+  }
+
+  @keyframes showcase-multiple-cell {
+    0%,
+    100% {
+      opacity: 0.55;
+      transform: scaleY(0.92);
+    }
+    50% {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .showcase-dcf-line {
+      stroke-dashoffset: 0;
+      animation: none;
+    }
+
+    .showcase-wacc-pulse,
+    .showcase-multiple-beam,
+    .showcase-multiple-cell {
+      animation: none;
+    }
+  }
+
+  .table-scroll-fade {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table-scroll-fade::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    inset-inline-end: 0;
+    width: 28px;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(15, 23, 42, 0.85)
+    );
+  }
+
+  [dir='rtl'] .table-scroll-fade::after {
+    inset-inline-end: auto;
+    inset-inline-start: 0;
+    background: linear-gradient(
+      270deg,
+      transparent,
+      rgba(15, 23, 42, 0.85)
+    );
+  }
+
+  .dcf-table-sticky-col {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 2;
+    background-color: rgb(15 23 42);
+    box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.35);
+  }
+
+  .dcf-table-sticky-col-foot {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 2;
+    background-color: rgb(30 41 59);
+  }
+
+  .scale-buttons-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .scale-buttons-row > button {
+    flex: 1 1 calc(50% - 4px);
+    min-width: max-content;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 640px) {
+    .scale-buttons-row > button {
+      flex: 1 1 calc(25% - 6px);
+    }
+  }
+
+  .quick-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 6px 0;
+  }
+
+  .quick-chip {
+    min-height: 44px;
+    min-width: max-content;
+    padding: 8px 12px;
+    font-size: 12px;
+    border-radius: 9999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .number-display {
+    font-size: clamp(1.25rem, 5vw, 2rem);
+    width: 100%;
+  }
+
+  [dir='rtl'] .number-display {
+    text-align: right;
+  }
+
+  [dir='ltr'] .number-display {
+    text-align: left;
+  }
+
+  .wizard-footer {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .wizard-cta-row {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    background: rgba(8, 11, 17, 0.96);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 12px 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(30, 41, 59, 0.55);
+    touch-action: manipulation;
+  }
+
+  .wizard-container button,
+  .wizard-container [role='button'],
+  .wizard-container input,
+  .wizard-container select {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .wizard-container input[type='number'],
+  .wizard-container input[type='text'],
+  .wizard-container input[type='email'],
+  .wizard-container input[type='tel'] {
+    font-size: 16px !important;
+  }
+}
+
+@keyframes vb-mesh-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(3%, -2%) scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes vb-progress-glint {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes vb-fab-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 22px rgba(0, 245, 160, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 34px rgba(0, 245, 160, 0.48);
+  }
+}
+
+@keyframes vb-modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Live accessibility preference modes (Israeli accessibility law toolbar) */
+[data-a11y-large-text='true'] {
+  --vb-font-scale: 1.15;
+  font-size: calc(100% * var(--vb-font-scale));
+}
+
+[data-a11y-readable-font='true'] {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif !important;
+}
+
+[data-a11y-high-contrast='true'] {
+  filter: contrast(1.2) saturate(1.1);
+}
+
+[data-a11y-high-contrast='true'] .vb-glass-pane,
+[data-a11y-high-contrast='true'] .vb-fintech-input {
+  background-color: rgba(0, 0, 0, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
+}
+
+[data-a11y-high-contrast='true'] .text-slate-300,
+[data-a11y-high-contrast='true'] .text-slate-400 {
+  color: #e2e8f0 !important;
+}
+
+[data-a11y-focus-highlight='true'] :focus-visible {
+  outline: 4px solid #fde047 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(253, 224, 71, 0.25) !important;
+}
+
+[data-a11y-focus-highlight='true'] a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Ambient background system */
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  isolation: isolate;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.ambient-bg-base {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #020504 0%, #080f0d 100%);
+}
+
+.ambient-bg-aura {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 55%;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 55% at 50% 100%,
+    rgba(16, 185, 129, 0.06) 0%,
+    transparent 70%
+  );
+  filter: blur(32px);
+}
+
+.ambient-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 1;
+  transform: translateZ(0);
+}
+
+.ambient-bg-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-size: 180px 180px;
+}
+
+.ambient-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 85%);
+}
+
+/* Methodology horizontal scroll — edge fade (RTL-aware) */
+.methodology-scroll-fade {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 1.5rem,
+    #000 calc(100% - 1.5rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 1.5rem,
+    #000 calc(100% - 1.5rem),
+    transparent 100%
+  );
+}
+
+[dir='rtl'] .methodology-scroll-fade {
+  -webkit-mask-image: linear-gradient(
+    270deg,
+    transparent 0,
+    #000 1.5rem,
+    #000 calc(100% - 1.5rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    270deg,
+    transparent 0,
+    #000 1.5rem,
+    #000 calc(100% - 1.5rem),
+    transparent 100%
+  );
+}
+
+/* Landing — bold geometric layout rhythm */
+.landing-section {
+  position: relative;
+}

@@ -1,0 +1,22 @@
+/**
+ * טוקנים של equify landing — ניתן להעביר ל-globals.css לאחר אישור.
+ * פלטת צבעים: #050F0D, #00C2B8, #C49A3C
+ */
+:root {
+  --ink: #050f0d;
+  --ink-2: #091c18;
+  --pine: #0f2e29;
+  --brand: #163530;
+  --turq: #00c2b8;
+  --turq-soft: #4dd6ce;
+  --mint: #9eeee6;
+  --gold: #c49a3c;
+  --paper: #e8f2f0;
+  --paper-dim: #7fa8a2;
+  --line: rgba(0, 194, 184, 0.13);
+  --display: var(--font-landing-display), 'Frank Ruhl Libre', serif;
+  --body: var(--font-landing-body), 'Assistant', system-ui, sans-serif;
+  --mono: var(--font-landing-mono), 'IBM Plex Mono', monospace;
+  --max: 1240px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}

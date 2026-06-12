@@ -1,0 +1,18 @@
+-- Optional rename path: map legacy stripe_* columns to Israeli gateway semantics.
+-- Current application stores:
+--   stripe_payment_intent_id  -> gateway transaction id (unique)
+--   stripe_checkout_session_id -> gateway sale / hosted-page session id
+--   stripe_customer_id        -> payer external reference (email hash / buyer id)
+--
+-- To fully rename (run during a maintenance window):
+--
+-- ALTER TABLE stripe_transactions RENAME TO local_payment_transactions;
+-- ALTER TABLE local_payment_transactions
+--   RENAME COLUMN stripe_payment_intent_id TO gateway_transaction_id;
+-- ALTER TABLE local_payment_transactions
+--   RENAME COLUMN stripe_checkout_session_id TO gateway_sale_id;
+-- ALTER TABLE local_payment_transactions
+--   RENAME COLUMN stripe_customer_id TO payer_external_id;
+--
+-- ALTER TABLE valuations
+--   RENAME COLUMN stripe_transaction_id TO local_payment_transaction_id;

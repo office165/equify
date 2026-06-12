@@ -1,0 +1,322 @@
+/**
+ * Equify PDF Print Compliance — master layout system
+ * @see docs/pdf-print-architecture.md
+ */
+
+:root {
+  --pdf-page-width: 210mm;
+  --pdf-page-margin-inline: 12mm;
+  --pdf-page-margin-block: 15mm;
+  --pdf-content-max-width: calc(210mm - (var(--pdf-page-margin-inline) * 2));
+  --pdf-safe-gap: 12px;
+}
+
+.print-a4-root {
+  width: 100%;
+  max-width: var(--pdf-page-width);
+  margin-inline: auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.print-a4-sheet {
+  width: 100%;
+  max-width: var(--pdf-content-max-width);
+  padding-inline: var(--pdf-page-margin-inline);
+  padding-block: var(--pdf-page-margin-block);
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+.print-card-safe,
+.pdf-card-contain,
+.metric-card,
+.diagnostic-block,
+.bento-item {
+  position: relative;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.print-section-group,
+.pdf-section-group {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.print-section-header,
+.section-header-title {
+  display: block;
+  width: 100%;
+}
+
+.print-block-flow {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.print-table-safe {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.print-chart-safe,
+.chart-wrapper,
+.chart-wrapper-block {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: var(--pdf-page-margin-block) var(--pdf-page-margin-inline);
+  }
+
+  html,
+  body,
+  .print-a4-root,
+  .pdf-root-container,
+  .pdf-print-report,
+  .pdf-report-subtree,
+  #valubot-report-capture,
+  #equify-report-capture {
+    width: var(--pdf-page-width) !important;
+    max-width: var(--pdf-page-width) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .h-screen,
+  .min-h-screen,
+  .h-\[100vh\],
+  .h-\[100dvh\],
+  .min-h-\[100vh\],
+  .min-h-\[100dvh\] {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .pdf-root-container .py-20,
+  .pdf-root-container .my-32,
+  .pdf-report-subtree .py-20,
+  .pdf-report-subtree .my-32,
+  #valubot-report-capture .py-20,
+  #valubot-report-capture .my-32 {
+    padding-block: 0 !important;
+    margin-block: 0 !important;
+  }
+
+  .pdf-root-container .overflow-hidden,
+  .pdf-root-container .overflow-x-hidden,
+  .pdf-root-container .overflow-y-hidden,
+  .pdf-root-container .overflow-y-auto,
+  .pdf-root-container .overflow-x-auto,
+  .pdf-report-subtree .overflow-hidden,
+  .pdf-report-subtree .overflow-x-hidden,
+  .pdf-report-subtree .overflow-y-hidden,
+  .pdf-report-subtree .overflow-y-auto,
+  #valubot-report-capture .overflow-hidden,
+  #valubot-report-capture .overflow-x-hidden,
+  #valubot-report-capture .overflow-y-hidden,
+  #valubot-report-capture .overflow-y-auto {
+    overflow: visible !important;
+  }
+
+  .pdf-root-container .grid,
+  .pdf-root-container .flex,
+  .pdf-root-container .bento-grid,
+  .pdf-report-subtree .grid,
+  .pdf-report-subtree .flex,
+  .pdf-report-subtree .bento-grid,
+  #valubot-report-capture .grid,
+  #valubot-report-capture .flex,
+  #valubot-report-capture .bento-grid {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    gap: 0 !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  .print-section-header,
+  .section-header-title {
+    page-break-after: avoid !important;
+    break-after: avoid-page !important;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .print-section-group,
+  .pdf-section-group {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: var(--pdf-safe-gap) !important;
+  }
+
+  .print-card-safe,
+  .pdf-card-contain,
+  .metric-card,
+  .diagnostic-block,
+  .bento-item,
+  .bento-grid-item,
+  .chart-wrapper,
+  .chart-wrapper-block,
+  .chart-block-wrapper,
+  .pdf-card-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    height: auto !important;
+    margin-bottom: var(--pdf-safe-gap) !important;
+    overflow: visible !important;
+  }
+
+  table,
+  .print-table-safe,
+  .pdf-capture-table,
+  .technical-appendix-table {
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    width: 100% !important;
+    display: table !important;
+    border-collapse: collapse !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  tbody {
+    display: table-row-group !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: table-row !important;
+  }
+
+  td,
+  th {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  canvas,
+  svg,
+  .recharts-wrapper,
+  .recharts-surface {
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  [data-pdf-exclude],
+  .ambient-bg,
+  .print-exclude {
+    display: none !important;
+  }
+}
+
+.valubot-pdf-capturing,
+.pdf-mode,
+.equify-pdf-capturing {
+  width: var(--pdf-page-width) !important;
+  max-width: var(--pdf-page-width) !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+.valubot-pdf-capturing .h-screen,
+.valubot-pdf-capturing .min-h-screen,
+.valubot-pdf-capturing .h-\[100vh\],
+.pdf-mode .h-screen,
+.pdf-mode .min-h-screen,
+.equify-pdf-capturing .h-screen,
+.equify-pdf-capturing .min-h-screen {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.valubot-pdf-capturing .overflow-hidden,
+.valubot-pdf-capturing .overflow-x-hidden,
+.valubot-pdf-capturing .overflow-y-hidden,
+.valubot-pdf-capturing .overflow-y-auto,
+.pdf-mode .overflow-hidden,
+.pdf-mode .overflow-y-auto,
+.equify-pdf-capturing .overflow-hidden,
+.equify-pdf-capturing .overflow-y-auto {
+  overflow: visible !important;
+}
+
+.valubot-pdf-capturing h1,
+.valubot-pdf-capturing h2,
+.valubot-pdf-capturing h3,
+.valubot-pdf-capturing .section-header-title,
+.pdf-mode h1,
+.pdf-mode h2,
+.pdf-mode h3,
+.equify-pdf-capturing h1,
+.equify-pdf-capturing h2,
+.equify-pdf-capturing h3 {
+  break-after: avoid-page !important;
+  page-break-after: avoid !important;
+}
+
+.valubot-pdf-capturing .print-card-safe,
+.valubot-pdf-capturing .pdf-card-contain,
+.valubot-pdf-capturing .metric-card,
+.valubot-pdf-capturing .diagnostic-block,
+.valubot-pdf-capturing .bento-item,
+.valubot-pdf-capturing .chart-wrapper,
+.valubot-pdf-capturing .chart-wrapper-block,
+.pdf-mode .print-card-safe,
+.pdf-mode .pdf-card-contain,
+.pdf-mode .metric-card,
+.equify-pdf-capturing .print-card-safe,
+.equify-pdf-capturing .pdf-card-contain {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  display: block !important;
+  overflow: visible !important;
+  height: auto !important;
+}
+
+.valubot-pdf-capturing .grid,
+.valubot-pdf-capturing .flex,
+.valubot-pdf-capturing .bento-grid,
+.pdf-mode .grid,
+.pdf-mode .flex,
+.equify-pdf-capturing .grid,
+.equify-pdf-capturing .flex {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+}

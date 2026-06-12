@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" role="img" aria-label="Equify">
+  <defs>
+    <linearGradient id="arrow" x1="14" y1="42" x2="42" y2="8" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0D1B2A"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+  </defs>
+  <path d="M4 6h7v36H4z" fill="#0D1B2A"/>
+  <path d="M11 31h7.5l3-2.8 3 2.8H30v6H11z" fill="#0D1B2A"/>
+  <path d="M11 20h5l2.6-2.4L21.2 20H27v5H11z" fill="#0D1B2A"/>
+  <path d="M11 9h4l2-1.8L19 9H24v5H11z" fill="#0D1B2A"/>
+  <path d="M12 42 15 42 37.5 11 41.5 7 46 11 42 15 19.5 38.5z" fill="url(#arrow)"/>
+</svg>

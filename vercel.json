@@ -1,0 +1,25 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/replay-pending-leads",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "functions": {
+    "app/api/generate-pdf/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/v1/reports/valuation/pdf/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/valuation/generate-pdf/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/valuation/backup-relay/route.ts": {
+      "maxDuration": 60
+    }
+  }
+}

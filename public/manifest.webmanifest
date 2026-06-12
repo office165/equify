@@ -1,0 +1,28 @@
+{
+  "name": "equify BY SBC",
+  "short_name": "equify",
+  "description": "אינדיקציית שווי מוסמכת ומדויקת מבוססת מודלים פיננסיים מתקדמים בזמן אמת.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0b2c24",
+  "background_color": "#051c14",
+  "lang": "he",
+  "dir": "rtl",
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
