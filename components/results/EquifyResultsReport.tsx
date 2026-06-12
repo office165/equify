@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import type { ValuationScenario } from '../../lib/valuation/canonical_valuation';
 import {
@@ -10,26 +10,37 @@ import {
   buildWaccDonutSlices,
 } from '../../lib/results/report-view-model';
 import { formatCurrencyShort } from '../../lib/utils/formatCurrency';
-import { PdfClientIdentityCaptureBlock } from '../pdf/PdfClientIdentityCaptureBlock';
-import { getWizardContext, hasValidatedUserIdentifiers } from '../../lib/pdf/wizard_context';
+import { downloadEquifyPdf } from '../../lib/results/download-equify-pdf';
+import { loadEquifyWizardState } from '../../lib/wizard/equify_storage';
+import { mapEquifyToWizardFormValues } from '../../lib/wizard/map_equify_wizard';
 import { useReducedMotion } from '../landing/motion/useReducedMotion';
-import { ScenarioTabs } from './ScenarioTabs';
-import { WaterfallBlock } from './WaterfallBlock';
-import { TrajectoryChart } from './charts/TrajectoryChart';
-import { WaccDonut } from './charts/WaccDonut';
-import { QualityGauge } from './charts/QualityGauge';
-import { useResultsBgOrb } from './useResultsBgOrb';
-import './results-report.css';
+import {
+  buildDcfBreakdown,
+  buildExecSummary,
+  buildFinChartData,
+  buildMultipleRows,
+  buildQualityFactors,
+  buildScrollScenarioView,
+  buildWaccRows,
+  formatReportDate,
+  resolvePurposeLabel,
+  SCROLL_SECTIONS,
+  toMillions,
+} from '../../lib/results/scroll-report-vm';
+import {
+  FinancialBarChart,
+  QualityGaugeChart,
+  WaccDonutChart,
+} from './scroll/ReportCharts';
+import { useScrollReportMotion } from './useScrollReportMotion';
+import { useScrollReportOrb } from './useScrollReportOrb';
+import './equify-scroll-report.css';
 
-const SECTIONS = [
-  { id: 'rr-p1', num: '01', labelHe: 'סיכום ושווי', labelEn: 'Summary' },
-  { id: 'rr-p2', num: '02', labelHe: 'גשר EV → הון', labelEn: 'EV bridge' },
-  { id: 'rr-p3', num: '03', labelHe: 'מסלול תחזית', labelEn: 'Trajectory' },
-  { id: 'rr-p4', num: '04', labelHe: 'פירוק WACC', labelEn: 'WACC' },
-  { id: 'rr-p5', num: '05', labelHe: 'ציון איכות', labelEn: 'Quality' },
-  { id: 'rr-p6', num: '06', labelHe: 'ממצאים', labelEn: 'Findings' },
-  { id: 'rr-p7', num: '07', labelHe: 'שקלול 3 מודלים', labelEn: '3-model blend' },
-] as const;
+const SCENARIO_TABS: { key: ValuationScenario; label: string }[] = [
+  { key: 'bear', label: 'Bear 🐻' },
+  { key: 'base', label: 'Base ◆' },
+  { key: 'bull', label: 'Bull 🚀' },
+];
 
 interface EquifyResultsReportProps {
   matrix: ForecastMatrixWithDiagnostics | null;
@@ -38,39 +49,142 @@ interface EquifyResultsReportProps {
 
 export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps) {
   const isHe = locale === 'he';
-  const [selectedScenario, setSelectedScenario] = useState<ValuationScenario>('base');
-  const orbHostRef = useRef<HTMLDivElement>(null);
+  const [scenario, setScenario] = useState<ValuationScenario>('base');
+  const [scVal, setScVal] = useState<string | null>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [idLabel, setIdLabel] = useState('');
+  const [purposeLabel, setPurposeLabel] = useState('');
+  const orbRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
-  useResultsBgOrb(orbHostRef, { enabled: !!matrix, reducedMotion });
+
+  useEffect(() => {
+    setMounted(true);
+    const stored = loadEquifyWizardState();
+    const national =
+      stored?.profile.userNationalId || stored?.profile.userCorporateTaxId;
+    setIdLabel(national ?? '');
+    const goalMap: Record<string, string> = {
+      negotiation: 'משא ומתן אסטרטגי',
+      fundraise: 'גיוס הון',
+      partner: 'שותפות עסקית',
+      bank: 'מימון בנקאי',
+      internal: 'שימוש פנימי',
+      legal: 'הליך משפטי / ירושה',
+    };
+    if (stored?.goal && goalMap[stored.goal]) {
+      setPurposeLabel(`מטרת ההערכה: ${goalMap[stored.goal]}`);
+    }
+  }, []);
 
   const vm = useMemo(
     () => (matrix ? buildReportViewModel(matrix, locale) : null),
     [matrix, locale],
   );
 
-  const wizardContext = useMemo(
-    () => (matrix ? getWizardContext(matrix) : null),
+  const base = vm?.scenarios.base;
+  const bear = vm?.scenarios.bear;
+  const bull = vm?.scenarios.bull;
+
+  const coverEquityM = base ? base.equityValue / 1_000_000 : 0;
+
+  useScrollReportOrb(orbRef, { enabled: mounted && !!vm, reducedMotion });
+  useScrollReportMotion({
+    enabled: mounted && !!vm,
+    reducedMotion,
+    coverEquityM,
+    finalEquityM: coverEquityM,
+  });
+
+  const scrollScenario = useMemo(
+    () =>
+      vm ? buildScrollScenarioView(vm, scenario, vm.currency) : null,
+    [scenario, vm],
+  );
+
+  const finData = useMemo(
+    () => (vm ? buildFinChartData(vm) : []),
+    [vm],
+  );
+
+  const multipleRows = useMemo(
+    () => (vm ? buildMultipleRows(vm, vm.currency) : []),
+    [vm],
+  );
+
+  const qualityFactors = useMemo(
+    () => (matrix ? buildQualityFactors(matrix) : []),
     [matrix],
   );
 
-  const reportAccessGranted = useMemo(
-    () =>
-      wizardContext
-        ? hasValidatedUserIdentifiers(wizardContext.user_identifiers)
-        : false,
-    [wizardContext],
+  const waccRows = useMemo(
+    () => (vm ? buildWaccRows(vm, scenario) : []),
+    [scenario, vm],
   );
 
-  if (!matrix || !vm) {
+  const dcfBreakdown = useMemo(
+    () => (vm ? buildDcfBreakdown(vm, vm.currency) : null),
+    [vm],
+  );
+
+  const resolvedPurposeLabel = useMemo(() => {
+    if (purposeLabel) return purposeLabel;
+    return vm ? resolvePurposeLabel(vm) : '';
+  }, [purposeLabel, vm]);
+
+  const resolvedIdLabel = useMemo(() => {
+    if (idLabel) return idLabel;
     return (
-      <div className="results-report-root" dir="rtl" lang="he">
-        <div className="rr-empty">
+      vm?.clientIdentity.nationalId || vm?.clientIdentity.corporateTaxId || ''
+    );
+  }, [idLabel, vm]);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!vm || !base) return;
+    setIsDownloadingPdf(true);
+    setPdfError(null);
+    try {
+      const stored = loadEquifyWizardState();
+      const industryCode = stored
+        ? mapEquifyToWizardFormValues(stored).industry
+        : undefined;
+      await downloadEquifyPdf({
+        equityValue: base.equityValue,
+        reportId: vm.reportId,
+        companyName: vm.companyName,
+        industryCode,
+        locale,
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'יצירת PDF נכשלה. נסה שוב.';
+      setPdfError(message);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  }, [base, locale, vm]);
+
+  const handleScenario = useCallback(
+    (key: ValuationScenario) => {
+      if (!vm) return;
+      setScenario(key);
+      const view = buildScrollScenarioView(vm, key, vm.currency);
+      setScVal(view.equityM.toFixed(1));
+    },
+    [vm],
+  );
+
+  if (!matrix || !vm || !base || !bear || !bull || !scrollScenario) {
+    return (
+      <div className="equify-scroll-report" dir="rtl" lang="he">
+        <div className="esr-empty">
           <p>
             {isHe
               ? 'לא נמצאו תוצאות הערכה. הרץ הערכה חדשה מהאשף.'
               : 'No valuation results found. Run a new valuation from the wizard.'}
           </p>
-          <Link href="/wizard" className="rr-btn rr-btn--primary">
+          <Link href="/wizard" className="btn">
             {isHe ? 'חזרה לאשף ההערכה' : 'Back to valuation wizard'}
           </Link>
         </div>
@@ -78,310 +192,495 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
     );
   }
 
-  const scenario = vm.scenarios[selectedScenario];
-  const waccSlices = buildWaccDonutSlices(scenario.waccPct);
-  const { clientIdentity } = vm;
-  const idLabel = clientIdentity.nationalId || clientIdentity.corporateTaxId;
-
-  const handlePrint = () => {
-    window.print();
-  };
+  const waccSlices = buildWaccDonutSlices(base.waccPct);
+  const reportDate = formatReportDate(locale);
+  const equityDisplay = scVal ?? scrollScenario.equityM.toFixed(1);
+  const scColor =
+    scenario === 'bear' ? '#D97575' : scenario === 'bull' ? '#C49A3C' : '#9EEEE6';
 
   return (
     <div
-      className="results-report-root pdf-root-container pdf-print-report"
+      className="equify-scroll-report pdf-root-container pdf-print-report"
       dir={isHe ? 'rtl' : 'ltr'}
       lang={isHe ? 'he' : 'en'}
       id="equify-report-capture"
     >
-      <div ref={orbHostRef} className="rr-orb-host print:hidden" aria-hidden />
-
-      <div className="rr-shell">
-        <aside className="rr-sidebar print:hidden" data-pdf-exclude>
-          <div className="rr-brand">
-            equify<em>.</em>
-            <div style={{ fontSize: '0.65rem', color: 'var(--paper-dim)', fontWeight: 500, marginTop: 4 }}>
-              BY SBC
-            </div>
-          </div>
-
-          <nav className="rr-nav" aria-label={isHe ? 'ניווט דוח' : 'Report navigation'}>
-            {SECTIONS.map((s) => (
-              <a key={s.id} href={`#${s.id}`}>
-                <span className="rr-nav__num">{s.num}</span>
-                {isHe ? s.labelHe : s.labelEn}
-              </a>
-            ))}
-          </nav>
-
-          <div className="rr-sidebar-actions">
-            <button type="button" className="rr-btn rr-btn--primary" onClick={handlePrint}>
-              {isHe ? 'הורד PDF / הדפס' : 'Download PDF / Print'}
-            </button>
-            <Link href="/wizard" className="rr-btn rr-btn--ghost">
-              {isHe ? 'אשף הערכה' : 'Valuation wizard'}
-            </Link>
-            <Link href="/" className="rr-btn rr-btn--ghost">
-              {isHe ? 'דף הבית' : 'Home'}
-            </Link>
-          </div>
-        </aside>
-
-        <main className="rr-main pdf-report-subtree">
-          {reportAccessGranted ? (
-            <div className="rr-identity-slot print:hidden">
-              <PdfClientIdentityCaptureBlock
-                identity={clientIdentity}
-                valuationMidpoint={scenario.enterpriseValue}
-                currency={vm.currency}
-                locale={locale}
-                customLogoDataUrl={wizardContext?.custom_logo_data_url}
-              />
-            </div>
-          ) : null}
-
-          {/* Page 1 — Cover / Hero */}
-          <section className="rr-page" id="rr-p1">
-            <div className="rr-eyebrow">
-              {isHe ? 'דוח הערכת שווי' : 'Valuation report'}
-            </div>
-            <h1 className="rr-page-title">{vm.companyName}</h1>
-            <p className="rr-page-sub">
-              {vm.industrySector} · {vm.lifecycleStage} · {vm.reportId}
-            </p>
-
-            <ScenarioTabs
-              selected={selectedScenario}
-              onSelect={setSelectedScenario}
-              locale={locale}
-            />
-
-            <div className="rr-hero-equity">
-              {formatCurrencyShort(scenario.equityValue, vm.currency)}
-              <span>{isHe ? 'שווי לבעלים' : 'Equity value'}</span>
-            </div>
-
-            <div className="rr-meta-grid">
-              <div className="rr-meta-cell">
-                <dt>{isHe ? 'שם מלא' : 'Full name'}</dt>
-                <dd>{clientIdentity.fullName || '—'}</dd>
-              </div>
-              <div className="rr-meta-cell">
-                <dt>{isHe ? 'ת.ז. / ח.פ.' : 'ID / Reg. no.'}</dt>
-                <dd dir="ltr">{idLabel || '—'}</dd>
-              </div>
-              <div className="rr-meta-cell">
-                <dt>{isHe ? 'חברה' : 'Company'}</dt>
-                <dd>{clientIdentity.companyName || '—'}</dd>
-              </div>
-              <div className="rr-meta-cell">
-                <dt>{isHe ? 'טלפון' : 'Phone'}</dt>
-                <dd dir="ltr">{clientIdentity.userPhone || '—'}</dd>
-              </div>
-              <div className="rr-meta-cell">
-                <dt>{isHe ? 'דוא״ל' : 'Email'}</dt>
-                <dd dir="ltr">{clientIdentity.userEmail || '—'}</dd>
-              </div>
-              <div className="rr-meta-cell">
-                <dt>{isHe ? 'שווי פעילות (EV)' : 'Enterprise value'}</dt>
-                <dd>{formatCurrencyShort(scenario.enterpriseValue, vm.currency)}</dd>
-              </div>
-            </div>
-
-            <div className="rr-kpi-strip">
-              <div className="rr-kpi">
-                <div className="rr-kpi__label">WACC</div>
-                <div className="rr-kpi__value">{scenario.waccPct.toFixed(1)}%</div>
-              </div>
-              <div className="rr-kpi">
-                <div className="rr-kpi__label">
-                  {isHe ? 'צמיחה לטווח ארוך' : 'Terminal growth'}
-                </div>
-                <div className="rr-kpi__value">{vm.terminalGrowthPct.toFixed(1)}%</div>
-              </div>
-              <div className="rr-kpi">
-                <div className="rr-kpi__label">EBITDA margin</div>
-                <div className="rr-kpi__value">{vm.ebitdaMarginPct.toFixed(0)}%</div>
-              </div>
-              <div className="rr-kpi">
-                <div className="rr-kpi__label">
-                  {isHe ? 'ציון איכות' : 'Quality score'}
-                </div>
-                <div className="rr-kpi__value">
-                  {vm.qualityScore} ({vm.qualityGrade})
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Page 2 — Waterfall */}
-          <section className="rr-page" id="rr-p2">
-            <div className="rr-eyebrow">{isHe ? 'גשר שווי' : 'Value bridge'}</div>
-            <h2 className="rr-page-title">
-              {isHe ? 'מ-EV לשווי לבעלים' : 'From EV to equity'}
-            </h2>
-            <p className="rr-page-sub">
-              {isHe
-                ? 'פירוק שווי הפעילות לחוב נטו ושווי הון — לפי תרחיש נבחר.'
-                : 'Enterprise value bridge to net debt and equity — selected scenario.'}
-            </p>
-            <div className="rr-card">
-              <WaterfallBlock
-                metrics={scenario.waterfall}
-                currency={vm.currency}
-                locale={locale}
-              />
-            </div>
-          </section>
-
-          {/* Page 3 — Trajectory */}
-          <section className="rr-page" id="rr-p3">
-            <div className="rr-eyebrow">{isHe ? 'תחזית' : 'Forecast'}</div>
-            <h2 className="rr-page-title">
-              {isHe ? 'מסלול הכנסות ו-EBITDA' : 'Revenue & EBITDA trajectory'}
-            </h2>
-            <p className="rr-page-sub">
-              {isHe
-                ? `תחזית 5 שנים · WACC ${scenario.waccPct.toFixed(1)}% · g ${vm.terminalGrowthPct.toFixed(1)}%`
-                : `5-year forecast · WACC ${scenario.waccPct.toFixed(1)}% · g ${vm.terminalGrowthPct.toFixed(1)}%`}
-            </p>
-            <div className="rr-card">
-              <TrajectoryChart
-                data={vm.trajectory}
-                currency={vm.currency}
-                locale={locale}
-              />
-            </div>
-          </section>
-
-          {/* Page 4 — WACC Donut */}
-          <section className="rr-page" id="rr-p4">
-            <div className="rr-eyebrow">WACC</div>
-            <h2 className="rr-page-title">
-              {isHe ? 'פירוק עלות ההון' : 'Cost of capital breakdown'}
-            </h2>
-            <p className="rr-page-sub">
-              {isHe
-                ? 'רכיבי WACC לפי CAPM מותאם לשוק הישראלי.'
-                : 'WACC components per Israel-adjusted CAPM.'}
-            </p>
-            <div className="rr-card">
-              <WaccDonut
-                slices={waccSlices}
-                waccPct={scenario.waccPct}
-                locale={locale}
-              />
-            </div>
-          </section>
-
-          {/* Page 5 — Quality Gauge */}
-          <section className="rr-page" id="rr-p5">
-            <div className="rr-eyebrow">{isHe ? 'איכות' : 'Quality'}</div>
-            <h2 className="rr-page-title">
-              {isHe ? 'ציון איכות הנתונים' : 'Data quality score'}
-            </h2>
-            <p className="rr-page-sub">
-              {isHe
-                ? 'הערכת שלמות הנתונים, עקביות התחזית ורמת הביטחון באינדיקציה.'
-                : 'Assessment of data completeness, forecast consistency, and confidence.'}
-            </p>
-            <div className="rr-card">
-              <QualityGauge
-                score={vm.qualityScore}
-                grade={vm.qualityGrade}
-                locale={locale}
-              />
-            </div>
-          </section>
-
-          {/* Page 6 — Findings */}
-          <section className="rr-page" id="rr-p6">
-            <div className="rr-eyebrow">{isHe ? 'תובנות' : 'Insights'}</div>
-            <h2 className="rr-page-title">
-              {isHe ? 'ממצאים מרכזיים' : 'Key findings'}
-            </h2>
-            <p className="rr-page-sub">
-              {isHe
-                ? 'סיכום מנהלים — מבוסס על ניתוח DCF, מכפילים ואבחון פיננסי.'
-                : 'Executive summary — based on DCF, multiples, and financial diagnostics.'}
-            </p>
-            <ul className="rr-findings">
-              {vm.findings.map((finding, i) => (
-                <li key={`${i}-${finding.slice(0, 24)}`}>{finding}</li>
-              ))}
-            </ul>
-          </section>
-
-          {/* Page 7 — 3-model blend */}
-          <section className="rr-page" id="rr-p7">
-            <div className="rr-eyebrow">{isHe ? 'שקלול' : 'Blend'}</div>
-            <h2 className="rr-page-title">
-              {isHe ? 'שקלול 3 מודלים' : 'Three-model blend'}
-            </h2>
-            <p className="rr-page-sub">
-              {isHe
-                ? 'DCF 50% · מכפיל EBITDA 30% · מכפיל הכנסות 20%'
-                : 'DCF 50% · EBITDA multiple 30% · Revenue multiple 20%'}
-            </p>
-
-            <div className="rr-card rr-blend">
-              <div className="rr-blend__bar" aria-hidden>
-                <div
-                  className="rr-blend__seg rr-blend__seg--dcf"
-                  style={{ width: `${BLEND_WEIGHTS.dcf * 100}%` }}
-                >
-                  DCF 50%
-                </div>
-                <div
-                  className="rr-blend__seg rr-blend__seg--ebitda"
-                  style={{ width: `${BLEND_WEIGHTS.ebitda * 100}%` }}
-                >
-                  EBITDA 30%
-                </div>
-                <div
-                  className="rr-blend__seg rr-blend__seg--rev"
-                  style={{ width: `${BLEND_WEIGHTS.rev * 100}%` }}
-                >
-                  Rev 20%
-                </div>
-              </div>
-
-              <div className="rr-blend__models">
-                <div className="rr-blend__model">
-                  <div className="rr-blend__model-label">DCF</div>
-                  <div className="rr-blend__model-weight">50%</div>
-                  <div className="rr-blend__model-value">
-                    {formatCurrencyShort(scenario.evDcf, vm.currency)}
-                  </div>
-                </div>
-                <div className="rr-blend__model">
-                  <div className="rr-blend__model-label">
-                    {isHe ? 'מכפיל EBITDA' : 'EBITDA multiple'}
-                  </div>
-                  <div className="rr-blend__model-weight">30%</div>
-                  <div className="rr-blend__model-value">
-                    {formatCurrencyShort(scenario.evEbitda, vm.currency)}
-                  </div>
-                </div>
-                <div className="rr-blend__model">
-                  <div className="rr-blend__model-label">
-                    {isHe ? 'מכפיל הכנסות' : 'Revenue multiple'}
-                  </div>
-                  <div className="rr-blend__model-weight">20%</div>
-                  <div className="rr-blend__model-value">
-                    {formatCurrencyShort(scenario.evRev, vm.currency)}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rr-blend__total">
-                <span>{isHe ? 'שווי משוקלל (EV)' : 'Blended EV'}</span>
-                <strong>{formatCurrencyShort(scenario.blendedEv, vm.currency)}</strong>
-              </div>
-            </div>
-          </section>
-        </main>
+      <div id="prog" aria-hidden="true">
+        <i />
       </div>
+
+      <header className="bar" id="bar">
+        <div className="wrap bar-in">
+          <Link href="/" className="logo" aria-label="equify BY SBC — דף הבית">
+            equify<em>.</em>
+            <small>BY SBC</small>
+          </Link>
+          <span className="doc-id">
+            REPORT #{vm.reportId} · {vm.companyName}
+          </span>
+          <button
+            type="button"
+            className="btn"
+            onClick={handleDownloadPdf}
+            disabled={isDownloadingPdf}
+            aria-busy={isDownloadingPdf}
+          >
+            {isDownloadingPdf ? 'מפיק PDF...' : 'הורד PDF נקי ↓'}
+          </button>
+        </div>
+      </header>
+
+      {pdfError ? (
+        <div className="wrap" style={{ padding: '8px 0', color: '#D97575', fontSize: 13 }}>
+          {pdfError}
+        </div>
+      ) : null}
+
+      <nav className="rail" aria-label="עמודי הדוח">
+        {SCROLL_SECTIONS.map((s, i) => (
+          <a key={s.id} href={`#${s.id}`} className={i === 0 ? 'on' : undefined}>
+            <span>{isHe ? s.labelHe : s.labelEn}</span>
+          </a>
+        ))}
+      </nav>
+
+      {/* PAGE 1 · COVER */}
+      <section className="pg cover" id="p1">
+        <div id="orb" ref={orbRef} aria-hidden="true" />
+        <div className="wrap">
+          <span className="eyebrow" style={{ justifyContent: 'center' }}>
+            דוח הערכת שווי · {reportDate}
+          </span>
+          <h1 style={{ marginTop: 22 }}>
+            <span className="h-title-ln">
+              <span className="c-comp">{vm.companyName}</span>
+            </span>
+            <span className="h-title-ln">
+              <span className="c-meta">
+                {resolvedIdLabel ? `ח.פ. ${resolvedIdLabel} · ` : ''}
+                {resolvedPurposeLabel}
+              </span>
+            </span>
+          </h1>
+          <div className="c-val">
+            <span id="coverVal">0.0</span>M ₪
+          </div>
+          <p className="c-cap">
+            שווי לבעלים (Equity Value) · תרחיש בסיס · טווח{' '}
+            <b className="num">
+              {formatCurrencyShort(bear.equityValue, vm.currency)}–
+              {formatCurrencyShort(bull.equityValue, vm.currency)}
+            </b>
+          </p>
+          <div className="seal">
+            <i />
+            CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY
+          </div>
+        </div>
+        <div className="scroll-hint">
+          לקריאת הדוח<i />
+        </div>
+      </section>
+
+      {/* PAGE 2 · EXEC SUMMARY */}
+      <section className="pg" id="p2">
+        <span className="pg-num">
+          <b>02</b> / 07 · EXECUTIVE SUMMARY
+        </span>
+        <div className="wrap">
+          <span className="eyebrow rv">תקציר מנהלים</span>
+          <h2 className="t rv">
+            השורה התחתונה — <span className="hl">קודם.</span>
+          </h2>
+          <p className="sub rv">{buildExecSummary(vm, vm.currency, locale)}</p>
+
+          <div className="kgrid">
+            <div className="kcard rv">
+              <div className="kv num" style={{ color: 'var(--mint)' }}>
+                <span className="cnt" data-to={toMillions(base.equityValue)} data-dec={1}>
+                  0
+                </span>
+                M ₪
+              </div>
+              <div className="kl">שווי לבעלים · בסיס</div>
+            </div>
+            <div className="kcard rv">
+              <div className="kv num">
+                <span className="cnt" data-to={toMillions(base.enterpriseValue)} data-dec={1}>
+                  0
+                </span>
+                M ₪
+              </div>
+              <div className="kl">שווי פעילות (EV)</div>
+            </div>
+            <div className="kcard rv">
+              <div className="kv num">
+                <span className="cnt" data-to={base.waccPct} data-dec={1}>
+                  0
+                </span>
+                %
+              </div>
+              <div className="kl">WACC אפקטיבי</div>
+            </div>
+            <div className="kcard rv">
+              <div className="kv num" style={{ color: 'var(--gold)' }}>
+                {vm.qualityGrade} ·{' '}
+                <span className="cnt" data-to={vm.qualityScore}>
+                  0
+                </span>
+              </div>
+              <div className="kl">Quality Score</div>
+            </div>
+          </div>
+
+          <div className="wf rv">
+            <h3>מ-EV לשווי לבעלים</h3>
+            <div className="wf-row">
+              <span className="lbl">שווי פעילות</span>
+              <div className="wf-track">
+                <div className="wf-fill ev" data-w={100} />
+              </div>
+              <b className="num">
+                {formatCurrencyShort(base.waterfall.ev, vm.currency)}
+              </b>
+            </div>
+            <div className="wf-row">
+              <span className="lbl">חוב נטו</span>
+              <div className="wf-track">
+                <div
+                  className="wf-fill debt"
+                  data-w={Math.round(base.waterfall.debtPct)}
+                />
+              </div>
+              <b className="num" style={{ color: 'var(--red)' }}>
+                −{formatCurrencyShort(base.waterfall.netDebt, vm.currency)}
+              </b>
+            </div>
+            <div className="wf-row total">
+              <span className="lbl">שווי לבעלים</span>
+              <div className="wf-track">
+                <div
+                  className="wf-fill eq"
+                  data-w={Math.round(base.waterfall.equityPct)}
+                />
+              </div>
+              <b className="num">
+                {formatCurrencyShort(base.waterfall.equity, vm.currency)}
+              </b>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PAGE 3 · FINANCIALS */}
+      <section className="pg" id="p3">
+        <span className="pg-num">
+          <b>03</b> / 07 · FINANCIAL DATA
+        </span>
+        <div className="wrap">
+          <span className="eyebrow rv">נתונים פיננסיים</span>
+          <h2 className="t rv">
+            המספרים שמאחורי <span className="hl">המודל.</span>
+          </h2>
+          <p className="sub rv">
+            הכנסות ו-EBITDA בפועל ותחזית, כפי שהוזנו לאשף ואומתו מול מודל ההערכה.
+          </p>
+          <FinancialBarChart
+            data={finData}
+            growthNote={`צמיחה שנתית ממוצעת ${vm.terminalGrowthPct.toFixed(0)}%`}
+            marginNote={`שיעור EBITDA ${vm.ebitdaMarginPct.toFixed(1)}%`}
+          />
+        </div>
+      </section>
+
+      {/* PAGE 4 · DCF */}
+      <section className="pg" id="p4">
+        <span className="pg-num">
+          <b>04</b> / 07 · DCF + WACC
+        </span>
+        <div className="wrap">
+          <span className="eyebrow rv">היוון תזרימי מזומנים</span>
+          <h2 className="t rv">
+            מבט קדימה: <span className="hl">DCF.</span>
+          </h2>
+          <p className="sub rv">
+            תזרימי המזומנים החופשיים מהוונים בעלות הון של {base.waccPct.toFixed(1)}
+            %, כולל פרמיית סיכון מדינה לפי Damodaran. ערך טרמינלי בצמיחה של{' '}
+            {vm.terminalGrowthPct.toFixed(1)}%.
+          </p>
+
+          <div className="split">
+            <div className="rv">
+              <WaccDonutChart slices={waccSlices} waccPct={base.waccPct} />
+            </div>
+            <div className="rv">
+              <div className="wacc-list">
+                {waccRows.map((row) => (
+                  <div key={row.label} className="wl">
+                    <span>{row.label}</span>
+                    <b className="num">{row.pct}</b>
+                  </div>
+                ))}
+                <div className="wl sum">
+                  <span>WACC אפקטיבי</span>
+                  <b className="num">{base.waccPct.toFixed(1)}%</b>
+                </div>
+              </div>
+              {dcfBreakdown && (
+                <div className="wacc-list" style={{ marginTop: 26 }}>
+                  <div className="wl">
+                    <span>שווי נוכחי של תזרימים</span>
+                    <b className="num">{dcfBreakdown.explicitPv}</b>
+                  </div>
+                  <div className="wl">
+                    <span>
+                      ערך טרמינלי מהוון (g = {vm.terminalGrowthPct.toFixed(1)}%)
+                    </span>
+                    <b className="num">{dcfBreakdown.terminal}</b>
+                  </div>
+                  <div className="wl sum">
+                    <span>שווי פעילות לפי DCF</span>
+                    <b className="num">{dcfBreakdown.total}</b>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PAGE 5 · MULTIPLES */}
+      <section className="pg" id="p5">
+        <span className="pg-num">
+          <b>05</b> / 07 · MARKET MULTIPLES
+        </span>
+        <div className="wrap">
+          <span className="eyebrow rv">מכפילי שוק</span>
+          <h2 className="t rv">
+            מבט הצידה: <span className="hl">השוק.</span>
+          </h2>
+          <p className="sub rv">
+            המכפילים מכוילים מול עסקאות M&A ישראליות בענף {vm.industrySector}.
+            הפס מציג את טווח השוק; הנקודה — את המיקום שלך.
+          </p>
+
+          <div className="mult-rows">
+            {multipleRows.map((row) => (
+              <div key={row.title} className="mr rv">
+                <div className="ml">
+                  {row.title}
+                  <small>{row.subtitle}</small>
+                </div>
+                <div>
+                  <div className="mr-track">
+                    <div
+                      className="mr-band"
+                      style={{
+                        insetInlineStart: row.bandStart,
+                        insetInlineEnd: row.bandEnd,
+                      }}
+                    />
+                    <div
+                      className="mr-dot"
+                      data-x={row.dotPct}
+                      style={
+                        row.dotGold
+                          ? { background: 'var(--gold)' }
+                          : undefined
+                      }
+                    />
+                  </div>
+                  <div className="mr-ends">
+                    <span>{row.rangeStart}</span>
+                    <span>{row.rangeEnd}</span>
+                  </div>
+                </div>
+                <div className="mr-val num">
+                  {row.value}
+                  <small>{row.valueSub}</small>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PAGE 6 · SCENARIOS */}
+      <section className="pg" id="p6">
+        <span className="pg-num">
+          <b>06</b> / 07 · SCENARIOS & QUALITY
+        </span>
+        <div className="wrap">
+          <span className="eyebrow rv">תרחישים</span>
+          <h2 className="t rv">
+            לא רק כמה — <span className="hl">באיזה טווח.</span>
+          </h2>
+          <p className="sub rv">
+            החלף תרחיש וראה את כל הדוח מתעדכן: שווי, מכפיל, WACC וההנחות מאחוריהם.
+          </p>
+
+          <div className="scen-tabs rv" role="tablist" aria-label="בחירת תרחיש">
+            {SCENARIO_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                data-s={tab.key}
+                role="tab"
+                aria-selected={scenario === tab.key}
+                className={scenario === tab.key ? 'on' : undefined}
+                onClick={() => handleScenario(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="scen-stage">
+            <div className="rv">
+              <div className="sc-val" style={{ color: scColor }}>
+                <span id="scVal">{equityDisplay}</span>M ₪
+              </div>
+              <p className="sc-cap" id="scCap">
+                {scrollScenario.cap}
+              </p>
+              <div className="range-big">
+                <div className="rb-bar">
+                  <div className="rb-fill" />
+                  <div
+                    className="rb-dot"
+                    id="rbDot"
+                    style={{ left: `${scrollScenario.dotPct}%` }}
+                  />
+                </div>
+                <div className="rb-ends">
+                  <span>
+                    Bear {formatCurrencyShort(bear.equityValue, vm.currency)}
+                  </span>
+                  <span>
+                    Bull {formatCurrencyShort(bull.equityValue, vm.currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="rv">
+              <div className="sc-list">
+                <div className="sl">
+                  <span>צמיחת הכנסות שנתית</span>
+                  <b className="num" id="sGro">
+                    {scrollScenario.growth}
+                  </b>
+                </div>
+                <div className="sl">
+                  <span>שיעור EBITDA יציב</span>
+                  <b className="num" id="sMar">
+                    {scrollScenario.margin}
+                  </b>
+                </div>
+                <div className="sl">
+                  <span>WACC</span>
+                  <b className="num" id="sWacc">
+                    {scrollScenario.wacc}
+                  </b>
+                </div>
+                <div className="sl">
+                  <span>מכפיל EBITDA אפקטיבי</span>
+                  <b className="num" id="sMult">
+                    {scrollScenario.mult}
+                  </b>
+                </div>
+                <div className="sl">
+                  <span>שווי פעילות (EV)</span>
+                  <b className="num" id="sEv">
+                    {scrollScenario.ev}
+                  </b>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="gauge-wrap">
+            <div className="rv">
+              <QualityGaugeChart score={vm.qualityScore} grade={vm.qualityGrade} />
+            </div>
+            <div className="rv">
+              {qualityFactors.map((qf) => (
+                <div key={qf.label} className="qf">
+                  <div className="qf-top">
+                    <span>{qf.label}</span>
+                    <span>{qf.pct}%</span>
+                  </div>
+                  <div className="qf-bar">
+                    <i data-w={qf.pct} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PAGE 7 · COMBINED */}
+      <section className="pg" id="p7">
+        <span className="pg-num">
+          <b>07</b> / 07 · COMBINED VALUE
+        </span>
+        <div className="wrap">
+          <span className="eyebrow rv" style={{ justifyContent: 'center', display: 'flex' }}>
+            שווי משולב
+          </span>
+          <h2 className="t rv" style={{ textAlign: 'center' }}>
+            שלושה מודלים. <span className="hl">מספר אחד.</span>
+          </h2>
+
+          <div className="weights rv" aria-label="משקלות המודלים">
+            <div className="w1" data-w={BLEND_WEIGHTS.dcf * 100} title="DCF">
+              DCF · 50%
+            </div>
+            <div className="w2" data-w={BLEND_WEIGHTS.ebitda * 100} title="מכפיל EBITDA">
+              EBITDA · 30%
+            </div>
+            <div className="w3" data-w={BLEND_WEIGHTS.rev * 100} title="מכפיל הכנסות">
+              REV · 20%
+            </div>
+          </div>
+
+          <div className="final-val rv">
+            <span id="finalVal">0.0</span>M ₪
+          </div>
+          <p className="final-cap rv">
+            שווי לבעלים · תרחיש בסיס · נכון ל-{reportDate}
+          </p>
+
+          <div className="final-cta rv">
+            <button
+              type="button"
+              className="btn"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+              aria-busy={isDownloadingPdf}
+            >
+              {isDownloadingPdf ? 'מפיק PDF...' : 'הורד PDF נקי ↓'}
+            </button>
+            <Link className="btn btn-ghost" href="/wizard">
+              הערכה חדשה
+            </Link>
+          </div>
+
+          <p className="disc rv">
+            דוח זה הינו אינדיקציית שווי אלגוריתמית המבוססת על נתונים שהוזנו על ידי
+            המשתמש ועל נתוני שוק פומביים. אין לראות בו ייעוץ השקעות, חוות דעת
+            חשבונאית או הערכת שווי לצרכים סטטוטוריים. © 2026 equify BY SBC.
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        EQUIFY VALUATION ENGINE · REPORT #{vm.reportId} · GENERATED{' '}
+        {new Date().toLocaleTimeString(isHe ? 'he-IL' : 'en-GB', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </footer>
     </div>
   );
 }

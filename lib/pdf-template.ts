@@ -1,6 +1,6 @@
 import { escHtml } from './pdf/print/print_formatters';
-import { buildAllPages, PDF_PAGE_COUNT } from './pdf-template/pages';
-import { buildPdfTemplateCss } from './pdf-template/styles';
+import { buildEquifyPdfPages, EQUIFY_PDF_PAGE_COUNT } from './pdf-template/equify-pdf-pages';
+import { buildEquifyPdfCss } from './pdf-template/equify-pdf-styles';
 import type { ValuationData } from './pdf-template/types';
 
 export type { ValuationData } from './pdf-template/types';
@@ -18,16 +18,16 @@ export type {
   WaccSegment,
 } from './pdf-template/types';
 
-export { PDF_PAGE_COUNT };
+export const PDF_PAGE_COUNT = EQUIFY_PDF_PAGE_COUNT;
 
 /**
- * בונה HTML מלא להדפסה — 8 עמודים עם כל ה-SVG charts.
- * מיועד לשימוש עם Puppeteer/Playwright ב-`app/api/generate-pdf/route.ts`.
+ * בונה HTML מלא להדפסה — 7 עמודי A4 (equify-pdf.html) עם SVG דינמי.
+ * מיועד לשימוש עם Puppeteer ב-`app/api/generate-pdf/route.ts`.
  */
 export function buildPdfHtml(data: ValuationData): string {
   const title = `equify — דוח הערכת שווי — ${escHtml(data.companyName)}`;
-  const css = buildPdfTemplateCss();
-  const pages = buildAllPages(data);
+  const css = buildEquifyPdfCss();
+  const pages = buildEquifyPdfPages(data);
 
   return `<!DOCTYPE html>
 <html lang="${data.locale ?? 'he'}" dir="rtl">

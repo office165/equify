@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { ValuationLocale } from '../../../api_client';
+import { saveEquifyWizardState } from '../../../lib/wizard/equify_storage';
 import { mapEquifyToWizardFormValues } from '../../../lib/wizard/map_equify_wizard';
-import {
-  fmtEquitySidebarM,
-  fmtK,
-} from '../../../lib/valuation';
+import { fmtEquitySidebarM, fmtK } from '../../../lib/valuation';
 import { useReducedMotion } from '../../landing/motion/useReducedMotion';
-import { ResultsScreen } from './ResultsScreen';
 import { Step1Profile } from './steps/Step1Profile';
 import { Step2Financials } from './steps/Step2Financials';
 import { Step3Risk } from './steps/Step3Risk';
@@ -18,6 +17,7 @@ import {
   WizardValuationProvider,
 } from './WizardValuationContext';
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
+import { useWizardStepMotion } from './hooks/useWizardStepMotion';
 import './wizard-equify.css';
 
 const STEPS = [
@@ -43,84 +43,40 @@ function EquifyWizardShell({
   submitError,
   locale = 'he',
 }: EquifyWizardProps) {
+  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const topbarRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  const { step, setStep, computed, state } = useWizardValuation();
   useWizardBgCanvas(canvasRef, { reducedMotion });
+  useWizardStepMotion(step, reducedMotion, topbarRef);
 
-  const {
-    step,
-    setStep,
-    showResults,
-    setShowResults,
-    computed,
-    resetWizard,
-    state,
-  } = useWizardValuation();
-
-  const [pdfDownloading, setPdfDownloading] = useState(false);
-
-  const progressPct = showResults ? 100 : ((step - 1) / 4) * 100;
+  const progressPct = ((step - 1) / 4) * 100;
 
   const goStep = useCallback(
     (n: number) => {
       if (n >= 1 && n <= 4) {
         setStep(n);
-        setShowResults(false);
         window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
       }
     },
-    [reducedMotion, setShowResults, setStep],
+    [reducedMotion, setStep],
   );
 
   const handleGenerate = useCallback(async () => {
-    setShowResults(true);
-    window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
-
     const formValues = mapEquifyToWizardFormValues(state);
+    saveEquifyWizardState(state);
+
     if (onRunValuation) {
       try {
         await onRunValuation(formValues, { locale });
       } catch {
-        // שגיאה מוצגת ב-Step4Goal דרך submitError
+        return;
       }
     }
-  }, [locale, onRunValuation, reducedMotion, setShowResults, state]);
 
-  const fetchPdf = useCallback(async () => {
-    const res = await fetch('/api/generate-pdf', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ state }),
-    });
-    if (!res.ok) throw new Error('PDF generation failed');
-    return res.blob();
-  }, [state]);
-
-  const handleDownloadPdf = useCallback(async () => {
-    setPdfDownloading(true);
-    try {
-      const blob = await fetchPdf();
-      const url = URL.createObjectURL(blob);
-      const opened = window.open(url, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'equify-valuation-report.pdf';
-        a.rel = 'noopener';
-        a.click();
-      }
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    } catch (err) {
-      console.error('[wizard] PDF download failed', err);
-    } finally {
-      setPdfDownloading(false);
-    }
-  }, [fetchPdf]);
-
-  const handleNewValuation = useCallback(() => {
-    resetWizard();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [resetWizard]);
+    router.push('/results');
+  }, [locale, onRunValuation, router, state]);
 
   return (
     <div className="equify-wizard" dir="rtl" lang="he">
@@ -128,20 +84,20 @@ function EquifyWizardShell({
 
       <div className="shell">
         <aside className="sidebar">
-          <div className="logo">
+          <Link href="/" className="logo" aria-label="equify BY SBC — דף הבית">
             <span className="lg">
               equify<em>.</em>
             </span>
             <small>BY SBC</small>
-          </div>
+          </Link>
 
           <nav className="steps" aria-label="שלבי האשף">
             {STEPS.map((s, i) => {
               const n = i + 1;
               const cls = [
                 'stp',
-                step === n && !showResults ? 'active' : '',
-                (step > n || showResults) && 'done',
+                step === n ? 'active' : '',
+                step > n && 'done',
               ]
                 .filter(Boolean)
                 .join(' ');
@@ -151,7 +107,7 @@ function EquifyWizardShell({
                   type="button"
                   className={cls}
                   onClick={() => n < step && goStep(n)}
-                  aria-current={step === n && !showResults ? 'step' : undefined}
+                  aria-current={step === n ? 'step' : undefined}
                 >
                   <div className="stp-num">{s.num}</div>
                   <div className="stp-txt">
@@ -196,54 +152,57 @@ function EquifyWizardShell({
             <div className="prog-fill" style={{ width: `${progressPct}%` }} />
           </div>
 
-          <div className="topbar">
+          <div className="topbar" ref={topbarRef}>
             <span className="step-badge">
-              שלב <b>{showResults ? '✓' : step}</b> / 4
+              שלב <b>{step}</b> / 4
             </span>
-            {(step > 1 || showResults) && (
+            {step > 1 && (
               <button
                 type="button"
                 className="back-btn"
-                onClick={() =>
-                  showResults ? goStep(4) : goStep(Math.max(1, step - 1))
-                }
+                onClick={() => goStep(Math.max(1, step - 1))}
               >
                 → חזרה
               </button>
             )}
           </div>
 
-          {showResults ? (
-            <ResultsScreen
-              onDownloadPdf={handleDownloadPdf}
-              onNewValuation={handleNewValuation}
-              isDownloadingPdf={pdfDownloading}
-            />
-          ) : (
-            <section className="pane active" aria-label={`שלב ${step}`}>
-              {step === 1 && <Step1Profile onNext={() => goStep(2)} />}
-              {step === 2 && (
-                <Step2Financials
-                  onBack={() => goStep(1)}
-                  onNext={() => goStep(3)}
-                />
-              )}
-              {step === 3 && (
-                <Step3Risk onBack={() => goStep(2)} onNext={() => goStep(4)} />
-              )}
-              {step === 4 && (
-                <Step4Goal
-                  onBack={() => goStep(3)}
-                  onGenerate={handleGenerate}
-                  isSubmitting={isSubmitting}
-                  submitError={submitError}
-                />
-              )}
-            </section>
-          )}
+          <section
+            key={step}
+            className="pane active"
+            aria-label={`שלב ${step}`}
+          >
+            {step === 1 && <Step1Profile onNext={() => goStep(2)} />}
+            {step === 2 && (
+              <Step2Financials
+                onBack={() => goStep(1)}
+                onNext={() => goStep(3)}
+              />
+            )}
+            {step === 3 && (
+              <Step3Risk onBack={() => goStep(2)} onNext={() => goStep(4)} />
+            )}
+            {step === 4 && (
+              <Step4Goal
+                onBack={() => goStep(3)}
+                onGenerate={handleGenerate}
+                isSubmitting={isSubmitting}
+                submitError={submitError}
+              />
+            )}
+          </section>
         </main>
       </div>
 
+      <div className="m-bar" aria-hidden={false}>
+        <div className="m-bar-live">
+          <span className="m-bar-label">שווי לבעלים</span>
+          <span className="m-bar-val mono">{fmtEquitySidebarM(computed.equity)}</span>
+        </div>
+        <span className="m-bar-step">
+          שלב <b>{step}</b>/4
+        </span>
+      </div>
     </div>
   );
 }

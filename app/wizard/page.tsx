@@ -1,22 +1,19 @@
 'use client';
 
-import { useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import ValuationDashboard, { type ForecastMatrixJson } from '../../ValuationDashboard';
+import { useCallback, useEffect, useState } from 'react';
 import EquifyWizard from '../../components/wizard/equify/EquifyWizard';
 import { runValuationFlow, type ValuationLocale } from '../../api_client';
-import {
-  clearBackupRelaySession,
-  dispatchUnifiedBackupRelay,
-} from '../../lib/pdf/backup_mirror';
-import { clearLeadSession, postLeadEvent } from '../../lib/crm/leads_client';
+import { dispatchUnifiedBackupRelay } from '../../lib/pdf/backup_mirror';
+import { postLeadEvent } from '../../lib/crm/leads_client';
 import { getIndustryLabel } from '../../lib/constants/industries';
 import {
   buildWizardLeadRelayInput,
   captureWizardLeadIdentifiers,
   lockLeadPayload,
 } from '../../lib/wizard/lead_wire';
+import { resolveBaseEquityValue } from '../../lib/wizard/resolve_base_equity';
 import { toLeadUpsertBody } from '../../lib/wizard/secured_lead_dispatch';
+import { resumeWizardProgressQueue } from '../../lib/wizard/wizard_progress_queue';
 import { ValuationI18nProvider } from '../../valuation_i18n';
 
 function captureLeadInBackground(
@@ -27,7 +24,6 @@ function captureLeadInBackground(
     sectorLabel?: string;
   },
 ): void {
-  const valuationPurpose = values.valuationPurpose || undefined;
   const leadRelay = buildWizardLeadRelayInput(values, {
     valuationMidpoint: options.valuationMidpoint,
     locale: options.locale,
@@ -36,38 +32,19 @@ function captureLeadInBackground(
     pdfBase64: '',
   });
 
-  void Promise.allSettled([
-    postLeadEvent({
-      event: 'wizard_completed',
-      fullName: leadRelay.fullName,
-      companyName: leadRelay.companyName,
-      userEmail: leadRelay.userEmail,
-      userPhone: leadRelay.userPhone,
-      nationalId: leadRelay.nationalId,
-      corporateTaxId: leadRelay.corporateTaxId,
-      industryCode: values.industry,
-      sectorLabel: options.sectorLabel,
-      valuationPurpose,
-      valuationMidpoint: options.valuationMidpoint,
-      locale: options.locale,
-    }),
-    Promise.resolve(dispatchUnifiedBackupRelay(leadRelay)),
-  ]).then((results) => {
-    const failures = results.filter((r) => r.status === 'rejected');
-    if (failures.length > 0) {
-      console.warn('[wizard] background lead capture had failures', failures);
-    }
+  void Promise.resolve(dispatchUnifiedBackupRelay(leadRelay)).catch((err) => {
+    console.warn('[wizard] backup relay failed', err);
   });
 }
 
 export default function WizardPage() {
-  const router = useRouter();
-  const [forecastMatrix, setForecastMatrix] = useState<ForecastMatrixJson | null>(
-    null,
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [wizardSessionKey, setWizardSessionKey] = useState(0);
+
+  useEffect(() => {
+    resumeWizardProgressQueue();
+  }, []);
 
   const handleRunValuation = useCallback(
     async (
@@ -84,8 +61,11 @@ export default function WizardPage() {
           : undefined;
 
         const result = await runValuationFlow(values, options);
-        const valuationMidpoint =
-          result.forecast_matrix_json?.scenarios?.base?.enterprise_value ?? 0;
+        const valuationMidpoint = resolveBaseEquityValue(
+          result.forecast_matrix_json,
+        );
+        const qualityScore =
+          result.forecast_matrix_json?.meta?.confidence_score ?? undefined;
 
         const completedLeadBody = toLeadUpsertBody(
           captureWizardLeadIdentifiers(values),
@@ -95,6 +75,7 @@ export default function WizardPage() {
             industryCode: values.industry,
             sectorLabel,
             valuationMidpoint,
+            qualityScore,
             valuationPurpose: values.valuationPurpose || undefined,
             locale,
           },
@@ -103,11 +84,10 @@ export default function WizardPage() {
           '🚀 MONDAY INTEGRATION INGESTION INITIATED. PAYLOAD:',
           completedLeadBody,
         );
-        void postLeadEvent(completedLeadBody).catch((err) => {
+        await postLeadEvent(completedLeadBody).catch((err) => {
           console.error('❌ MONDAY ROUTING FAILURE:', err);
         });
 
-        // שומרים מטריצה ל-sessionStorage — תוצאות מוצגות inline ב-EquifyWizard
         try {
           sessionStorage.setItem(
             'valubot.lastValuationMatrix',
@@ -134,38 +114,14 @@ export default function WizardPage() {
     [],
   );
 
-  const handleRunAnotherValuation = useCallback(() => {
-    clearBackupRelaySession();
-    clearLeadSession();
-    setForecastMatrix(null);
-    setSubmitError(null);
-    setWizardSessionKey((k) => k + 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const handleBackToHome = useCallback(() => {
-    setForecastMatrix(null);
-    setSubmitError(null);
-    router.push('/');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [router]);
-
   return (
     <ValuationI18nProvider>
-      {forecastMatrix ? (
-        <ValuationDashboard
-          forecast_matrix_json={forecastMatrix}
-          onRunAnotherValuation={handleRunAnotherValuation}
-          onBackToHome={handleBackToHome}
-        />
-      ) : (
-        <EquifyWizard
-          key={wizardSessionKey}
-          onRunValuation={handleRunValuation}
-          isSubmitting={isSubmitting}
-          submitError={submitError}
-        />
-      )}
+      <EquifyWizard
+        key={wizardSessionKey}
+        onRunValuation={handleRunValuation}
+        isSubmitting={isSubmitting}
+        submitError={submitError}
+      />
     </ValuationI18nProvider>
   );
 }

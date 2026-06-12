@@ -37,7 +37,7 @@ function pdfResponse(
   });
 }
 
-/** יצירת דוח PDF — Puppeteer (8 עמודים) עם fallback ל-@react-pdf/renderer */
+/** יצירת דוח PDF — Puppeteer (7 עמודים) עם fallback ל-@react-pdf/renderer */
 export async function POST(request: Request) {
   try {
     let body: GeneratePdfBody;

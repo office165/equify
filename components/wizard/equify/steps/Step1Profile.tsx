@@ -2,6 +2,9 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 import type { EquifyLifecycleKey, EquifySectorKey } from '../../../../lib/valuation';
+import { lockLeadPayload } from '../../../../lib/wizard/lead_wire';
+import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_wizard';
+import { scheduleWizardProgressSave } from '../../../../lib/wizard/wizard_progress_queue';
 import { useWizardValuation } from '../WizardValuationContext';
 
 const SECTORS: { key: EquifySectorKey; label: string }[] = [
@@ -34,6 +37,7 @@ export interface Step1ProfileProps {
 
 export function Step1Profile({ onNext }: Step1ProfileProps) {
   const { state, updateProfile, setSector, setLifecycle } = useWizardValuation();
+  const wizardLocale = 'he' as const;
   const { profile } = state;
   const fileRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
@@ -52,8 +56,11 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
   }, [profile]);
 
   const handleNext = useCallback(() => {
-    if (validate()) onNext();
-  }, [onNext, validate]);
+    if (!validate()) return;
+    const formValues = mapEquifyToWizardFormValues(state);
+    scheduleWizardProgressSave(lockLeadPayload(formValues, wizardLocale));
+    onNext();
+  }, [onNext, state, validate]);
 
   const handleLogo = useCallback(
     (file: File | null) => {
