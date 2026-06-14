@@ -12,6 +12,9 @@ const nextConfig = {
       '/api/v1/reports/valuation/pdf': [
         './node_modules/@sparticuz/chromium/**',
       ],
+      '/api/generate-pdf': [
+        './node_modules/@sparticuz/chromium/**',
+      ],
     },
   },
   output: process.env.CAPACITOR_BUILD === 'true' ? 'export' : undefined,

@@ -17,6 +17,7 @@ export interface EquifyWizardProfile {
   userCorporateTaxId: string;
   foundedYear: string;
   sector: EquifySectorKey;
+  subSector: string;
   lifecycle: EquifyLifecycleKey;
   customLogoDataUrl: string;
   qualitativeDescription: string;
@@ -28,6 +29,15 @@ export interface EquifyWizardFinancials {
   rev: number;
   margin: number;
   growth: number;
+  /** חוב ברוטו (₪K) */
+  grossDebtK: number;
+  /** מזומן ושווי מזומנים (₪K) */
+  cashK: number;
+  /** שכר בעלים מנורמל (₪K) */
+  normalizedOwnerSalaryK: number;
+  /** רמת השקעות CAPEX (% מהכנסות) */
+  capexLevelPct: number;
+  /** @deprecated use grossDebtK − cashK */
   debt: number;
 }
 
@@ -48,17 +58,12 @@ export interface EquifyWizardState {
   agreedToTerms: boolean;
 }
 
-const SECTOR_TO_INDUSTRY: Record<EquifySectorKey, string> = {
-  saas: 'Software/SaaS',
-  fintech: 'FinTech',
-  cyber: 'Cybersecurity',
-  health: 'HealthTech',
-  services: 'Professional Services',
-  industry: 'Industrial',
-  ecom: 'E-Commerce',
-  energy: 'renewable_energy',
-  other: 'Other',
-};
+import { getIndustryConfig } from '../constants/industry_config';
+
+/** חוב נטו מ-₪K */
+export function computeNetDebtK(financials: EquifyWizardFinancials): number {
+  return Math.max(0, financials.grossDebtK - financials.cashK);
+}
 
 const GOAL_TO_PURPOSE: Record<
   Exclude<EquifyGoalKey, ''>,
@@ -81,7 +86,9 @@ export function mapEquifyToWizardFormValues(
   state: EquifyWizardState,
 ): ValuationWizardFormValues {
   const { profile, financials, risk, goal } = state;
-  const ebitdaK = financials.rev * (financials.margin / 100);
+  const netDebtK = computeNetDebtK(financials);
+  const ebitdaK =
+    financials.rev * (financials.margin / 100) + financials.normalizedOwnerSalaryK;
 
   return {
     userMobilePhone: profile.userMobilePhone,
@@ -90,7 +97,7 @@ export function mapEquifyToWizardFormValues(
     userEmail: profile.userEmail,
     companyName: profile.companyName,
     fullName: profile.fullName,
-    industry: SECTOR_TO_INDUSTRY[profile.sector],
+    industry: getIndustryConfig(profile.sector).industryCode,
     lifecycleStage: profile.lifecycle,
     currency: profile.currency,
     incorporationCountry: 'IL',
@@ -98,18 +105,31 @@ export function mapEquifyToWizardFormValues(
     annualRevenue: kToAbsoluteString(financials.rev),
     annualChurnRate: '',
     ebitda: kToAbsoluteString(ebitdaK),
-    freeCashFlow: kToAbsoluteString(ebitdaK * 0.85),
+    freeCashFlow: kToAbsoluteString(
+      ebitdaK * Math.max(0.55, 0.85 - financials.capexLevelPct / 100),
+    ),
     rdExpensesY1: '0',
     rdExpensesY2: '0',
     rdExpensesY3: '0',
     rdExpensesY4: '0',
     rdExpensesY5: '0',
     interestExpense: '0',
-    totalDebt: kToAbsoluteString(financials.debt),
-    cashAndEquivalents: '0',
-    qualitativeDescription: profile.qualitativeDescription,
+    totalDebt: kToAbsoluteString(financials.grossDebtK),
+    cashAndEquivalents: kToAbsoluteString(financials.cashK),
+    qualitativeDescription: [
+      profile.qualitativeDescription,
+      profile.subSector ? `תת-ענף: ${profile.subSector}` : '',
+      financials.normalizedOwnerSalaryK > 0
+        ? `שכר בעלים מנורמל: ₪${financials.normalizedOwnerSalaryK}K`
+        : '',
+      financials.capexLevelPct > 0
+        ? `CAPEX: ${financials.capexLevelPct}% מהכנסות`
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' · '),
     customLogoDataUrl: profile.customLogoDataUrl,
-    netDebt: kToAbsoluteString(financials.debt),
+    netDebt: kToAbsoluteString(netDebtK),
     recurringRevenuePct: risk.recurring,
     customerConcentrationPct: risk.topCustomer,
     customerConcentrationOver20: risk.topCustomer > 20,
@@ -129,7 +149,8 @@ export const DEFAULT_EQUIFY_WIZARD_STATE: EquifyWizardState = {
     userNationalId: '',
     userCorporateTaxId: '',
     foundedYear: '',
-    sector: 'services',
+    sector: 'hospitality',
+    subSector: 'boutique_hotel',
     lifecycle: 'growth',
     customLogoDataUrl: '',
     qualitativeDescription: '',
@@ -138,8 +159,12 @@ export const DEFAULT_EQUIFY_WIZARD_STATE: EquifyWizardState = {
   },
   financials: {
     rev: 12000,
-    margin: 18,
+    margin: 22.6,
     growth: 9,
+    grossDebtK: 5200,
+    cashK: 800,
+    normalizedOwnerSalaryK: 420,
+    capexLevelPct: 6,
     debt: 4400,
   },
   risk: {

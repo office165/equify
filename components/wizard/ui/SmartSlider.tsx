@@ -1,8 +1,15 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  clampAndSnap,
+  formatDigitsWhileTyping,
+  formatFinancialInputValue,
+  parseFinancialInput,
+  type FinancialInputUnit,
+} from '../../../lib/utils/financial_input_parser';
 
-export type SmartSliderUnit = '%' | '₪K' | '';
+export type SmartSliderUnit = FinancialInputUnit;
 
 export interface SmartSliderProps {
   label: React.ReactNode;
@@ -19,17 +26,13 @@ export interface SmartSliderProps {
   required?: boolean;
 }
 
-function formatDisplay(v: number, unit: SmartSliderUnit): string {
-  if (unit === '₪K') {
-    return v >= 1000
-      ? `₪${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}M`
-      : `₪${v}K`;
-  }
-  if (unit === '%') return `${v}%`;
-  return String(v);
+const ON_CHANGE_DEBOUNCE_MS = 80;
+
+function safeNumber(value: number, fallback: number): number {
+  return Number.isFinite(value) ? value : fallback;
 }
 
-/** סליידר מספרי חכם — תומך RTL (מדידה מימין) */
+/** Hybrid slider + direct numeric input — RTL track, pointer-capture drag, iOS-friendly keypad */
 export function SmartSlider({
   label,
   value,
@@ -45,84 +48,214 @@ export function SmartSlider({
   required,
 }: SmartSliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const onChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingValueRef = useRef<number | null>(null);
+
   const [dragging, setDragging] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState('');
+  const [displayValue, setDisplayValue] = useState(() => safeNumber(value, min));
+
+  useEffect(() => {
+    if (!dragging) {
+      setDisplayValue(safeNumber(value, min));
+    }
+  }, [value, min, dragging]);
+
+  useEffect(
+    () => () => {
+      if (onChangeTimerRef.current) clearTimeout(onChangeTimerRef.current);
+    },
+    [],
+  );
 
   const pct = useCallback(
-    (v: number) => ((v - min) / (max - min)) * 100,
+    (v: number) => ((safeNumber(v, min) - min) / (max - min)) * 100,
     [min, max],
   );
 
-  const snap = useCallback(
-    (v: number) => Math.round(v / step) * step,
-    [step],
+  const flushOnChange = useCallback(() => {
+    if (onChangeTimerRef.current) {
+      clearTimeout(onChangeTimerRef.current);
+      onChangeTimerRef.current = null;
+    }
+    if (pendingValueRef.current !== null) {
+      onChange(pendingValueRef.current);
+      pendingValueRef.current = null;
+    }
+  }, [onChange]);
+
+  const scheduleOnChange = useCallback(
+    (v: number) => {
+      pendingValueRef.current = v;
+      if (onChangeTimerRef.current) clearTimeout(onChangeTimerRef.current);
+      onChangeTimerRef.current = setTimeout(() => {
+        onChangeTimerRef.current = null;
+        if (pendingValueRef.current !== null) {
+          onChange(pendingValueRef.current);
+          pendingValueRef.current = null;
+        }
+      }, ON_CHANGE_DEBOUNCE_MS);
+    },
+    [onChange],
   );
+
+  const applyParsed = useCallback(
+    (raw: string) => {
+      const parsed = parseFinancialInput(raw, unit);
+      if (parsed !== null && Number.isFinite(parsed)) {
+        const next = clampAndSnap(parsed, min, max, step);
+        setDisplayValue(next);
+        onChange(next);
+      }
+    },
+    [max, min, onChange, step, unit],
+  );
+
+  const commitDraft = useCallback(() => {
+    if (!draft.trim()) {
+      setEditing(false);
+      setDraft('');
+      return;
+    }
+    applyParsed(draft);
+    setEditing(false);
+    setDraft('');
+  }, [applyParsed, draft]);
 
   const getValFromPointer = useCallback(
     (clientX: number) => {
       const track = trackRef.current;
-      if (!track) return value;
+      if (!track) return displayValue;
       const rect = track.getBoundingClientRect();
+      if (rect.width <= 0) return displayValue;
       const raw = (rect.right - clientX) / rect.width;
       const clamped = Math.max(0, Math.min(1, raw));
-      return snap(min + clamped * (max - min));
+      return clampAndSnap(min + clamped * (max - min), min, max, step);
     },
-    [min, max, snap, value],
+    [displayValue, min, max, step],
   );
 
-  const handlePointerDownTrack = useCallback(
+  const setValueFromPointer = useCallback(
+    (clientX: number) => {
+      const next = getValFromPointer(clientX);
+      setDisplayValue(next);
+      scheduleOnChange(next);
+    },
+    [getValFromPointer, scheduleOnChange],
+  );
+
+  const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if ((e.target as HTMLElement).classList.contains('sn-thumb')) return;
-      const v = getValFromPointer(e.clientX);
-      onChange(v);
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setDragging(true);
+      setEditing(false);
+      setDraft('');
+      document.body.style.userSelect = 'none';
+      setValueFromPointer(e.clientX);
     },
-    [getValFromPointer, onChange],
+    [setValueFromPointer],
   );
-
-  const handleThumbPointerDown = useCallback(() => {
-    setDragging(true);
-    document.body.style.userSelect = 'none';
-  }, []);
 
   const handlePointerMove = useCallback(
-    (e: PointerEvent) => {
-      if (!dragging) return;
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
       e.preventDefault();
-      onChange(getValFromPointer(e.clientX));
+      setValueFromPointer(e.clientX);
     },
-    [dragging, getValFromPointer, onChange],
+    [setValueFromPointer],
   );
 
-  const handlePointerUp = useCallback(() => {
-    if (!dragging) return;
-    setDragging(false);
-    document.body.style.userSelect = '';
-  }, [dragging]);
+  const endPointerDrag = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      setDragging(false);
+      document.body.style.userSelect = '';
+      flushOnChange();
+    },
+    [flushOnChange],
+  );
 
-  useEffect(() => {
-    if (!dragging) return undefined;
-    document.addEventListener('pointermove', handlePointerMove, { passive: false });
-    document.addEventListener('pointerup', handlePointerUp);
-    return () => {
-      document.removeEventListener('pointermove', handlePointerMove);
-      document.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [dragging, handlePointerMove, handlePointerUp]);
+  const handleWheel = useCallback(
+    (e: React.WheelEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? step : -step;
+      const next = clampAndSnap(displayValue + delta, min, max, step);
+      if (next === displayValue) return;
+      setDisplayValue(next);
+      onChange(next);
+    },
+    [displayValue, max, min, onChange, step],
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      let next = value;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') next = Math.min(max, value + step);
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') next = Math.max(min, value - step);
-      if (next !== value) {
-        e.preventDefault();
-        onChange(next);
+      let next = displayValue;
+      const bigStep = step * 10;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        next = clampAndSnap(displayValue + step, min, max, step);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        next = clampAndSnap(displayValue - step, min, max, step);
+      } else if (e.key === 'PageUp') {
+        next = clampAndSnap(displayValue + bigStep, min, max, step);
+      } else if (e.key === 'PageDown') {
+        next = clampAndSnap(displayValue - bigStep, min, max, step);
+      } else if (e.key === 'Home') {
+        next = min;
+      } else if (e.key === 'End') {
+        next = max;
+      } else {
+        return;
       }
+
+      e.preventDefault();
+      setDisplayValue(next);
+      onChange(next);
     },
-    [max, min, onChange, step, value],
+    [displayValue, max, min, onChange, step],
   );
 
-  const p = pct(value);
+  const handleInputFocus = useCallback(() => {
+    setEditing(true);
+    setDraft(formatFinancialInputValue(displayValue, unit));
+    requestAnimationFrame(() => inputRef.current?.select());
+  }, [displayValue, unit]);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const formatted = formatDigitsWhileTyping(e.target.value);
+      setEditing(true);
+      setDraft(formatted);
+      applyParsed(formatted);
+    },
+    [applyParsed],
+  );
+
+  const handleInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitDraft();
+        inputRef.current?.blur();
+      }
+      if (e.key === 'Escape') {
+        setEditing(false);
+        setDraft('');
+        inputRef.current?.blur();
+      }
+    },
+    [commitDraft],
+  );
+
+  const p = pct(displayValue);
   const trackStyle = { '--p': `${p}%` } as React.CSSProperties;
+  const idleValue = formatFinancialInputValue(displayValue, unit);
+  const displayText = editing ? draft : idleValue;
 
   return (
     <div className="smart-num">
@@ -131,18 +264,47 @@ export function SmartSlider({
           {label}
           {required ? <span className="req"> *</span> : null}
         </label>
-        <span className="sn-live mono">{formatDisplay(value, unit)}</span>
+        <div className="sn-value-wrap">
+          {unit === '₪K' && !editing ? (
+            <span className="sn-currency" aria-hidden="true">
+              ₪
+            </span>
+          ) : null}
+          <input
+            ref={inputRef}
+            type="text"
+            inputMode="decimal"
+            enterKeyHint="done"
+            autoComplete="off"
+            spellCheck={false}
+            className={`sn-input mono${editing ? ' is-editing' : ''}`}
+            value={displayText}
+            onFocus={handleInputFocus}
+            onChange={handleInputChange}
+            onBlur={() => {
+              if (editing) commitDraft();
+            }}
+            onKeyDown={handleInputKeyDown}
+            aria-label={ariaLabel ? `${ariaLabel} — numeric input` : 'Numeric value'}
+          />
+          {unit === '%' && !editing ? (
+            <span className="sn-suffix" aria-hidden="true">
+              %
+            </span>
+          ) : null}
+        </div>
       </div>
       <div
-        className="sn-track"
+        className={`sn-track${dragging ? ' is-dragging' : ''}`}
         ref={trackRef}
         style={trackStyle}
-        onPointerDown={handlePointerDownTrack}
-        role="presentation"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={endPointerDrag}
+        onPointerCancel={endPointerDrag}
+        onWheel={handleWheel}
       >
-        <div
-          className={fillClassName ? `sn-fill ${fillClassName}` : 'sn-fill'}
-        />
+        <div className={fillClassName ? `sn-fill ${fillClassName}` : 'sn-fill'} />
         <div
           className={`sn-thumb${dragging ? ' dragging' : ''}`}
           style={{ insetInlineEnd: `${100 - p}%` }}
@@ -151,8 +313,7 @@ export function SmartSlider({
           aria-label={ariaLabel}
           aria-valuemin={min}
           aria-valuemax={max}
-          aria-valuenow={value}
-          onPointerDown={handleThumbPointerDown}
+          aria-valuenow={displayValue}
           onKeyDown={handleKeyDown}
         />
       </div>

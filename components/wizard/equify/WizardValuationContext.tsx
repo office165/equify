@@ -19,7 +19,9 @@ import {
   type ValuationComputed,
   type ValuationScenarios,
 } from '../../../lib/valuation';
+import { getIndustryConfig, getSubSectorMultAdj } from '../../../lib/constants/industry_config';
 import {
+  computeNetDebtK,
   DEFAULT_EQUIFY_WIZARD_STATE,
   type EquifyWizardFinancials,
   type EquifyWizardProfile,
@@ -49,12 +51,18 @@ const WizardValuationContext = createContext<WizardValuationContextValue | null>
 
 function buildInputs(state: EquifyWizardState) {
   const { financials, risk, profile } = state;
+  const netDebt = computeNetDebtK(financials);
   return {
     rev: financials.rev,
     margin: financials.margin,
     growth: financials.growth,
-    debt: financials.debt,
+    debt: netDebt,
+    grossDebt: financials.grossDebtK,
+    cash: financials.cashK,
+    normalizedOwnerSalary: financials.normalizedOwnerSalaryK,
+    capexLevelPct: financials.capexLevelPct,
     sectorMult: SECTOR_MULTIPLIERS[profile.sector],
+    subSectorMult: getSubSectorMultAdj(profile.sector, profile.subSector),
     lifecycleAdj: LIFECYCLE_ADJ[profile.lifecycle],
     recurring: risk.recurring,
     topCustomer: risk.topCustomer,
@@ -78,24 +86,27 @@ export function WizardValuationProvider({
   const [step, setStep] = useState(1);
 
   const computed = useMemo(() => computeValuation(buildInputs(state)), [state]);
-  const scenarios = useMemo(
-    () =>
-      computeScenarios(computed, {
-        growth: state.financials.growth,
-        debt: state.financials.debt,
-      }),
-    [computed, state.financials.debt, state.financials.growth],
-  );
+  const scenarios = useMemo(() => {
+    const netDebt = computeNetDebtK(state.financials);
+    return computeScenarios(computed, {
+      growth: state.financials.growth,
+      debt: netDebt,
+    });
+  }, [computed, state.financials]);
 
   const updateProfile = useCallback((patch: Partial<EquifyWizardProfile>) => {
     setState((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }));
   }, []);
 
   const updateFinancials = useCallback((patch: Partial<EquifyWizardFinancials>) => {
-    setState((prev) => ({
-      ...prev,
-      financials: { ...prev.financials, ...patch },
-    }));
+    setState((prev) => {
+      const next = { ...prev.financials, ...patch };
+      const netDebt = computeNetDebtK(next);
+      return {
+        ...prev,
+        financials: { ...next, debt: netDebt },
+      };
+    });
   }, []);
 
   const updateRisk = useCallback((patch: Partial<EquifyWizardRisk>) => {
@@ -103,7 +114,17 @@ export function WizardValuationProvider({
   }, []);
 
   const setSector = useCallback((sector: EquifySectorKey) => {
-    setState((prev) => ({ ...prev, profile: { ...prev.profile, sector } }));
+    setState((prev) => {
+      const subs = getIndustryConfig(sector).subSectors;
+      return {
+        ...prev,
+        profile: {
+          ...prev.profile,
+          sector,
+          subSector: subs[0]?.id ?? '',
+        },
+      };
+    });
   }, []);
 
   const setLifecycle = useCallback((lifecycle: EquifyLifecycleKey) => {

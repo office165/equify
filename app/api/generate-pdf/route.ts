@@ -8,6 +8,7 @@ import type { ValuationData } from '../../../lib/pdf-template';
 import { renderHtmlToPdfBuffer } from '../../../lib/pdf/render_html_pdf';
 import { renderWizardSummaryPdfBuffer } from '../../../lib/pdf/render_wizard_summary_pdf';
 import type { EquifyWizardState } from '../../../lib/wizard/map_equify_wizard';
+import type { ValuationLocale } from '../../../api_client';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -19,6 +20,14 @@ interface GeneratePdfBody {
   state?: EquifyWizardState;
   reportId?: string;
   filename?: string;
+  locale?: ValuationLocale;
+}
+
+/** RFC 5987 — HTTP headers are Latin1-only; non-ASCII filenames need filename*. */
+function buildContentDisposition(filename: string): string {
+  const asciiFallback =
+    filename.replace(/[^\x20-\x7E]/g, '_').replace(/["\\]/g, '_') || 'report.pdf';
+  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }
 
 function pdfResponse(
@@ -30,7 +39,7 @@ function pdfResponse(
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${filename}"`,
+      'Content-Disposition': buildContentDisposition(filename),
       'Cache-Control': 'private, no-cache',
       'X-Pdf-Engine': engine,
     },
@@ -54,7 +63,8 @@ export async function POST(request: Request) {
       valuationData = body.data;
     } else if (body.state?.profile) {
       wizardState = body.state;
-      valuationData = mapWizardToValuationData(body.state, body.reportId);
+      const pdfLocale = body.locale ?? 'he';
+      valuationData = mapWizardToValuationData(body.state, body.reportId, pdfLocale);
     } else {
       return jsonError('data or state is required.', 400, 'VALIDATION_ERROR');
     }

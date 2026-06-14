@@ -6,6 +6,7 @@ import {
   fmtM,
   terminalValuePct,
 } from '../../../lib/valuation';
+import { computeNetDebtK } from '../../../lib/wizard/map_equify_wizard';
 import { useWizardValuation } from './WizardValuationContext';
 
 export interface ResultsScreenProps {
@@ -22,14 +23,16 @@ export function ResultsScreen({
   const { computed, scenarios, state } = useWizardValuation();
   const { financials } = state;
 
+  const netDebtK = computeNetDebtK(financials);
+
   const wfWidths = useMemo(() => {
     const ev = computed.ev || 1;
     return {
       ev: 100,
-      debt: Math.min(100, (financials.debt / ev) * 100),
+      debt: Math.min(100, (netDebtK / ev) * 100),
       eq: Math.min(100, (computed.equity / ev) * 100),
     };
-  }, [computed.equity, computed.ev, financials.debt]);
+  }, [computed.equity, computed.ev, netDebtK]);
 
   const tvPct = terminalValuePct(computed.dcf);
 
@@ -42,7 +45,7 @@ export function ResultsScreen({
         </div>
         <div className="res-cap">
           שווי פעילות <span className="mono">{fmtK(computed.ev)}</span> בניכוי חוב
-          נטו <span className="mono">{fmtK(financials.debt)}</span>
+          נטו <span className="mono">{fmtK(netDebtK)}</span>
         </div>
         <div className="res-range">
           <span className="rr-bear">
@@ -110,7 +113,7 @@ export function ResultsScreen({
             <div className="wf-bar dt" style={{ width: `${wfWidths.debt}%` }} />
           </div>
           <b className="mono" style={{ color: 'var(--red)' }}>
-            −{fmtK(financials.debt)}
+            −{fmtK(netDebtK)}
           </b>
         </div>
         <div className="wf-row total">

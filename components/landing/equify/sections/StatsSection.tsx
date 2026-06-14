@@ -28,7 +28,7 @@ export function StatsSection() {
               <span className="count" data-to="10">
                 0
               </span>
-              <em>min</em>
+              <em>דק׳</em>
             </div>
             <div className="s-lab">זמן ממוצע להשלמת דוח</div>
           </div>

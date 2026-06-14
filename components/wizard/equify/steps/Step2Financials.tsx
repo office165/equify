@@ -1,7 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { fmtEquitySidebarM, fmtK } from '../../../../lib/valuation';
+import { computeNetDebtK } from '../../../../lib/wizard/map_equify_wizard';
+import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
+import { FieldTooltip } from '../../ui/FieldTooltip';
 import { SmartSlider } from '../../ui/SmartSlider';
 import { useWizardValuation } from '../WizardValuationContext';
 
@@ -11,81 +14,160 @@ export interface Step2FinancialsProps {
 }
 
 export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
+  const { shell, steps: t, isHe, locale } = useEquifyStrings();
   const { state, computed, scenarios, updateFinancials, updateProfile } =
     useWizardValuation();
   const { financials, profile } = state;
 
+  const netDebtK = useMemo(() => computeNetDebtK(financials), [financials]);
+
   const maxEv = Math.max(computed.dcf, computed.ebtMult, computed.revMult, 1);
   const barPct = (v: number) => `${(v / maxEv) * 90}%`;
   const qsArc = (computed.qs / 100) * 163.4;
+  const backLabel = isHe ? `→ ${t.common.back}` : `← ${t.common.back}`;
 
   return (
     <>
-      <div className="pane-eyebrow rv">שלב 2 · נתונים פיננסיים</div>
+      <div className="pane-eyebrow rv">{shell.step2Eyebrow}</div>
       <h2 className="pane-title rv">
-        המספרים שמפעילים <span className="hl">את המודל.</span>
+        {shell.step2TitleBefore}{' '}
+        <span className="hl">{shell.step2TitleHl}</span>
       </h2>
-      <p className="pane-sub rv">
-        כל שינוי מחשב מחדש את השווי בזמן אמת — ראה את הפאנל משמאל מתעדכן.
-      </p>
+      <p className="pane-sub rv">{t.step2.sub}</p>
 
       <div className="fin-layout">
         <div className="fin-sliders stagger">
           <SmartSlider
-            label="הכנסות שנתיות"
+            label={
+              <>
+                {t.step2.revenue}
+                <FieldTooltip text={t.step2.revenueTip} />
+              </>
+            }
             value={financials.rev}
             min={500}
             max={200000}
             step={500}
             unit="₪K"
             required
-            ariaLabel="הכנסות שנתיות"
-            minLabel="₪500K"
-            maxLabel="₪200M"
+            ariaLabel={t.step2.revenue}
+            minLabel={t.step2.minRev}
+            maxLabel={t.step2.maxRev}
             onChange={(v) => updateFinancials({ rev: v })}
           />
           <SmartSlider
-            label="שיעור EBITDA"
+            label={
+              <>
+                {t.step2.margin}
+                <FieldTooltip text={t.step2.marginTip} />
+              </>
+            }
             value={financials.margin}
             min={0}
             max={60}
-            step={1}
+            step={0.5}
             unit="%"
             required
-            ariaLabel="EBITDA"
+            ariaLabel={t.step2.margin}
             minLabel="0%"
             maxLabel="60%"
             onChange={(v) => updateFinancials({ margin: v })}
           />
           <SmartSlider
-            label="צמיחה שנתית צפויה"
+            label={
+              <>
+                {t.step2.ownerSalary}
+                <FieldTooltip text={t.step2.ownerSalaryTip} />
+              </>
+            }
+            value={financials.normalizedOwnerSalaryK}
+            min={0}
+            max={3000}
+            step={50}
+            unit="₪K"
+            ariaLabel={t.step2.ownerSalary}
+            minLabel={t.step2.minZero}
+            maxLabel={t.step2.maxOwnerSalary}
+            onChange={(v) => updateFinancials({ normalizedOwnerSalaryK: v })}
+          />
+          <SmartSlider
+            label={
+              <>
+                {t.step2.capex}
+                <FieldTooltip text={t.step2.capexTip} />
+              </>
+            }
+            value={financials.capexLevelPct}
+            min={0}
+            max={25}
+            step={1}
+            unit="%"
+            ariaLabel={t.step2.capex}
+            minLabel="0%"
+            maxLabel="25%"
+            onChange={(v) => updateFinancials({ capexLevelPct: v })}
+          />
+          <SmartSlider
+            label={
+              <>
+                {t.step2.growth}
+                <FieldTooltip text={t.step2.growthTip} />
+              </>
+            }
             value={financials.growth}
             min={-10}
             max={50}
             step={1}
             unit="%"
             required
-            ariaLabel="צמיחה"
-            minLabel="−10%"
-            maxLabel="+50%"
+            ariaLabel={t.step2.growth}
+            minLabel={t.step2.minGrowth}
+            maxLabel={t.step2.maxGrowth}
             onChange={(v) => updateFinancials({ growth: v })}
           />
           <SmartSlider
-            label="חוב נטו"
-            value={financials.debt}
+            label={
+              <>
+                {t.step2.grossDebt}
+                <FieldTooltip text={t.step2.grossDebtTip} />
+              </>
+            }
+            value={financials.grossDebtK}
             min={0}
             max={50000}
             step={100}
             unit="₪K"
-            ariaLabel="חוב נטו"
-            minLabel="₪0"
-            maxLabel="₪50M"
-            onChange={(v) => updateFinancials({ debt: v })}
+            ariaLabel={t.step2.grossDebt}
+            minLabel={t.step2.minZero}
+            maxLabel={t.step2.maxGrossDebt}
+            onChange={(v) => updateFinancials({ grossDebtK: v })}
           />
+          <SmartSlider
+            label={
+              <>
+                {t.step2.cash}
+                <FieldTooltip text={t.step2.cashTip} />
+              </>
+            }
+            value={financials.cashK}
+            min={0}
+            max={20000}
+            step={50}
+            unit="₪K"
+            ariaLabel={t.step2.cash}
+            minLabel={t.step2.minZero}
+            maxLabel={t.step2.maxCash}
+            onChange={(v) => updateFinancials({ cashK: v })}
+          />
+
+          <div className="net-debt-banner rv">
+            <span>{t.step2.netDebt}</span>
+            <b className="mono">{fmtK(netDebtK, locale)}</b>
+          </div>
 
           <div className="fgroup two" style={{ marginTop: 8 }}>
             <div className="field">
-              <label>מטבע דיווח</label>
+              <label>{t.step2.currency}</label>
               <select
                 className="sel"
                 value={profile.currency}
@@ -95,13 +177,13 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
                   })
                 }
               >
-                <option value="ILS">₪ שקל (ILS)</option>
-                <option value="USD">$ דולר (USD)</option>
-                <option value="EUR">€ אירו (EUR)</option>
+                <option value="ILS">{t.step2.currencyIls}</option>
+                <option value="USD">{t.step2.currencyUsd}</option>
+                <option value="EUR">{t.step2.currencyEur}</option>
               </select>
             </div>
             <div className="field">
-              <label>שנת דיווח אחרונה</label>
+              <label>{t.step2.fiscalYear}</label>
               <input
                 className="inp"
                 type="number"
@@ -115,62 +197,58 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
         </div>
 
         <div className="calc-live rv-r">
-          <div className="cl-hd">שווי לבעלים · LIVE</div>
-          <div className="cl-val mono">{fmtEquitySidebarM(computed.equity)}</div>
+          <div className="cl-hd">{t.step2.livePanel}</div>
+          <div className="cl-val mono">{fmtEquitySidebarM(computed.equity, locale)}</div>
+          <div className="cl-sub mono">
+            {t.step2.waccQuality(computed.wacc.toFixed(1), computed.qsGrade)}
+          </div>
           <div className="cl-models">
             <div className="cl-row">
-              <span>DCF</span>
+              <span>{t.step2.modelDcf}</span>
               <div className="cl-bar-wrap">
                 <div className="cl-bar-fill" style={{ width: barPct(computed.dcf) }} />
               </div>
-              <b className="mono">{fmtK(computed.dcf)}</b>
+              <b className="mono">{fmtK(computed.dcf, locale)}</b>
             </div>
             <div className="cl-row">
-              <span>EBITDA ×</span>
+              <span>{t.step2.modelEbitda}</span>
               <div className="cl-bar-wrap">
                 <div
                   className="cl-bar-fill"
                   style={{ width: barPct(computed.ebtMult) }}
                 />
               </div>
-              <b className="mono">{fmtK(computed.ebtMult)}</b>
+              <b className="mono">{fmtK(computed.ebtMult, locale)}</b>
             </div>
             <div className="cl-row">
-              <span>Revenue ×</span>
+              <span>{t.step2.modelRevenue}</span>
               <div className="cl-bar-wrap">
                 <div
                   className="cl-bar-fill"
                   style={{ width: barPct(computed.revMult) }}
                 />
               </div>
-              <b className="mono">{fmtK(computed.revMult)}</b>
+              <b className="mono">{fmtK(computed.revMult, locale)}</b>
             </div>
           </div>
           <div className="scen-row">
             <div className="scen-badge bear">
-              <span style={{ color: 'var(--dim)', fontSize: 10 }}>Bear</span>
-              <span className="sv mono">{fmtK(scenarios.bearEq)}</span>
+              <span style={{ color: 'var(--dim)', fontSize: 10 }}>{t.step2.scenarioBear}</span>
+              <span className="sv mono">{fmtK(scenarios.bearEq, locale)}</span>
             </div>
             <div className="scen-badge base">
-              <span style={{ color: 'var(--dim)', fontSize: 10 }}>Base</span>
-              <span className="sv mono">{fmtK(scenarios.baseEq)}</span>
+              <span style={{ color: 'var(--dim)', fontSize: 10 }}>{t.step2.scenarioBase}</span>
+              <span className="sv mono">{fmtK(scenarios.baseEq, locale)}</span>
             </div>
             <div className="scen-badge bull">
-              <span style={{ color: 'var(--dim)', fontSize: 10 }}>Bull</span>
-              <span className="sv mono">{fmtK(scenarios.bullEq)}</span>
+              <span style={{ color: 'var(--dim)', fontSize: 10 }}>{t.step2.scenarioBull}</span>
+              <span className="sv mono">{fmtK(scenarios.bullEq, locale)}</span>
             </div>
           </div>
           <div className="qs-wrap">
             <div className="qs-ring" style={{ width: 64, height: 64 }}>
               <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="26"
-                  fill="none"
-                  stroke="#0F2E29"
-                  strokeWidth="6"
-                />
+                <circle cx="32" cy="32" r="26" fill="none" stroke="#0F2E29" strokeWidth="6" />
                 <circle
                   cx="32"
                   cy="32"
@@ -193,7 +271,7 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
             </div>
             <div className="qs-detail">
               <div className="qs-grade">{computed.qsGrade}</div>
-              <div className="qs-label">Quality Score</div>
+              <div className="qs-label">{t.step2.qualityScore}</div>
             </div>
           </div>
         </div>
@@ -201,10 +279,10 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
 
       <div className="nav-row rv">
         <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>
-          → חזרה
+          {backLabel}
         </button>
         <button type="button" className="btn btn-primary" onClick={onNext}>
-          המשך לסיכון <span className="arr">←</span>
+          {t.common.nextRisk} <span className="arr">{isHe ? '←' : '→'}</span>
         </button>
       </div>
     </>

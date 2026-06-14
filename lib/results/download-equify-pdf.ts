@@ -1,10 +1,18 @@
 'use client';
 
+import type { ValuationLocale } from '../../api_client';
 import { getIndustryLabel } from '../constants/industries';
 import { queueLeadPersistenceBeforeExport } from '../pdf/lead_persistence_queue';
+import {
+  DEFAULT_EQUIFY_WIZARD_STATE,
+  type EquifyWizardState,
+} from '../wizard/map_equify_wizard';
 import { loadEquifyWizardState } from '../wizard/equify_storage';
 import { captureWizardLeadIdentifiers } from '../wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../wizard/map_equify_wizard';
+import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
+
+const MATRIX_STORAGE_KEY = 'valubot.lastValuationMatrix';
 
 function parseContentDispositionFilename(header: string | null): string | null {
   if (!header) return null;
@@ -22,7 +30,41 @@ function parseContentDispositionFilename(header: string | null): string | null {
 
 function defaultPdfFilename(companyName: string): string {
   const safe = companyName.replace(/[^\w\u0590-\u05FF]+/g, '-').slice(0, 40);
-  return `equify-${safe || 'valuation'}.pdf`;
+  return `valuation-report-${safe || 'equify'}.pdf`;
+}
+
+function readMatrixCompanyName(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const raw = sessionStorage.getItem(MATRIX_STORAGE_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as { meta?: { company_name?: string } };
+    return parsed.meta?.company_name?.trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function resolvePdfWizardState(
+  locale: ValuationLocale,
+  companyNameHint?: string,
+): EquifyWizardState {
+  const stored = loadEquifyWizardState();
+  const base = stored ?? DEFAULT_EQUIFY_WIZARD_STATE;
+  const rawName =
+    stored?.profile?.companyName?.trim() ||
+    companyNameHint?.trim() ||
+    readMatrixCompanyName() ||
+    '';
+  const displayName = resolveDisplayCompanyName(rawName, locale);
+
+  return {
+    ...base,
+    profile: {
+      ...base.profile,
+      companyName: displayName,
+    },
+  };
 }
 
 export interface DownloadEquifyPdfOptions {
@@ -30,73 +72,91 @@ export interface DownloadEquifyPdfOptions {
   reportId?: string;
   companyName?: string;
   industryCode?: string;
-  locale?: 'he' | 'en';
+  locale?: ValuationLocale;
 }
 
-/** מפיק PDF מ-/api/generate-pdf ומוריד מיד לדפדפן. */
+/** Generates PDF via /api/generate-pdf and triggers a secure browser download. */
 export async function downloadEquifyPdf(
   options: DownloadEquifyPdfOptions,
 ): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  const state = loadEquifyWizardState();
-  if (!state?.profile?.companyName) {
-    throw new Error('חסרים נתוני אשף. הרץ הערכה חדשה מהאשף.');
-  }
+  const locale = options.locale ?? 'he';
 
-  const formValues = mapEquifyToWizardFormValues(state);
-  const ids = captureWizardLeadIdentifiers(formValues);
-  const sectorLabel = options.industryCode
-    ? getIndustryLabel(options.industryCode, options.locale ?? 'he')
-    : undefined;
+  try {
+    const state = resolvePdfWizardState(locale, options.companyName);
+    const formValues = mapEquifyToWizardFormValues(state);
+    const ids = captureWizardLeadIdentifiers(formValues);
+    const displayCompany = resolveDisplayCompanyName(
+      options.companyName ?? state.profile.companyName,
+      locale,
+    );
+    const sectorLabel = options.industryCode
+      ? getIndustryLabel(options.industryCode, locale)
+      : undefined;
 
-  queueLeadPersistenceBeforeExport({
-    fullName: ids.fullName,
-    companyName: ids.companyName,
-    nationalId: ids.nationalId,
-    corporateTaxId: ids.corporateTaxId,
-    userPhone: ids.userPhone,
-    userEmail: ids.userEmail,
-    valuationMidpoint: options.equityValue,
-    industry: options.industryCode ?? formValues.industry,
-    sectorLabel,
-    locale: options.locale ?? 'he',
-  });
+    queueLeadPersistenceBeforeExport({
+      fullName: ids.fullName,
+      companyName: displayCompany,
+      nationalId: ids.nationalId,
+      corporateTaxId: ids.corporateTaxId,
+      userPhone: ids.userPhone,
+      userEmail: ids.userEmail,
+      valuationMidpoint: options.equityValue,
+      industry: options.industryCode ?? formValues.industry,
+      sectorLabel,
+      locale,
+    });
 
-  const companyName = options.companyName ?? state.profile.companyName;
-  const response = await fetch('/api/generate-pdf', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    const payload = {
       state,
       reportId: options.reportId,
-      filename: defaultPdfFilename(companyName),
-    }),
-  });
+      filename: defaultPdfFilename(displayCompany),
+      locale,
+    };
 
-  if (!response.ok) {
-    let message = 'יצירת PDF נכשלה. נסה שוב בעוד רגע.';
-    try {
-      const err = (await response.json()) as { error?: string; message?: string };
-      message = err.error ?? err.message ?? message;
-    } catch {
-      // ignore
+    const response = await fetch('/api/generate-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let message =
+        locale === 'he'
+          ? 'יצירת PDF נכשלה. נסה שוב בעוד רגע.'
+          : 'PDF generation failed. Please try again shortly.';
+      try {
+        const err = (await response.json()) as { error?: string; message?: string };
+        message = err.error ?? err.message ?? message;
+      } catch {
+        // ignore parse errors
+      }
+      throw new Error(message);
     }
-    throw new Error(message);
+
+    const blob = await response.blob();
+    if (!blob.size) {
+      throw new Error(
+        locale === 'he' ? 'קובץ PDF ריק התקבל מהשרת.' : 'Received an empty PDF from the server.',
+      );
+    }
+
+    const filename =
+      parseContentDispositionFilename(response.headers.get('Content-Disposition')) ??
+      defaultPdfFilename(displayCompany);
+
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = 'noopener';
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error(
+      locale === 'he' ? 'יצירת PDF נכשלה. נסה שוב.' : 'PDF generation failed. Please try again.',
+    );
   }
-
-  const blob = await response.blob();
-  const filename =
-    parseContentDispositionFilename(response.headers.get('Content-Disposition')) ??
-    defaultPdfFilename(companyName);
-
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.style.display = 'none';
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

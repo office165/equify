@@ -6,6 +6,7 @@ import {
   type ValuationComputed,
   type ValuationInputs,
 } from '../valuation';
+import type { ValuationLocale } from '../../api_client';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
 import type {
   DcfYearRow,
@@ -19,17 +20,13 @@ import type {
   WaccSegment,
 } from './types';
 
-const SECTOR_LABELS: Record<string, string> = {
-  saas: 'SaaS / תוכנה',
-  fintech: 'FinTech',
-  cyber: 'סייבר',
-  health: 'HealthTech',
-  services: 'שירותים מקצועיים',
-  industry: 'תעשייה',
-  ecom: 'מסחר אלקטרוני',
-  energy: 'אנרגיה',
-  other: 'אחר',
-};
+import {
+  getMultiplesIntroText,
+  getSectorChipLabel,
+  getSubSectorMultAdj,
+} from '../constants/industry_config';
+import { computeNetDebtK } from '../wizard/map_equify_wizard';
+import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 
 const LIFECYCLE_LABELS: Record<string, string> = {
   seed: 'Seed',
@@ -38,7 +35,7 @@ const LIFECYCLE_LABELS: Record<string, string> = {
   mature: 'בשלות',
 };
 
-const GOAL_LABELS: Record<string, string> = {
+const GOAL_LABELS_HE: Record<string, string> = {
   negotiation: 'משא ומתן אסטרטגי',
   fundraise: 'גיוס הון',
   partner: 'שותפות',
@@ -47,6 +44,21 @@ const GOAL_LABELS: Record<string, string> = {
   legal: 'משפטי / מס',
   '': 'כללי',
 };
+
+const GOAL_LABELS_EN: Record<string, string> = {
+  negotiation: 'Strategic negotiation',
+  fundraise: 'Fundraising',
+  partner: 'Partnership',
+  bank: 'Bank financing',
+  internal: 'Internal report',
+  legal: 'Legal / tax',
+  '': 'General',
+};
+
+function goalLabel(goal: string, locale: ValuationLocale): string {
+  const map = locale === 'he' ? GOAL_LABELS_HE : GOAL_LABELS_EN;
+  return map[goal] ?? goal;
+}
 
 function kToNis(k: number): number {
   return k * 1000;
@@ -254,13 +266,20 @@ function scenarioRowsFromComputed(
 export function mapWizardToValuationData(
   state: EquifyWizardState,
   reportId?: string,
+  locale: ValuationLocale = 'he',
 ): ValuationData {
+  const netDebtK = computeNetDebtK(state.financials);
   const inputs: ValuationInputs = {
     rev: state.financials.rev,
     margin: state.financials.margin,
     growth: state.financials.growth,
-    debt: state.financials.debt,
+    debt: netDebtK,
+    grossDebt: state.financials.grossDebtK,
+    cash: state.financials.cashK,
+    normalizedOwnerSalary: state.financials.normalizedOwnerSalaryK,
+    capexLevelPct: state.financials.capexLevelPct,
     sectorMult: SECTOR_MULTIPLIERS[state.profile.sector],
+    subSectorMult: getSubSectorMultAdj(state.profile.sector, state.profile.subSector),
     lifecycleAdj: LIFECYCLE_ADJ[state.profile.lifecycle],
     recurring: state.risk.recurring,
     topCustomer: state.risk.topCustomer,
@@ -319,26 +338,26 @@ export function mapWizardToValuationData(
     reportId: reportId ?? `EQ-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`,
     valuationDate: dateStr,
     valuationDateShort: dateShort,
-    locale: 'he',
+    locale,
 
     fullName: state.profile.fullName,
     email: state.profile.userEmail,
     phone: state.profile.userMobilePhone,
-    companyName: state.profile.companyName,
+    companyName: resolveDisplayCompanyName(state.profile.companyName, locale),
     corporateId: state.profile.userCorporateTaxId || state.profile.userNationalId,
     foundedYear: state.profile.foundedYear ? Number(state.profile.foundedYear) : undefined,
     sector: state.profile.sector,
-    sectorLabel: SECTOR_LABELS[state.profile.sector] ?? state.profile.sector,
+    sectorLabel: getSectorChipLabel(state.profile.sector, locale),
     lifecycle: state.profile.lifecycle,
     lifecycleLabel: LIFECYCLE_LABELS[state.profile.lifecycle] ?? state.profile.lifecycle,
     goal: state.goal,
-    goalLabel: GOAL_LABELS[state.goal] ?? state.goal,
+    goalLabel: goalLabel(state.goal, locale),
     customLogoDataUrl: state.profile.customLogoDataUrl || undefined,
 
     revenueK: state.financials.rev,
     marginPct: state.financials.margin,
     growthPct: state.financials.growth,
-    debtK: state.financials.debt,
+    debtK: netDebtK,
     currency: state.profile.currency,
     fiscalYear: state.profile.fiscalYear ? Number(state.profile.fiscalYear) : undefined,
 
@@ -354,7 +373,7 @@ export function mapWizardToValuationData(
     enterpriseValue: kToNis(computed.ev),
     bearEquity: kToNis(scenarios.bearEq),
     bullEquity: kToNis(scenarios.bullEq),
-    netDebt: kToNis(state.financials.debt),
+    netDebt: kToNis(netDebtK),
     dcfEv: kToNis(computed.dcf),
     ebitdaEv: kToNis(computed.ebtMult),
     revenueEv: kToNis(computed.revMult),
@@ -418,15 +437,16 @@ export function mapWizardToValuationData(
       computed.equity,
       state.financials.growth,
       computed.wacc,
-      state.financials.debt,
+      netDebtK,
     ),
     sensitivityEbitdaMult: buildSensitivityEbitdaMult(
       ebitdaK,
       computed.effectiveMult,
-      state.financials.debt,
+      netDebtK,
     ),
 
-    netDebtNote: `חוב נטו ליום ההערכה: ₪${(state.financials.debt / 1000).toFixed(1)}M.`,
+    netDebtNote: `חוב נטו ליום ההערכה: ₪${(netDebtK / 1000).toFixed(1)}M (חוב ברוטו ₪${(state.financials.grossDebtK / 1000).toFixed(1)}M פחות מזומן ₪${(state.financials.cashK / 1000).toFixed(1)}M).`,
     keyFindings: `Quality ${computed.qsGrade} · WACC ${computed.wacc.toFixed(1)}% · מכפיל EBITDA ×${computed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
+    multiplesIntro: getMultiplesIntroText(state.profile.sector, locale),
   };
 }

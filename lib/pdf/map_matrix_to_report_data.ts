@@ -1,5 +1,5 @@
-import { computeFinancialDiagnostics } from '../../api_client';
-import type { ValuationLocale } from '../../api_client';
+import { computeFinancialDiagnostics, type ValuationLocale } from '../../api_client';
+import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { normalizeMultiplesAnalysis } from '../valuation/normalize_multiples_analysis';
 import type { CanonicalValuation } from '../valuation/canonical_valuation';
@@ -194,11 +194,12 @@ export function mapMatrixToReportData(
 
   const clientIdentity =
     overrides.clientIdentity ?? harvestPdfClientIdentity(matrix);
-  const companyName =
+  const companyName = resolveDisplayCompanyName(
     clientIdentity.companyName.trim() ||
-    wizard.company_name?.trim() ||
-    matrix.meta.company_name?.trim() ||
-    (locale === 'he' ? 'חברה' : 'Company');
+      wizard.company_name?.trim() ||
+      matrix.meta.company_name?.trim(),
+    locale,
+  );
 
   const ebitdaMarginPct = margin > 0 ? margin * 100 : 0;
 

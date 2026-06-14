@@ -133,6 +133,12 @@ const EN: TranslationMap = {
     'The model applies mid-year discounting and standard reinvestment assumptions (McKinsey framework).',
   blendedEnterpriseValue: 'Blended Enterprise Value',
   weightingExplainer: 'Weighted blend of DCF and Israeli sector multiples.',
+  reportBottomLine: 'The bottom line — first.',
+  reportDcfHeadline: 'Looking ahead: DCF.',
+  reportMarketHeadline: 'A sideways view: the market.',
+  reportEquityValueLabel: 'Equity Value',
+  reportPurposeNegotiation: 'Valuation purpose: strategic negotiation',
+  equifyWizardStep1Eyebrow: 'Step 1 · Company profile',
   annualArr: 'Annual Recurring Revenue (ARR)',
   annualChurnRate: 'Annual Churn Rate (%)',
   churnTooltipTitle: 'Annual Churn Rate',
@@ -419,6 +425,12 @@ const HE: TranslationMap = {
     'המודל מיישם היוון אמצע-שנה והנחות השקעה-חוזרת סטנדרטיות (McKinsey framework).',
   blendedEnterpriseValue: 'שווי פעילות משוקלל',
   weightingExplainer: 'שקלול בין תזרים מהוון (DCF) למכפילי שוק ישראליים.',
+  reportBottomLine: 'השורה התחתונה — קודם.',
+  reportDcfHeadline: 'מבט קדימה: DCF.',
+  reportMarketHeadline: 'מבט הצידה: השוק.',
+  reportEquityValueLabel: 'שווי לבעלים (Equity Value)',
+  reportPurposeNegotiation: 'מטרת ההערכה: משא ומתן אסטרטגי',
+  equifyWizardStep1Eyebrow: 'שלב 1 · פרופיל החברה',
   annualArr: 'הכנסה חוזרת שנתית (ARR)',
   annualChurnRate: 'שיעור נשירה שנתי (%)',
   churnTooltipTitle: 'שיעור נשירה שנתי',
@@ -674,7 +686,10 @@ export function createValuationTranslations(
   locale: ValuationLocale,
 ): ValuationTranslations {
   const map = getMap(locale);
-  const t = (key: TranslationKey) => map[key] ?? EN[key] ?? key;
+  const t = (key: TranslationKey) => {
+    const value = map[key] ?? EN[key];
+    return typeof value === 'string' && value.length > 0 ? value : String(key);
+  };
   const tf = (key: TranslationKey, vars: Record<string, string | number>) =>
     interpolate(t(key), vars);
   return {
@@ -716,10 +731,18 @@ const ValuationI18nContext = createContext<{
 
 export function ValuationI18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<ValuationLocale>('he');
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setLocaleState(readValuationLocale());
+    setHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (!hydrated || typeof document === 'undefined') return;
+    document.documentElement.lang = locale;
+    document.documentElement.dir = locale === 'he' ? 'rtl' : 'ltr';
+  }, [hydrated, locale]);
 
   const setLocale = useCallback((next: ValuationLocale) => {
     setLocaleState(next);

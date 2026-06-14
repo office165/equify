@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { SmartSlider } from '../../ui/SmartSlider';
+import { FieldTooltip } from '../../ui/FieldTooltip';
 import { useWizardValuation } from '../WizardValuationContext';
 
 export interface Step3RiskProps {
@@ -39,25 +41,33 @@ function ToggleRow({
 }
 
 export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
-  const { state, updateRisk, updateProfile } = useWizardValuation();
+  const { shell, steps: t, isHe } = useEquifyStrings();
+  const { state, computed, updateRisk, updateProfile } = useWizardValuation();
   const { risk, profile } = state;
+
+  const concWaccBps = risk.topCustomer > 40 ? 80 : risk.topCustomer > 20 ? 40 : 0;
+  const recurWaccBps = Math.round((1 - risk.recurring / 100) * 80);
+  const backLabel = isHe ? `→ ${t.common.back}` : `← ${t.common.back}`;
 
   return (
     <>
-      <div className="pane-eyebrow rv">שלב 3 · סיכון ורגישות</div>
+      <div className="pane-eyebrow rv">{shell.step3Eyebrow}</div>
       <h2 className="pane-title rv">
-        מה <span className="hl">מייחד את העסק שלך.</span>
+        {t.step3.titlePrefix} <span className="hl">{t.step3.titleHl}</span>
       </h2>
-      <p className="pane-sub rv">
-        הגורמים האיכותיים שמכיילים את עלות ההון ואת מכפיל האיכות.
-      </p>
+      <p className="pane-sub rv">{t.step3.sub}</p>
 
       <div className="fgroup stagger">
         <div className="risk-section">
-          <h4>הכנסות ויציבות</h4>
+          <h4>{t.step3.revenueStability}</h4>
           <div className="risk-fields">
             <SmartSlider
-              label="הכנסות חוזרות (MRR/ARR)"
+              label={
+                <>
+                  {t.step3.recurring}
+                  <FieldTooltip text={t.step3.recurringTip} />
+                </>
+              }
               value={risk.recurring}
               min={0}
               max={100}
@@ -68,55 +78,69 @@ export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
               onChange={(v) => updateRisk({ recurring: v })}
             />
             <SmartSlider
-              label="ריכוז — לקוח הגדול ביותר"
+              label={
+                <>
+                  {t.step3.concentration}
+                  <FieldTooltip text={t.step3.concentrationTip(concWaccBps)} />
+                </>
+              }
               value={risk.topCustomer}
               min={0}
               max={100}
               step={5}
               unit="%"
               fillClassName="sn-fill-conc"
-              minLabel="0% (פיזור מלא)"
-              maxLabel="100% (לקוח יחיד)"
+              minLabel={t.step3.minConc}
+              maxLabel={t.step3.maxConc}
               onChange={(v) => updateRisk({ topCustomer: v })}
             />
           </div>
         </div>
 
         <div className="risk-section">
-          <h4>ניהול ותחרות</h4>
+          <h4>{t.step3.management}</h4>
           <div className="risk-fields">
             <ToggleRow
-              label="תלות גבוהה במייסד / איש מפתח"
-              hint="מוריד את ה-Quality Score"
+              label={t.step3.founderDep}
+              hint={t.step3.founderDepHint}
               checked={risk.founderDep}
               onChange={(v) => updateRisk({ founderDep: v })}
             />
             <ToggleRow
-              label="תחרות אינטנסיבית בשוק"
-              hint="מעלה את פרמיית הסיכון"
+              label={t.step3.competition}
+              hint={t.step3.competitionHint}
               checked={risk.competition}
               onChange={(v) => updateRisk({ competition: v })}
             />
             <ToggleRow
-              label="IP / קניין רוחני מוגן"
-              hint="מעלה את המכפיל"
+              label={t.step3.ip}
+              hint={t.step3.ipHint}
               checked={risk.ip}
               onChange={(v) => updateRisk({ ip: v })}
             />
             <ToggleRow
-              label="חוזים עם לקוחות ארוכי-טווח"
-              hint="מייצב תחזית התזרים"
+              label={t.step3.contracts}
+              hint={t.step3.contractsHint}
               checked={risk.contracts}
               onChange={(v) => updateRisk({ contracts: v })}
             />
           </div>
         </div>
 
+        <p className="risk-mod-hint rv">
+          {t.step3.riskHint(
+            computed.wacc.toFixed(1),
+            concWaccBps,
+            recurWaccBps,
+            risk.founderDep,
+          )}
+        </p>
+
         <div className="field">
-          <label>הערות / יתרון תחרותי ייחודי</label>
+          <label>{t.step3.moatLabel}</label>
           <textarea
             className="textarea"
-            placeholder="תאר את המעמד התחרותי, נכסים ייחודיים, חסמי כניסה..."
+            placeholder={t.step3.moatPlaceholder}
             value={profile.qualitativeDescription}
             onChange={(e) =>
               updateProfile({ qualitativeDescription: e.target.value })
@@ -127,10 +151,10 @@ export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
 
       <div className="nav-row rv">
         <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>
-          → חזרה
+          {backLabel}
         </button>
         <button type="button" className="btn btn-primary" onClick={onNext}>
-          המשך למטרת ההערכה <span className="arr">←</span>
+          {t.common.nextGoal} <span className="arr">{isHe ? '←' : '→'}</span>
         </button>
       </div>
     </>

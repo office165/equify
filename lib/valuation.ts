@@ -1,8 +1,11 @@
+import type { ValuationLocale } from '../api_client';
+
 /**
  * מנוע הערכת שווי equify — פונקציות טהורות (פורט מה-HTML)
  */
 
 export type EquifySectorKey =
+  | 'hospitality'
   | 'saas'
   | 'fintech'
   | 'cyber'
@@ -31,8 +34,10 @@ export interface ValuationInputs {
   rev: number;
   margin: number;
   growth: number;
+  /** חוב נטו (₪K) — grossDebt − cash */
   debt: number;
   sectorMult: number;
+  subSectorMult?: number;
   lifecycleAdj: number;
   recurring: number;
   topCustomer: number;
@@ -40,6 +45,12 @@ export interface ValuationInputs {
   competition: boolean;
   ip: boolean;
   contracts: boolean;
+  /** שכר בעלים מנורמל (₪K) — מוסיף ל-EBITDA התפעולי */
+  normalizedOwnerSalary?: number;
+  /** CAPEX כ-% מהכנסות — מוריד מ-FCFF */
+  capexLevelPct?: number;
+  grossDebt?: number;
+  cash?: number;
 }
 
 export interface ValuationComputed {
@@ -75,6 +86,7 @@ export interface ValuationScenarios {
 }
 
 export const SECTOR_MULTIPLIERS: Record<EquifySectorKey, number> = {
+  hospitality: 1.05,
   saas: 1.4,
   fintech: 1.5,
   cyber: 1.45,
@@ -101,6 +113,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     growth,
     debt,
     sectorMult,
+    subSectorMult = 1,
     lifecycleAdj,
     recurring,
     topCustomer,
@@ -108,9 +121,12 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     competition,
     ip,
     contracts,
+    normalizedOwnerSalary = 0,
+    capexLevelPct = 0,
   } = inputs;
 
-  const ebitda = rev * (margin / 100);
+  const reportedEbitda = rev * (margin / 100);
+  const ebitda = reportedEbitda + normalizedOwnerSalary;
 
   const rf = 4.3;
   const erp = 5.4;
@@ -140,23 +156,27 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   );
   const qsGrade = qualityScoreGrade(qs);
 
+  const combinedSectorMult = sectorMult * subSectorMult;
   const baseM = 5.2;
   const growthM = Math.min(3.5, growth * 0.14);
   const qualM = ((qs - 50) / 100) * 2.8;
   const effectiveMult = Math.max(
     2.5,
-    Math.min(13, baseM + growthM + qualM) * sectorMult,
+    Math.min(13, baseM + growthM + qualM) * combinedSectorMult,
   );
   const ebtMult = ebitda * effectiveMult;
 
   const revMultiplier = Math.max(
     0.5,
-    Math.min(4.5, (margin / 100) * 8 + (growth / 100) * 6 + 0.8) * sectorMult,
+    Math.min(4.5, (margin / 100) * 8 + (growth / 100) * 6 + 0.8) * combinedSectorMult,
   );
   const revMult = rev * revMultiplier;
 
+  const capexK = rev * (capexLevelPct / 100);
+  const fcffConversion = Math.max(0.55, 0.85 - capexLevelPct / 100);
+
   let pv = 0;
-  let fcff = ebitda * 0.85;
+  let fcff = ebitda * fcffConversion - capexK * 0.15;
   const g = Math.max(-0.05, growth / 100);
   const w = wacc / 100;
   for (let i = 1; i <= 5; i += 1) {
@@ -247,21 +267,41 @@ export function computeScenarios(
   };
 }
 
-/** פורמט ₪K — למשל ₪12.0M או ₪450K */
-export function fmtK(k: number): string {
-  if (k >= 1_000_000) return `₪${(k / 1_000_000).toFixed(1)}M`;
-  if (k >= 1000) return `₪${(k / 1000).toFixed(1)}M`;
-  return `₪${Math.round(k)}K`;
+function formatKAmount(k: number): string {
+  if (k >= 1_000_000) return `${(k / 1_000_000).toFixed(1)}M`;
+  if (k >= 1000) return `${(k / 1000).toFixed(1)}M`;
+  return `${Math.round(k)}K`;
 }
 
-/** המרה ל-M ₪ (מספר בלבד) */
+/** פורמט ₪K — RTL: 12.0M ₪ · LTR: ₪12.0M */
+export function fmtK(k: number, locale: ValuationLocale = 'he'): string {
+  const amount = formatKAmount(k);
+  const sym = '₪';
+  return locale === 'he' ? `${amount} ${sym}` : `${sym}${amount}`;
+}
+
+/** המרה ל-M (מספר בלבד) */
 export function fmtM(k: number): string {
   return (k / 1000).toFixed(1);
 }
 
 /** תצוגת שווי לבעלים בסרגל הצד */
-export function fmtEquitySidebarM(equityK: number): string {
-  return `${fmtM(equityK)}M ₪`;
+export function fmtEquitySidebarM(
+  equityK: number,
+  locale: ValuationLocale = 'he',
+): string {
+  const amount = `${fmtM(equityK)}M`;
+  const sym = '₪';
+  return locale === 'he' ? `${amount} ${sym}` : `${sym}${amount}`;
+}
+
+/** חלקי תצוגת מיליוני ₪ לספירה אנימטיבית (cover / scenario) */
+export function fmtMillionParts(
+  locale: ValuationLocale,
+): { prefix: string; suffix: string } {
+  return locale === 'he'
+    ? { prefix: '', suffix: 'M ₪' }
+    : { prefix: '₪', suffix: 'M' };
 }
 
 /** אחוז ערך טרמינלי מ-DCF */

@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ValuationLocale } from '../../../api_client';
 import { saveEquifyWizardState } from '../../../lib/wizard/equify_storage';
+import {
+  getEquifyWizardCopy,
+  getEquifyWizardSteps,
+} from '../../../lib/wizard/equify_wizard_copy';
 import { mapEquifyToWizardFormValues } from '../../../lib/wizard/map_equify_wizard';
+import { resolveDisplayCompanyName } from '../../../lib/wizard/resolve_company_display';
 import { fmtEquitySidebarM, fmtK } from '../../../lib/valuation';
+import { EquifyLanguageToggle } from '../../shared/EquifyLanguageToggle';
 import { useReducedMotion } from '../../landing/motion/useReducedMotion';
+import { useValuationI18n } from '../../../valuation_i18n';
 import { Step1Profile } from './steps/Step1Profile';
 import { Step2Financials } from './steps/Step2Financials';
 import { Step3Risk } from './steps/Step3Risk';
@@ -19,13 +26,6 @@ import {
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
 import { useWizardStepMotion } from './hooks/useWizardStepMotion';
 import './wizard-equify.css';
-
-const STEPS = [
-  { num: '01', label: 'פרופיל החברה', desc: 'פרטים משפטיים ועסקיים' },
-  { num: '02', label: 'נתונים פיננסיים', desc: 'הכנסות, EBITDA, תחזית' },
-  { num: '03', label: 'סיכון ורגישות', desc: 'מאפייני עסק ואיכות' },
-  { num: '04', label: 'מטרת ההערכה', desc: 'הפקת דוח PDF' },
-];
 
 export interface EquifyWizardProps {
   onRunValuation?: (
@@ -41,15 +41,35 @@ function EquifyWizardShell({
   onRunValuation,
   isSubmitting,
   submitError,
-  locale = 'he',
+  locale: localeProp,
 }: EquifyWizardProps) {
   const router = useRouter();
+  const { locale: ctxLocale } = useValuationI18n();
+  const locale = localeProp ?? ctxLocale;
+  const isHe = locale === 'he';
+  const copy = getEquifyWizardCopy(locale);
+  const steps = getEquifyWizardSteps(locale);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const topbarRef = useRef<HTMLDivElement>(null);
+  const paneRef = useRef<HTMLElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const reducedMotion = useReducedMotion();
   const { step, setStep, computed, state } = useWizardValuation();
+  const displayCompanyName = resolveDisplayCompanyName(state.profile.companyName, locale);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    setRevealed(false);
+  }, [step]);
+
   useWizardBgCanvas(canvasRef, { reducedMotion });
-  useWizardStepMotion(step, reducedMotion, topbarRef);
+  useWizardStepMotion(step, reducedMotion, topbarRef, paneRef, () => {
+    setRevealed(true);
+  });
 
   const progressPct = ((step - 1) / 4) * 100;
 
@@ -79,20 +99,31 @@ function EquifyWizardShell({
   }, [locale, onRunValuation, router, state]);
 
   return (
-    <div className="equify-wizard" dir="rtl" lang="he">
+    <div
+      className={[
+        'equify-wizard',
+        mounted ? 'eqw-mounted' : '',
+        mounted && !reducedMotion ? 'eqw-animate' : '',
+        revealed ? 'eqw-revealed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      dir={isHe ? 'rtl' : 'ltr'}
+      lang={isHe ? 'he' : 'en'}
+    >
       <canvas ref={canvasRef} id="bg-canvas" aria-hidden="true" />
 
       <div className="shell">
         <aside className="sidebar">
-          <Link href="/" className="logo" aria-label="equify BY SBC — דף הבית">
+          <Link href="/" className="logo" aria-label={copy.homeAria}>
             <span className="lg">
               equify<em>.</em>
             </span>
             <small>BY SBC</small>
           </Link>
 
-          <nav className="steps" aria-label="שלבי האשף">
-            {STEPS.map((s, i) => {
+          <nav className="steps" aria-label={copy.stepNavLabel}>
+            {steps.map((s, i) => {
               const n = i + 1;
               const cls = [
                 'stp',
@@ -121,27 +152,32 @@ function EquifyWizardShell({
 
           <div className="lv-panel">
             <div className="lv-top">
-              <span>שווי לבעלים</span>
+              <span>{copy.ownerValue}</span>
               <span className="lv-dot" />
             </div>
-            <div className="lv-val mono">{fmtEquitySidebarM(computed.equity)}</div>
-            <div className="lv-sub">תרחיש בסיס · מתעדכן בזמן אמת</div>
+            <div className="lv-val mono">{fmtEquitySidebarM(computed.equity, locale)}</div>
+            <div className="lv-sub">{copy.liveUpdating}</div>
+            {displayCompanyName ? (
+              <div className="lv-sub" style={{ marginTop: 4, opacity: 0.85 }}>
+                {displayCompanyName}
+              </div>
+            ) : null}
             <div className="lv-rows">
               <div className="lv-row">
-                <span>DCF (50%)</span>
-                <b className="mono">{fmtK(computed.dcf)}</b>
+                <span>{copy.dcfWeight}</span>
+                <b className="mono">{fmtK(computed.dcf, locale)}</b>
               </div>
               <div className="lv-row">
-                <span>EBITDA ×(30%)</span>
-                <b className="mono">{fmtK(computed.ebtMult)}</b>
+                <span>{copy.ebitdaWeight}</span>
+                <b className="mono">{fmtK(computed.ebtMult, locale)}</b>
               </div>
               <div className="lv-row">
-                <span>הכנסות ×(20%)</span>
-                <b className="mono">{fmtK(computed.revMult)}</b>
+                <span>{copy.revWeight}</span>
+                <b className="mono">{fmtK(computed.revMult, locale)}</b>
               </div>
               <div className="lv-row hl">
-                <span>שווי פעילות</span>
-                <b className="mono">{fmtK(computed.ev)}</b>
+                <span>{copy.enterpriseValue}</span>
+                <b className="mono">{fmtK(computed.ev, locale)}</b>
               </div>
             </div>
           </div>
@@ -154,23 +190,50 @@ function EquifyWizardShell({
 
           <div className="topbar" ref={topbarRef}>
             <span className="step-badge">
-              שלב <b>{step}</b> / 4
+              {copy.stepBadge} <b>{step}</b> {copy.stepOf}
             </span>
-            {step > 1 && (
-              <button
-                type="button"
-                className="back-btn"
-                onClick={() => goStep(Math.max(1, step - 1))}
-              >
-                → חזרה
-              </button>
-            )}
+            <div className="topbar-actions">
+              <EquifyLanguageToggle />
+              {step > 1 && (
+                <button
+                  type="button"
+                  className="back-btn"
+                  onClick={() => goStep(Math.max(1, step - 1))}
+                >
+                  {isHe ? `→ ${copy.backBtn}` : `← ${copy.backBtn}`}
+                </button>
+              )}
+            </div>
           </div>
+
+          <nav className="wizard-rail" aria-label={copy.stepNavLabel}>
+            {steps.map((s, i) => {
+              const n = i + 1;
+              const cls = [
+                'wizard-rail-btn',
+                step === n ? 'on' : '',
+                step > n ? 'done' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
+              return (
+                <button
+                  key={s.num}
+                  type="button"
+                  className={cls}
+                  onClick={() => n <= step && goStep(n)}
+                  aria-label={`${s.label} — ${s.desc}`}
+                  aria-current={step === n ? 'step' : undefined}
+                />
+              );
+            })}
+          </nav>
 
           <section
             key={step}
+            ref={paneRef}
             className="pane active"
-            aria-label={`שלב ${step}`}
+            aria-label={`${copy.stepBadge} ${step}`}
           >
             {step === 1 && <Step1Profile onNext={() => goStep(2)} />}
             {step === 2 && (
@@ -196,11 +259,11 @@ function EquifyWizardShell({
 
       <div className="m-bar" aria-hidden={false}>
         <div className="m-bar-live">
-          <span className="m-bar-label">שווי לבעלים</span>
-          <span className="m-bar-val mono">{fmtEquitySidebarM(computed.equity)}</span>
+          <span className="m-bar-label">{copy.ownerValue}</span>
+          <span className="m-bar-val mono">{fmtEquitySidebarM(computed.equity, locale)}</span>
         </div>
         <span className="m-bar-step">
-          שלב <b>{step}</b>/4
+          {copy.stepBadge} <b>{step}</b>{copy.stepOf}
         </span>
       </div>
     </div>

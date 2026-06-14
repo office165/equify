@@ -1,6 +1,8 @@
 import React from 'react';
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
+import { computeNetDebtK } from '../wizard/map_equify_wizard';
+import { getSubSectorMultAdj } from '../constants/industry_config';
 import {
   computeScenarios,
   computeValuation,
@@ -67,14 +69,20 @@ export function WizardSummaryPdfDocument({
   computed: computedProp,
   reportId,
 }: WizardSummaryPdfProps) {
+  const netDebtK = computeNetDebtK(state.financials);
   const computed =
     computedProp ??
     computeValuation({
       rev: state.financials.rev,
       margin: state.financials.margin,
       growth: state.financials.growth,
-      debt: state.financials.debt,
+      debt: netDebtK,
+      grossDebt: state.financials.grossDebtK,
+      cash: state.financials.cashK,
+      normalizedOwnerSalary: state.financials.normalizedOwnerSalaryK,
+      capexLevelPct: state.financials.capexLevelPct,
       sectorMult: SECTOR_MULTIPLIERS[state.profile.sector],
+      subSectorMult: getSubSectorMultAdj(state.profile.sector, state.profile.subSector),
       lifecycleAdj: LIFECYCLE_ADJ[state.profile.lifecycle],
       recurring: state.risk.recurring,
       topCustomer: state.risk.topCustomer,
@@ -85,7 +93,7 @@ export function WizardSummaryPdfDocument({
     });
   const scenarios = computeScenarios(computed, {
     growth: state.financials.growth,
-    debt: state.financials.debt,
+    debt: netDebtK,
   });
   const today = new Date().toLocaleDateString('he-IL', {
     day: '2-digit',

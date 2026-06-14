@@ -174,6 +174,8 @@ export interface ValuationData {
   industryEbitdaMedian?: number;
   industryRevenueMedian?: number;
   industryEbitdaMarginPct?: number;
+  /** Page 5 intro — sector-specific M&A calibration copy */
+  multiplesIntro?: string;
 
   compsTransactions?: CompTransactionRow[];
   sensitivityGrowthWacc?: SensitivityMatrix;

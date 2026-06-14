@@ -9,10 +9,16 @@ import {
   buildReportViewModel,
   buildWaccDonutSlices,
 } from '../../lib/results/report-view-model';
+import { fmtMillionParts } from '../../lib/valuation';
 import { formatCurrencyShort } from '../../lib/utils/formatCurrency';
 import { downloadEquifyPdf } from '../../lib/results/download-equify-pdf';
+import { getMultiplesIntroText } from '../../lib/constants/industry_config';
+import { useEquifyStrings } from '../../lib/i18n/use_equify_strings';
+import { getGoalPurposeLabel } from '../../lib/i18n/equify_wizard_steps';
 import { loadEquifyWizardState } from '../../lib/wizard/equify_storage';
 import { mapEquifyToWizardFormValues } from '../../lib/wizard/map_equify_wizard';
+import { resolveDisplayCompanyName } from '../../lib/wizard/resolve_company_display';
+import { EquifyLanguageToggle } from '../shared/EquifyLanguageToggle';
 import { useReducedMotion } from '../landing/motion/useReducedMotion';
 import {
   buildDcfBreakdown,
@@ -36,19 +42,14 @@ import { useScrollReportMotion } from './useScrollReportMotion';
 import { useScrollReportOrb } from './useScrollReportOrb';
 import './equify-scroll-report.css';
 
-const SCENARIO_TABS: { key: ValuationScenario; label: string }[] = [
-  { key: 'bear', label: 'Bear 🐻' },
-  { key: 'base', label: 'Base ◆' },
-  { key: 'bull', label: 'Bull 🚀' },
-];
+const SCENARIO_KEYS: ValuationScenario[] = ['bear', 'base', 'bull'];
 
 interface EquifyResultsReportProps {
   matrix: ForecastMatrixWithDiagnostics | null;
-  locale: 'he' | 'en';
 }
 
-export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps) {
-  const isHe = locale === 'he';
+export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
+  const { shell, results: rs, isHe, locale } = useEquifyStrings();
   const [scenario, setScenario] = useState<ValuationScenario>('base');
   const [scVal, setScVal] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -56,6 +57,7 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
   const [mounted, setMounted] = useState(false);
   const [idLabel, setIdLabel] = useState('');
   const [purposeLabel, setPurposeLabel] = useState('');
+  const [wizardCompanyRaw, setWizardCompanyRaw] = useState('');
   const orbRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
@@ -65,22 +67,26 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
     const national =
       stored?.profile.userNationalId || stored?.profile.userCorporateTaxId;
     setIdLabel(national ?? '');
-    const goalMap: Record<string, string> = {
-      negotiation: 'משא ומתן אסטרטגי',
-      fundraise: 'גיוס הון',
-      partner: 'שותפות עסקית',
-      bank: 'מימון בנקאי',
-      internal: 'שימוש פנימי',
-      legal: 'הליך משפטי / ירושה',
-    };
-    if (stored?.goal && goalMap[stored.goal]) {
-      setPurposeLabel(`מטרת ההערכה: ${goalMap[stored.goal]}`);
+    setWizardCompanyRaw(stored?.profile.companyName ?? '');
+    if (stored?.goal) {
+      setPurposeLabel(getGoalPurposeLabel(locale, stored.goal) ?? '');
+    } else {
+      setPurposeLabel('');
     }
-  }, []);
+  }, [locale]);
 
   const vm = useMemo(
     () => (matrix ? buildReportViewModel(matrix, locale) : null),
     [matrix, locale],
+  );
+
+  const displayCompanyName = useMemo(
+    () =>
+      resolveDisplayCompanyName(
+        wizardCompanyRaw || vm?.companyName || matrix?.meta?.company_name,
+        locale,
+      ),
+    [wizardCompanyRaw, vm?.companyName, matrix?.meta?.company_name, locale],
   );
 
   const base = vm?.scenarios.base;
@@ -128,6 +134,15 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
     [vm],
   );
 
+  const multiplesIntro = useMemo(() => {
+    const stored = loadEquifyWizardState();
+    const sector = stored?.profile?.sector;
+    if (sector) {
+      return getMultiplesIntroText(sector, locale);
+    }
+    return rs.multIntro(vm?.industrySector ?? (isHe ? 'כללי' : 'General'));
+  }, [isHe, locale, rs, vm?.industrySector]);
+
   const resolvedPurposeLabel = useMemo(() => {
     if (purposeLabel) return purposeLabel;
     return vm ? resolvePurposeLabel(vm) : '';
@@ -152,18 +167,18 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
       await downloadEquifyPdf({
         equityValue: base.equityValue,
         reportId: vm.reportId,
-        companyName: vm.companyName,
+        companyName: displayCompanyName,
         industryCode,
         locale,
       });
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'יצירת PDF נכשלה. נסה שוב.';
+        err instanceof Error ? err.message : shell.pdfFailed;
       setPdfError(message);
     } finally {
       setIsDownloadingPdf(false);
     }
-  }, [base, locale, vm]);
+  }, [base, displayCompanyName, locale, shell.pdfFailed, vm]);
 
   const handleScenario = useCallback(
     (key: ValuationScenario) => {
@@ -177,15 +192,18 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
 
   if (!matrix || !vm || !base || !bear || !bull || !scrollScenario) {
     return (
-      <div className="equify-scroll-report" dir="rtl" lang="he">
+      <div
+        className="equify-scroll-report"
+        dir={isHe ? 'rtl' : 'ltr'}
+        lang={isHe ? 'he' : 'en'}
+      >
         <div className="esr-empty">
-          <p>
-            {isHe
-              ? 'לא נמצאו תוצאות הערכה. הרץ הערכה חדשה מהאשף.'
-              : 'No valuation results found. Run a new valuation from the wizard.'}
-          </p>
+          <div className="esr-empty-actions">
+            <EquifyLanguageToggle />
+          </div>
+          <p>{shell.noResults}</p>
           <Link href="/wizard" className="btn">
-            {isHe ? 'חזרה לאשף ההערכה' : 'Back to valuation wizard'}
+            {shell.backToWizard}
           </Link>
         </div>
       </div>
@@ -197,6 +215,12 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
   const equityDisplay = scVal ?? scrollScenario.equityM.toFixed(1);
   const scColor =
     scenario === 'bear' ? '#D97575' : scenario === 'bull' ? '#C49A3C' : '#9EEEE6';
+  const millionParts = fmtMillionParts(locale);
+  const scenarioLabel = (key: ValuationScenario) => {
+    if (key === 'bear') return rs.scenarioBear;
+    if (key === 'bull') return rs.scenarioBull;
+    return rs.scenarioBase;
+  };
 
   return (
     <div
@@ -211,22 +235,25 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
 
       <header className="bar" id="bar">
         <div className="wrap bar-in">
-          <Link href="/" className="logo" aria-label="equify BY SBC — דף הבית">
+          <Link href="/" className="logo" aria-label={shell.homeAria}>
             equify<em>.</em>
             <small>BY SBC</small>
           </Link>
           <span className="doc-id">
-            REPORT #{vm.reportId} · {vm.companyName}
+            REPORT #{vm.reportId} · {displayCompanyName}
           </span>
-          <button
-            type="button"
-            className="btn"
-            onClick={handleDownloadPdf}
-            disabled={isDownloadingPdf}
-            aria-busy={isDownloadingPdf}
-          >
-            {isDownloadingPdf ? 'מפיק PDF...' : 'הורד PDF נקי ↓'}
-          </button>
+          <div className="bar-actions">
+            <EquifyLanguageToggle />
+            <button
+              type="button"
+              className="btn"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf}
+              aria-busy={isDownloadingPdf}
+            >
+              {isDownloadingPdf ? shell.pdfGenerating : shell.pdfDownload}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -236,10 +263,16 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
         </div>
       ) : null}
 
-      <nav className="rail" aria-label="עמודי הדוח">
+      <nav className="rail" aria-label={shell.reportPagesNav}>
         {SCROLL_SECTIONS.map((s, i) => (
-          <a key={s.id} href={`#${s.id}`} className={i === 0 ? 'on' : undefined}>
-            <span>{isHe ? s.labelHe : s.labelEn}</span>
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className={i === 0 ? 'on' : undefined}
+            aria-label={isHe ? s.labelHe : s.labelEn}
+          >
+            <span className="rail-dot" aria-hidden="true" />
+            <span className="rail-label">{isHe ? s.labelHe : s.labelEn}</span>
           </a>
         ))}
       </nav>
@@ -249,24 +282,28 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
         <div id="orb" ref={orbRef} aria-hidden="true" />
         <div className="wrap">
           <span className="eyebrow" style={{ justifyContent: 'center' }}>
-            דוח הערכת שווי · {reportDate}
+            {shell.valuationReportEyebrow} {reportDate}
           </span>
           <h1 style={{ marginTop: 22 }}>
             <span className="h-title-ln">
-              <span className="c-comp">{vm.companyName}</span>
+              <span className="c-comp">{displayCompanyName}</span>
             </span>
             <span className="h-title-ln">
               <span className="c-meta">
-                {resolvedIdLabel ? `ח.פ. ${resolvedIdLabel} · ` : ''}
+                {resolvedIdLabel
+                  ? `${rs.corpIdPrefix} ${resolvedIdLabel} · `
+                  : ''}
                 {resolvedPurposeLabel}
               </span>
             </span>
           </h1>
-          <div className="c-val">
-            <span id="coverVal">0.0</span>M ₪
+          <div className="c-val num">
+            {millionParts.prefix ? <span>{millionParts.prefix}</span> : null}
+            <span id="coverVal">0.0</span>
+            {millionParts.suffix}
           </div>
           <p className="c-cap">
-            שווי לבעלים (Equity Value) · תרחיש בסיס · טווח{' '}
+            {rs.coverCaption}{' '}
             <b className="num">
               {formatCurrencyShort(bear.equityValue, vm.currency)}–
               {formatCurrencyShort(bull.equityValue, vm.currency)}
@@ -274,11 +311,12 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           </p>
           <div className="seal">
             <i />
-            CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY
+            {rs.sealBadge}
           </div>
         </div>
         <div className="scroll-hint">
-          לקריאת הדוח<i />
+          {shell.scrollHint}
+          <i />
         </div>
       </section>
 
@@ -288,30 +326,32 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           <b>02</b> / 07 · EXECUTIVE SUMMARY
         </span>
         <div className="wrap">
-          <span className="eyebrow rv">תקציר מנהלים</span>
+          <span className="eyebrow rv">{rs.execEyebrow}</span>
           <h2 className="t rv">
-            השורה התחתונה — <span className="hl">קודם.</span>
+            {rs.execTitle} <span className="hl">{rs.execTitleHl}</span>
           </h2>
           <p className="sub rv">{buildExecSummary(vm, vm.currency, locale)}</p>
 
           <div className="kgrid">
             <div className="kcard rv">
               <div className="kv num" style={{ color: 'var(--mint)' }}>
+                {millionParts.prefix}
                 <span className="cnt" data-to={toMillions(base.equityValue)} data-dec={1}>
                   0
                 </span>
-                M ₪
+                {millionParts.suffix}
               </div>
-              <div className="kl">שווי לבעלים · בסיס</div>
+              <div className="kl">{rs.kEquity}</div>
             </div>
             <div className="kcard rv">
               <div className="kv num">
+                {millionParts.prefix}
                 <span className="cnt" data-to={toMillions(base.enterpriseValue)} data-dec={1}>
                   0
                 </span>
-                M ₪
+                {millionParts.suffix}
               </div>
-              <div className="kl">שווי פעילות (EV)</div>
+              <div className="kl">{rs.kEv}</div>
             </div>
             <div className="kcard rv">
               <div className="kv num">
@@ -320,7 +360,7 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
                 </span>
                 %
               </div>
-              <div className="kl">WACC אפקטיבי</div>
+              <div className="kl">{rs.kWacc}</div>
             </div>
             <div className="kcard rv">
               <div className="kv num" style={{ color: 'var(--gold)' }}>
@@ -334,9 +374,9 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           </div>
 
           <div className="wf rv">
-            <h3>מ-EV לשווי לבעלים</h3>
+            <h3>{rs.waterfallTitle}</h3>
             <div className="wf-row">
-              <span className="lbl">שווי פעילות</span>
+              <span className="lbl">{rs.wfEv}</span>
               <div className="wf-track">
                 <div className="wf-fill ev" data-w={100} />
               </div>
@@ -345,7 +385,7 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
               </b>
             </div>
             <div className="wf-row">
-              <span className="lbl">חוב נטו</span>
+              <span className="lbl">{rs.wfDebt}</span>
               <div className="wf-track">
                 <div
                   className="wf-fill debt"
@@ -357,7 +397,7 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
               </b>
             </div>
             <div className="wf-row total">
-              <span className="lbl">שווי לבעלים</span>
+              <span className="lbl">{rs.wfEquity}</span>
               <div className="wf-track">
                 <div
                   className="wf-fill eq"
@@ -378,17 +418,15 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           <b>03</b> / 07 · FINANCIAL DATA
         </span>
         <div className="wrap">
-          <span className="eyebrow rv">נתונים פיננסיים</span>
+          <span className="eyebrow rv">{rs.finEyebrow}</span>
           <h2 className="t rv">
-            המספרים שמאחורי <span className="hl">המודל.</span>
+            {rs.finTitle} <span className="hl">{rs.finTitleHl}</span>
           </h2>
-          <p className="sub rv">
-            הכנסות ו-EBITDA בפועל ותחזית, כפי שהוזנו לאשף ואומתו מול מודל ההערכה.
-          </p>
+          <p className="sub rv">{rs.finSub}</p>
           <FinancialBarChart
             data={finData}
-            growthNote={`צמיחה שנתית ממוצעת ${vm.terminalGrowthPct.toFixed(0)}%`}
-            marginNote={`שיעור EBITDA ${vm.ebitdaMarginPct.toFixed(1)}%`}
+            growthNote={rs.growthNote(vm.terminalGrowthPct)}
+            marginNote={rs.marginNote(vm.ebitdaMarginPct.toFixed(1))}
           />
         </div>
       </section>
@@ -399,14 +437,15 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           <b>04</b> / 07 · DCF + WACC
         </span>
         <div className="wrap">
-          <span className="eyebrow rv">היוון תזרימי מזומנים</span>
+          <span className="eyebrow rv">{rs.dcfEyebrow}</span>
           <h2 className="t rv">
-            מבט קדימה: <span className="hl">DCF.</span>
+            {rs.dcfTitle} <span className="hl">{rs.dcfTitleHl}</span>
           </h2>
           <p className="sub rv">
-            תזרימי המזומנים החופשיים מהוונים בעלות הון של {base.waccPct.toFixed(1)}
-            %, כולל פרמיית סיכון מדינה לפי Damodaran. ערך טרמינלי בצמיחה של{' '}
-            {vm.terminalGrowthPct.toFixed(1)}%.
+            {rs.dcfSub(
+              `${base.waccPct.toFixed(1)}%`,
+              `${vm.terminalGrowthPct.toFixed(1)}%`,
+            )}
           </p>
 
           <div className="split">
@@ -422,24 +461,22 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
                   </div>
                 ))}
                 <div className="wl sum">
-                  <span>WACC אפקטיבי</span>
+                  <span>{rs.dcfWacc}</span>
                   <b className="num">{base.waccPct.toFixed(1)}%</b>
                 </div>
               </div>
               {dcfBreakdown && (
                 <div className="wacc-list" style={{ marginTop: 26 }}>
                   <div className="wl">
-                    <span>שווי נוכחי של תזרימים</span>
+                    <span>{rs.dcfPv}</span>
                     <b className="num">{dcfBreakdown.explicitPv}</b>
                   </div>
                   <div className="wl">
-                    <span>
-                      ערך טרמינלי מהוון (g = {vm.terminalGrowthPct.toFixed(1)}%)
-                    </span>
+                    <span>{rs.dcfTerminal(`${vm.terminalGrowthPct.toFixed(1)}%`)}</span>
                     <b className="num">{dcfBreakdown.terminal}</b>
                   </div>
                   <div className="wl sum">
-                    <span>שווי פעילות לפי DCF</span>
+                    <span>{rs.dcfEv}</span>
                     <b className="num">{dcfBreakdown.total}</b>
                   </div>
                 </div>
@@ -455,13 +492,12 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           <b>05</b> / 07 · MARKET MULTIPLES
         </span>
         <div className="wrap">
-          <span className="eyebrow rv">מכפילי שוק</span>
+          <span className="eyebrow rv">{rs.multEyebrow}</span>
           <h2 className="t rv">
-            מבט הצידה: <span className="hl">השוק.</span>
+            {rs.multTitle} <span className="hl">{rs.multTitleHl}</span>
           </h2>
           <p className="sub rv">
-            המכפילים מכוילים מול עסקאות M&A ישראליות בענף {vm.industrySector}.
-            הפס מציג את טווח השוק; הנקודה — את המיקום שלך.
+            {multiplesIntro}
           </p>
 
           <div className="mult-rows">
@@ -511,26 +547,24 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           <b>06</b> / 07 · SCENARIOS & QUALITY
         </span>
         <div className="wrap">
-          <span className="eyebrow rv">תרחישים</span>
+          <span className="eyebrow rv">{rs.scenEyebrow}</span>
           <h2 className="t rv">
-            לא רק כמה — <span className="hl">באיזה טווח.</span>
+            {rs.scenTitle} <span className="hl">{rs.scenTitleHl}</span>
           </h2>
-          <p className="sub rv">
-            החלף תרחיש וראה את כל הדוח מתעדכן: שווי, מכפיל, WACC וההנחות מאחוריהם.
-          </p>
+          <p className="sub rv">{rs.scenSub}</p>
 
-          <div className="scen-tabs rv" role="tablist" aria-label="בחירת תרחיש">
-            {SCENARIO_TABS.map((tab) => (
+          <div className="scen-tabs rv" role="tablist" aria-label={rs.scenTabList}>
+            {SCENARIO_KEYS.map((key) => (
               <button
-                key={tab.key}
+                key={key}
                 type="button"
-                data-s={tab.key}
+                data-s={key}
                 role="tab"
-                aria-selected={scenario === tab.key}
-                className={scenario === tab.key ? 'on' : undefined}
-                onClick={() => handleScenario(tab.key)}
+                aria-selected={scenario === key}
+                className={scenario === key ? 'on' : undefined}
+                onClick={() => handleScenario(key)}
               >
-                {tab.label}
+                {scenarioLabel(key)}
               </button>
             ))}
           </div>
@@ -538,7 +572,9 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
           <div className="scen-stage">
             <div className="rv">
               <div className="sc-val" style={{ color: scColor }}>
-                <span id="scVal">{equityDisplay}</span>M ₪
+                {millionParts.prefix}
+                <span id="scVal">{equityDisplay}</span>
+                {millionParts.suffix}
               </div>
               <p className="sc-cap" id="scCap">
                 {scrollScenario.cap}
@@ -565,13 +601,13 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
             <div className="rv">
               <div className="sc-list">
                 <div className="sl">
-                  <span>צמיחת הכנסות שנתית</span>
+                  <span>{rs.scenGrowth}</span>
                   <b className="num" id="sGro">
                     {scrollScenario.growth}
                   </b>
                 </div>
                 <div className="sl">
-                  <span>שיעור EBITDA יציב</span>
+                  <span>{rs.scenEbitda}</span>
                   <b className="num" id="sMar">
                     {scrollScenario.margin}
                   </b>
@@ -583,13 +619,13 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
                   </b>
                 </div>
                 <div className="sl">
-                  <span>מכפיל EBITDA אפקטיבי</span>
+                  <span>{rs.scenMult}</span>
                   <b className="num" id="sMult">
                     {scrollScenario.mult}
                   </b>
                 </div>
                 <div className="sl">
-                  <span>שווי פעילות (EV)</span>
+                  <span>{rs.scenEv}</span>
                   <b className="num" id="sEv">
                     {scrollScenario.ev}
                   </b>
@@ -626,29 +662,31 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
         </span>
         <div className="wrap">
           <span className="eyebrow rv" style={{ justifyContent: 'center', display: 'flex' }}>
-            שווי משולב
+            {rs.blendEyebrow}
           </span>
           <h2 className="t rv" style={{ textAlign: 'center' }}>
-            שלושה מודלים. <span className="hl">מספר אחד.</span>
+            {rs.blendTitle} <span className="hl">{rs.blendTitleHl}</span>
           </h2>
 
-          <div className="weights rv" aria-label="משקלות המודלים">
+          <div className="weights rv" aria-label={rs.blendWeights}>
             <div className="w1" data-w={BLEND_WEIGHTS.dcf * 100} title="DCF">
               DCF · 50%
             </div>
-            <div className="w2" data-w={BLEND_WEIGHTS.ebitda * 100} title="מכפיל EBITDA">
+            <div className="w2" data-w={BLEND_WEIGHTS.ebitda * 100} title={rs.blendEbitdaTitle}>
               EBITDA · 30%
             </div>
-            <div className="w3" data-w={BLEND_WEIGHTS.rev * 100} title="מכפיל הכנסות">
+            <div className="w3" data-w={BLEND_WEIGHTS.rev * 100} title={rs.blendRevTitle}>
               REV · 20%
             </div>
           </div>
 
           <div className="final-val rv">
-            <span id="finalVal">0.0</span>M ₪
+            {millionParts.prefix}
+            <span id="finalVal">0.0</span>
+            {millionParts.suffix}
           </div>
           <p className="final-cap rv">
-            שווי לבעלים · תרחיש בסיס · נכון ל-{reportDate}
+            {rs.blendFooter(reportDate)}
           </p>
 
           <div className="final-cta rv">
@@ -659,18 +697,14 @@ export function EquifyResultsReport({ matrix, locale }: EquifyResultsReportProps
               disabled={isDownloadingPdf}
               aria-busy={isDownloadingPdf}
             >
-              {isDownloadingPdf ? 'מפיק PDF...' : 'הורד PDF נקי ↓'}
+              {isDownloadingPdf ? shell.pdfGenerating : shell.pdfDownload}
             </button>
             <Link className="btn btn-ghost" href="/wizard">
-              הערכה חדשה
+              {rs.newValuation}
             </Link>
           </div>
 
-          <p className="disc rv">
-            דוח זה הינו אינדיקציית שווי אלגוריתמית המבוססת על נתונים שהוזנו על ידי
-            המשתמש ועל נתוני שוק פומביים. אין לראות בו ייעוץ השקעות, חוות דעת
-            חשבונאית או הערכת שווי לצרכים סטטוטוריים. © 2026 equify BY SBC.
-          </p>
+          <p className="disc rv">{rs.disclaimer}</p>
         </div>
       </section>
 

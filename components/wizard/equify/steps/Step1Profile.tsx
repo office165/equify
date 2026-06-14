@@ -1,25 +1,15 @@
 'use client';
 
-import React, { useCallback, useRef, useState } from 'react';
-import type { EquifyLifecycleKey, EquifySectorKey } from '../../../../lib/valuation';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import type { EquifyLifecycleKey } from '../../../../lib/valuation';
+import { SECTOR_SELECT_OPTIONS, getSubSectorsForSector } from '../../../../lib/constants/industry_config';
+import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { lockLeadPayload } from '../../../../lib/wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_wizard';
 import { scheduleWizardProgressSave } from '../../../../lib/wizard/wizard_progress_queue';
 import { useWizardValuation } from '../WizardValuationContext';
 
-const SECTORS: { key: EquifySectorKey; label: string }[] = [
-  { key: 'saas', label: 'הייטק / SaaS' },
-  { key: 'fintech', label: 'פינטק' },
-  { key: 'cyber', label: 'סייבר' },
-  { key: 'health', label: 'רפואה / Biotech' },
-  { key: 'services', label: 'שירותים מקצועיים' },
-  { key: 'industry', label: 'תעשייה' },
-  { key: 'ecom', label: 'קמעונאות / איקומרס' },
-  { key: 'energy', label: 'אנרגיה' },
-  { key: 'other', label: 'אחר' },
-];
-
-const LIFECYCLES: {
+const LIFECYCLES_HE: {
   key: EquifyLifecycleKey;
   icon: string;
   name: string;
@@ -31,14 +21,36 @@ const LIFECYCLES: {
   { key: 'mature', icon: '🏛️', name: 'Mature', desc: 'תזרים יציב' },
 ];
 
+const LIFECYCLES_EN: {
+  key: EquifyLifecycleKey;
+  icon: string;
+  name: string;
+  desc: string;
+}[] = [
+  { key: 'seed', icon: '🌱', name: 'Seed', desc: 'Pre-revenue' },
+  { key: 'early', icon: '🚀', name: 'Early Stage', desc: 'Initial PMF' },
+  { key: 'growth', icon: '📈', name: 'Growth', desc: 'Sales acceleration' },
+  { key: 'mature', icon: '🏛️', name: 'Mature', desc: 'Stable cash flow' },
+];
+
 export interface Step1ProfileProps {
   onNext: () => void;
 }
 
 export function Step1Profile({ onNext }: Step1ProfileProps) {
+  const { shell, steps: t, isHe, locale } = useEquifyStrings();
+  const sectors = useMemo(
+    () =>
+      SECTOR_SELECT_OPTIONS.map((s) => ({
+        key: s.key,
+        label: isHe ? s.labelHe : s.labelEn,
+      })),
+    [isHe],
+  );
+  const lifecycles = isHe ? LIFECYCLES_HE : LIFECYCLES_EN;
   const { state, updateProfile, setSector, setLifecycle } = useWizardValuation();
-  const wizardLocale = 'he' as const;
   const { profile } = state;
+  const subSectors = getSubSectorsForSector(profile.sector);
   const fileRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
 
@@ -48,7 +60,6 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
       name: !profile.fullName.trim(),
       email: !emailRe.test(profile.userEmail),
       phone: !profile.userMobilePhone.trim(),
-      company: !profile.companyName.trim(),
       sector: !profile.sector,
     };
     setErrors(nextErrors);
@@ -58,9 +69,9 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
   const handleNext = useCallback(() => {
     if (!validate()) return;
     const formValues = mapEquifyToWizardFormValues(state);
-    scheduleWizardProgressSave(lockLeadPayload(formValues, wizardLocale));
+    scheduleWizardProgressSave(lockLeadPayload(formValues, locale));
     onNext();
-  }, [onNext, state, validate]);
+  }, [locale, onNext, state, validate]);
 
   const handleLogo = useCallback(
     (file: File | null) => {
@@ -76,29 +87,34 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
 
   return (
     <>
-      <div className="pane-eyebrow rv">שלב 1 · פרופיל החברה</div>
+      <div className="pane-eyebrow rv">{shell.step1Eyebrow}</div>
       <h1 className="pane-title rv">
-        ספר לנו על <span className="hl">העסק שלך.</span>
+        {t.step1.titlePrefix}{' '}
+        <span className="hl">{shell.step1TitleHl}</span>
       </h1>
-      <p className="pane-sub rv">
-        הפרטים מגדירים את ההקשר המשפטי והעסקי של הדוח.
-      </p>
+      <p className="pane-sub rv">{shell.step1Sub}</p>
 
       <div className="fgroup two stagger">
         <div className="field">
-          <label>שם מלא <span className="req">*</span></label>
+          <label>
+            {shell.fullName} <span className="req">*</span>
+          </label>
           <input
             className={`inp${errors.name ? ' err' : profile.fullName ? ' ok' : ''}`}
             type="text"
-            placeholder="ישראל ישראלי"
+            placeholder={t.common.placeholderName}
             autoComplete="name"
             value={profile.fullName}
             onChange={(e) => updateProfile({ fullName: e.target.value })}
           />
-          {errors.name && <span className="v-msg err show">נא להזין שם מלא</span>}
+          {errors.name ? (
+            <span className="v-msg err show">{t.common.errFullName}</span>
+          ) : null}
         </div>
         <div className="field">
-          <label>אימייל <span className="req">*</span></label>
+          <label>
+            {shell.email} <span className="req">*</span>
+          </label>
           <input
             className={`inp${errors.email ? ' err' : profile.userEmail ? ' ok' : ''}`}
             type="email"
@@ -106,12 +122,14 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
             value={profile.userEmail}
             onChange={(e) => updateProfile({ userEmail: e.target.value })}
           />
-          {errors.email && (
-            <span className="v-msg err show">כתובת אימייל לא תקינה</span>
-          )}
+          {errors.email ? (
+            <span className="v-msg err show">{t.common.errEmail}</span>
+          ) : null}
         </div>
         <div className="field">
-          <label>טלפון / WhatsApp <span className="req">*</span></label>
+          <label>
+            {shell.phone} <span className="req">*</span>
+          </label>
           <input
             className={`inp${errors.phone ? ' err' : profile.userMobilePhone ? ' ok' : ''}`}
             type="tel"
@@ -120,20 +138,20 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
             value={profile.userMobilePhone}
             onChange={(e) => updateProfile({ userMobilePhone: e.target.value })}
           />
-          <span className="hint">הדוח יישלח לכאן ב-WhatsApp</span>
+          <span className="hint">{t.common.phoneHint}</span>
         </div>
         <div className="field">
-          <label>שם חברה <span className="req">*</span></label>
+          <label>{shell.companyName}</label>
           <input
-            className={`inp${errors.company ? ' err' : profile.companyName ? ' ok' : ''}`}
+            className={`inp${profile.companyName ? ' ok' : ''}`}
             type="text"
-            placeholder='אוריון טכנולוגיות בע"מ'
+            placeholder={shell.companyPlaceholder}
             value={profile.companyName}
             onChange={(e) => updateProfile({ companyName: e.target.value })}
           />
         </div>
         <div className="field">
-          <label>ח.פ / ת.ז</label>
+          <label>{shell.corporateId}</label>
           <input
             className="inp"
             type="text"
@@ -149,7 +167,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
           />
         </div>
         <div className="field">
-          <label>שנת הקמה</label>
+          <label>{shell.foundedYear}</label>
           <input
             className="inp"
             type="number"
@@ -165,9 +183,11 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
 
       <div className="fgroup stagger" style={{ marginTop: 28 }}>
         <div className="field">
-          <label>ענף פעילות <span className="req">*</span></label>
-          <div className="chips" role="group" aria-label="בחר ענף">
-            {SECTORS.map((s) => (
+          <label>
+            {shell.sector} <span className="req">*</span>
+          </label>
+          <div className="chips" role="group" aria-label={t.common.selectSector}>
+            {sectors.map((s) => (
               <button
                 key={s.key}
                 type="button"
@@ -180,10 +200,32 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
           </div>
         </div>
 
+        {subSectors.length > 0 ? (
+          <div className="field">
+            <label>
+              {t.common.subSector} <span className="req">*</span>
+            </label>
+            <div className="chips" role="group" aria-label={t.common.selectSubSector}>
+              {subSectors.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`chip${profile.subSector === s.id ? ' on' : ''}`}
+                  onClick={() => updateProfile({ subSector: s.id })}
+                >
+                  {isHe ? s.labelHe : s.labelEn}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div className="field">
-          <label>שלב מחזור חיים <span className="req">*</span></label>
-          <div className="lifecycle" role="group" aria-label="שלב חיים">
-            {LIFECYCLES.map((lc) => (
+          <label>
+            {shell.lifecycle} <span className="req">*</span>
+          </label>
+          <div className="lifecycle" role="group" aria-label={t.common.lifecycleGroup}>
+            {lifecycles.map((lc) => (
               <button
                 key={lc.key}
                 type="button"
@@ -199,7 +241,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
         </div>
 
         <div className="field">
-          <label>לוגו חברה (אופציונלי)</label>
+          <label>{shell.logo}</label>
           <div
             className="upload-zone"
             role="button"
@@ -208,9 +250,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
             onKeyDown={(e) => e.key === 'Enter' && fileRef.current?.click()}
           >
             <div className="uz-icon">📎</div>
-            <div className="uz-txt">
-              גרור לכאן או <b>לחץ להעלאה</b> · PNG/JPG
-            </div>
+            <div className="uz-txt">{t.common.uploadLogo}</div>
           </div>
           <input
             ref={fileRef}
@@ -223,9 +263,9 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
       </div>
 
       <div className="nav-row rv">
-        <span style={{ fontSize: 13, color: 'var(--dim)' }}>* שדות חובה</span>
+        <span style={{ fontSize: 13, color: 'var(--dim)' }}>{t.common.requiredFields}</span>
         <button type="button" className="btn btn-primary" onClick={handleNext}>
-          המשך לנתונים פיננסיים <span className="arr">←</span>
+          {t.common.nextFinancials} <span className="arr">{isHe ? '←' : '→'}</span>
         </button>
       </div>
     </>

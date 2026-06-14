@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { EquifyResultsReport } from '../../components/results/EquifyResultsReport';
-import { ValuationI18nProvider, useValuationI18n } from '../../valuation_i18n';
+import { ValuationI18nProvider } from '../../valuation_i18n';
 
 const STORAGE_KEY = 'valubot.lastValuationMatrix';
 
 function ResultsContent() {
-  const { locale } = useValuationI18n();
   const [matrix, setMatrix] = useState<ForecastMatrixWithDiagnostics | null>(null);
 
   useEffect(() => {
@@ -22,7 +21,7 @@ function ResultsContent() {
     }
   }, []);
 
-  return <EquifyResultsReport matrix={matrix} locale={locale} />;
+  return <EquifyResultsReport matrix={matrix} />;
 }
 
 export default function ResultsPage() {

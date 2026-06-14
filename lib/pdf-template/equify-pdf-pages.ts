@@ -209,7 +209,7 @@ function buildPage5Multiples(data: ValuationData): string {
   <div class="body">
     <span class="eyebrow">05 · מכפילי שוק</span>
     <h2>מבט הצידה: השוק.</h2>
-    <p class="sub">מכפילים מכוילים מול עסקאות M&A רלוונטיות בענף.</p>
+    <p class="sub">${escHtml(data.multiplesIntro ?? 'מכפילים מכוילים מול עסקאות M&A רלוונטיות בענף.')}</p>
     <div class="box"><h3>מיקום מול טווח השוק</h3>${buildEquifyMultiplesTracksSvg(data.multiplesPositions)}</div>
     <table><tr><th>פרמטר</th><th>החברה</th><th>חציון השוק</th><th>פרשנות</th></tr>${multiplesInterpretation(data)}</table>
   </div>`;
