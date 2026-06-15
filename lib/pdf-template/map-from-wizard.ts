@@ -25,6 +25,7 @@ import {
   getSectorChipLabel,
   getSubSectorMultAdj,
 } from '../constants/industry_config';
+import { getScenarioNarrative } from '../i18n/equify_report_copy';
 import { computeNetDebtK } from '../wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 
@@ -237,27 +238,36 @@ function buildSensitivityEbitdaMult(ebitdaK: number, mult: number, debtK: number
 function scenarioRowsFromComputed(
   scenarios: ReturnType<typeof computeScenarios>,
   inputs: ValuationInputs,
+  sectorKey: EquifyWizardState['profile']['sector'],
+  locale: ValuationLocale = 'he',
 ): ScenarioRow[] {
   const labels: Record<string, string> = { bear: 'Bear', base: 'Base', bull: 'Bull' };
-  const narratives: Record<string, string> = {
-    bear: 'האטה ענפית · לחץ מחירים · EBITDA −2%',
-    base: 'המשך מגמה נוכחית · EBITDA יציב',
-    bull: 'הרחבה · גיוס לקוחות · EBITDA +2%',
-  };
+  const baseMargin = inputs.margin;
 
   return scenarios.rows.map((row) => {
     const mult = parseFloat(row.multDisplay.replace('×', '')) || 0;
     const marginAdj = row.label === 'bear' ? -2 : row.label === 'bull' ? 2 : 0;
+    const ebitdaMarginPct = baseMargin + marginAdj;
+    const baseRow = scenarios.rows.find((r) => r.label === 'base');
+    const narrative = getScenarioNarrative(row.label as 'bear' | 'base' | 'bull', sectorKey, {
+      growthPct: row.growthPct,
+      baseGrowthPct: baseRow?.growthPct ?? inputs.growth,
+      ebitdaMarginPct,
+      baseEbitdaMarginPct: baseMargin,
+    }, locale);
+
     return {
       key: row.label,
       label: labels[row.label],
       growthPct: row.growthPct,
-      ebitdaMarginPct: inputs.margin + marginAdj,
+      ebitdaMarginPct,
       waccPct: row.waccPct,
       multiple: mult,
       ev: kToNis(row.ev),
       equity: kToNis(row.equity),
-      narrative: narratives[row.label],
+      description: narrative.description,
+      fullDescription: narrative.fullDescription,
+      narrative: narrative.description,
     };
   });
 }
@@ -390,7 +400,7 @@ export function mapWizardToValuationData(
     waccSegments: buildWaccSegments(computed.wacc, computed.qs),
     dcfRows,
     terminalPvM,
-    scenarios: scenarioRowsFromComputed(scenarios, inputs),
+    scenarios: scenarioRowsFromComputed(scenarios, inputs, state.profile.sector, locale),
     modelBlend,
     qualityFactors: buildQualityFactors(inputs),
     multiplesPositions: [

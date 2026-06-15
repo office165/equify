@@ -13,8 +13,10 @@ import { fmtMillionParts } from '../../lib/valuation';
 import { formatCurrencyShort } from '../../lib/utils/formatCurrency';
 import { downloadEquifyPdf } from '../../lib/results/download-equify-pdf';
 import { getMultiplesIntroText } from '../../lib/constants/industry_config';
+import { scenariosIntroFromRows } from '../../lib/i18n/equify_report_copy';
 import { useEquifyStrings } from '../../lib/i18n/use_equify_strings';
 import { getGoalPurposeLabel } from '../../lib/i18n/equify_wizard_steps';
+import type { EquifySectorKey } from '../../lib/valuation';
 import { loadEquifyWizardState } from '../../lib/wizard/equify_storage';
 import { mapEquifyToWizardFormValues } from '../../lib/wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../../lib/wizard/resolve_company_display';
@@ -103,10 +105,14 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
     finalEquityM: coverEquityM,
   });
 
+  const sectorKey = useMemo((): EquifySectorKey => {
+    return loadEquifyWizardState()?.profile?.sector ?? 'other';
+  }, []);
+
   const scrollScenario = useMemo(
     () =>
-      vm ? buildScrollScenarioView(vm, scenario, vm.currency) : null,
-    [scenario, vm],
+      vm ? buildScrollScenarioView(vm, scenario, vm.currency, sectorKey) : null,
+    [scenario, sectorKey, vm],
   );
 
   const finData = useMemo(
@@ -142,6 +148,28 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
     }
     return rs.multIntro(vm?.industrySector ?? (isHe ? 'כללי' : 'General'));
   }, [isHe, locale, rs, vm?.industrySector]);
+
+  const scenariosIntro = useMemo(() => {
+    if (!vm) return rs.scenSub;
+    const baseGrowth = (vm.matrix.assumptions.revenue_growth_rates[0] ?? 0.09) * 100;
+    const baseMargin = vm.ebitdaMarginPct;
+    return scenariosIntroFromRows(
+      [
+        {
+          key: 'bear',
+          growthPct: Math.max(-5, baseGrowth - 6),
+          ebitdaMarginPct: baseMargin - 2,
+        },
+        { key: 'base', growthPct: baseGrowth, ebitdaMarginPct: baseMargin },
+        {
+          key: 'bull',
+          growthPct: baseGrowth + 6,
+          ebitdaMarginPct: baseMargin + 2,
+        },
+      ],
+      locale,
+    );
+  }, [locale, rs, vm]);
 
   const resolvedPurposeLabel = useMemo(() => {
     if (purposeLabel) return purposeLabel;
@@ -184,10 +212,10 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
     (key: ValuationScenario) => {
       if (!vm) return;
       setScenario(key);
-      const view = buildScrollScenarioView(vm, key, vm.currency);
+      const view = buildScrollScenarioView(vm, key, vm.currency, sectorKey);
       setScVal(view.equityM.toFixed(1));
     },
-    [vm],
+    [sectorKey, vm],
   );
 
   if (!matrix || !vm || !base || !bear || !bull || !scrollScenario) {
@@ -441,12 +469,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           <h2 className="t rv">
             {rs.dcfTitle} <span className="hl">{rs.dcfTitleHl}</span>
           </h2>
-          <p className="sub rv">
-            {rs.dcfSub(
-              `${base.waccPct.toFixed(1)}%`,
-              `${vm.terminalGrowthPct.toFixed(1)}%`,
-            )}
-          </p>
+          <p className="sub rv">{rs.dcfSub}</p>
 
           <div className="split">
             <div className="rv">
@@ -551,7 +574,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           <h2 className="t rv">
             {rs.scenTitle} <span className="hl">{rs.scenTitleHl}</span>
           </h2>
-          <p className="sub rv">{rs.scenSub}</p>
+          <p className="sub rv">{scenariosIntro}</p>
 
           <div className="scen-tabs rv" role="tablist" aria-label={rs.scenTabList}>
             {SCENARIO_KEYS.map((key) => (
@@ -579,6 +602,11 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
               <p className="sc-cap" id="scCap">
                 {scrollScenario.cap}
               </p>
+              {scrollScenario.capFull ? (
+                <p className="sub rv" style={{ marginTop: '0.75rem', maxWidth: '42rem' }}>
+                  {scrollScenario.capFull}
+                </p>
+              ) : null}
               <div className="range-big">
                 <div className="rb-bar">
                   <div className="rb-fill" />
@@ -635,6 +663,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           </div>
 
           <div className="gauge-wrap">
+            <p className="sub rv">{rs.qualSub}</p>
             <div className="rv">
               <QualityGaugeChart score={vm.qualityScore} grade={vm.qualityGrade} />
             </div>

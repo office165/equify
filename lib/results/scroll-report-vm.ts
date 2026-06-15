@@ -6,7 +6,9 @@ import {
   buildWaccDonutSlices,
   type ReportViewModel,
 } from './report-view-model';
+import type { EquifySectorKey } from '../valuation';
 import type { ValuationScenario } from '../valuation/canonical_valuation';
+import { getScenarioNarrative } from '../i18n/equify_report_copy';
 import { formatCurrencyShort } from '../utils/formatCurrency';
 
 export const SCROLL_SECTIONS = [
@@ -47,6 +49,7 @@ export interface QualityFactorView {
 export interface ScrollScenarioView {
   equityM: number;
   cap: string;
+  capFull?: string;
   dotPct: number;
   growth: string;
   margin: string;
@@ -89,7 +92,7 @@ export function buildExecSummary(
   const base = vm.scenarios.base;
   const isHe = locale === 'he';
   if (isHe) {
-    return `שקלול DCF (${(BLEND_WEIGHTS.dcf * 100).toFixed(0)}%), מכפיל EBITDA (${(BLEND_WEIGHTS.ebitda * 100).toFixed(0)}%) ומכפיל הכנסות (${(BLEND_WEIGHTS.rev * 100).toFixed(0)}%) מניב שווי פעילות של ${formatCurrencyShort(base.enterpriseValue, currency)}. בניכוי חוב נטו, השווי לבעלים עומד על ${formatCurrencyShort(base.equityValue, currency)}.`;
+    return `שקלול DCF (${(BLEND_WEIGHTS.dcf * 100).toFixed(0)}%), מכפיל EBITDA (${(BLEND_WEIGHTS.ebitda * 100).toFixed(0)}%) ומכפיל הכנסות (${(BLEND_WEIGHTS.rev * 100).toFixed(0)}%) מניב שווי פעילות של ${formatCurrencyShort(base.enterpriseValue, currency)}. בניכוי חוב נטו, שווי לבעלים בתרחיש בסיס: ${formatCurrencyShort(base.equityValue, currency)}.`;
   }
   return `Blended DCF, EBITDA and revenue multiples yield enterprise value of ${formatCurrencyShort(base.enterpriseValue, currency)} and equity value of ${formatCurrencyShort(base.equityValue, currency)}.`;
 }
@@ -183,6 +186,7 @@ export function buildScrollScenarioView(
   vm: ReportViewModel,
   scenario: ValuationScenario,
   currency: string,
+  sectorKey: EquifySectorKey = 'other',
 ): ScrollScenarioView {
   const s = vm.scenarios[scenario];
   const bear = vm.scenarios.bear.equityValue;
@@ -190,15 +194,25 @@ export function buildScrollScenarioView(
   const span = bull - bear || 1;
   const dotPct = Math.max(4, Math.min(96, ((s.equityValue - bear) / span) * 100));
 
-  const caps: Record<ValuationScenario, string> = {
-    bear: 'תרחיש דובי — האטה ענפית והקפאת מכפילים',
-    base: 'תרחיש בסיס — מגמה נוכחית וצמיחה מתונה',
-    bull: 'תרחיש שורי — האצת צמיחה והרחבת קיבולת',
-  };
+  const baseGrowth = (vm.matrix.assumptions.revenue_growth_rates[0] ?? 0.09) * 100;
+  const baseMargin = vm.ebitdaMarginPct;
+  const marginAdj = scenario === 'bear' ? -2 : scenario === 'bull' ? 2 : 0;
+  const narrative = getScenarioNarrative(scenario, sectorKey, {
+    growthPct:
+      scenario === 'bear'
+        ? Math.max(-5, baseGrowth - 6)
+        : scenario === 'bull'
+          ? baseGrowth + 6
+          : baseGrowth,
+    baseGrowthPct: baseGrowth,
+    ebitdaMarginPct: baseMargin + marginAdj,
+    baseEbitdaMarginPct: baseMargin,
+  });
 
   return {
     equityM: s.equityValue / 1_000_000,
-    cap: caps[scenario],
+    cap: narrative.description,
+    capFull: narrative.fullDescription,
     dotPct,
     growth: `${SCENARIO_GROWTH[scenario]}%`,
     margin: `${vm.ebitdaMarginPct.toFixed(1)}%`,

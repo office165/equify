@@ -29,8 +29,8 @@ function parseContentDispositionFilename(header: string | null): string | null {
 }
 
 function defaultPdfFilename(companyName: string): string {
-  const safe = companyName.replace(/[^\w\u0590-\u05FF]+/g, '-').slice(0, 40);
-  return `valuation-report-${safe || 'equify'}.pdf`;
+  const safe = companyName.trim() || 'equify';
+  return `דוח_${safe}.pdf`;
 }
 
 function readMatrixCompanyName(): string | undefined {

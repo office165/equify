@@ -34,6 +34,11 @@ export interface ScenarioRow {
   multiple: number;
   ev: number;
   equity: number;
+  /** Short tagline — e.g. האטה ענפית · לחץ מחירים · −2% EBITDA */
+  description?: string;
+  /** Full scenario narrative paragraph */
+  fullDescription?: string;
+  /** @deprecated use description */
   narrative?: string;
 }
 

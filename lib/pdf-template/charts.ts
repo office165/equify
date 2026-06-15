@@ -8,7 +8,11 @@ import type {
   TrajectoryPoint,
   WaccSegment,
 } from './types';
-import { fmtMoneyCompact } from '../pdf/print/print_formatters';
+import {
+  fmtMoneyCompact,
+  numHtml,
+  pdfDocumentDir,
+} from '../pdf/print/print_formatters';
 
 function toM(nis: number): number {
   return nis / 1_000_000;
@@ -379,15 +383,34 @@ export function buildQualityFactorBarsSvg(
   </svg>`;
 }
 
-export function buildSensitivityMatrixTable(matrix: SensitivityMatrix): string {
-  const header = matrix.waccLabels.map((l) => `<th>${l}</th>`).join('');
+function matrixAxisLabelHtml(label: string, locale?: string): string {
+  const rtl = pdfDocumentDir(locale) === 'rtl';
+  const shekel = label.match(/^₪([\d.]+)([KMB])$/);
+  if (shekel) {
+    const amount = `${shekel[1]}${shekel[2]}`;
+    return rtl ? `${numHtml(amount)} ₪` : numHtml(`₪${amount}`);
+  }
+  return numHtml(label);
+}
+
+export function buildSensitivityMatrixTable(
+  matrix: SensitivityMatrix,
+  locale?: string,
+): string {
+  const cornerHeader =
+    pdfDocumentDir(locale) === 'rtl' ? 'צמיחה \\ WACC' : 'Growth \\ WACC';
+  const baseSuffix = ' ←Base';
+  const header = matrix.waccLabels
+    .map((l) => `<th class="n">${matrixAxisLabelHtml(l, locale)}</th>`)
+    .join('');
   const body = matrix.growthLabels
     .map((growLabel, ri) => {
       const isBaseRow = ri === matrix.baseRow;
       const rowStyle = isBaseRow ? ' style="background:rgba(0,168,159,.06)"' : '';
+      const growHtml = matrixAxisLabelHtml(growLabel, locale);
       const growCell = isBaseRow
-        ? `<td style="font-weight:700;color:#00A89F">${growLabel} ←Base</td>`
-        : `<td style="font-weight:700">${growLabel}</td>`;
+        ? `<td style="font-weight:700;color:#00A89F">${growHtml}${baseSuffix}</td>`
+        : `<td style="font-weight:700">${growHtml}</td>`;
       const cells = matrix.cells[ri]
         ?.map((val, ci) => {
           const isCenter = ri === matrix.baseRow && ci === matrix.baseCol;
@@ -395,7 +418,7 @@ export function buildSensitivityMatrixTable(matrix: SensitivityMatrix): string {
           const style = isCenter
             ? ' style="background:rgba(0,168,159,.18);font-weight:700;color:#163530"'
             : '';
-          return `<td class="${cls}"${style}>${val.toFixed(1)}</td>`;
+          return `<td class="${cls}"${style}>${numHtml(val.toFixed(1))}</td>`;
         })
         .join('');
       return `<tr${rowStyle}>${growCell}${cells}</tr>`;
@@ -403,27 +426,36 @@ export function buildSensitivityMatrixTable(matrix: SensitivityMatrix): string {
     .join('');
 
   return `<div class="sens-grid"><table>
-    <tr><th style="background:#F0F8F6">צמיחה \\ WACC</th>${header}</tr>
+    <tr><th style="background:#F0F8F6">${cornerHeader}</th>${header}</tr>
     ${body}
   </table></div>`;
 }
 
-export function buildEbitdaSensitivityTable(matrix: EbitdaSensitivityMatrix): string {
-  const header = matrix.multipleLabels.map((l) => `<th>${l}</th>`).join('');
+export function buildEbitdaSensitivityTable(
+  matrix: EbitdaSensitivityMatrix,
+  locale?: string,
+): string {
+  const ebitdaCorner =
+    pdfDocumentDir(locale) === 'rtl' ? 'EBITDA \\ מכפיל' : 'EBITDA \\ Multiple';
+  const baseSuffix = ' ←Base';
+  const header = matrix.multipleLabels
+    .map((l) => `<th class="n">${matrixAxisLabelHtml(l, locale)}</th>`)
+    .join('');
   const body = matrix.ebitdaLabels
     .map((ebitdaLabel, ri) => {
       const isBase = ri === matrix.baseRow;
       const rowStyle = isBase ? ' style="background:rgba(0,168,159,.06)"' : '';
+      const labelHtml = matrixAxisLabelHtml(ebitdaLabel, locale);
       const labelCell = isBase
-        ? `<td class="n"><b>${ebitdaLabel} ←Base</b></td>`
-        : `<td class="n">${ebitdaLabel}</td>`;
+        ? `<td class="n"><b>${labelHtml}${baseSuffix}</b></td>`
+        : `<td class="n">${labelHtml}</td>`;
       const cells = matrix.cells[ri]
         ?.map((val, ci) => {
           const isCenter = ri === matrix.baseRow && ci === matrix.baseCol;
           const style = isCenter
             ? ' class="n center-cell" style="background:rgba(0,168,159,.18);font-weight:700"'
             : ' class="n"';
-          return `<td${style}>${val.toFixed(1)}</td>`;
+          return `<td${style}>${numHtml(val.toFixed(1))}</td>`;
         })
         .join('');
       return `<tr${rowStyle}>${labelCell}${cells}</tr>`;
@@ -431,7 +463,7 @@ export function buildEbitdaSensitivityTable(matrix: EbitdaSensitivityMatrix): st
     .join('');
 
   return `<table>
-    <tr><th>EBITDA \\ מכפיל</th>${header}</tr>
+    <tr><th>${ebitdaCorner}</th>${header}</tr>
     ${body}
   </table>`;
 }

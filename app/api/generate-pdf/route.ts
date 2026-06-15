@@ -4,6 +4,10 @@ import { NextResponse } from 'next/server';
 import { appRouteMethodNotAllowed, jsonError } from '../../../lib/api/http';
 import { buildPdfHtml } from '../../../lib/pdf-template';
 import { mapWizardToValuationData } from '../../../lib/pdf-template/map-from-wizard';
+import {
+  isEquifyReportApiPayload,
+  mapApiPayloadToValuationData,
+} from '../../../lib/pdf-template/map-from-api';
 import type { ValuationData } from '../../../lib/pdf-template';
 import { renderHtmlToPdfBuffer } from '../../../lib/pdf/render_html_pdf';
 import { renderWizardSummaryPdfBuffer } from '../../../lib/pdf/render_wizard_summary_pdf';
@@ -14,20 +18,60 @@ export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 interface GeneratePdfBody {
-  /** נתוני דוח מלא — עדיפות על state */
-  data?: ValuationData;
-  /** מצב אשף equify — ימופה ל-ValuationData + נדרש ל-fallback */
+  companyName?: string;
+  registrationId?: string;
+  valuationPurpose?: string;
+  valuationDate?: string;
+  language?: ValuationLocale;
+  sector?: string;
+  sectorLabel?: string;
+  /** ValuationData, nested API payload, or omitted when using wizard state */
+  data?: ValuationData | Record<string, unknown>;
   state?: EquifyWizardState;
   reportId?: string;
   filename?: string;
   locale?: ValuationLocale;
 }
 
-/** RFC 5987 — HTTP headers are Latin1-only; non-ASCII filenames need filename*. */
+/** RFC 5987 — HTTP headers are Latin1-only; never put Hebrew in filename= alone. */
 function buildContentDisposition(filename: string): string {
   const asciiFallback =
     filename.replace(/[^\x20-\x7E]/g, '_').replace(/["\\]/g, '_') || 'report.pdf';
   return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
+
+function defaultUtf8Filename(companyName: string): string {
+  const safe = companyName.trim() || 'equify';
+  return `דוח_${safe}.pdf`;
+}
+
+function isValuationDataShape(data: unknown): data is ValuationData {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as Record<string, unknown>;
+  return typeof d.companyName === 'string' && typeof d.equity === 'number';
+}
+
+function resolveValuationData(body: GeneratePdfBody): {
+  valuationData: ValuationData;
+  wizardState?: EquifyWizardState;
+} | { error: string } {
+  if (isEquifyReportApiPayload(body)) {
+    return { valuationData: mapApiPayloadToValuationData(body) };
+  }
+
+  if (isValuationDataShape(body.data)) {
+    return { valuationData: body.data };
+  }
+
+  if (body.state?.profile) {
+    const pdfLocale = body.locale ?? body.language ?? 'he';
+    return {
+      valuationData: mapWizardToValuationData(body.state, body.reportId, pdfLocale),
+      wizardState: body.state,
+    };
+  }
+
+  return { error: 'Provide companyName+data (API payload), data (ValuationData), or state (wizard).' };
 }
 
 function pdfResponse(
@@ -46,7 +90,7 @@ function pdfResponse(
   });
 }
 
-/** יצירת דוח PDF — Puppeteer (7 עמודים) עם fallback ל-@react-pdf/renderer */
+/** PDF report — Puppeteer (8 pages) with react-pdf fallback when wizard state is provided. */
 export async function POST(request: Request) {
   try {
     let body: GeneratePdfBody;
@@ -56,22 +100,16 @@ export async function POST(request: Request) {
       return jsonError('Invalid JSON body.', 400, 'INVALID_JSON');
     }
 
-    let valuationData: ValuationData;
-    let wizardState: EquifyWizardState | undefined = body.state;
-
-    if (body.data?.companyName) {
-      valuationData = body.data;
-    } else if (body.state?.profile) {
-      wizardState = body.state;
-      const pdfLocale = body.locale ?? 'he';
-      valuationData = mapWizardToValuationData(body.state, body.reportId, pdfLocale);
-    } else {
-      return jsonError('data or state is required.', 400, 'VALIDATION_ERROR');
+    const resolved = resolveValuationData(body);
+    if ('error' in resolved) {
+      return jsonError(resolved.error, 400, 'VALIDATION_ERROR');
     }
 
-    const safeName =
+    const { valuationData, wizardState } = resolved;
+
+    const utf8Filename =
       body.filename ??
-      `equify-${valuationData.companyName.replace(/[^\w\u0590-\u05FF]+/g, '-').slice(0, 40)}.pdf`;
+      defaultUtf8Filename(valuationData.companyName);
 
     try {
       const html = buildPdfHtml(valuationData);
@@ -98,7 +136,7 @@ export async function POST(request: Request) {
         buffer = await renderHtmlToPdfBuffer(html);
       }
 
-      return pdfResponse(buffer, safeName, 'puppeteer');
+      return pdfResponse(buffer, utf8Filename, 'puppeteer');
     } catch (puppeteerErr) {
       console.warn(
         '[generate-pdf] Puppeteer unavailable, falling back to react-pdf',
@@ -117,7 +155,7 @@ export async function POST(request: Request) {
         wizardState,
         body.reportId ?? valuationData.reportId,
       );
-      return pdfResponse(buffer, safeName, 'react-pdf');
+      return pdfResponse(buffer, utf8Filename, 'react-pdf');
     }
   } catch (err) {
     console.error('[generate-pdf]', err);

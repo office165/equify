@@ -8,7 +8,13 @@ export function buildEquifyPdfCss(): string {
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Assistant',sans-serif;color:var(--ink);background:#E6EDEB;font-size:11.5px;line-height:1.6;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.num{font-family:'IBM Plex Mono',monospace;direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+.num{font-family:'IBM Plex Mono',monospace;direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums;display:inline-block}
+html[dir=rtl] .num-currency-gap{margin-inline-start:.15em}
+html[dir=ltr] th{text-align:left}
+html[dir=ltr] td.n{text-align:right}
+html[dir=ltr] .kcard .kv{text-align:left}
+html[dir=ltr] .wf-row b{text-align:right}
+html[dir=ltr] .c-grid b{direction:ltr}
 .sheet{width:210mm;height:296mm;background:var(--bg);margin:0 auto;position:relative;overflow:hidden;page-break-after:always;display:flex;flex-direction:column}
 .sheet:last-of-type{page-break-after:auto}
 @media print{body{background:#fff}.sheet{margin:0}}
@@ -64,5 +70,8 @@ tr.sum td.n{color:var(--turq)}
 .wf-track{height:8mm;border-radius:4px;background:#F0F8F6;position:relative;overflow:hidden}
 .wf-fill{position:absolute;top:0;bottom:0;border-radius:4px}
 .wf-row b{font-family:'IBM Plex Mono',monospace;direction:ltr;text-align:left;font-weight:600}
+.sens-grid table td.center-cell{background:rgba(0,168,159,.18);font-weight:700;color:var(--pine)}
+.sens-grid table{font-size:9.5px}
+.sens-grid th{background:var(--tint)}
 `;
 }
