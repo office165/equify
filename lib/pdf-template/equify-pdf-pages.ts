@@ -9,6 +9,7 @@ import {
   numHtml,
   pctHtml,
   reportDateHe,
+  reportDateShortHe,
 } from '../pdf/print/print_formatters';
 import {
   buildEbitdaSensitivityTable,
@@ -55,12 +56,11 @@ function head(rid: string): string {
 }
 
 function foot(page: number, locale?: ValuationData['locale']): string {
-  const f = pdfFmt(locale);
-  const pageLabel =
-    locale === 'en'
-      ? `Page ${f.int(page)} / ${f.int(TOTAL_PAGES)}`
-      : `עמוד ${f.int(page)} / ${f.int(TOTAL_PAGES)}`;
-  return `<div class="foot"><span>EQUIFY VALUATION ENGINE © 2026 SBC</span><span class="pg">${pageLabel}</span></div>`;
+  const en = locale === 'en';
+  const pageInner = en
+    ? `Page <b>${page}</b> / ${TOTAL_PAGES}`
+    : `עמוד <b>${page}</b> / ${TOTAL_PAGES}`;
+  return `<div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">${pageInner}</span></div>`;
 }
 
 function wrapSheet(
@@ -69,7 +69,7 @@ function wrapSheet(
   body: string,
   locale?: ValuationData['locale'],
 ): string {
-  return `<div class="sheet${className ? ` ${className}` : ''}">${body}${foot(page, locale)}</div>`;
+  return `<div class="page${className ? ` ${className}` : ''}">${body}${foot(page, locale)}</div>`;
 }
 
 function metaLine(data: ValuationData): string {
@@ -107,7 +107,7 @@ function buildPage1Cover(data: ValuationData): string {
   const dateLabel = reportDateHe(data.valuationDate);
   const body = `
   ${head(`VALUATION REPORT · #${escHtml(data.reportId)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body">
     ${buildEquifyCoverRingsSvg()}
     <div class="cwrap">
@@ -138,11 +138,11 @@ function buildPage2ExecSummary(data: ValuationData): string {
         `<tr><td>${escHtml(r.name)}</td><td class="n">${f.money(r.ev)}</td><td class="n">${f.pct(r.weightPct, 0)}</td><td class="n">${f.money(r.contribution)}</td></tr>`,
     )
     .join('');
-  const noteDate = data.valuationDateShort ?? reportDateHe(data.valuationDate);
+  const noteDate = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body">
     <span class="eyebrow">02 · תקציר מנהלים</span>
     <h2>תקציר מנהלים</h2>
@@ -184,7 +184,7 @@ function buildPage3Financials(data: ValuationData): string {
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body">
     <span class="eyebrow">03 · נתונים פיננסיים</span>
     <h2>נתונים פיננסיים</h2>
@@ -212,7 +212,7 @@ function buildPage4Dcf(data: ValuationData): string {
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body">
     <span class="eyebrow">04 · היוון תזרימי מזומנים</span>
     <h2>DCF + WACC</h2>
@@ -260,7 +260,7 @@ function buildCompsTable(data: ValuationData): string {
 function buildPage5Multiples(data: ValuationData): string {
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body">
     <span class="eyebrow">05 · מכפילי שוק</span>
     <h2>מיקום מול עסקאות השוואה</h2>
@@ -315,7 +315,7 @@ function buildPage6Scenarios(data: ValuationData): string {
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body">
     <span class="eyebrow">${en ? '06 · Scenarios' : '06 · תרחישים'}</span>
     <h2>${en ? 'Equity range by scenario' : 'טווח שווי לפי תרחיש'}</h2>
@@ -362,7 +362,7 @@ function buildPage7QualitySensitivity(data: ValuationData): string {
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body">
     <span class="eyebrow">${en ? '07 · Quality & sensitivity' : '07 · איכות ורגישות'}</span>
     <h2>${en ? 'Quality Score & sensitivity analysis' : 'Quality Score וניתוח רגישות'}</h2>
@@ -392,10 +392,10 @@ function blendWeightBar(data: ValuationData): string {
 
 function buildPage8Combined(data: ValuationData): string {
   const f = pdfFmt(data.locale);
-  const dateLabel = data.valuationDateShort ?? reportDateHe(data.valuationDate);
+  const dateLabel = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
-  <div class="rule"></div>
+  <div class="rule-grad"></div>
   <div class="body" style="text-align:center;display:flex;flex-direction:column;justify-content:center">
     <span class="eyebrow" style="justify-content:center">08 · שווי משולב</span>
     <h2>שווי משולב</h2>

@@ -11,9 +11,9 @@
   --paper: #E8F2F0;
   --paper-dim: #7FA8A2;
   --line: rgba(0, 194, 184, 0.13);
-  --display: var(--font-equify, 'Manrope'), 'Frank Ruhl Libre', serif;
-  --body: var(--font-equify, 'Manrope'), 'Assistant', system-ui, sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --body: var(--font-sans, var(--font-equify), 'Assistant', system-ui, sans-serif);
+  --display: var(--body);
+  --mono: var(--font-mono, 'IBM Plex Mono'), ui-monospace, monospace;
   --max: 1240px;
   --sidebar-w: 220px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -111,7 +111,6 @@
 }
 
 .rr-brand {
-  font-family: var(--display);
   font-weight: 800;
   font-size: 1.35rem;
   letter-spacing: -0.02em;
@@ -229,7 +228,6 @@
 }
 
 .rr-page-title {
-  font-family: var(--display);
   font-size: clamp(1.5rem, 3vw, 2rem);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -245,7 +243,6 @@
 
 /* ============ HERO / COVER ============ */
 .rr-hero-equity {
-  font-family: var(--display);
   font-size: clamp(2.4rem, 6vw, 3.6rem);
   font-weight: 900;
   letter-spacing: -0.03em;
@@ -348,7 +345,6 @@
 }
 
 .rr-kpi__value {
-  font-family: var(--display);
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--turq-soft);
@@ -364,7 +360,6 @@
 }
 
 .rr-section-title {
-  font-family: var(--display);
   font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 20px;
@@ -481,7 +476,6 @@
 }
 
 .rr-wacc-donut__value {
-  font-family: var(--display);
   font-size: 1.6rem;
   font-weight: 800;
   color: var(--mint);
@@ -531,7 +525,6 @@
 
 .rr-quality-gauge__score {
   fill: var(--mint);
-  font-family: var(--display);
   font-size: 28px;
   font-weight: 800;
 }
@@ -617,7 +610,6 @@
 }
 
 .rr-blend__model-value {
-  font-family: var(--display);
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--mint);
@@ -633,7 +625,6 @@
 }
 
 .rr-blend__total strong {
-  font-family: var(--display);
   font-size: 1.35rem;
   color: var(--turq-soft);
 }

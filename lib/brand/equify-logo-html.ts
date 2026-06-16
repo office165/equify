@@ -59,10 +59,10 @@ export function equifyLogoHtml(
   <g transform="translate(0, ${L.markY}) scale(${L.markScale})">
     ${markPaths(ink, slice, gradId)}
   </g>
-  <text x="${L.wordmarkX}" y="${L.wordmarkY}" fill="${ink}" font-family="Manrope,Inter,ui-sans-serif,system-ui,sans-serif" font-size="${L.wordmarkSize}" font-weight="700" letter-spacing="-0.01em">equify</text>
+  <text x="${L.wordmarkX}" y="${L.wordmarkY}" fill="${ink}" font-family="Assistant,var(--font-equify),ui-sans-serif,system-ui,sans-serif" font-size="${L.wordmarkSize}" font-weight="700" letter-spacing="-0.01em">equify</text>
   ${
     opts.showSubBrand !== false
-      ? `<text x="${L.subBrandX}" y="${L.subBrandY}" fill="${sub}" font-family="Manrope,Inter,ui-sans-serif,system-ui,sans-serif" font-size="9" font-weight="500" letter-spacing="0.18em" text-anchor="end">BY SBC</text>`
+      ? `<text x="${L.subBrandX}" y="${L.subBrandY}" fill="${sub}" font-family="Assistant,var(--font-equify),ui-sans-serif,system-ui,sans-serif" font-size="9" font-weight="500" letter-spacing="0.18em" text-anchor="end">BY SBC</text>`
       : ''
   }
 </svg>`;

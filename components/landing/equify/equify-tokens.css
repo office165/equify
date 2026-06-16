@@ -14,8 +14,8 @@
   --paper: #e8f2f0;
   --paper-dim: #7fa8a2;
   --line: rgba(0, 194, 184, 0.13);
-  --display: var(--font-landing-display), 'Frank Ruhl Libre', serif;
-  --body: var(--font-landing-body), 'Assistant', system-ui, sans-serif;
+  --body: var(--font-sans);
+  --display: var(--body);
   --mono: var(--font-landing-mono), 'IBM Plex Mono', monospace;
   --max: 1240px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

@@ -12,6 +12,7 @@ import {
 import { fmtMillionParts } from '../../lib/valuation';
 import { formatCurrencyShort } from '../../lib/utils/formatCurrency';
 import { downloadEquifyPdf } from '../../lib/results/download-equify-pdf';
+import { downloadEquifyHtml } from '../../lib/results/download-equify-html';
 import { getMultiplesIntroText } from '../../lib/constants/industry_config';
 import { scenariosIntroFromRows } from '../../lib/i18n/equify_report_copy';
 import { useEquifyStrings } from '../../lib/i18n/use_equify_strings';
@@ -55,7 +56,8 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
   const [scenario, setScenario] = useState<ValuationScenario>('base');
   const [scVal, setScVal] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [isDownloadingHtml, setIsDownloadingHtml] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [idLabel, setIdLabel] = useState('');
   const [purposeLabel, setPurposeLabel] = useState('');
@@ -186,7 +188,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
   const handleDownloadPdf = useCallback(async () => {
     if (!vm || !base) return;
     setIsDownloadingPdf(true);
-    setPdfError(null);
+    setExportError(null);
     try {
       const stored = loadEquifyWizardState();
       const industryCode = stored
@@ -201,12 +203,37 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
       });
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : shell.pdfFailed;
-      setPdfError(message);
+        err instanceof Error ? err.message : shell.exportFailed;
+      setExportError(message);
     } finally {
       setIsDownloadingPdf(false);
     }
-  }, [base, displayCompanyName, locale, shell.pdfFailed, vm]);
+  }, [base, displayCompanyName, locale, shell.exportFailed, vm]);
+
+  const handleDownloadHtml = useCallback(async () => {
+    if (!vm || !base) return;
+    setIsDownloadingHtml(true);
+    setExportError(null);
+    try {
+      const stored = loadEquifyWizardState();
+      const industryCode = stored
+        ? mapEquifyToWizardFormValues(stored).industry
+        : undefined;
+      await downloadEquifyHtml({
+        equityValue: base.equityValue,
+        reportId: vm.reportId,
+        companyName: displayCompanyName,
+        industryCode,
+        locale,
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : shell.exportFailed;
+      setExportError(message);
+    } finally {
+      setIsDownloadingHtml(false);
+    }
+  }, [base, displayCompanyName, locale, shell.exportFailed, vm]);
 
   const handleScenario = useCallback(
     (key: ValuationScenario) => {
@@ -244,6 +271,8 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
   const scColor =
     scenario === 'bear' ? '#D97575' : scenario === 'bull' ? '#C49A3C' : '#9EEEE6';
   const millionParts = fmtMillionParts(locale);
+  const equityM = toMillions(base.equityValue);
+  const evM = toMillions(base.enterpriseValue);
   const scenarioLabel = (key: ValuationScenario) => {
     if (key === 'bear') return rs.scenarioBear;
     if (key === 'bull') return rs.scenarioBull;
@@ -274,9 +303,18 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
             <EquifyLanguageToggle />
             <button
               type="button"
+              className="btn btn-ghost"
+              onClick={handleDownloadHtml}
+              disabled={isDownloadingHtml || isDownloadingPdf}
+              aria-busy={isDownloadingHtml}
+            >
+              {isDownloadingHtml ? shell.htmlGenerating : shell.htmlDownload}
+            </button>
+            <button
+              type="button"
               className="btn"
               onClick={handleDownloadPdf}
-              disabled={isDownloadingPdf}
+              disabled={isDownloadingPdf || isDownloadingHtml}
               aria-busy={isDownloadingPdf}
             >
               {isDownloadingPdf ? shell.pdfGenerating : shell.pdfDownload}
@@ -285,9 +323,9 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
         </div>
       </header>
 
-      {pdfError ? (
+      {exportError ? (
         <div className="wrap" style={{ padding: '8px 0', color: '#D97575', fontSize: 13 }}>
-          {pdfError}
+          {exportError}
         </div>
       ) : null}
 
@@ -327,7 +365,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           </h1>
           <div className="c-val num">
             {millionParts.prefix ? <span>{millionParts.prefix}</span> : null}
-            <span id="coverVal">0.0</span>
+            <span id="coverVal">{equityM.toFixed(1)}</span>
             {millionParts.suffix}
           </div>
           <p className="c-cap">
@@ -364,9 +402,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
             <div className="kcard rv">
               <div className="kv num" style={{ color: 'var(--mint)' }}>
                 {millionParts.prefix}
-                <span className="cnt" data-to={toMillions(base.equityValue)} data-dec={1}>
-                  0
-                </span>
+                {equityM.toFixed(1)}
                 {millionParts.suffix}
               </div>
               <div className="kl">{rs.kEquity}</div>
@@ -374,28 +410,20 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
             <div className="kcard rv">
               <div className="kv num">
                 {millionParts.prefix}
-                <span className="cnt" data-to={toMillions(base.enterpriseValue)} data-dec={1}>
-                  0
-                </span>
+                {evM.toFixed(1)}
                 {millionParts.suffix}
               </div>
               <div className="kl">{rs.kEv}</div>
             </div>
             <div className="kcard rv">
               <div className="kv num">
-                <span className="cnt" data-to={base.waccPct} data-dec={1}>
-                  0
-                </span>
-                %
+                {base.waccPct.toFixed(1)}%
               </div>
               <div className="kl">{rs.kWacc}</div>
             </div>
             <div className="kcard rv">
               <div className="kv num" style={{ color: 'var(--gold)' }}>
-                {vm.qualityGrade} ·{' '}
-                <span className="cnt" data-to={vm.qualityScore}>
-                  0
-                </span>
+                {vm.qualityGrade} · {vm.qualityScore}
               </div>
               <div className="kl">Quality Score</div>
             </div>
@@ -711,7 +739,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
 
           <div className="final-val rv">
             {millionParts.prefix}
-            <span id="finalVal">0.0</span>
+            <span id="finalVal">{equityM.toFixed(1)}</span>
             {millionParts.suffix}
           </div>
           <p className="final-cap rv">
@@ -721,9 +749,18 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           <div className="final-cta rv">
             <button
               type="button"
+              className="btn btn-ghost"
+              onClick={handleDownloadHtml}
+              disabled={isDownloadingHtml || isDownloadingPdf}
+              aria-busy={isDownloadingHtml}
+            >
+              {isDownloadingHtml ? shell.htmlGenerating : shell.htmlDownload}
+            </button>
+            <button
+              type="button"
               className="btn"
               onClick={handleDownloadPdf}
-              disabled={isDownloadingPdf}
+              disabled={isDownloadingPdf || isDownloadingHtml}
               aria-busy={isDownloadingPdf}
             >
               {isDownloadingPdf ? shell.pdfGenerating : shell.pdfDownload}

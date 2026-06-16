@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>equify — דוח הערכת שווי מוסדי</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;700;900&family=Assistant:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+/* ═══════════════ RESET & TOKENS ═══════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --pine: #163530;    --pine2: #0F2E29;   --turq: #00A89F;
+  --turqB:#00C2B8;    --gold: #A8842E;    --goldL:#C9A84C;
+  --red:  #C24A4A;    --ink:  #1E3A36;    --dim:  #527570;
+  --line: #D6E8E4;    --tint: #F0F8F6;    --bg:   #FFFFFF;
+}
+html,body{background:#E8ECEB; font-family:'Assistant',sans-serif; font-size:11px; color:var(--ink); -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.mono{font-family:'IBM Plex Mono',monospace; direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums}
+.num{font-family:'IBM Plex Mono',monospace; direction:ltr; text-align:left}
+
+/* ═══════════════ PAGE SHELL ═══════════════ */
+.page{
+  width:210mm; min-height:296mm; background:var(--bg);
+  margin:6mm auto; display:flex; flex-direction:column;
+  position:relative; overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.18);
+}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .page{margin:0;box-shadow:none;page-break-after:always}
+  .page:last-child{page-break-after:auto}
+}
+
+/* ═══════════════ LETTERHEAD ═══════════════ */
+.lh{padding:9mm 13mm 0; display:flex; justify-content:space-between; align-items:flex-start}
+.logo-txt{font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:19px; color:var(--pine)}
+.logo-txt em{font-style:normal; color:var(--turqB)}
+.logo-txt small{font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:.2em; color:var(--gold); margin-inline-start:5px}
+.rid{font-family:'IBM Plex Mono',monospace; font-size:7px; color:var(--dim); letter-spacing:.07em; text-align:left}
+.rule-grad{height:2.5px; margin:4mm 13mm 0; background:linear-gradient(90deg,var(--turqB) 0%,var(--gold) 55%,var(--turq) 100%); border-radius:2px}
+
+.body{flex:1; padding:6mm 13mm 0}
+.foot{padding:0 13mm 7mm; margin-top:auto; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); padding-top:4mm; margin-top:6mm}
+.foot-l{font-size:7px; color:var(--dim); font-family:'IBM Plex Mono',monospace}
+.foot-r{font-size:7px; color:var(--dim); font-family:'IBM Plex Mono',monospace}
+.foot-pg b{color:var(--turq)}
+
+/* ═══════════════ SECTION LABELS ═══════════════ */
+.eyebrow{display:inline-flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:.2em; color:var(--turq); text-transform:uppercase; font-weight:600; margin-bottom:3mm}
+.eyebrow::before{content:""; width:18px; height:1.5px; background:var(--turq)}
+.section-divider{display:flex; align-items:center; gap:8px; margin:6mm 0 4mm}
+.section-divider h2{font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:16px; color:var(--pine)}
+.section-divider .sd-line{flex:1; height:1px; background:linear-gradient(90deg,var(--line),transparent)}
+.section-num{font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--dim); margin-inline-end:2px}
+
+h2{font-family:'Frank Ruhl Libre',serif; font-weight:900; font-size:18px; color:var(--pine); line-height:1.2; margin-bottom:2mm}
+h3{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:12px; color:var(--pine); margin-bottom:2mm}
+h4{font-family:'Assistant',sans-serif; font-weight:700; font-size:10.5px; color:var(--ink); margin-bottom:1.5mm}
+p{line-height:1.65; color:var(--ink); margin-bottom:2mm}
+.sub{color:var(--dim); font-size:10px; line-height:1.6}
+
+/* ═══════════════ COVER ═══════════════ */
+.cover-hero{text-align:center; padding:8mm 0 6mm; position:relative}
+.cover-rings{position:absolute; inset:0; pointer-events:none}
+.cover-content{position:relative; z-index:1}
+.cv-company{font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:22px; color:var(--pine); margin-bottom:1.5mm}
+.cv-meta{font-family:'IBM Plex Mono',monospace; font-size:7.5px; color:var(--dim); letter-spacing:.1em; margin-bottom:8mm}
+.cv-big{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:64px; color:var(--pine); direction:ltr; line-height:1; margin-bottom:1.5mm}
+.cv-big span{color:var(--turqB)}
+.cv-range{font-size:9.5px; color:var(--dim); margin-bottom:5mm}
+.cv-range b{color:var(--ink)}
+.seal{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--gold); color:var(--gold); font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:.16em; padding:5px 14px; border-radius:30px; font-weight:600; margin-bottom:7mm}
+.seal i{width:5px; height:5px; border-radius:50%; background:var(--gold); display:inline-block}
+
+/* ═══════════════ KPI ROW ═══════════════ */
+.krow{display:grid; grid-template-columns:repeat(4,1fr); gap:3mm; margin:4mm 0}
+.kc{border:1px solid var(--line); border-radius:7px; padding:4mm 4mm; background:var(--tint); position:relative; overflow:hidden}
+.kc::before{content:""; position:absolute; bottom:0; inset-inline:0; height:2.5px; background:var(--turq)}
+.kc b{font-family:'IBM Plex Mono',monospace; font-size:16px; display:block; direction:ltr; text-align:right; color:var(--pine); font-weight:600}
+.kc b.hl{color:var(--turqB)} .kc b.gd{color:var(--gold)} .kc b.rd{color:var(--red)}
+.kc span{font-size:8px; color:var(--dim)}
+.kc-label{font-size:9px; font-weight:600; color:var(--ink); margin-top:1mm}
+
+/* ═══════════════ TABLES ═══════════════ */
+table{width:100%; border-collapse:collapse; margin-bottom:3mm; font-size:9.5px}
+th{font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:.1em; color:var(--dim); text-align:right; font-weight:600; padding:5px 7px; background:var(--tint); border-bottom:2px solid var(--pine); border-top:1px solid var(--line)}
+td{padding:5.5px 7px; border-bottom:1px solid var(--line); vertical-align:middle}
+td.n{font-family:'IBM Plex Mono',monospace; direction:ltr; text-align:left}
+tr:nth-child(even){background:rgba(240,248,246,.45)}
+tr.sum td{font-weight:700; background:var(--tint); border-top:2px solid var(--pine); border-bottom:2px solid var(--pine)}
+tr.sum td.n{color:var(--turq)}
+tr.bear-val{color:var(--red);font-weight:600} tr.base-row td{background:rgba(0,168,159,.06)} tr.base-row td.n-val{color:var(--turq);font-weight:700} tr.bull-val{color:var(--gold);font-weight:600}
+tr.hl-row td{font-weight:700}
+
+/* ═══════════════ BOX / CALLOUT ═══════════════ */
+.box{border:1px solid var(--line); border-radius:9px; padding:5mm; margin:3mm 0; background:var(--bg)}
+.box.tint{background:var(--tint)}
+.callout{border-inline-start:3px solid var(--turqB); padding:3mm 5mm; background:var(--tint); border-radius:0 7px 7px 0; margin:3mm 0; font-size:9.5px}
+.callout.gold{border-color:var(--gold)}
+.callout.red{border-color:var(--red)}
+
+/* ═══════════════ TWO / THREE COLUMN ═══════════════ */
+.cols2{display:grid; grid-template-columns:1fr 1fr; gap:4mm}
+.cols3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:3mm}
+.cols-6-4{display:grid; grid-template-columns:1.5fr 1fr; gap:5mm; align-items:start}
+.cols-4-6{display:grid; grid-template-columns:1fr 1.5fr; gap:5mm; align-items:start}
+
+/* ═══════════════ WATERFALL SVG ═══════════════ */
+.chart-title{font-family:'IBM Plex Mono',monospace; font-size:8px; letter-spacing:.1em; color:var(--dim); margin-bottom:2mm; text-transform:uppercase}
+.chart-wrap{border:1px solid var(--line); border-radius:9px; padding:4mm; background:var(--tint); margin:3mm 0}
+
+/* ═══════════════ DISC ═══════════════ */
+.disclaimer{font-size:7.5px; color:var(--dim); border-top:1px solid var(--line); padding-top:3mm; margin-top:4mm; line-height:1.6}
+
+/* ═══════════════ BADGE / PILL ═══════════════ */
+.pill{display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:7px; letter-spacing:.1em; padding:2px 8px; border-radius:20px; font-weight:600}
+.pill-green{background:rgba(0,168,159,.12); color:var(--turq); border:1px solid rgba(0,168,159,.3)}
+.pill-gold{background:rgba(168,132,46,.12); color:var(--gold); border:1px solid rgba(168,132,46,.3)}
+.pill-red{background:rgba(194,74,74,.1); color:var(--red); border:1px solid rgba(194,74,74,.25)}
+
+/* ═══════════════ SENSITIVITY GRID ═══════════════ */
+.sens-grid table td.center-cell{background:rgba(0,168,159,.18); font-weight:700; color:var(--pine)}
+.sens-grid table td.low{color:var(--red)} .sens-grid table td.high{color:var(--turq)}
+
+/* ═══════════════ FLOW DIAGRAM ═══════════════ */
+.flow{display:flex; align-items:stretch; gap:0; margin:3mm 0}
+.flow-step{flex:1; background:var(--tint); border:1px solid var(--line); padding:3mm 3mm; text-align:center; position:relative; font-size:9px}
+.flow-step:not(:last-child)::after{content:"←"; position:absolute; inset-inline-end:-8px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--turq); z-index:1; background:white; padding:0 1px}
+.flow-step .fs-num{font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; color:var(--turqB); display:block; margin-bottom:1mm}
+.flow-step .fs-lbl{font-weight:700; color:var(--pine); font-size:8.5px}
+.flow-step .fs-sub{color:var(--dim); font-size:7.5px; margin-top:1mm}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 1 — COVER
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh">
+    <div class="logo-txt">equify<em>.</em><small>BY SBC</small></div>
+    <div class="rid">VALUATION REPORT · #EQ-2026-0612<br>STRICTLY CONFIDENTIAL</div>
+  </div>
+  <div class="rule-grad"></div>
+  <div class="body" style="display:flex;flex-direction:column;justify-content:center;padding-top:4mm">
+
+    <div class="cover-hero">
+      <!-- decorative SVG rings -->
+      <svg class="cover-rings" viewBox="0 0 560 320" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+        <circle cx="280" cy="160" r="145" fill="none" stroke="#00A89F" stroke-opacity=".1" stroke-width="1"/>
+        <circle cx="280" cy="160" r="175" fill="none" stroke="#A8842E" stroke-opacity=".12" stroke-width="1" stroke-dasharray="3 7"/>
+        <circle cx="280" cy="160" r="115" fill="none" stroke="#00C2B8" stroke-opacity=".07" stroke-width="18"/>
+        <path d="M160 160 Q280 100 400 160" fill="none" stroke="#00A89F" stroke-opacity=".08" stroke-width="1"/>
+        <!-- mini sparkline decorative -->
+        <polyline points="80,240 110,225 140,232 170,208 200,215 230,195 260,200 290,182 320,188" fill="none" stroke="#00C2B8" stroke-opacity=".18" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+
+      <div class="cover-content">
+        <div class="eyebrow" style="justify-content:center">הערכת שווי מוסדית · equify Engine v2 · 12 יוני 2026</div>
+        <div class="cv-company" style="margin-top:3mm">אוריון מלונאות בע״מ</div>
+        <div class="cv-meta">ח.פ. 51-623-4187 · ענף: אירוח ומלונאות · מטרה: משא ומתן אסטרטגי</div>
+
+        <div class="cv-big">₪<span>20.1</span>M</div>
+        <div class="cv-range">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח <b>₪16.3M – ₪24.8M</b></div>
+        <div class="seal"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY · IFRS COMPLIANT</div>
+      </div>
+    </div>
+
+    <!-- KPI strip -->
+    <div class="krow">
+      <div class="kc" style="--kc-color:var(--turqB)"><b class="hl">₪24.5M</b><div class="kc-label">שווי פעילות (EV)</div><span>Weighted blend · 3 models</span></div>
+      <div class="kc"><b>16.2%</b><div class="kc-label">WACC אפקטיבי</div><span>Damodaran CRP · CAPM</span></div>
+      <div class="kc"><b>×7.5</b><div class="kc-label">מכפיל EBITDA</div><span>Market-calibrated 2023-26</span></div>
+      <div class="kc"><b class="gd">B+ · 78</b><div class="kc-label">Quality Score</div><span>Risk-adjusted · 6 factors</span></div>
+    </div>
+
+    <!-- mini methodology pills -->
+    <div style="display:flex;gap:6px;margin:3mm 0;flex-wrap:wrap">
+      <span class="pill pill-green">DCF + WACC 50%</span>
+      <span class="pill pill-green">מכפיל EBITDA 30%</span>
+      <span class="pill pill-green">מכפיל הכנסות 20%</span>
+      <span class="pill pill-gold">Damodaran Israel CRP</span>
+      <span class="pill pill-gold">12 עסקאות M&amp;A ישראליות</span>
+      <span class="pill pill-green">Quality Score System</span>
+    </div>
+
+    <!-- cover flow: 4 steps -->
+    <div class="chart-title">מבנה הניתוח</div>
+    <div class="flow">
+      <div class="flow-step"><span class="fs-num">01</span><div class="fs-lbl">פרופיל & נתונים</div><div class="fs-sub">Inputs · IFRS</div></div>
+      <div class="flow-step"><span class="fs-num">02</span><div class="fs-lbl">WACC + DCF</div><div class="fs-sub">5Y + Terminal</div></div>
+      <div class="flow-step"><span class="fs-num">03</span><div class="fs-lbl">Market Comps</div><div class="fs-sub">EBITDA · Revenue ×</div></div>
+      <div class="flow-step"><span class="fs-num">04</span><div class="fs-lbl">Weighted Blend</div><div class="fs-sub">Bear / Base / Bull</div></div>
+    </div>
+
+    <div class="disclaimer">דוח זה הינו אינדיקציית שווי אלגוריתמית בלבד. אינו מהווה ייעוץ השקעות, חוות דעת חשבונאית או הערכת שווי לצרכים סטטוטוריים.</div>
+  </div>
+  <div class="foot">
+    <span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span>
+    <span class="foot-r foot-pg">עמוד <b>1</b> / 8</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 2 — EXECUTIVE SUMMARY + WATERFALL
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh"><div class="logo-txt">equify<em>.</em><small>BY SBC</small></div><div class="rid">#EQ-2026-0612 · אוריון מלונאות בע״מ</div></div>
+  <div class="rule-grad"></div>
+  <div class="body">
+
+    <div class="section-divider"><span class="section-num">02</span><h2>תקציר מנהלים</h2><div class="sd-line"></div></div>
+    <p class="sub">שקלול DCF (50%), מכפיל EBITDA (30%) ומכפיל הכנסות (20%) מניב שווי פעילות של ₪24.5M. בניכוי חוב נטו ₪4.4M — שווי לבעלים ₪20.1M.</p>
+
+    <div class="cols2" style="margin-top:3mm">
+      <!-- LEFT: model weight table -->
+      <div>
+        <div class="chart-title">תרומת מודלים לשווי המשולב</div>
+        <table>
+          <tr><th>מודל</th><th>EV</th><th>משקל</th><th>תרומה</th></tr>
+          <tr><td>DCF + WACC (16.2%)</td><td class="n">₪26.8M</td><td class="n">50%</td><td class="n">₪13.4M</td></tr>
+          <tr><td>מכפיל EBITDA × 7.5</td><td class="n">₪21.0M</td><td class="n">30%</td><td class="n">₪6.3M</td></tr>
+          <tr><td>מכפיל הכנסות × 1.9</td><td class="n">₪23.6M</td><td class="n">20%</td><td class="n">₪4.7M</td></tr>
+          <tr class="sum"><td>שווי פעילות משולב (EV)</td><td class="n"></td><td class="n">100%</td><td class="n">₪24.5M</td></tr>
+        </table>
+
+        <!-- Stacked weight bar SVG -->
+        <div class="chart-title" style="margin-top:3mm">משקלות מודלים</div>
+        <svg viewBox="0 0 380 38" style="width:100%;display:block;border-radius:6px;overflow:hidden">
+          <rect x="0" y="0" width="190" height="38" fill="#00A89F"/>
+          <rect x="190" y="0" width="114" height="38" fill="#4DD6CE"/>
+          <rect x="304" y="0" width="76" height="38" fill="#C5EDE9"/>
+          <text x="95" y="22" text-anchor="middle" fill="white" font-family="IBM Plex Mono" font-size="10" font-weight="600">DCF · 50%</text>
+          <text x="247" y="22" text-anchor="middle" fill="#163530" font-family="IBM Plex Mono" font-size="9" font-weight="600">EBITDA · 30%</text>
+          <text x="342" y="22" text-anchor="middle" fill="#163530" font-family="IBM Plex Mono" font-size="9">REV · 20%</text>
+        </svg>
+      </div>
+
+      <!-- RIGHT: Waterfall SVG -->
+      <div>
+        <div class="chart-title">waterfall — מ-EV לשווי לבעלים (₪M)</div>
+        <svg viewBox="0 0 320 200" style="width:100%;display:block">
+          <!-- grid lines -->
+          <line x1="60" x2="300" y1="30" y2="30" stroke="#D6E8E4" stroke-dasharray="3 4"/>
+          <line x1="60" x2="300" y1="70" y2="70" stroke="#D6E8E4" stroke-dasharray="3 4"/>
+          <line x1="60" x2="300" y1="110" y2="110" stroke="#D6E8E4" stroke-dasharray="3 4"/>
+          <line x1="60" x2="300" y1="150" y2="150" stroke="#D6E8E4" stroke-dasharray="3 4"/>
+          <text x="52" y="33" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">30</text>
+          <text x="52" y="73" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">20</text>
+          <text x="52" y="113" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">10</text>
+          <text x="52" y="153" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">0</text>
+
+          <!-- EV bar: 24.5 → proportional, base=150, scale=4px/M -->
+          <!-- bar top = 150 - 24.5*4 = 52, height=98 -->
+          <rect x="80" y="52" width="52" height="98" fill="#00A89F" rx="3"/>
+          <text x="106" y="46" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#163530" font-weight="600">₪24.5M</text>
+          <text x="106" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">EV</text>
+
+          <!-- debt bar (reduction): starts at 98, goes down 4.4*4=17.6px -->
+          <!-- connector line at top of equity -->
+          <line x1="132" x2="158" y1="52" y2="52" stroke="#D6E8E4" stroke-dasharray="2 3"/>
+          <rect x="158" y="69" width="52" height="18" fill="#C24A4A" rx="3" opacity=".85"/>
+          <text x="184" y="64" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#C24A4A" font-weight="600">−₪4.4M</text>
+          <text x="184" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">חוב נטו</text>
+
+          <!-- equity bar: 20.1 → top=150-80.4=69.6≈70, h=80 -->
+          <line x1="210" x2="234" y1="69" y2="69" stroke="#D6E8E4" stroke-dasharray="2 3"/>
+          <rect x="234" y="69" width="52" height="81" fill="#163530" rx="3"/>
+          <rect x="234" y="69" width="52" height="10" fill="#00C2B8" rx="3"/>
+          <text x="260" y="63" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#163530" font-weight="700">₪20.1M</text>
+          <text x="260" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">שווי לבעלים</text>
+
+          <!-- legend -->
+          <rect x="64" y="178" width="8" height="8" fill="#00A89F" rx="1"/>
+          <text x="76" y="186" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Enterprise Value</text>
+          <rect x="136" y="178" width="8" height="8" fill="#C24A4A" rx="1"/>
+          <text x="148" y="186" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Net Debt</text>
+          <rect x="198" y="178" width="8" height="8" fill="#163530" rx="1"/>
+          <text x="210" y="186" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Equity Value</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- scenario ribbon -->
+    <div class="chart-title" style="margin-top:3mm">טווח שווי לבעלים — שלושה תרחישים (₪M)</div>
+    <svg viewBox="0 0 560 64" style="width:100%;display:block;margin-bottom:2mm">
+      <!-- background track -->
+      <rect x="40" y="24" width="480" height="12" rx="6" fill="#F0F8F6" stroke="#D6E8E4"/>
+      <!-- gradient fill bear→bull -->
+      <defs>
+        <linearGradient id="rib" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#C24A4A" stop-opacity=".45"/>
+          <stop offset="50%" stop-color="#00A89F" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="#A8842E" stop-opacity=".45"/>
+        </linearGradient>
+      </defs>
+      <rect x="40" y="24" width="480" height="12" rx="6" fill="url(#rib)"/>
+      <!-- Bear dot: 16.3 out of range 16.3-24.8 = 8.5M span, 480px -->
+      <circle cx="40" cy="30" r="7" fill="#C24A4A" stroke="white" stroke-width="1.5"/>
+      <!-- Base dot: 20.1 = (20.1-16.3)/8.5 * 480 + 40 = 214.8 + 40 ≈ 255 -->
+      <circle cx="255" cy="30" r="9" fill="#163530" stroke="#00C2B8" stroke-width="2"/>
+      <!-- Bull dot -->
+      <circle cx="520" cy="30" r="7" fill="#A8842E" stroke="white" stroke-width="1.5"/>
+
+      <text x="40" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#C24A4A" font-weight="600">₪16.3M</text>
+      <text x="40" y="61" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Bear 🐻</text>
+      <text x="255" y="10" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#163530" font-weight="700">₪20.1M</text>
+      <text x="255" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">◆ Base</text>
+      <text x="520" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#A8842E" font-weight="600">₪24.8M</text>
+      <text x="520" y="61" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Bull 🚀</text>
+    </svg>
+
+    <div class="callout gold">
+      <b>עיקרי הממצאים:</b> העסק ממוצב מעל חציון השוק (Quality B+), עם EBITDA מרג׳ין 22.6% ביחס לממוצע ענפי 20.4%. WACC 16.2% משקף פרמיית גודל וסיכון ספציפי. ערך טרמינלי מהווה 57% מה-DCF — רגישות גבוהה להנחת g=2.5%.
+    </div>
+  </div>
+  <div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">עמוד <b>2</b> / 8</span></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 3 — FINANCIAL DATA + BAR CHART
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh"><div class="logo-txt">equify<em>.</em><small>BY SBC</small></div><div class="rid">#EQ-2026-0612 · אוריון מלונאות בע״מ</div></div>
+  <div class="rule-grad"></div>
+  <div class="body">
+    <div class="section-divider"><span class="section-num">03</span><h2>נתונים פיננסיים</h2><div class="sd-line"></div></div>
+    <p class="sub">הכנסות ו-EBITDA בפועל 2023–2025 ותחזית 2026F–2028F. CAGR הכנסות 9% · שיפור שיעור EBITDA מ-19.8% ל-23.4% · נתוני 2026F ואילך — תחזית הנהלה.</p>
+
+    <div class="chart-wrap">
+      <div class="chart-title">הכנסות מול EBITDA · ₪M · 2023–2028F</div>
+      <svg viewBox="0 0 720 220" style="width:100%;display:block">
+        <defs>
+          <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00A89F"/><stop offset="100%" stop-color="#0F5B55"/></linearGradient>
+          <linearGradient id="gEbt" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#C9A84C"/><stop offset="100%" stop-color="#7A6030"/></linearGradient>
+          <linearGradient id="gRevF" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00A89F" stop-opacity=".5"/><stop offset="100%" stop-color="#0F5B55" stop-opacity=".4"/></linearGradient>
+          <linearGradient id="gEbtF" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#C9A84C" stop-opacity=".5"/><stop offset="100%" stop-color="#7A6030" stop-opacity=".4"/></linearGradient>
+        </defs>
+        <!-- Grid -->
+        <line x1="60" x2="710" y1="20" y2="20" stroke="#D6E8E4" stroke-dasharray="3 5"/>
+        <line x1="60" x2="710" y1="60" y2="60" stroke="#D6E8E4" stroke-dasharray="3 5"/>
+        <line x1="60" x2="710" y1="100" y2="100" stroke="#D6E8E4" stroke-dasharray="3 5"/>
+        <line x1="60" x2="710" y1="140" y2="140" stroke="#D6E8E4" stroke-dasharray="3 5"/>
+        <line x1="60" x2="710" y1="180" y2="180" stroke="#D6E8E4"/>
+        <text x="55" y="24" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">18</text>
+        <text x="55" y="64" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">13.5</text>
+        <text x="55" y="104" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">9</text>
+        <text x="55" y="144" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">4.5</text>
+        <text x="55" y="183" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">0</text>
+
+        <!-- Forecast shading -->
+        <rect x="439" y="15" width="270" height="168" fill="#F0F8F6" opacity=".6" rx="2"/>
+        <text x="574" y="13" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">◀ תחזית ▶</text>
+
+        <!-- Data: scale 18M → 160px, base y=180 -->
+        <!-- 2023: Rev=10.4 → h=92.4 y=87.6; Ebt=2.06 → h=18.3 y=161.7 -->
+        <rect x="75" y="87" width="28" height="93" fill="url(#gRev)" rx="3"/>
+        <rect x="107" y="162" width="28" height="18" fill="url(#gEbt)" rx="3"/>
+        <text x="102" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">2023</text>
+        <text x="89" y="83" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#00A89F">10.4</text>
+        <text x="121" y="159" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#A8842E">2.1</text>
+
+        <!-- 2024: Rev=11.3 → h=100.4 y=79.6; Ebt=2.43 → h=21.6 y=158.4 -->
+        <rect x="185" y="80" width="28" height="100" fill="url(#gRev)" rx="3"/>
+        <rect x="217" y="158" width="28" height="22" fill="url(#gEbt)" rx="3"/>
+        <text x="216" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">2024</text>
+        <text x="199" y="76" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#00A89F">11.3</text>
+        <text x="231" y="154" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#A8842E">2.4</text>
+
+        <!-- 2025: Rev=12.4 → h=110.2 y=69.8; Ebt=2.80 → h=24.9 -->
+        <rect x="295" y="70" width="28" height="110" fill="url(#gRev)" rx="3"/>
+        <rect x="327" y="155" width="28" height="25" fill="url(#gEbt)" rx="3"/>
+        <text x="326" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">2025</text>
+        <text x="309" y="66" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#00A89F">12.4</text>
+        <text x="341" y="151" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#A8842E">2.8</text>
+
+        <!-- 2026F: Rev=13.5; Ebt=3.05 -->
+        <rect x="451" y="60" width="28" height="120" fill="url(#gRevF)" rx="3"/>
+        <rect x="483" y="153" width="28" height="27" fill="url(#gEbtF)" rx="3"/>
+        <text x="480" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">2026F</text>
+        <text x="465" y="56" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#00A89F" opacity=".8">13.5</text>
+
+        <!-- 2027F: Rev=14.7; Ebt=3.38 -->
+        <rect x="555" y="49" width="28" height="131" fill="url(#gRevF)" rx="3"/>
+        <rect x="587" y="150" width="28" height="30" fill="url(#gEbtF)" rx="3"/>
+        <text x="584" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">2027F</text>
+        <text x="569" y="45" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#00A89F" opacity=".8">14.7</text>
+
+        <!-- 2028F: Rev=16.0; Ebt=3.74 -->
+        <rect x="659" y="37" width="28" height="143" fill="url(#gRevF)" rx="3"/>
+        <rect x="691" y="147" width="19" height="33" fill="url(#gEbtF)" rx="3"/>
+        <text x="678" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">2028F</text>
+        <text x="673" y="33" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#00A89F" opacity=".8">16.0</text>
+
+        <!-- EBITDA margin line -->
+        <!-- points: 2023(102,168) 2024(217,163) 2025(327,158) 2026F(483,155) 2027F(587,152) 2028F(691,148) -->
+        <!-- translate to % line: scale separately, margin track 19.8%→23.4%, y range 170→145 -->
+        <!-- 2023 y=170+(23.4-19.8)/(23.4-19.8)*25=170 → y=170; 2028 y=145 -->
+        <polyline points="102,170 217,166 327,163 483,160 587,157 691,154"
+          fill="none" stroke="#C24A4A" stroke-width="1.5" stroke-dasharray="3 3" stroke-linecap="round"/>
+        <text x="700" y="152" font-family="IBM Plex Mono" font-size="7" fill="#C24A4A">EBITDA%</text>
+
+        <!-- Legend -->
+        <rect x="65" y="210" width="8" height="7" fill="#00A89F" rx="1"/>
+        <text x="77" y="217" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">הכנסות</text>
+        <rect x="130" y="210" width="8" height="7" fill="#C9A84C" rx="1"/>
+        <text x="142" y="217" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">EBITDA</text>
+        <line x1="200" y1="213" x2="218" y2="213" stroke="#C24A4A" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <text x="222" y="217" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">שיעור EBITDA</text>
+        <rect x="310" y="210" width="8" height="7" fill="#00A89F" rx="1" opacity=".45"/>
+        <text x="322" y="217" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">תחזית (F)</text>
+      </svg>
+    </div>
+
+    <!-- financial table -->
+    <table>
+      <tr><th>₪M</th><th>2023A</th><th>2024A</th><th>2025A</th><th>2026F</th><th>2027F</th><th>2028F</th><th>CAGR</th></tr>
+      <tr><td>הכנסות</td><td class="n">10.4</td><td class="n">11.3</td><td class="n">12.4</td><td class="n">13.5</td><td class="n">14.7</td><td class="n">16.0</td><td class="n">+9.0%</td></tr>
+      <tr><td>EBITDA</td><td class="n">2.06</td><td class="n">2.43</td><td class="n">2.80</td><td class="n">3.05</td><td class="n">3.38</td><td class="n">3.74</td><td class="n">+10.6%</td></tr>
+      <tr class="hl-row"><td>שיעור EBITDA</td><td class="n">19.8%</td><td class="n">21.5%</td><td class="n">22.6%</td><td class="n">22.6%</td><td class="n">23.0%</td><td class="n">23.4%</td><td class="n">▲ 360bp</td></tr>
+      <tr><td>FCFF</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td class="n">2.31</td><td class="n">2.56</td><td class="n">2.84</td><td class="n">—</td></tr>
+    </table>
+
+    <div class="callout">
+      חוב נטו ליום ההערכה: <b>₪4.4M</b> (חוב פיננסי ₪5.6M בניכוי מזומן ₪1.2M). הון חוזר תקין ביחס לממוצע ענפי. שיפור עקבי בשיעור ה-EBITDA מ-19.8% ל-22.6% — מעיד על מינוף תפעולי חיובי ושיפור מיקס המוצרים.
+    </div>
+  </div>
+  <div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">עמוד <b>3</b> / 8</span></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 4 — DCF + WACC BREAKDOWN
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh"><div class="logo-txt">equify<em>.</em><small>BY SBC</small></div><div class="rid">#EQ-2026-0612 · אוריון מלונאות בע״מ</div></div>
+  <div class="rule-grad"></div>
+  <div class="body">
+    <div class="section-divider"><span class="section-num">04</span><h2>DCF + WACC</h2><div class="sd-line"></div></div>
+    <p class="sub">היוון תזרימי מזומנים חופשיים 2026–2030 + ערך טרמינלי. WACC 16.2% על בסיס CAPM + Damodaran CRP ישראל 2026.</p>
+
+    <div class="cols-6-4">
+      <!-- LEFT: WACC breakdown -->
+      <div>
+        <div class="chart-title">הרכב WACC — 16.2%</div>
+
+        <!-- Horizontal stacked bar for WACC components -->
+        <svg viewBox="0 0 400 52" style="width:100%;display:block;margin-bottom:3mm">
+          <defs>
+            <linearGradient id="w1" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4DD6CE"/><stop offset="100%" stop-color="#00A89F"/></linearGradient>
+            <linearGradient id="w2" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#00A89F"/><stop offset="100%" stop-color="#163530"/></linearGradient>
+            <linearGradient id="w3" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#C9A84C"/><stop offset="100%" stop-color="#A8842E"/></linearGradient>
+            <linearGradient id="w4" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#163530"/><stop offset="100%" stop-color="#0F2E29"/></linearGradient>
+            <linearGradient id="w5" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#7FB8B4"/><stop offset="100%" stop-color="#4DD6CE"/></linearGradient>
+          </defs>
+          <!-- total=16.2: Rf=4.3(26.5%), ERP=5.4(33.3%), CRP=1.6(9.9%), Size=3.1(19.1%), Spec=1.8(11.1%) -->
+          <!-- widths: 400px total -->
+          <!-- Rf: 4.3/16.2*380+20 = 100.7+20=~101, start=20 -->
+          <rect x="0"   y="8" width="101" height="28" fill="url(#w1)" rx="0"/>
+          <rect x="101" y="8" width="127" height="28" fill="url(#w2)"/>
+          <rect x="228" y="8" width="37"  height="28" fill="url(#w3)"/>
+          <rect x="265" y="8" width="73"  height="28" fill="url(#w4)"/>
+          <rect x="338" y="8" width="62"  height="28" fill="url(#w5)" rx="0" style="border-radius:0 4px 4px 0"/>
+          <!-- labels -->
+          <text x="50" y="27" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="white" font-weight="600">Rf 4.3%</text>
+          <text x="164" y="27" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="white" font-weight="600">ERP 5.4%</text>
+          <text x="246" y="27" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="white">1.6%</text>
+          <text x="301" y="27" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="white" font-weight="600">Size 3.1%</text>
+          <text x="369" y="27" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="white">Spec 1.8%</text>
+          <!-- legend below -->
+          <rect x="0" y="42" width="6" height="6" fill="#4DD6CE" rx="1"/>
+          <text x="10" y="48" font-family="IBM Plex Mono" font-size="6.5" fill="#527570">Risk-Free</text>
+          <rect x="70" y="42" width="6" height="6" fill="#00A89F" rx="1"/>
+          <text x="80" y="48" font-family="IBM Plex Mono" font-size="6.5" fill="#527570">Equity Risk Premium</text>
+          <rect x="190" y="42" width="6" height="6" fill="#C9A84C" rx="1"/>
+          <text x="200" y="48" font-family="IBM Plex Mono" font-size="6.5" fill="#527570">Israel CRP</text>
+          <rect x="255" y="42" width="6" height="6" fill="#163530" rx="1"/>
+          <text x="265" y="48" font-family="IBM Plex Mono" font-size="6.5" fill="#527570">Size Premium</text>
+          <rect x="325" y="42" width="6" height="6" fill="#7FB8B4" rx="1"/>
+          <text x="335" y="48" font-family="IBM Plex Mono" font-size="6.5" fill="#527570">Specific Risk</text>
+        </svg>
+
+        <table>
+          <tr><th>רכיב WACC</th><th>סימון</th><th>ערך</th><th>מקור</th></tr>
+          <tr><td>ריבית חסרת סיכון (10Y ממשלתי)</td><td class="n">Rf</td><td class="n">4.3%</td><td style="font-size:8px;color:var(--dim)">Bank of Israel</td></tr>
+          <tr><td>פרמיית סיכון שוק</td><td class="n">ERP</td><td class="n">5.4%</td><td style="font-size:8px;color:var(--dim)">Damodaran 2026</td></tr>
+          <tr><td>פרמיית סיכון מדינה (CRP)</td><td class="n">CRP</td><td class="n">1.6%</td><td style="font-size:8px;color:var(--dim)">Damodaran Israel</td></tr>
+          <tr><td>פרמיית גודל וסחירות</td><td class="n">Size</td><td class="n">3.1%</td><td style="font-size:8px;color:var(--dim)">Ibbotson Low-Cap</td></tr>
+          <tr><td>סיכון ספציפי (Quality-adj)</td><td class="n">SRP</td><td class="n">1.8%</td><td style="font-size:8px;color:var(--dim)">Quality Score 78</td></tr>
+          <tr class="sum"><td>WACC אפקטיבי</td><td class="n"></td><td class="n">16.2%</td><td></td></tr>
+        </table>
+
+        <div class="chart-title" style="margin-top:3mm">תזרימי מזומנים מהוונים — DCF</div>
+        <table>
+          <tr><th>₪M</th><th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>TV</th></tr>
+          <tr><td>FCFF</td><td class="n">2.31</td><td class="n">2.56</td><td class="n">2.84</td><td class="n">3.07</td><td class="n">3.28</td><td class="n">—</td></tr>
+          <tr><td>פקטור היוון</td><td class="n">0.861</td><td class="n">0.741</td><td class="n">0.637</td><td class="n">0.548</td><td class="n">0.472</td><td class="n">—</td></tr>
+          <tr><td>PV</td><td class="n">1.99</td><td class="n">1.90</td><td class="n">1.81</td><td class="n">1.68</td><td class="n">1.55</td><td class="n">15.9*</td></tr>
+          <tr class="sum"><td>שווי פעילות DCF</td><td class="n" colspan="6">₪24.8M &nbsp;→&nbsp; TV מהווה <b>57%</b></td></tr>
+        </table>
+        <div style="font-size:8px;color:var(--dim)">* TV = FCFF₂₀₃₁×(1+g)/(WACC−g) / (1+WACC)⁵ · g=2.5%</div>
+      </div>
+
+      <!-- RIGHT: DCF timeline visual -->
+      <div>
+        <div class="chart-title">תרומת שנים ל-DCF</div>
+        <!-- Horizontal bar per year -->
+        <svg viewBox="0 0 200 220" style="width:100%;display:block">
+          <!-- bars: max PV=15.9 (TV), scale to 120px -->
+          <!-- labels on left, bar in middle-right -->
+          <text x="30" y="28" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">2026</text>
+          <rect x="34" y="18" width="47" height="14" fill="#4DD6CE" rx="3"/>
+          <text x="85" y="28" font-family="IBM Plex Mono" font-size="8" fill="#163530">₪1.99M</text>
+
+          <text x="30" y="52" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">2027</text>
+          <rect x="34" y="42" width="45" height="14" fill="#00A89F" rx="3"/>
+          <text x="83" y="52" font-family="IBM Plex Mono" font-size="8" fill="#163530">₪1.90M</text>
+
+          <text x="30" y="76" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">2028</text>
+          <rect x="34" y="66" width="43" height="14" fill="#00A89F" rx="3" opacity=".85"/>
+          <text x="81" y="76" font-family="IBM Plex Mono" font-size="8" fill="#163530">₪1.81M</text>
+
+          <text x="30" y="100" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">2029</text>
+          <rect x="34" y="90" width="40" height="14" fill="#0F5B55" rx="3"/>
+          <text x="78" y="100" font-family="IBM Plex Mono" font-size="8" fill="#163530">₪1.68M</text>
+
+          <text x="30" y="124" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">2030</text>
+          <rect x="34" y="114" width="37" height="14" fill="#0F5B55" rx="3" opacity=".8"/>
+          <text x="75" y="124" font-family="IBM Plex Mono" font-size="8" fill="#163530">₪1.55M</text>
+
+          <!-- divider -->
+          <line x1="34" x2="195" y1="136" y2="136" stroke="#D6E8E4" stroke-dasharray="2 3"/>
+          <text x="30" y="160" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#A8842E" font-weight="600">Terminal</text>
+          <rect x="34" y="146" width="152" height="20" fill="url(#w3)" rx="3" opacity=".7"/>
+          <text x="110" y="160" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="white" font-weight="700">₪15.9M (57%)</text>
+
+          <!-- total line -->
+          <line x1="34" x2="195" y1="176" y2="176" stroke="#163530" stroke-width="1.5"/>
+          <rect x="34" y="180" width="185" height="18" fill="#163530" rx="3"/>
+          <text x="126" y="193" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="white" font-weight="700">TOTAL ₪24.8M</text>
+        </svg>
+
+        <div class="callout gold" style="margin-top:3mm">
+          <b>רגישות TV:</b> שינוי של ±0.5% ב-g מניב שינוי של ±₪1.8M בשווי. שינוי של ±1% ב-WACC → שינוי ±₪2.4M.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">עמוד <b>4</b> / 8</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 5 — MARKET MULTIPLES + COMPS TABLE
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh"><div class="logo-txt">equify<em>.</em><small>BY SBC</small></div><div class="rid">#EQ-2026-0612 · אוריון מלונאות בע״מ</div></div>
+  <div class="rule-grad"></div>
+  <div class="body">
+    <div class="section-divider"><span class="section-num">05</span><h2>מכפילי שוק</h2><div class="sd-line"></div></div>
+    <p class="sub">השוואה ל-12 עסקאות M&A ישראליות בענפי האירוח והשירותים (2023–2026). הנקודה מציגה את מיקום החברה ביחס לטווח השוק.</p>
+
+    <!-- Bull's-eye / scatter chart for 3 multiples -->
+    <div class="chart-wrap">
+      <div class="chart-title">מיקום מול טווח שוק — EV/EBITDA · EV/Revenue · DCF</div>
+      <svg viewBox="0 0 700 160" style="width:100%;display:block">
+        <!-- === EBITDA multiple === -->
+        <!-- label -->
+        <text x="695" y="38" text-anchor="end" font-family="Assistant" font-size="10" font-weight="700" fill="#163530">EV / EBITDA</text>
+        <text x="695" y="50" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">×4.0 — ×11.0</text>
+        <!-- track -->
+        <rect x="20" y="40" width="640" height="12" rx="6" fill="#F0F8F6" stroke="#D6E8E4"/>
+        <!-- market band: ×5.2–×9.4 → (5.2-4)/(11-4)*640+20=109, (9.4-4)/(7)*640+20=513 -->
+        <rect x="109" y="40" width="404" height="12" rx="5" fill="rgba(0,168,159,.18)"/>
+        <!-- company dot: ×7.5 → (7.5-4)/7*640+20=340 -->
+        <circle cx="340" cy="46" r="7" fill="#00A89F" stroke="white" stroke-width="2"/>
+        <text x="340" y="36" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#163530" font-weight="700">×7.5</text>
+        <text x="20" y="62" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">×4.0</text>
+        <text x="660" y="62" text-anchor="end" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">×11.0</text>
+        <text x="109" y="62" font-family="IBM Plex Mono" font-size="7" fill="#00A89F">×5.2</text>
+        <text x="513" y="62" font-family="IBM Plex Mono" font-size="7" fill="#00A89F">×9.4</text>
+
+        <!-- === Revenue multiple === -->
+        <text x="695" y="98" text-anchor="end" font-family="Assistant" font-size="10" font-weight="700" fill="#163530">EV / Revenue</text>
+        <text x="695" y="110" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">×0.8 — ×3.2</text>
+        <rect x="20" y="100" width="640" height="12" rx="6" fill="#F0F8F6" stroke="#D6E8E4"/>
+        <!-- band ×1.2–×2.6 → (1.2-.8)/(3.2-.8)*640+20=127; (2.6-.8)/2.4*640+20=500 -->
+        <rect x="127" y="100" width="373" height="12" rx="5" fill="rgba(0,168,159,.18)"/>
+        <!-- company ×1.9 → (1.9-.8)/2.4*640+20=313 -->
+        <circle cx="313" cy="106" r="7" fill="#00A89F" stroke="white" stroke-width="2"/>
+        <text x="313" y="96" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#163530" font-weight="700">×1.9</text>
+        <text x="20" y="122" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">×0.8</text>
+        <text x="660" y="122" text-anchor="end" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">×3.2</text>
+
+        <!-- === DCF comparison === -->
+        <text x="695" y="148" text-anchor="end" font-family="Assistant" font-size="10" font-weight="700" fill="#163530">DCF (₪M)</text>
+        <text x="695" y="158" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">₪18M — ₪30M</text>
+        <rect x="20" y="140" width="640" height="12" rx="6" fill="#F0F8F6" stroke="#D6E8E4"/>
+        <!-- DCF ₪24.8 → (24.8-18)/(30-18)*640+20=382 -->
+        <circle cx="382" cy="146" r="7" fill="#A8842E" stroke="white" stroke-width="2"/>
+        <text x="382" y="136" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#A8842E" font-weight="700">₪24.8M</text>
+        <text x="20" y="162" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">₪18M</text>
+        <text x="660" y="162" text-anchor="end" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">₪30M</text>
+      </svg>
+    </div>
+
+    <!-- comps table -->
+    <div class="chart-title" style="margin-top:2mm">עסקאות השוואה — 12 עסקאות M&amp;A ישראליות (2023–2026)</div>
+    <table>
+      <tr><th>#</th><th>ענף</th><th>שנה</th><th>EV (₪M)</th><th>EV/EBITDA</th><th>EV/Rev</th><th>EBITDA%</th><th>הערה</th></tr>
+      <tr><td>1</td><td>אירוח ישראל</td><td class="n">2024</td><td class="n">38.5</td><td class="n">7.8×</td><td class="n">2.1×</td><td class="n">27%</td><td style="font-size:8px;color:var(--dim)">מלון בוטיק TLV</td></tr>
+      <tr><td>2</td><td>אירוח ישראל</td><td class="n">2023</td><td class="n">22.1</td><td class="n">6.4×</td><td class="n">1.6×</td><td class="n">25%</td><td style="font-size:8px;color:var(--dim)">שרשרת קיימות</td></tr>
+      <tr><td>3</td><td>שירותי מזון</td><td class="n">2025</td><td class="n">51.0</td><td class="n">8.2×</td><td class="n">2.4×</td><td class="n">29%</td><td style="font-size:8px;color:var(--dim)">קיימות גבוהה</td></tr>
+      <tr><td>4</td><td>שירותים ישראל</td><td class="n">2024</td><td class="n">18.7</td><td class="n">5.9×</td><td class="n">1.4×</td><td class="n">24%</td><td style="font-size:8px;color:var(--dim)">SME standard</td></tr>
+      <tr><td>5</td><td>אירוח ישראל</td><td class="n">2026</td><td class="n">44.2</td><td class="n">9.1×</td><td class="n">2.8×</td><td class="n">31%</td><td style="font-size:8px;color:var(--dim)">Premium + IP</td></tr>
+      <tr><td>6</td><td>שירותי B2B</td><td class="n">2023</td><td class="n">29.8</td><td class="n">7.0×</td><td class="n">1.8×</td><td class="n">26%</td><td style="font-size:8px;color:var(--dim)">Recurring 70%</td></tr>
+      <tr class="hl-row"><td>—</td><td style="color:var(--turq)">חציון שוק</td><td class="n">—</td><td class="n">33.7</td><td class="n">7.1×</td><td class="n">1.8×</td><td class="n">26%</td><td style="font-size:8px;color:var(--turq)">Median N=12</td></tr>
+      <tr class="sum"><td>★</td><td>אוריון מלונאות</td><td class="n">2026</td><td class="n">24.5</td><td class="n">7.5×</td><td class="n">1.9×</td><td class="n">22.6%</td><td style="font-size:8px;color:var(--turq)">מעל חציון</td></tr>
+    </table>
+
+    <div class="cols2" style="margin-top:2mm">
+      <div class="callout"><b>מכפיל EBITDA ×7.5:</b> מעל החציון (×7.1) — מוצדק בשיעור הכנסות חוזרות 64% ואיכות תזרים גבוהה יחסית לעמיתים.</div>
+      <div class="callout gold"><b>מכפיל הכנסות ×1.9:</b> בתוך הטווח — מכפיל הכנסות מתאים לחברה בצמיחה מתונה ובלי פרמיית IP.</div>
+    </div>
+  </div>
+  <div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">עמוד <b>5</b> / 8</span></div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════
+     PAGE 6 — QUALITY SCORE + RISK RADAR
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh"><div class="logo-txt">equify<em>.</em><small>BY SBC</small></div><div class="rid">#EQ-2026-0612 · אוריון מלונאות בע״מ</div></div>
+  <div class="rule-grad"></div>
+  <div class="body">
+    <div class="section-divider"><span class="section-num">06</span><h2>Quality Score & Risk Analysis</h2><div class="sd-line"></div></div>
+    <p class="sub">ה-Quality Score (0–100) מכייל את המכפיל ואת פרמיית הסיכון הספציפית. ציון גבוה יותר → מכפיל גבוה יותר + WACC נמוך יותר.</p>
+
+    <div class="cols-4-6">
+      <!-- LEFT: gauge + grade -->
+      <div>
+        <div class="chart-title">Quality Score — 78 / 100 (B+)</div>
+        <svg viewBox="0 0 220 210" style="width:100%;display:block">
+          <!-- background arc 270deg -->
+          <path d="M 110 130 m -85 0 a 85 85 0 1 1 170 0" fill="none" stroke="#F0F8F6" stroke-width="16" stroke-linecap="round"/>
+          <!-- colored segments of gauge: 5 zones -->
+          <!-- Poor 0-40: red segment -->
+          <path d="M 110 130 m -85 0 a 85 85 0 0 1 -55.4 -65.7" fill="none" stroke="#C24A4A" stroke-width="16" stroke-linecap="round" opacity=".3"/>
+          <!-- Fair 40-55: orange -->
+          <path d="M 55 64.3 a 85 85 0 0 1 38.7 -30.8" fill="none" stroke="#E5924A" stroke-width="16" stroke-linecap="round" opacity=".3"/>
+          <!-- Good 55-70: yellow -->
+          <path d="M 93.7 33.5 a 85 85 0 0 1 45.6 0" fill="none" stroke="#C9A84C" stroke-width="16" stroke-linecap="round" opacity=".3"/>
+          <!-- Very Good 70-85: teal -->
+          <path d="M 139.3 33.5 a 85 85 0 0 1 38.7 30.8" fill="none" stroke="#00A89F" stroke-width="16" stroke-linecap="round"/>
+          <!-- Excellent 85-100: green -->
+          <path d="M 178 64.3 a 85 85 0 0 1 17 65.7" fill="none" stroke="#163530" stroke-width="16" stroke-linecap="round"/>
+
+          <!-- filled arc for score 78/100 → 78% of 270 = 210.6 deg -->
+          <!-- compute arc path: start at bottom-left, go 210.6 degrees clockwise -->
+          <!-- simplified: just show the gradient arc -->
+          <path d="M 25 130 a 85 85 0 1 1 149.6 -47.2" fill="none" stroke="url(#qg)" stroke-width="9" stroke-linecap="round"/>
+          <defs><linearGradient id="qg" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#00C2B8"/><stop offset="100%" stop-color="#C9A84C"/>
+          </linearGradient></defs>
+
+          <!-- needle -->
+          <!-- score 78 → angle: start=-135deg, range=270deg → 78%*270-135 = 210.6-135=75.6deg from horizontal right -->
+          <!-- x = 110 + 65*cos(75.6°) = 110+65*0.249=126; y = 130 - 65*sin(75.6°) = 130-65*0.968=67 -->
+          <line x1="110" y1="130" x2="126" y2="67" stroke="#163530" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="110" cy="130" r="5" fill="#163530"/>
+
+          <!-- center text -->
+          <text x="110" y="118" text-anchor="middle" font-family="IBM Plex Mono" font-size="26" font-weight="600" fill="#163530">78</text>
+          <text x="110" y="135" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">/ 100</text>
+          <text x="110" y="152" text-anchor="middle" font-family="Frank Ruhl Libre" font-size="18" font-weight="900" fill="#A8842E">B+</text>
+
+          <!-- scale labels -->
+          <text x="18" y="148" font-family="IBM Plex Mono" font-size="7.5" fill="#C24A4A">0</text>
+          <text x="88" y="30" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">50</text>
+          <text x="200" y="148" font-family="IBM Plex Mono" font-size="7.5" fill="#163530">100</text>
+
+          <!-- zone labels -->
+          <text x="30" y="170" font-family="IBM Plex Mono" font-size="7" fill="#C24A4A">Poor</text>
+          <text x="85" y="185" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#C9A84C">Fair–Good</text>
+          <text x="180" y="170" text-anchor="end" font-family="IBM Plex Mono" font-size="7" fill="#00A89F">Excellent</text>
+        </svg>
+
+        <!-- grade table -->
+        <table style="margin-top:0">
+          <tr><th>ציון</th><th>דירוג</th><th>המשמעות</th></tr>
+          <tr style="opacity:.5"><td class="n">85–100</td><td><span class="pill pill-green">A</span></td><td style="font-size:8px">מינוף תפעולי גבוה</td></tr>
+          <tr style="opacity:.5"><td class="n">75–84</td><td><span class="pill pill-green">A−</span></td><td style="font-size:8px">איכות עודפת</td></tr>
+          <tr style="background:rgba(0,168,159,.06)"><td class="n"><b>65–74 ← 78</b></td><td><span class="pill pill-gold">B+</span></td><td style="font-size:8px">מעל ממוצע</td></tr>
+          <tr style="opacity:.5"><td class="n">50–64</td><td><span class="pill">B</span></td><td style="font-size:8px">ממוצע</td></tr>
+          <tr style="opacity:.5"><td class="n">0–49</td><td><span class="pill pill-red">C</span></td><td style="font-size:8px">סיכון מוגבר</td></tr>
+        </table>
+      </div>
+
+      <!-- RIGHT: quality factor breakdown + spider (bar version) -->
+      <div>
+        <div class="chart-title">פירוט Quality Factors</div>
+
+        <!-- horizontal bars for each factor -->
+        <svg viewBox="0 0 360 200" style="width:100%;display:block;margin-bottom:3mm">
+          <!-- factor rows: Recurring(64 of max 28pts), Concentration(72/22), FounderDep(14/14), Competition(10/10), IP(12/12), Contracts(10/10), Growth(7/14) = 78/100 -->
+
+          <!-- Recurring Revenue 18pts -->
+          <text x="140" y="20" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">הכנסות חוזרות (64%)</text>
+          <rect x="144" y="8" width="200" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
+          <rect x="144" y="8" width="128" height="10" rx="3" fill="#00A89F"/><!-- 18/28*200=128 -->
+          <text x="348" y="18" font-family="IBM Plex Mono" font-size="8" fill="#527570">18/28</text>
+
+          <!-- Customer Concentration 16pts -->
+          <text x="140" y="44" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">ריכוז לקוחות (20%)</text>
+          <rect x="144" y="32" width="200" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
+          <rect x="144" y="32" width="145" height="10" rx="3" fill="#00A89F"/><!-- 16/22*200=145 -->
+          <text x="348" y="42" font-family="IBM Plex Mono" font-size="8" fill="#527570">16/22</text>
+
+          <!-- Founder Dep 14pts (full — no dep) -->
+          <text x="140" y="68" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">תלות במייסד (נמוכה)</text>
+          <rect x="144" y="56" width="200" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
+          <rect x="144" y="56" width="200" height="10" rx="3" fill="#4DD6CE"/>
+          <text x="348" y="66" font-family="IBM Plex Mono" font-size="8" fill="#00A89F">14/14</text>
+
+          <!-- Competition 8pts -->
+          <text x="140" y="92" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">תחרות בשוק (בינונית)</text>
+          <rect x="144" y="80" width="200" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
+          <rect x="144" y="80" width="160" height="10" rx="3" fill="#C9A84C"/>
+          <text x="348" y="90" font-family="IBM Plex Mono" font-size="8" fill="#527570">8/10</text>
+
+          <!-- IP 12pts -->
+          <text x="140" y="116" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">קניין רוחני (מוגן)</text>
+          <rect x="144" y="104" width="200" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
+          <rect x="144" y="104" width="200" height="10" rx="3" fill="#4DD6CE"/>
+          <text x="348" y="114" font-family="IBM Plex Mono" font-size="8" fill="#00A89F">12/12</text>
+
+          <!-- Contracts 10pts -->
+          <text x="140" y="140" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">חוזים ארוכי טווח</text>
+          <rect x="144" y="128" width="200" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
+          <rect x="144" y="128" width="200" height="10" rx="3" fill="#00A89F"/>
+          <text x="348" y="138" font-family="IBM Plex Mono" font-size="8" fill="#00A89F">10/10</text>
+
+          <!-- Growth premium 7/14pts -->
+          <text x="140" y="164" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">פרמיית צמיחה (9%)</text>
+          <rect x="144" y="152" width="200" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
+          <rect x="144" y="152" width="100" height="10" rx="3" fill="#E5924A"/>
+          <text x="348" y="162" font-family="IBM Plex Mono" font-size="8" fill="#527570">7/14</text>
+
+          <!-- total -->
+          <line x1="144" x2="344" y1="175" y2="175" stroke="#163530" stroke-width="1"/>
+          <rect x="144" y="178" width="156" height="13" fill="#163530" rx="3"/>
+          <text x="222" y="188" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="white" font-weight="700">TOTAL: 78 / 100</text>
+          <text x="348" y="188" font-family="IBM Plex Mono" font-size="9" fill="#A8842E" font-weight="600">B+</text>
+        </svg>
+
+        <div class="callout">
+          <b>השפעה על המודל:</b> Quality Score 78 מוסיף פרמיית WACC של <b>1.8%</b> ומגדיל את מכפיל EBITDA ב-<b>+0.8×</b> ביחס לחברה ממוצעת בדירוג B (ציון 60).
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">עמוד <b>6</b> / 8</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 7 — SCENARIOS + SENSITIVITY MATRIX
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh"><div class="logo-txt">equify<em>.</em><small>BY SBC</small></div><div class="rid">#EQ-2026-0612 · אוריון מלונאות בע״מ</div></div>
+  <div class="rule-grad"></div>
+  <div class="body">
+    <div class="section-divider"><span class="section-num">07</span><h2>תרחישים וניתוח רגישות</h2><div class="sd-line"></div></div>
+
+    <!-- 3-scenario cards -->
+    <div class="cols3" style="margin-bottom:4mm">
+      <!-- BEAR -->
+      <div class="box" style="border-color:#C24A4A44;background:rgba(194,74,74,.03)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2mm">
+          <span style="font-size:14px">🐻</span>
+          <span class="pill pill-red">Bear</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:#C24A4A;direction:ltr;text-align:right">₪16.3M</div>
+        <div style="font-size:8px;color:var(--dim);margin-top:1mm">שווי לבעלים</div>
+        <hr style="border:none;border-top:1px solid #D6E8E4;margin:3mm 0">
+        <div style="font-size:8.5px;display:grid;gap:2mm">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">צמיחה</span><b class="mono">+3%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">WACC</span><b class="mono">17.8%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">מכפיל</span><b class="mono">×5.8</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">EV</span><b class="mono">₪20.7M</b></div>
+        </div>
+        <div style="font-size:7.5px;color:var(--dim);margin-top:3mm;border-top:1px dashed #D6E8E4;padding-top:2mm">האטה ענפית · לחץ מחירים · EBITDA −2%</div>
+      </div>
+
+      <!-- BASE -->
+      <div class="box" style="border-color:#00A89F55;background:rgba(0,168,159,.04)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2mm">
+          <span style="font-size:14px">◆</span>
+          <span class="pill pill-green">Base</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:#163530;direction:ltr;text-align:right">₪20.1M</div>
+        <div style="font-size:8px;color:var(--dim);margin-top:1mm">שווי לבעלים</div>
+        <hr style="border:none;border-top:1px solid #D6E8E4;margin:3mm 0">
+        <div style="font-size:8.5px;display:grid;gap:2mm">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">צמיחה</span><b class="mono">+9%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">WACC</span><b class="mono">16.2%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">מכפיל</span><b class="mono">×7.5</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">EV</span><b class="mono">₪24.5M</b></div>
+        </div>
+        <div style="font-size:7.5px;color:var(--dim);margin-top:3mm;border-top:1px dashed #D6E8E4;padding-top:2mm">המשך מגמה נוכחית · EBITDA יציב · ריכוז לקוחות ללא שינוי</div>
+      </div>
+
+      <!-- BULL -->
+      <div class="box" style="border-color:#A8842E55;background:rgba(168,132,46,.03)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2mm">
+          <span style="font-size:14px">🚀</span>
+          <span class="pill pill-gold">Bull</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:#A8842E;direction:ltr;text-align:right">₪24.8M</div>
+        <div style="font-size:8px;color:var(--dim);margin-top:1mm">שווי לבעלים</div>
+        <hr style="border:none;border-top:1px solid #D6E8E4;margin:3mm 0">
+        <div style="font-size:8.5px;display:grid;gap:2mm">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">צמיחה</span><b class="mono">+15%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">WACC</span><b class="mono">14.8%</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">מכפיל</span><b class="mono">×8.8</b></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">EV</span><b class="mono">₪29.2M</b></div>
+        </div>
+        <div style="font-size:7.5px;color:var(--dim);margin-top:3mm;border-top:1px dashed #D6E8E4;padding-top:2mm">הרחבת קיבולת + גיוס לקוחות אסטרטגי + EBITDA +2%</div>
+      </div>
+    </div>
+
+    <!-- Sensitivity matrix: WACC vs Growth -->
+    <div class="section-divider" style="margin-top:3mm"><h3>ניתוח רגישות — שווי לבעלים (₪M)</h3><div class="sd-line"></div></div>
+    <p class="sub" style="margin-bottom:2mm">ציר X: WACC · ציר Y: צמיחה שנתית. תא מרכזי = תרחיש בסיס.</p>
+
+    <div class="sens-grid">
+      <table>
+        <tr>
+          <th style="background:#F0F8F6">צמיחה \ WACC</th>
+          <th>14.5%</th><th>15.2%</th><th>16.2%</th><th>17.2%</th><th>18.0%</th>
+        </tr>
+        <tr>
+          <td style="font-weight:700;color:#A8842E">+15%</td>
+          <td class="n" style="color:#A8842E">27.4</td><td class="n" style="color:#A8842E">26.1</td>
+          <td class="n" style="color:#A8842E">24.8</td><td class="n">23.6</td><td class="n">22.5</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">+12%</td>
+          <td class="n">24.8</td><td class="n">23.5</td>
+          <td class="n">22.4</td><td class="n">21.3</td><td class="n">20.4</td>
+        </tr>
+        <tr style="background:rgba(0,168,159,.06)">
+          <td style="font-weight:700;color:#00A89F">+9% ←Base</td>
+          <td class="n">22.8</td><td class="n">21.5</td>
+          <td class="n center-cell" style="background:rgba(0,168,159,.18);font-weight:700;color:#163530">20.1</td>
+          <td class="n">19.1</td><td class="n">18.2</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">+6%</td>
+          <td class="n">20.1</td><td class="n">19.0</td>
+          <td class="n">18.0</td><td class="n">17.1</td><td class="n">16.3</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700;color:#C24A4A">+3%</td>
+          <td class="n">18.1</td><td class="n">17.2</td>
+          <td class="n">16.3</td><td class="n" style="color:#C24A4A">15.4</td>
+          <td class="n" style="color:#C24A4A">14.7</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- EV/EBITDA sensitivity -->
+    <div style="margin-top:3mm">
+      <div class="chart-title">רגישות מכפיל — EV/EBITDA × שינוי EBITDA (EV ₪M)</div>
+      <table>
+        <tr><th>EBITDA \ מכפיל</th><th>×5.5</th><th>×6.5</th><th>×7.5</th><th>×8.5</th><th>×9.5</th></tr>
+        <tr><td class="n">₪2.0M</td><td class="n">11.0</td><td class="n">13.0</td><td class="n">15.0</td><td class="n">17.0</td><td class="n">19.0</td></tr>
+        <tr><td class="n">₪2.4M</td><td class="n">13.2</td><td class="n">15.6</td><td class="n">18.0</td><td class="n">20.4</td><td class="n">22.8</td></tr>
+        <tr style="background:rgba(0,168,159,.06)"><td class="n"><b>₪2.8M ←Base</b></td><td class="n">15.4</td><td class="n">18.2</td><td class="n center-cell" style="background:rgba(0,168,159,.18);font-weight:700">21.0</td><td class="n">23.8</td><td class="n">26.6</td></tr>
+        <tr><td class="n">₪3.2M</td><td class="n">17.6</td><td class="n">20.8</td><td class="n">24.0</td><td class="n">27.2</td><td class="n">30.4</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">עמוד <b>7</b> / 8</span></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 8 — COMBINED VALUE + DISCLAIMER
+══════════════════════════════════════════════ -->
+<div class="page">
+  <div class="lh"><div class="logo-txt">equify<em>.</em><small>BY SBC</small></div><div class="rid">#EQ-2026-0612 · אוריון מלונאות בע״מ</div></div>
+  <div class="rule-grad"></div>
+  <div class="body" style="display:flex;flex-direction:column;justify-content:space-between">
+    <div>
+      <div class="section-divider"><span class="section-num">08</span><h2>שווי משולב — Conclusion</h2><div class="sd-line"></div></div>
+
+      <!-- model weight bar -->
+      <div style="display:flex;height:14mm;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:4mm 0">
+        <div style="width:50%;background:#00A89F;display:grid;place-items:center;color:white;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600">DCF · 50%</div>
+        <div style="width:30%;background:#4DD6CE;display:grid;place-items:center;color:#163530;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600">EBITDA · 30%</div>
+        <div style="width:20%;background:#C5EDE9;display:grid;place-items:center;color:#163530;font-family:'IBM Plex Mono',monospace;font-size:9px">REV · 20%</div>
+      </div>
+
+      <!-- big final number -->
+      <div style="text-align:center;margin:4mm 0">
+        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:60px;color:#163530;direction:ltr;line-height:1">₪20.1M</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:1.5mm">שווי לבעלים · תרחיש בסיס · טווח ₪16.3M – ₪24.8M · נכון ל-12.06.2026</div>
+        <div class="seal" style="margin:4mm auto 0;display:inline-flex"><i></i>CERTIFIED ALGORITHMIC VALUATION · equify BY SBC</div>
+      </div>
+
+      <!-- summary table -->
+      <table style="margin-top:4mm">
+        <tr><th>מדד</th><th>ערך</th><th>מדד</th><th>ערך</th></tr>
+        <tr><td>שווי פעילות (EV)</td><td class="n">₪24.5M</td><td>WACC אפקטיבי</td><td class="n">16.2%</td></tr>
+        <tr><td>חוב נטו</td><td class="n">₪4.4M</td><td>מכפיל EBITDA</td><td class="n">×7.5</td></tr>
+        <tr><td>EBITDA שנתי (Base)</td><td class="n">₪2.8M</td><td>Quality Score</td><td class="n">B+ · 78</td></tr>
+        <tr><td>TV כ-% מ-DCF</td><td class="n">57%</td><td>שנות תחזית</td><td class="n">5Y + Terminal</td></tr>
+        <tr class="sum"><td>שווי לבעלים · Base</td><td class="n">₪20.1M</td><td>טווח כולל</td><td class="n">₪16.3M – ₪24.8M</td></tr>
+      </table>
+    </div>
+
+    <div class="disclaimer">
+      <b>גילוי נאות מלא:</b> דוח זה הינו אינדיקציית שווי אלגוריתמית שהופקה על ידי מנוע equify BY SBC, על בסיס נתונים שהוזנו על ידי המשתמש ונתוני שוק פומביים. הדוח אינו מהווה ייעוץ השקעות, חוות דעת חשבונאית, הערכת שווי לצרכים סטטוטוריים, תחליף לבדיקת נאותות או ייעוץ משפטי. SBC ו-equify אינן נושאות באחריות להחלטות שיתקבלו על בסיס דוח זה. מסקנות הדוח מבוססות על הנחות תחזיתיות שיכולות להשתנות. ניתוחי הרגישות מוצגים לצרכי הבנה בלבד. © 2026 equify BY SBC. כל הזכויות שמורות. דוח מספר #EQ-2026-0612.
+    </div>
+  </div>
+  <div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">עמוד <b>8</b> / 8</span></div>
+</div>
+
+</body>
+</html>

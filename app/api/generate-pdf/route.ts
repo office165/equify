@@ -1,168 +1,78 @@
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
 import { NextResponse } from 'next/server';
 import { appRouteMethodNotAllowed, jsonError } from '../../../lib/api/http';
-import { buildPdfHtml } from '../../../lib/pdf-template';
-import { mapWizardToValuationData } from '../../../lib/pdf-template/map-from-wizard';
+import { buildPdfHtml, PDF_PAGE_COUNT } from '../../../lib/pdf-template';
 import {
-  isEquifyReportApiPayload,
-  mapApiPayloadToValuationData,
-} from '../../../lib/pdf-template/map-from-api';
-import type { ValuationData } from '../../../lib/pdf-template';
+  buildContentDisposition,
+  defaultUtf8PdfFilename,
+  resolveValuationDataFromBody,
+  type GenerateReportBody,
+} from '../../../lib/pdf-template/resolve-pdf-request';
 import { renderHtmlToPdfBuffer } from '../../../lib/pdf/render_html_pdf';
-import { renderWizardSummaryPdfBuffer } from '../../../lib/pdf/render_wizard_summary_pdf';
-import type { EquifyWizardState } from '../../../lib/wizard/map_equify_wizard';
-import type { ValuationLocale } from '../../../api_client';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-interface GeneratePdfBody {
-  companyName?: string;
-  registrationId?: string;
-  valuationPurpose?: string;
-  valuationDate?: string;
-  language?: ValuationLocale;
-  sector?: string;
-  sectorLabel?: string;
-  /** ValuationData, nested API payload, or omitted when using wizard state */
-  data?: ValuationData | Record<string, unknown>;
-  state?: EquifyWizardState;
-  reportId?: string;
-  filename?: string;
-  locale?: ValuationLocale;
+function countReportPages(html: string): number {
+  return (html.match(/class="page(?:\s|")/g) ?? []).length;
 }
 
-/** RFC 5987 — HTTP headers are Latin1-only; never put Hebrew in filename= alone. */
-function buildContentDisposition(filename: string): string {
-  const asciiFallback =
-    filename.replace(/[^\x20-\x7E]/g, '_').replace(/["\\]/g, '_') || 'report.pdf';
-  return `attachment; filename="${asciiFallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
-}
-
-function defaultUtf8Filename(companyName: string): string {
-  const safe = companyName.trim() || 'equify';
-  return `דוח_${safe}.pdf`;
-}
-
-function isValuationDataShape(data: unknown): data is ValuationData {
-  if (!data || typeof data !== 'object') return false;
-  const d = data as Record<string, unknown>;
-  return typeof d.companyName === 'string' && typeof d.equity === 'number';
-}
-
-function resolveValuationData(body: GeneratePdfBody): {
-  valuationData: ValuationData;
-  wizardState?: EquifyWizardState;
-} | { error: string } {
-  if (isEquifyReportApiPayload(body)) {
-    return { valuationData: mapApiPayloadToValuationData(body) };
-  }
-
-  if (isValuationDataShape(body.data)) {
-    return { valuationData: body.data };
-  }
-
-  if (body.state?.profile) {
-    const pdfLocale = body.locale ?? body.language ?? 'he';
-    return {
-      valuationData: mapWizardToValuationData(body.state, body.reportId, pdfLocale),
-      wizardState: body.state,
-    };
-  }
-
-  return { error: 'Provide companyName+data (API payload), data (ValuationData), or state (wizard).' };
-}
-
-function pdfResponse(
-  buffer: Buffer,
-  filename: string,
-  engine: 'puppeteer' | 'react-pdf',
-): NextResponse {
+function pdfResponse(buffer: Buffer, filename: string, pages: number): NextResponse {
   return new NextResponse(new Uint8Array(buffer), {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': buildContentDisposition(filename),
       'Cache-Control': 'private, no-cache',
-      'X-Pdf-Engine': engine,
+      'X-Pdf-Engine': 'puppeteer',
+      'X-Report-Pages': String(pages),
     },
   });
 }
 
-/** PDF report — Puppeteer (8 pages) with react-pdf fallback when wizard state is provided. */
+/** 8-page A4 PDF via Puppeteer — uses equify-report-source print CSS (.page page-break-after). */
 export async function POST(request: Request) {
+  let body: GenerateReportBody;
   try {
-    let body: GeneratePdfBody;
-    try {
-      body = (await request.json()) as GeneratePdfBody;
-    } catch {
-      return jsonError('Invalid JSON body.', 400, 'INVALID_JSON');
-    }
+    body = (await request.json()) as GenerateReportBody;
+  } catch {
+    return jsonError('Invalid JSON body.', 400, 'INVALID_JSON');
+  }
 
-    const resolved = resolveValuationData(body);
-    if ('error' in resolved) {
-      return jsonError(resolved.error, 400, 'VALIDATION_ERROR');
-    }
+  const resolved = resolveValuationDataFromBody(body);
+  if ('error' in resolved) {
+    return jsonError(resolved.error, 400, 'VALIDATION_ERROR');
+  }
 
-    const { valuationData, wizardState } = resolved;
+  const { valuationData } = resolved;
+  const utf8Filename =
+    body.filename ?? defaultUtf8PdfFilename(valuationData.companyName);
 
-    const utf8Filename =
-      body.filename ??
-      defaultUtf8Filename(valuationData.companyName);
-
-    try {
-      const html = buildPdfHtml(valuationData);
-
-      let buffer: Buffer;
-      if (process.env.VERCEL) {
-        const chromiumWithGraphics = chromium as typeof chromium & {
-          setGraphicsMode?: (enabled: boolean) => void;
-        };
-        chromiumWithGraphics.setGraphicsMode?.(false);
-
-        const browser = await puppeteer.launch({
-          args: chromium.args,
-          executablePath: await chromium.executablePath(),
-          headless: true,
-        });
-
-        try {
-          buffer = await renderHtmlToPdfBuffer(html, browser);
-        } finally {
-          await browser.close();
-        }
-      } else {
-        buffer = await renderHtmlToPdfBuffer(html);
-      }
-
-      return pdfResponse(buffer, utf8Filename, 'puppeteer');
-    } catch (puppeteerErr) {
-      console.warn(
-        '[generate-pdf] Puppeteer unavailable, falling back to react-pdf',
-        puppeteerErr,
-      );
-
-      if (!wizardState?.profile) {
-        return jsonError(
-          'Full PDF requires Puppeteer; pass state for react-pdf fallback.',
-          503,
-          'PDF_ENGINE_UNAVAILABLE',
-        );
-      }
-
-      const buffer = await renderWizardSummaryPdfBuffer(
-        wizardState,
-        body.reportId ?? valuationData.reportId,
-      );
-      return pdfResponse(buffer, utf8Filename, 'react-pdf');
-    }
+  let html: string;
+  try {
+    html = buildPdfHtml(valuationData);
   } catch (err) {
-    console.error('[generate-pdf]', err);
+    console.error('[generate-pdf] HTML build failed', err);
+    const message = err instanceof Error ? err.message : 'Report HTML build failed.';
+    return jsonError(message, 500, 'REPORT_HTML_BUILD_FAILED');
+  }
+
+  const pages = countReportPages(html);
+  if (pages !== PDF_PAGE_COUNT) {
+    console.warn(
+      `[generate-pdf] Expected ${PDF_PAGE_COUNT} pages, built ${pages} for ${valuationData.reportId}`,
+    );
+  }
+
+  try {
+    const buffer = await renderHtmlToPdfBuffer(html);
+    return pdfResponse(buffer, utf8Filename, pages);
+  } catch (err) {
+    console.error('[generate-pdf] Puppeteer render failed', err);
+    const message = err instanceof Error ? err.message : 'PDF render failed.';
     return jsonError(
-      err instanceof Error ? err.message : 'PDF generation failed.',
-      500,
-      'PDF_GENERATION_FAILED',
+      `${message} You can use Download HTML and print to PDF from your browser.`,
+      503,
+      'PDF_RENDER_FAILED',
     );
   }
 }

@@ -1,5 +1,9 @@
 import type { ValuationLocale } from '../../api_client';
 import type { EquifySectorKey } from '../valuation';
+import {
+  multiplesMethodologyCopy,
+  multiplesMethodologyCopyEn,
+} from '../i18n/equify_report_copy';
 
 export interface SubSectorOption {
   id: string;
@@ -183,21 +187,18 @@ export function getSectorChipLabel(
   return locale === 'he' ? entry.chipLabelHe : entry.chipLabelEn;
 }
 
-/** Page 5 multiples intro — Orion Hotels spec phrasing */
+/** Page 5 multiples intro */
 export function getMultiplesIntroText(
   sector: EquifySectorKey,
   locale: ValuationLocale = 'he',
-  dealCount?: number,
 ): string {
   const entry = getIndustryConfig(sector);
-  const n = dealCount ?? entry.maDealCount;
   const sectorPhrase =
     locale === 'he' ? entry.multiplesSectorPhraseHe : entry.multiplesSectorPhraseEn;
 
-  if (locale === 'he') {
-    return `המכפילים מכוילים מול ${n} עסקאות M&A ישראליות ${sectorPhrase} (2023-2024). הפס מציג את טווח השוק; הנקודה — את המיקום שלך.`;
-  }
-  return `Multiples are calibrated against ${n} Israeli M&A transactions ${sectorPhrase} (2023-2024). The bar shows the market range; the dot marks your position.`;
+  return locale === 'he'
+    ? multiplesMethodologyCopy(sectorPhrase)
+    : multiplesMethodologyCopyEn(sectorPhrase);
 }
 
 export function getSubSectorMultAdj(

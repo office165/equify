@@ -1,5 +1,4 @@
 /* equify wizard — פורט עיצוב מה-HTML (טוקנים #050F0D, #00C2B8, #C49A3C) */
-@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Assistant:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 .equify-wizard {
   --ink: #050f0d;
@@ -16,9 +15,9 @@
   --line: rgba(0, 194, 184, 0.13);
   --red: #d97575;
   --green: #5db88a;
-  --display: 'Frank Ruhl Libre', serif;
-  --body: 'Assistant', system-ui, sans-serif;
-  --mono: 'IBM Plex Mono', monospace;
+  --body: var(--font-sans, var(--font-equify), 'Assistant', system-ui, sans-serif);
+  --display: var(--body);
+  --mono: var(--font-mono, var(--font-landing-mono), 'IBM Plex Mono'), monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   font-family: var(--body);
@@ -108,7 +107,6 @@
 }
 
 .equify-wizard .logo .lg {
-  font-family: var(--display);
   font-weight: 900;
   font-size: 22px;
 }
@@ -429,7 +427,6 @@
 }
 
 .equify-wizard .pane-title {
-  font-family: var(--display);
   font-weight: 900;
   font-size: clamp(28px, 4vw, 46px);
   line-height: 1.4;
@@ -536,6 +533,15 @@
   flex-direction: column;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.equify-wizard .smart-num.is-dragging {
+  touch-action: none;
+}
+
+body.equify-slider-dragging {
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 .equify-wizard .sn-top {
@@ -910,7 +916,6 @@
 }
 
 .equify-wizard .qs-grade {
-  font-family: var(--display);
   font-weight: 900;
   font-size: 22px;
   color: var(--gold);
@@ -929,7 +934,6 @@
 }
 
 .equify-wizard .risk-section h4 {
-  font-family: var(--display);
   font-size: 18px;
   font-weight: 700;
   margin-bottom: 18px;
@@ -1181,7 +1185,6 @@
 }
 
 .equify-wizard .waterfall h3 {
-  font-family: var(--display);
   font-size: 20px;
   font-weight: 700;
   margin-bottom: 20px;
@@ -1479,7 +1482,6 @@
 }
 
 .equify-wizard .modal-head h3 {
-  font-family: var(--display);
   font-size: 20px;
   font-weight: 700;
 }
@@ -1810,7 +1812,31 @@
 }
 
 .field-tip-pop--fixed {
-  pointer-events: none;
+  pointer-events: auto;
+}
+
+.field-tip-pop--mobile {
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 14px 16px;
+  border-radius: 14px;
+  box-shadow:
+    0 20px 56px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(0, 194, 184, 0.12);
+}
+
+.field-tip-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10040;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: rgba(5, 15, 13, 0.42);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  cursor: default;
+  touch-action: manipulation;
 }
 
 .equify-wizard .net-debt-banner {

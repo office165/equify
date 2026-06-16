@@ -11,9 +11,15 @@ const nextConfig = {
     outputFileTracingIncludes: {
       '/api/v1/reports/valuation/pdf': [
         './node_modules/@sparticuz/chromium/**',
+        './node_modules/@sparticuz/chromium/bin/**',
       ],
       '/api/generate-pdf': [
         './node_modules/@sparticuz/chromium/**',
+        './node_modules/@sparticuz/chromium/bin/**',
+        './lib/pdf-template/**',
+      ],
+      '/api/generate-html': [
+        './lib/pdf-template/**',
       ],
     },
   },

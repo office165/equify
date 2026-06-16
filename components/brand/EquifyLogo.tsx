@@ -169,7 +169,7 @@ export function EquifyLogo({
         x={L.wordmarkX}
         y={L.wordmarkY}
         fill={ink}
-        fontFamily="var(--font-manrope, Manrope), ui-sans-serif, system-ui, sans-serif"
+        fontFamily="var(--font-equify, Assistant), ui-sans-serif, system-ui, sans-serif"
         fontSize={L.wordmarkSize}
         fontWeight="700"
         letterSpacing="-0.01em"
@@ -181,7 +181,7 @@ export function EquifyLogo({
           x={L.subBrandX}
           y={L.subBrandY}
           fill={sub}
-          fontFamily="var(--font-manrope, Manrope), ui-sans-serif, system-ui, sans-serif"
+          fontFamily="var(--font-equify, Assistant), ui-sans-serif, system-ui, sans-serif"
           fontSize="9"
           fontWeight="500"
           letterSpacing="0.18em"

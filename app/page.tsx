@@ -1,26 +1,12 @@
 import type { Metadata } from 'next';
-import { Assistant, Frank_Ruhl_Libre, IBM_Plex_Mono } from 'next/font/google';
+import { IBM_Plex_Mono } from 'next/font/google';
 import { LandingPage } from '../components/landing/LandingPage';
 
 export const metadata: Metadata = {
-  title: 'equify BY SBC — מנוע הערכת השווי לעסקים בישראל',
+  title: 'equify BY SBC — שווי העסק שלך. בנתונים.',
   description:
-    'אינדיקציית שווי מוסמכת בזמן אמת. DCF, WACC ומכפילים ישראליים 2026 — דוח PDF תוך 10 דקות.',
+    'דוח הערכת שווי על שלוש יסודות: DCF, מכפילי שוק מכוילים ל-12 עסקאות M&A בישראל, וציון איכות. שווי משוקלל מעשי.',
 };
-
-const landingDisplay = Frank_Ruhl_Libre({
-  subsets: ['hebrew', 'latin'],
-  weight: ['400', '700', '900'],
-  variable: '--font-landing-display',
-  display: 'swap',
-});
-
-const landingBody = Assistant({
-  subsets: ['hebrew', 'latin'],
-  weight: ['300', '400', '600', '700'],
-  variable: '--font-landing-body',
-  display: 'swap',
-});
 
 const landingMono = IBM_Plex_Mono({
   subsets: ['latin'],
@@ -31,9 +17,7 @@ const landingMono = IBM_Plex_Mono({
 
 export default function Home() {
   return (
-    <div
-      className={`${landingDisplay.variable} ${landingBody.variable} ${landingMono.variable}`}
-    >
+    <div className={landingMono.variable}>
       <LandingPage />
     </div>
   );

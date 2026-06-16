@@ -1,4 +1,8 @@
 import type { ValuationLocale } from '../../api_client';
+import {
+  QUALITY_METHODOLOGY_COPY,
+  QUALITY_METHODOLOGY_COPY_EN,
+} from './equify_report_copy';
 
 export interface EquifyWizardStepStrings {
   common: {
@@ -119,9 +123,9 @@ const HE: EquifyWizardStepStrings = {
     uploadLogo: 'גרור לכאן או לחץ להעלאה · PNG/JPG',
     placeholderName: 'ישראל ישראלי',
   },
-  step1: { titlePrefix: 'ספר לנו על' },
+  step1: { titlePrefix: 'פרטי חברה' },
   step2: {
-    sub: 'כל שינוי מחשב מחדש את השווי בזמן אמת — כולל נרמול EBITDA, CAPEX וחוב נטו.',
+    sub: 'הכנסות ו-EBITDA לשנתיים האחרונות; תחזית לשלוש שנים קדימה לפי הקלט ותחזית הנהלה.',
     revenue: 'הכנסות שנתיות',
     revenueTip: 'הכנסות מדווחות לשנה האחרונה (₪K). בסיס לכל מודלי ההערכה.',
     margin: 'שיעור EBITDA מדווח',
@@ -162,9 +166,9 @@ const HE: EquifyWizardStepStrings = {
     maxCash: '20M ₪',
   },
   step3: {
-    titlePrefix: 'מה',
-    titleHl: 'מייחד את העסק שלך.',
-    sub: 'הגורמים האיכותיים שמכיילים את עלות ההון ואת מכפיל האיכות.',
+    titlePrefix: 'מדדי סיכון',
+    titleHl: 'ואיכות עסקית',
+    sub: QUALITY_METHODOLOGY_COPY,
     revenueStability: 'הכנסות ויציבות',
     management: 'ניהול ותחרות',
     recurring: 'הכנסות חוזרות (MRR/ARR)',
@@ -189,9 +193,9 @@ const HE: EquifyWizardStepStrings = {
     moatPlaceholder: 'תאר את המעמד התחרותי, נכסים ייחודיים, חסמי כניסה...',
   },
   step4: {
-    titlePrefix: 'להשתמש בדוח',
-    titleHl: 'לשם מה?',
-    sub: 'המטרה קובעת את הדגשים, הניסוח ורמת הפירוט בדוח ה-PDF.',
+    titlePrefix: 'מטרת ההערכה',
+    titleHl: 'והפקת הדוח',
+    sub: 'המטרה קובעת את הדגשים ואת רמת הפירוט בדוח PDF.',
     goalGroup: 'מטרת ההערכה',
     termsLabel: 'הסכמה לתנאי שימוש',
     termsBody:
@@ -230,9 +234,9 @@ const EN: EquifyWizardStepStrings = {
     uploadLogo: 'Drag here or tap to upload · PNG/JPG',
     placeholderName: 'Jane Doe',
   },
-  step1: { titlePrefix: 'Tell us about' },
+  step1: { titlePrefix: 'Company details' },
   step2: {
-    sub: 'Every change recalculates value in real time — including EBITDA normalization, CAPEX, and net debt.',
+    sub: 'Revenue and EBITDA for the past two years; three-year forward forecast from your inputs and management projections.',
     revenue: 'Annual revenue',
     revenueTip: 'Reported revenue for the latest year (₪K). Basis for all valuation models.',
     margin: 'Reported EBITDA margin',
@@ -273,9 +277,9 @@ const EN: EquifyWizardStepStrings = {
     maxCash: '₪20M',
   },
   step3: {
-    titlePrefix: 'What',
-    titleHl: 'makes your business unique.',
-    sub: 'Quality drivers that calibrate cost of capital and the quality multiple.',
+    titlePrefix: 'Risk metrics',
+    titleHl: 'and business quality',
+    sub: QUALITY_METHODOLOGY_COPY_EN,
     revenueStability: 'Revenue & stability',
     management: 'Management & competition',
     recurring: 'Recurring revenue (MRR/ARR)',
@@ -299,9 +303,9 @@ const EN: EquifyWizardStepStrings = {
     moatPlaceholder: 'Describe competitive position, unique assets, barriers to entry...',
   },
   step4: {
-    titlePrefix: 'What will you',
-    titleHl: 'use the report for?',
-    sub: 'Purpose shapes emphasis, wording, and depth in the PDF report.',
+    titlePrefix: 'Valuation purpose',
+    titleHl: 'and report output',
+    sub: 'Purpose shapes emphasis and depth in the PDF report.',
     goalGroup: 'Valuation purpose',
     termsLabel: 'Terms of use agreement',
     termsBody:

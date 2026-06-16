@@ -17,6 +17,7 @@ import {
   multiplesMethodologyCopyEn,
   resolveEquifySectorKey,
 } from '../i18n/equify_report_copy';
+import { reportDateShortHe } from '../pdf/print/print_formatters';
 
 const FINANCIAL_YEAR_ORDER = ['2023', '2024', '2025', '2026F', '2027F', '2028F'] as const;
 
@@ -510,7 +511,8 @@ export function mapApiPayloadToValuationData(payload: EquifyReportApiPayload): V
   const growthPct = data.scenarios.base.growth;
   const marginPct = latest.ebitda_pct;
 
-  const valuationDate = payload.valuationDate ?? new Date().toLocaleDateString('he-IL');
+  const valuationDate =
+    payload.valuationDate ?? new Date().toISOString().slice(0, 10);
   const reportId =
     payload.reportId ??
     `EQ-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}`;
@@ -523,7 +525,7 @@ export function mapApiPayloadToValuationData(payload: EquifyReportApiPayload): V
   return {
     reportId,
     valuationDate,
-    valuationDateShort: valuationDate,
+    valuationDateShort: reportDateShortHe(valuationDate),
     locale,
 
     fullName: '',

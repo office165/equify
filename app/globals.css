@@ -26,7 +26,7 @@
   --brand-mint-2: #05d38a;
   --brand-mint-hover: #33f7b3;
   --brand-on-dark: #ffffff;
-  --font-equify: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-equify), 'Assistant', system-ui, sans-serif;
   /* Landing — Nextronium emerald canvas */
   --eq-bg-base: #020504;
   --eq-bg-elevated: #080f0d;
@@ -53,6 +53,7 @@
 
   body {
     @apply antialiased;
+    font-family: var(--font-sans);
     background: linear-gradient(180deg, #020504 0%, #080f0d 100%);
     background-attachment: fixed;
     color: var(--vb-text-primary);
@@ -60,6 +61,15 @@
     overflow-y: visible;
     min-height: 100%;
     height: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: inherit;
   }
 
   :focus-visible {

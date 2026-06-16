@@ -1,39 +1,18 @@
 import type { Browser } from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
-import puppeteer from 'puppeteer-core';
-import { getBrowser } from './getBrowser';
+import { launchPdfChromium } from './launch_chromium';
 
 const PDF_VIEWPORT_WIDTH = 794;
 const PDF_VIEWPORT_HEIGHT = 1123;
 
-/** Launch ל-Vercel/serverless — @sparticuz/chromium + puppeteer-core בלבד */
-export async function launchVercelChromiumBrowser(): Promise<Browser> {
-  const chromiumWithGraphics = chromium as typeof chromium & {
-    setGraphicsMode?: (enabled: boolean) => void;
-  };
-  chromiumWithGraphics.setGraphicsMode?.(false);
+export { launchPdfChromium as launchVercelChromiumBrowser } from './launch_chromium';
 
-  return puppeteer.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
-    headless: true,
-  });
-}
-
-async function resolvePdfBrowser(): Promise<Browser> {
-  if (process.env.VERCEL) {
-    return launchVercelChromiumBrowser();
-  }
-  return getBrowser();
-}
-
-/** מרנדר HTML מוכן להדפסה ל-PDF באמצעות puppeteer-core */
+/** מרנדר HTML מוכן להדפסה ל-PDF — respects @page A4 + .page breaks */
 export async function renderHtmlToPdfBuffer(
   html: string,
   browserInstance?: Browser,
 ): Promise<Buffer> {
   const ownsBrowser = browserInstance == null;
-  const browser = browserInstance ?? (await resolvePdfBrowser());
+  const browser = browserInstance ?? (await launchPdfChromium());
 
   try {
     const page = await browser.newPage();
@@ -42,20 +21,22 @@ export async function renderHtmlToPdfBuffer(
       height: PDF_VIEWPORT_HEIGHT,
       deviceScaleFactor: 1,
     });
+
     await page.emulateMediaType('print');
 
     await page.setContent(html, {
-      waitUntil: 'networkidle0' as 'load',
-      timeout: 45_000,
+      waitUntil: 'load',
+      timeout: 60_000,
     });
 
-    const fontsReadyHandle = await page.evaluateHandle(() => document.fonts.ready);
-    await fontsReadyHandle.evaluate(async (ready) => {
-      await (ready as unknown as Promise<FontFaceSet>);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      document.querySelectorAll('.page').forEach((el) => {
+        el.getBoundingClientRect();
+      });
     });
-    await fontsReadyHandle.dispose();
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 350));
 
     const pdfUint8 = await page.pdf({
       format: 'A4',

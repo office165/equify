@@ -104,7 +104,6 @@ html {
 }
 
 #loader .l-logo {
-  font-family: var(--display);
   font-weight: 900;
   font-size: clamp(34px, 6vw, 56px);
   letter-spacing: -0.01em;
@@ -161,7 +160,6 @@ html {
 }
 
 .logo {
-  font-family: var(--display);
   font-weight: 900;
   font-size: 24px;
   display: flex;
@@ -336,7 +334,6 @@ html {
 }
 
 .h-title {
-  font-family: var(--display);
   font-weight: 900;
   font-size: clamp(44px, 7vw, 92px);
   line-height: 1.04;
@@ -685,7 +682,6 @@ html {
 }
 
 .sec-title {
-  font-family: var(--display);
   font-weight: 900;
   font-size: clamp(32px, 4.6vw, 58px);
   line-height: 1.12;
@@ -762,7 +758,6 @@ html {
 }
 
 .step h3 {
-  font-family: var(--display);
   font-weight: 700;
   font-size: 22px;
   margin: 20px 0 10px;
@@ -813,7 +808,6 @@ html {
 }
 
 .calc-ctrl h3 {
-  font-family: var(--display);
   font-size: 26px;
   font-weight: 700;
   margin-bottom: 6px;
@@ -1121,7 +1115,6 @@ html {
 }
 
 .p-name {
-  font-family: var(--display);
   font-weight: 900;
   font-size: 34px;
   margin: 18px 0 6px;
@@ -1312,7 +1305,6 @@ html {
 }
 
 .final .f-title {
-  font-family: var(--display);
   font-weight: 900;
   font-size: clamp(38px, 6vw, 80px);
   line-height: 1.08;
@@ -1466,7 +1458,6 @@ footer {
 }
 
 .mmenu a {
-  font-family: var(--display);
   font-size: 32px;
   font-weight: 700;
 }

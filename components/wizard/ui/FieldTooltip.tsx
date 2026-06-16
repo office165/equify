@@ -18,12 +18,17 @@ export interface FieldTooltipProps {
 }
 
 const VIEWPORT_PAD = 16;
+const MOBILE_BREAKPOINT = 640;
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
-/** Tooltip [i] — viewport-safe on mobile with collision-aware fixed positioning */
+function isMobileViewport(): boolean {
+  return typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT;
+}
+
+/** Tooltip [i] — tap-to-open on mobile, 44px target, viewport-safe positioning */
 export function FieldTooltip({ text, label }: FieldTooltipProps) {
   const { locale } = useValuationI18n();
   const defaultLabel = getEquifyWizardStepStrings(locale).common.tooltipAria;
@@ -31,13 +36,20 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
 
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const [mobile, setMobile] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; left: number; width?: number } | null>(
+    null,
+  );
   const tipId = useId();
   const btnRef = useRef<HTMLButtonElement>(null);
   const popRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     setMounted(true);
+    const syncMobile = () => setMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    syncMobile();
+    window.addEventListener('resize', syncMobile);
+    return () => window.removeEventListener('resize', syncMobile);
   }, []);
 
   const reposition = useCallback(() => {
@@ -46,21 +58,36 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
     if (!btn || !pop) return;
 
     const anchor = btn.getBoundingClientRect();
-    const popW = pop.offsetWidth;
-    const popH = pop.offsetHeight;
-    const gap = 10;
-    const maxW = Math.min(320, window.innerWidth - VIEWPORT_PAD * 2);
+    const gap = 12;
+    const viewportW = window.innerWidth;
+    const viewportH = window.innerHeight;
+    const isMobile = viewportW < MOBILE_BREAKPOINT;
+    const maxW = Math.min(isMobile ? viewportW - VIEWPORT_PAD * 2 : 300, viewportW - VIEWPORT_PAD * 2);
 
     pop.style.maxWidth = `${maxW}px`;
+    pop.style.width = isMobile ? `${maxW}px` : 'max-content';
+
+    const popW = pop.offsetWidth;
+    const popH = pop.offsetHeight;
+
+    if (isMobile) {
+      const left = VIEWPORT_PAD;
+      let top = anchor.bottom + gap;
+      if (top + popH > viewportH - VIEWPORT_PAD) {
+        top = Math.max(VIEWPORT_PAD, anchor.top - gap - popH);
+      }
+      setCoords({ top, left, width: maxW });
+      return;
+    }
 
     let left = anchor.left + anchor.width / 2 - popW / 2;
-    left = clamp(left, VIEWPORT_PAD, window.innerWidth - popW - VIEWPORT_PAD);
+    left = clamp(left, VIEWPORT_PAD, viewportW - popW - VIEWPORT_PAD);
 
     let top = anchor.bottom + gap;
-    if (top + popH > window.innerHeight - VIEWPORT_PAD) {
+    if (top + popH > viewportH - VIEWPORT_PAD) {
       top = anchor.top - gap - popH;
     }
-    top = clamp(top, VIEWPORT_PAD, window.innerHeight - popH - VIEWPORT_PAD);
+    top = clamp(top, VIEWPORT_PAD, viewportH - popH - VIEWPORT_PAD);
 
     setCoords({ top, left });
   }, []);
@@ -74,7 +101,7 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
       window.requestAnimationFrame(() => reposition());
     });
     return () => window.cancelAnimationFrame(id);
-  }, [open, reposition, text]);
+  }, [open, mobile, reposition, text]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -90,6 +117,7 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
 
   useEffect(() => {
     if (!open) return undefined;
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
@@ -97,7 +125,35 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const toggle = useCallback(() => setOpen((v) => !v), []);
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (btnRef.current?.contains(target) || popRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [open]);
+
+  const toggle = useCallback((e: React.MouseEvent | React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen((v) => !v);
+  }, []);
+
+  const backdrop =
+    open && mounted && mobile ? (
+      <button
+        type="button"
+        className="field-tip-backdrop"
+        aria-hidden="true"
+        tabIndex={-1}
+        onClick={() => setOpen(false)}
+      />
+    ) : null;
 
   const popover =
     open && mounted && coords ? (
@@ -105,11 +161,12 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
         id={tipId}
         ref={popRef}
         role="tooltip"
-        className="field-tip-pop field-tip-pop--fixed"
+        className={`field-tip-pop field-tip-pop--fixed${mobile ? ' field-tip-pop--mobile' : ''}`}
         style={{
           position: 'fixed',
           top: coords.top,
           left: coords.left,
+          width: coords.width,
           zIndex: 10050,
           maxWidth: `calc(100vw - ${VIEWPORT_PAD * 2}px)`,
         }}
@@ -127,14 +184,20 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
         aria-label={ariaLabel}
         aria-expanded={open}
         aria-describedby={open ? tipId : undefined}
-        onClick={(e) => {
+        onClick={toggle}
+        onPointerDown={(e) => {
           e.stopPropagation();
-          toggle();
         }}
       >
         i
       </button>
-      {popover ? createPortal(popover, document.body) : null}
+      {mounted ? createPortal(
+        <>
+          {backdrop}
+          {popover}
+        </>,
+        document.body,
+      ) : null}
     </span>
   );
 }

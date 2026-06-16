@@ -70,6 +70,28 @@ export function SmartSlider({
     [],
   );
 
+  useEffect(() => {
+    if (!dragging) return undefined;
+
+    const blockTouchScroll = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = document.body.style.touchAction;
+    document.body.classList.add('equify-slider-dragging');
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.addEventListener('touchmove', blockTouchScroll, { passive: false });
+
+    return () => {
+      document.body.classList.remove('equify-slider-dragging');
+      document.body.style.overflow = prevOverflow;
+      document.body.style.touchAction = prevTouchAction;
+      document.removeEventListener('touchmove', blockTouchScroll);
+    };
+  }, [dragging]);
+
   const pct = useCallback(
     (v: number) => ((safeNumber(v, min) - min) / (max - min)) * 100,
     [min, max],
@@ -258,7 +280,7 @@ export function SmartSlider({
   const displayText = editing ? draft : idleValue;
 
   return (
-    <div className="smart-num">
+    <div className={`smart-num${dragging ? ' is-dragging' : ''}`}>
       <div className="sn-top">
         <label>
           {label}

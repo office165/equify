@@ -10,6 +10,10 @@
       "maxDuration": 60,
       "memory": 1024
     },
+    "app/api/generate-html/route.ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
     "app/api/v1/reports/valuation/pdf/route.ts": {
       "maxDuration": 60,
       "memory": 1024

@@ -303,11 +303,7 @@ export function mapWizardToValuationData(
   const scenarios = computeScenarios(computed, inputs);
   const { rows: dcfRows, terminalPvM, terminalSharePct } = buildDcfRows(inputs, computed);
   const now = new Date();
-  const dateStr = now.toLocaleDateString('he-IL', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const dateIso = now.toISOString().slice(0, 10);
   const dateShort = now.toLocaleDateString('he-IL');
 
   const modelBlend: ModelBlendRow[] = [
@@ -346,7 +342,7 @@ export function mapWizardToValuationData(
 
   return {
     reportId: reportId ?? `EQ-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`,
-    valuationDate: dateStr,
+    valuationDate: dateIso,
     valuationDateShort: dateShort,
     locale,
 

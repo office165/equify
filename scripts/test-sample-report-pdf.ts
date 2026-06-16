@@ -52,10 +52,10 @@ async function writePdf(
   const pdfPath = path.join(outDir, pdfFilename);
   fs.writeFileSync(pdfPath, pdfBuffer);
 
-  const sheets = (html.match(/class="sheet/g) ?? []).length;
+  const pages = (html.match(/class="page(?:\s|")/g) ?? []).length;
   console.log(`${label}:`);
   console.log(`  HTML: ${htmlPath}`);
-  console.log(`  PDF:  ${pdfPath} (${pdfBuffer.length} bytes, ${sheets}/${PDF_PAGE_COUNT} sheets)`);
+  console.log(`  PDF:  ${pdfPath} (${pdfBuffer.length} bytes, ${pages}/${PDF_PAGE_COUNT} pages)`);
   console.log(`  dir=${html.match(/dir="(rtl|ltr)"/)?.[1]} company=${valuationData.companyName}`);
 }
 

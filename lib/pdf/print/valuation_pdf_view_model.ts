@@ -3,7 +3,7 @@ import type { ValuationLocale } from '../../../api_client';
 import { deriveWaccBreakdown } from '../dcf_projection';
 import { getWizardContext } from '../wizard_context';
 import type { ValuationReportData } from '../types';
-import { reportDateHe } from './print_formatters';
+import { parseReportDate, reportDateHe } from './print_formatters';
 
 export type PdfScenarioKey = 'bear' | 'base' | 'bull';
 
@@ -389,9 +389,7 @@ export function buildValuationPdfViewModel(
   const cash = matrix.capital_structure.cash_and_equivalents;
   const corpId = id.corporateTaxId || id.nationalId;
   const valuationDate = reportDateHe(matrix.meta.generated_at);
-  const dateShort = fmtShortDate(
-    matrix.meta.generated_at ? new Date(matrix.meta.generated_at) : new Date(),
-  );
+  const dateShort = fmtShortDate(parseReportDate(matrix.meta.generated_at));
 
   return {
     reportId: data.reportId,

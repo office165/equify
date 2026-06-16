@@ -157,11 +157,116 @@ export function fmtMultiple(value: number | null | undefined): string {
   return `${value.toFixed(1)}x`;
 }
 
-export function reportDateHe(iso?: string): string {
-  const d = iso ? new Date(iso) : new Date();
-  return new Intl.DateTimeFormat('he-IL', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(d);
+const HEBREW_MONTH_NAMES =
+  /בינואר|בפברואר|במרץ|באפריל|במאי|ביוני|ביולי|באוגוסט|בספטמבר|באוקטובר|בנובמבר|בדצמבר/;
+
+function isHebrewLongDate(value: string): boolean {
+  return /[\u0590-\u05FF]/.test(value) && HEBREW_MONTH_NAMES.test(value);
+}
+
+function isHebrewShortDate(value: string): boolean {
+  return /^\d{1,2}[./]\d{1,2}[./]\d{4}$/.test(value.trim());
+}
+
+/** Parse report dates from ISO, dd.mm.yyyy, or fall back to now (never throws). */
+export function parseReportDate(value?: string | Date | null): Date {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? new Date() : value;
+  }
+  if (value == null) return new Date();
+
+  const trimmed = String(value).trim();
+  if (!trimmed) return new Date();
+
+  if (isHebrewLongDate(trimmed)) {
+    const months = [
+      'בינואר',
+      'בפברואר',
+      'במרץ',
+      'באפריל',
+      'במאי',
+      'ביוני',
+      'ביולי',
+      'באוגוסט',
+      'בספטמבר',
+      'באוקטובר',
+      'בנובמבר',
+      'בדצמבר',
+    ];
+    let month = new Date().getMonth();
+    for (let i = 0; i < months.length; i += 1) {
+      if (trimmed.includes(months[i]!)) {
+        month = i;
+        break;
+      }
+    }
+    const dayMatch = /^(\d{1,2})\s/.exec(trimmed);
+    const yearMatch = /(20\d{2})/.exec(trimmed);
+    const day = dayMatch ? Number(dayMatch[1]) : 1;
+    const year = yearMatch ? Number(yearMatch[1]) : new Date().getFullYear();
+    const parsed = new Date(year, month, day);
+    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+  }
+
+  const isoAttempt = new Date(trimmed);
+  if (!Number.isNaN(isoAttempt.getTime())) {
+    return isoAttempt;
+  }
+
+  const dmy = /^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/.exec(trimmed);
+  if (dmy) {
+    const parsed = new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]));
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})/.exec(trimmed);
+  if (ymd) {
+    const parsed = new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return new Date();
+}
+
+function formatHebrewLongDate(d: Date): string {
+  try {
+    return new Intl.DateTimeFormat('he-IL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(d);
+  } catch {
+    return new Date().toLocaleDateString('he-IL', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
+}
+
+export function reportDateShortHe(value?: string | Date | null): string {
+  if (typeof value === 'string' && isHebrewShortDate(value)) {
+    return value.trim();
+  }
+  return formatHebrewShortDate(parseReportDate(value));
+}
+
+function formatHebrewShortDate(d: Date): string {
+  try {
+    return new Intl.DateTimeFormat('he-IL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d);
+  } catch {
+    return new Date().toLocaleDateString('he-IL');
+  }
+}
+
+/** Long Hebrew date for PDF cover — accepts ISO, dd.mm.yyyy, or pre-formatted Hebrew. */
+export function reportDateHe(value?: string | Date | null): string {
+  if (typeof value === 'string' && isHebrewLongDate(value.trim())) {
+    return value.trim();
+  }
+  return formatHebrewLongDate(parseReportDate(value));
 }
