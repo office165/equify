@@ -12,6 +12,7 @@ export const INDUSTRY_VALUES = [
   'Professional Services',
   'Industrial',
   'Defense & Military',
+  'Defense & Aerospace',
   'renewable_energy',
   'Other',
 ] as const;
@@ -62,6 +63,10 @@ const INDUSTRY_LABELS: Record<IndustryValue, { en: string; he: string }> = {
   'Defense & Military': {
     en: 'Defense & Military',
     he: 'ביטחון וצבא',
+  },
+  'Defense & Aerospace': {
+    en: 'Defense & Aerospace',
+    he: 'ביטחון ותעופה',
   },
   renewable_energy: {
     en: 'Renewable Energy',

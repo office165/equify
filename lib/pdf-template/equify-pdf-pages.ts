@@ -25,6 +25,7 @@ import {
   computeWaterfallFills,
 } from './equify-pdf-charts';
 import { FINANCIAL_DATA_COPY, multiplesMethodologyCopy, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY } from '../i18n/equify_report_copy';
+import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import type { ValuationData } from './types';
 
 const TOTAL_PAGES = 8;
@@ -102,9 +103,15 @@ function defaultDisclaimer(): string {
   return 'דוח זה הינו אינדיקציית שווי אלגוריתמית שהופקה על ידי מנוע equify, על בסיס נתונים שהוזנו על ידי המשתמש ונתוני שוק פומביים. הדוח אינו מהווה ייעוץ השקעות, חוות דעת חשבונאית, הערכת שווי לצרכים סטטוטוריים או תחליף לבדיקת נאותות. SBC ו-equify אינן נושאות באחריות להחלטות שיתקבלו על בסיס דוח זה. © 2026 equify BY SBC. כל הזכויות שמורות.';
 }
 
+function companyLogoCoverHtml(dataUrl?: string): string {
+  if (!isValidLogoDataUrl(dataUrl)) return '';
+  return `<img class="c-logo" src="${escHtml(dataUrl)}" alt="" />`;
+}
+
 function buildPage1Cover(data: ValuationData): string {
   const f = pdfFmt(data.locale);
   const dateLabel = reportDateHe(data.valuationDate);
+  const logoHtml = companyLogoCoverHtml(data.customLogoDataUrl);
   const body = `
   ${head(`VALUATION REPORT · #${escHtml(data.reportId)}`)}
   <div class="rule-grad"></div>
@@ -112,6 +119,7 @@ function buildPage1Cover(data: ValuationData): string {
     ${buildEquifyCoverRingsSvg()}
     <div class="cwrap">
       <span class="eyebrow" style="justify-content:center">דוח הערכת שווי · ${escHtml(dateLabel)}</span>
+      ${logoHtml}
       <div class="c-comp">${escHtml(data.companyName)}</div>
       <div class="c-meta">${metaLine(data)}</div>
       <div class="c-id">${identityLine(data)}</div>

@@ -78,6 +78,7 @@ p{line-height:1.65;color:var(--ink);margin-bottom:2mm}
 .cover-rings,.cv-rings{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;z-index:0}
 .cover-content,.cwrap{position:relative;z-index:1}
 .cv-company,.c-comp{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:22px;color:var(--pine);margin-bottom:1.5mm;margin-top:3mm}
+.c-logo{display:block;margin:0 auto 3mm;max-height:50px;width:auto;max-width:60mm;object-fit:contain}
 .cv-meta,.c-meta{font-family:'IBM Plex Mono',monospace;font-size:7.5px;color:var(--dim);letter-spacing:.1em;margin-bottom:2mm}
 .c-id{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:.08em;margin-top:3px;margin-bottom:4mm}
 .cv-big,.c-val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:64px;color:var(--pine);direction:ltr;line-height:1;margin-bottom:1.5mm}

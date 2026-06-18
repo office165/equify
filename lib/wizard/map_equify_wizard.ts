@@ -58,7 +58,7 @@ export interface EquifyWizardState {
   agreedToTerms: boolean;
 }
 
-import { getIndustryConfig } from '../constants/industry_config';
+import { getIndustryConfig, getSubSectorLabel } from '../constants/industry_config';
 
 /** חוב נטו מ-₪K */
 export function computeNetDebtK(financials: EquifyWizardFinancials): number {
@@ -118,7 +118,9 @@ export function mapEquifyToWizardFormValues(
     cashAndEquivalents: kToAbsoluteString(financials.cashK),
     qualitativeDescription: [
       profile.qualitativeDescription,
-      profile.subSector ? `תת-ענף: ${profile.subSector}` : '',
+      profile.subSector
+        ? `תת-ענף: ${getSubSectorLabel(profile.sector, profile.subSector, 'he') ?? profile.subSector}`
+        : '',
       financials.normalizedOwnerSalaryK > 0
         ? `שכר בעלים מנורמל: ₪${financials.normalizedOwnerSalaryK}K`
         : '',

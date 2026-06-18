@@ -27,6 +27,7 @@ const SECTOR_MARKET_HE: Record<EquifySectorKey, string> = {
   industry: 'שוק התעשייה והייצור',
   ecom: 'שוק המסחר והאיקומרס',
   energy: 'שוק האנרגיה והתשתיות',
+  defense_aerospace: 'שוק הביטחון, התעופה והחלל',
   other: 'השוק הרלוונטי',
 };
 
@@ -40,6 +41,7 @@ const SECTOR_MARKET_EN: Record<EquifySectorKey, string> = {
   industry: 'industry and manufacturing',
   ecom: 'commerce and e-commerce',
   energy: 'energy and infrastructure',
+  defense_aerospace: 'defense, aviation and aerospace',
   other: 'the relevant market',
 };
 
@@ -174,6 +176,7 @@ export function resolveEquifySectorKey(sector?: string): EquifySectorKey {
     'industry',
     'ecom',
     'energy',
+    'defense_aerospace',
     'other',
   ];
   if (sector && keys.includes(sector as EquifySectorKey)) {

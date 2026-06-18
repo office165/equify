@@ -14,6 +14,7 @@ export type EquifySectorKey =
   | 'industry'
   | 'ecom'
   | 'energy'
+  | 'defense_aerospace'
   | 'other';
 
 export type EquifyLifecycleKey = 'seed' | 'early' | 'growth' | 'mature';
@@ -95,6 +96,7 @@ export const SECTOR_MULTIPLIERS: Record<EquifySectorKey, number> = {
   industry: 0.88,
   ecom: 0.95,
   energy: 1.1,
+  defense_aerospace: 1.28,
   other: 1.0,
 };
 

@@ -21,6 +21,7 @@ import type { EquifySectorKey } from '../../lib/valuation';
 import { loadEquifyWizardState } from '../../lib/wizard/equify_storage';
 import { mapEquifyToWizardFormValues } from '../../lib/wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../../lib/wizard/resolve_company_display';
+import { isValidLogoDataUrl } from '../../lib/utils/logo_data_url';
 import { EquifyLanguageToggle } from '../shared/EquifyLanguageToggle';
 import { useReducedMotion } from '../landing/motion/useReducedMotion';
 import {
@@ -62,6 +63,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
   const [idLabel, setIdLabel] = useState('');
   const [purposeLabel, setPurposeLabel] = useState('');
   const [wizardCompanyRaw, setWizardCompanyRaw] = useState('');
+  const [companyLogo, setCompanyLogo] = useState('');
   const orbRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
@@ -72,12 +74,21 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
       stored?.profile.userNationalId || stored?.profile.userCorporateTaxId;
     setIdLabel(national ?? '');
     setWizardCompanyRaw(stored?.profile.companyName ?? '');
+    const logoFromStorage = stored?.profile.customLogoDataUrl?.trim() ?? '';
+    const logoFromMatrix = matrix?.wizard_context?.custom_logo_data_url?.trim() ?? '';
+    setCompanyLogo(
+      isValidLogoDataUrl(logoFromStorage)
+        ? logoFromStorage
+        : isValidLogoDataUrl(logoFromMatrix)
+          ? logoFromMatrix
+          : '',
+    );
     if (stored?.goal) {
       setPurposeLabel(getGoalPurposeLabel(locale, stored.goal) ?? '');
     } else {
       setPurposeLabel('');
     }
-  }, [locale]);
+  }, [locale, matrix]);
 
   const vm = useMemo(
     () => (matrix ? buildReportViewModel(matrix, locale) : null),
@@ -350,19 +361,19 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           <span className="eyebrow" style={{ justifyContent: 'center' }}>
             {shell.valuationReportEyebrow} {reportDate}
           </span>
-          <h1 style={{ marginTop: 22 }}>
-            <span className="h-title-ln">
-              <span className="c-comp">{displayCompanyName}</span>
-            </span>
-            <span className="h-title-ln">
-              <span className="c-meta">
-                {resolvedIdLabel
-                  ? `${rs.corpIdPrefix} ${resolvedIdLabel} · `
-                  : ''}
-                {resolvedPurposeLabel}
-              </span>
-            </span>
-          </h1>
+          <div className="cover-head">
+            {companyLogo ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={companyLogo} alt="" className="cover-co-logo" />
+            ) : null}
+            <h1 className="c-comp">{displayCompanyName}</h1>
+            <p className="c-meta">
+              {resolvedIdLabel
+                ? `${rs.corpIdPrefix} ${resolvedIdLabel} · `
+                : ''}
+              {resolvedPurposeLabel}
+            </p>
+          </div>
           <div className="c-val num">
             {millionParts.prefix ? <span>{millionParts.prefix}</span> : null}
             <span id="coverVal">{equityM.toFixed(1)}</span>

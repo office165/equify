@@ -62,6 +62,7 @@ export function mapWizardIndustry(industry: string): Industry {
     'Professional Services': 'professional_services',
     Industrial: 'manufacturing',
     'Defense & Military': 'defense',
+    'Defense & Aerospace': 'defense',
     renewable_energy: 'energy',
     Other: 'other',
   };

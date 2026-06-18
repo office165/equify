@@ -22,10 +22,11 @@ import type {
 
 import {
   getMultiplesIntroText,
-  getSectorChipLabel,
+  getSectorDisplayLabel,
   getSubSectorMultAdj,
 } from '../constants/industry_config';
 import { getScenarioNarrative } from '../i18n/equify_report_copy';
+import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import { computeNetDebtK } from '../wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 
@@ -353,12 +354,18 @@ export function mapWizardToValuationData(
     corporateId: state.profile.userCorporateTaxId || state.profile.userNationalId,
     foundedYear: state.profile.foundedYear ? Number(state.profile.foundedYear) : undefined,
     sector: state.profile.sector,
-    sectorLabel: getSectorChipLabel(state.profile.sector, locale),
+    sectorLabel: getSectorDisplayLabel(
+      state.profile.sector,
+      state.profile.subSector,
+      locale,
+    ),
     lifecycle: state.profile.lifecycle,
     lifecycleLabel: LIFECYCLE_LABELS[state.profile.lifecycle] ?? state.profile.lifecycle,
     goal: state.goal,
     goalLabel: goalLabel(state.goal, locale),
-    customLogoDataUrl: state.profile.customLogoDataUrl || undefined,
+    customLogoDataUrl: isValidLogoDataUrl(state.profile.customLogoDataUrl)
+      ? state.profile.customLogoDataUrl
+      : undefined,
 
     revenueK: state.financials.rev,
     marginPct: state.financials.margin,

@@ -161,6 +161,35 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
       { id: 'services_energy', labelHe: 'שירותי אנרגיה', labelEn: 'Energy services', multAdj: 0.95 },
     ],
   },
+  defense_aerospace: {
+    sectorKey: 'defense_aerospace',
+    chipLabelHe: 'ביטחון ותעופה',
+    chipLabelEn: 'Defense & Aerospace',
+    industryCode: 'Defense & Aerospace',
+    maDealCount: 12,
+    multiplesSectorPhraseHe: 'בענפי הביטחון, התעופה והחלל',
+    multiplesSectorPhraseEn: 'in defense, aviation & aerospace',
+    subSectors: [
+      {
+        id: 'defense_manufacturing',
+        labelHe: 'ייצור ביטחוני וחומרה',
+        labelEn: 'Defense Manufacturing & Hardware',
+        multAdj: 0.98,
+      },
+      {
+        id: 'aviation_space',
+        labelHe: 'תעופה וחלל',
+        labelEn: 'Aviation & Space',
+        multAdj: 1.1,
+      },
+      {
+        id: 'defense_tech',
+        labelHe: 'טכנולוגיות ומערכות ביטחוניות',
+        labelEn: 'Defense Tech & Systems',
+        multAdj: 1.14,
+      },
+    ],
+  },
   other: {
     sectorKey: 'other',
     chipLabelHe: 'אחר',
@@ -212,6 +241,28 @@ export function getSubSectorMultAdj(
 
 export function getSubSectorsForSector(sector: EquifySectorKey): SubSectorOption[] {
   return getIndustryConfig(sector).subSectors;
+}
+
+export function getSubSectorLabel(
+  sector: EquifySectorKey,
+  subSectorId: string,
+  locale: ValuationLocale = 'he',
+): string | undefined {
+  const sub = getIndustryConfig(sector).subSectors.find((s) => s.id === subSectorId);
+  if (!sub) return undefined;
+  return locale === 'he' ? sub.labelHe : sub.labelEn;
+}
+
+/** Main sector + optional sub-sector label for reports and CRM */
+export function getSectorDisplayLabel(
+  sector: EquifySectorKey,
+  subSectorId: string | undefined,
+  locale: ValuationLocale = 'he',
+): string {
+  const main = getSectorChipLabel(sector, locale);
+  if (!subSectorId) return main;
+  const sub = getSubSectorLabel(sector, subSectorId, locale);
+  return sub ? `${main} · ${sub}` : main;
 }
 
 export const SECTOR_SELECT_OPTIONS = (

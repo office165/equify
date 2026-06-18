@@ -8,6 +8,7 @@ import { lockLeadPayload } from '../../../../lib/wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_wizard';
 import { scheduleWizardProgressSave } from '../../../../lib/wizard/wizard_progress_queue';
 import { useWizardValuation } from '../WizardValuationContext';
+import { isAcceptedLogoFile, MAX_LOGO_BYTES } from '../../../../lib/utils/logo_data_url';
 
 const LIFECYCLES_HE: {
   key: EquifyLifecycleKey;
@@ -53,6 +54,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
   const subSectors = getSubSectorsForSector(profile.sector);
   const fileRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [logoError, setLogoError] = useState<string | null>(null);
 
   const validate = useCallback(() => {
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -76,11 +78,34 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
   const handleLogo = useCallback(
     (file: File | null) => {
       if (!file) return;
+      setLogoError(null);
+      if (!isAcceptedLogoFile(file)) {
+        setLogoError(t.common.logoErrorType);
+        return;
+      }
+      if (file.size > MAX_LOGO_BYTES) {
+        setLogoError(t.common.logoErrorSize);
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
-        updateProfile({ customLogoDataUrl: String(reader.result ?? '') });
+        const result = reader.result;
+        if (typeof result === 'string') {
+          updateProfile({ customLogoDataUrl: result });
+        }
       };
       reader.readAsDataURL(file);
+      if (fileRef.current) fileRef.current.value = '';
+    },
+    [t.common.logoErrorSize, t.common.logoErrorType, updateProfile],
+  );
+
+  const clearLogo = useCallback(
+    (e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      setLogoError(null);
+      updateProfile({ customLogoDataUrl: '' });
+      if (fileRef.current) fileRef.current.value = '';
     },
     [updateProfile],
   );
@@ -243,19 +268,42 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
         <div className="field">
           <label>{shell.logo}</label>
           <div
-            className="upload-zone"
+            className={`upload-zone${profile.customLogoDataUrl ? ' has-logo' : ''}`}
             role="button"
             tabIndex={0}
             onClick={() => fileRef.current?.click()}
             onKeyDown={(e) => e.key === 'Enter' && fileRef.current?.click()}
           >
-            <div className="uz-icon">📎</div>
-            <div className="uz-txt">{t.common.uploadLogo}</div>
+            {profile.customLogoDataUrl ? (
+              <div className="upload-preview">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={profile.customLogoDataUrl}
+                  alt=""
+                  className="upload-thumb"
+                />
+                <button
+                  type="button"
+                  className="upload-remove"
+                  onClick={clearLogo}
+                >
+                  {t.common.logoRemove}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="uz-icon">📎</div>
+                <div className="uz-txt">{t.common.uploadLogo}</div>
+              </>
+            )}
           </div>
+          {logoError ? (
+            <span className="v-msg err show">{logoError}</span>
+          ) : null}
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept=".png,.jpg,.jpeg,image/png,image/jpeg"
             hidden
             onChange={(e) => handleLogo(e.target.files?.[0] ?? null)}
           />

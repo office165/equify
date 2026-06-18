@@ -20,6 +20,9 @@ export interface EquifyWizardStepStrings {
     selectSubSector: string;
     lifecycleGroup: string;
     uploadLogo: string;
+    logoErrorType: string;
+    logoErrorSize: string;
+    logoRemove: string;
     placeholderName: string;
   };
   step1: { titlePrefix: string };
@@ -121,6 +124,9 @@ const HE: EquifyWizardStepStrings = {
     selectSubSector: 'בחר תת-ענף',
     lifecycleGroup: 'שלב חיים',
     uploadLogo: 'גרור לכאן או לחץ להעלאה · PNG/JPG',
+    logoErrorType: 'יש להעלות קובץ PNG או JPG בלבד.',
+    logoErrorSize: 'גודל הלוגו חייב להיות קטן מ-2MB.',
+    logoRemove: 'הסר לוגו',
     placeholderName: 'ישראל ישראלי',
   },
   step1: { titlePrefix: 'פרטי חברה' },
@@ -232,6 +238,9 @@ const EN: EquifyWizardStepStrings = {
     selectSubSector: 'Select sub-sector',
     lifecycleGroup: 'Lifecycle stage',
     uploadLogo: 'Drag here or tap to upload · PNG/JPG',
+    logoErrorType: 'Please upload a PNG or JPG image.',
+    logoErrorSize: 'Logo must be smaller than 2 MB.',
+    logoRemove: 'Remove logo',
     placeholderName: 'Jane Doe',
   },
   step1: { titlePrefix: 'Company details' },
