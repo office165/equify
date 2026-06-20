@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { RefObject } from 'react';
+import { DurationValue } from '../../shared/BidiNumberUnit';
 
 interface HeroSectionProps {
   terrainRef: RefObject<HTMLDivElement>;
@@ -24,21 +25,18 @@ export function HeroSection({
       <div id="terrain" ref={terrainRef} aria-hidden="true" />
       <div className="wrap hero-in">
         <div>
-          <span className="eyebrow rv">מנוע הערכת שווי · ישראל 2026</span>
+          <span className="eyebrow rv">equify BY SBC · שוק ישראל 2026</span>
           <h1 className="h-title">
             <span className="ln">
-              <span>כמה שווה</span>
+              <span>שווי העסק שלך.</span>
             </span>
             <span className="ln">
-              <span>העסק שלך —</span>
-            </span>
-            <span className="ln">
-              <span className="hl">במספר אחד.</span>
+              <span className="hl">בנתונים.</span>
             </span>
           </h1>
           <p className="h-sub rv">
-            מנוע פיננסי שמריץ <b>DCF + WACC, מכפיל EBITDA, מכפיל הכנסות</b> ועוד 7 מכפילים מכוילים
-            לשוק הישראלי — ומפיק דוח PDF מוסמך תוך 10 דקות.
+            שלוש יסודות: DCF, מכפילי שוק מכוילים וציון איכות. השווי המוצג הוא ממוצע משוקלל — מעשי
+            השוק, לא אקדמי.
           </p>
           <div className="h-cta rv">
             <Link className="btn magnetic" href="/wizard">
@@ -53,16 +51,17 @@ export function HeroSection({
               <i />ללא כרטיס אשראי
             </span>
             <span>
-              <i />10 דקות
+              <i />
+              <DurationValue variant="long" />
             </span>
             <span>
-              <i />PDF להורדה מיידית
+              <i />דוח PDF · 8 עמודים
             </span>
           </div>
         </div>
 
         <div className="tick-card rv-l" id="tiltCard" ref={tiltCardRef}>
-          <span className="tc-badge">דוח לדוגמה · 7 עמודים</span>
+          <span className="tc-badge">דוח לדוגמה · 8 עמודים</span>
           <div className="tc-top">
             <span>שווי לבעלים · תרחיש בסיס</span>
             <span className="tc-live">
@@ -76,7 +75,7 @@ export function HeroSection({
             </span>
             M ₪
           </div>
-          <div className="tc-cap">שווי משולב — DCF + מכפילים ישראליים</div>
+          <div className="tc-cap">שקלול DCF 50% · מכפיל EBITDA 30% · מכפיל הכנסות 20%</div>
           <svg className="tc-spark" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">

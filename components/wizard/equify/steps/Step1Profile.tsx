@@ -62,6 +62,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
       name: !profile.fullName.trim(),
       email: !emailRe.test(profile.userEmail),
       phone: !profile.userMobilePhone.trim(),
+      companyName: !profile.companyName.trim(),
       sector: !profile.sector,
     };
     setErrors(nextErrors);
@@ -163,17 +164,21 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
             value={profile.userMobilePhone}
             onChange={(e) => updateProfile({ userMobilePhone: e.target.value })}
           />
-          <span className="hint">{t.common.phoneHint}</span>
         </div>
         <div className="field">
-          <label>{shell.companyName}</label>
+          <label>
+            {shell.companyName} <span className="req">*</span>
+          </label>
           <input
-            className={`inp${profile.companyName ? ' ok' : ''}`}
+            className={`inp${errors.companyName ? ' err' : profile.companyName ? ' ok' : ''}`}
             type="text"
             placeholder={shell.companyPlaceholder}
             value={profile.companyName}
             onChange={(e) => updateProfile({ companyName: e.target.value })}
           />
+          {errors.companyName ? (
+            <span className="v-msg err show">{t.common.errCompanyName}</span>
+          ) : null}
         </div>
         <div className="field">
           <label>{shell.corporateId}</label>

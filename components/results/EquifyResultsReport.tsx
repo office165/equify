@@ -5,9 +5,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import type { ValuationScenario } from '../../lib/valuation/canonical_valuation';
 import {
-  BLEND_WEIGHTS,
   buildReportViewModel,
   buildWaccDonutSlices,
+  getBlendWeights,
 } from '../../lib/results/report-view-model';
 import { fmtMillionParts } from '../../lib/valuation';
 import { formatCurrencyShort } from '../../lib/utils/formatCurrency';
@@ -18,7 +18,9 @@ import { scenariosIntroFromRows } from '../../lib/i18n/equify_report_copy';
 import { useEquifyStrings } from '../../lib/i18n/use_equify_strings';
 import { getGoalPurposeLabel } from '../../lib/i18n/equify_wizard_steps';
 import type { EquifySectorKey } from '../../lib/valuation';
+import { summarizeBlendedEbitda } from '../../lib/valuation/blended_ebitda';
 import { loadEquifyWizardState } from '../../lib/wizard/equify_storage';
+import type { EquifyWizardState } from '../../lib/wizard/map_equify_wizard';
 import { mapEquifyToWizardFormValues } from '../../lib/wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../../lib/wizard/resolve_company_display';
 import { isValidLogoDataUrl } from '../../lib/utils/logo_data_url';
@@ -48,11 +50,65 @@ import './equify-scroll-report.css';
 
 const SCENARIO_KEYS: ValuationScenario[] = ['bear', 'base', 'bull'];
 
-interface EquifyResultsReportProps {
-  matrix: ForecastMatrixWithDiagnostics | null;
+/** Responsive PDF/HTML download row — full-width stack on mobile, inline row on desktop. */
+const DOWNLOAD_ACTIONS_ROW_CLASS =
+  'flex w-full min-w-0 max-w-full flex-col gap-4 sm:flex-row sm:w-auto items-stretch sm:items-center justify-center';
+const DOWNLOAD_BTN_CLASS = 'w-full max-w-full sm:w-auto justify-center box-border';
+
+interface ReportDownloadButtonsProps {
+  shell: {
+    htmlDownload: string;
+    htmlGenerating: string;
+    pdfDownload: string;
+    pdfGenerating: string;
+  };
+  isDownloadingPdf: boolean;
+  isDownloadingHtml: boolean;
+  onDownloadPdf: () => void;
+  onDownloadHtml: () => void;
 }
 
-export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
+function ReportDownloadButtons({
+  shell,
+  isDownloadingPdf,
+  isDownloadingHtml,
+  onDownloadPdf,
+  onDownloadHtml,
+}: ReportDownloadButtonsProps) {
+  const disabled = isDownloadingPdf || isDownloadingHtml;
+  return (
+    <div className={DOWNLOAD_ACTIONS_ROW_CLASS}>
+      <button
+        type="button"
+        className={`btn btn-ghost ${DOWNLOAD_BTN_CLASS}`}
+        onClick={onDownloadHtml}
+        disabled={disabled}
+        aria-busy={isDownloadingHtml}
+      >
+        {isDownloadingHtml ? shell.htmlGenerating : shell.htmlDownload}
+      </button>
+      <button
+        type="button"
+        className={`btn ${DOWNLOAD_BTN_CLASS}`}
+        onClick={onDownloadPdf}
+        disabled={disabled}
+        aria-busy={isDownloadingPdf}
+      >
+        {isDownloadingPdf ? shell.pdfGenerating : shell.pdfDownload}
+      </button>
+    </div>
+  );
+}
+
+interface EquifyResultsReportProps {
+  matrix: ForecastMatrixWithDiagnostics | null;
+  equifyState?: EquifyWizardState | null;
+}
+
+export function EquifyResultsReport({
+  matrix,
+  equifyState: equifyStateProp,
+}: EquifyResultsReportProps) {
   const { shell, results: rs, isHe, locale } = useEquifyStrings();
   const [scenario, setScenario] = useState<ValuationScenario>('base');
   const [scVal, setScVal] = useState<string | null>(null);
@@ -67,9 +123,14 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
   const orbRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
+  const equifyState = useMemo(
+    () => equifyStateProp ?? loadEquifyWizardState(),
+    [equifyStateProp],
+  );
+
   useEffect(() => {
     setMounted(true);
-    const stored = loadEquifyWizardState();
+    const stored = equifyState;
     const national =
       stored?.profile.userNationalId || stored?.profile.userCorporateTaxId;
     setIdLabel(national ?? '');
@@ -88,11 +149,12 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
     } else {
       setPurposeLabel('');
     }
-  }, [locale, matrix]);
+  }, [equifyState, locale, matrix]);
 
   const vm = useMemo(
-    () => (matrix ? buildReportViewModel(matrix, locale) : null),
-    [matrix, locale],
+    () =>
+      matrix ? buildReportViewModel(matrix, locale, equifyState) : null,
+    [matrix, locale, equifyState],
   );
 
   const displayCompanyName = useMemo(
@@ -119,8 +181,13 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
   });
 
   const sectorKey = useMemo((): EquifySectorKey => {
-    return loadEquifyWizardState()?.profile?.sector ?? 'other';
-  }, []);
+    return equifyState?.profile?.sector ?? 'other';
+  }, [equifyState]);
+
+  const blendWeights = useMemo(
+    () => getBlendWeights(sectorKey),
+    [sectorKey],
+  );
 
   const scrollScenario = useMemo(
     () =>
@@ -152,6 +219,11 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
     () => (vm ? buildDcfBreakdown(vm, vm.currency) : null),
     [vm],
   );
+
+  const blendedEbitdaFootnote = useMemo(() => {
+    if (!vm?.ebitdaBlend) return null;
+    return rs.blendedEbitdaNote(summarizeBlendedEbitda(vm.ebitdaBlend));
+  }, [rs, vm?.ebitdaBlend]);
 
   const multiplesIntro = useMemo(() => {
     const stored = loadEquifyWizardState();
@@ -310,26 +382,15 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           <span className="doc-id">
             REPORT #{vm.reportId} · {displayCompanyName}
           </span>
-          <div className="bar-actions">
+          <div className="bar-actions flex w-full min-w-0 max-w-full flex-col items-stretch justify-center gap-4 px-5 pb-1 sm:flex-row sm:items-center sm:justify-center sm:px-0 sm:pb-0 sm:w-auto">
             <EquifyLanguageToggle />
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={handleDownloadHtml}
-              disabled={isDownloadingHtml || isDownloadingPdf}
-              aria-busy={isDownloadingHtml}
-            >
-              {isDownloadingHtml ? shell.htmlGenerating : shell.htmlDownload}
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={handleDownloadPdf}
-              disabled={isDownloadingPdf || isDownloadingHtml}
-              aria-busy={isDownloadingPdf}
-            >
-              {isDownloadingPdf ? shell.pdfGenerating : shell.pdfDownload}
-            </button>
+            <ReportDownloadButtons
+              shell={shell}
+              isDownloadingPdf={isDownloadingPdf}
+              isDownloadingHtml={isDownloadingHtml}
+              onDownloadPdf={handleDownloadPdf}
+              onDownloadHtml={handleDownloadHtml}
+            />
           </div>
         </div>
       </header>
@@ -340,7 +401,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
         </div>
       ) : null}
 
-      <nav className="rail" aria-label={shell.reportPagesNav}>
+      <nav className="rail hidden md:flex" aria-label={shell.reportPagesNav}>
         {SCROLL_SECTIONS.map((s, i) => (
           <a
             key={s.id}
@@ -407,7 +468,13 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           <h2 className="t rv">
             {rs.execTitle} <span className="hl">{rs.execTitleHl}</span>
           </h2>
-          <p className="sub rv">{buildExecSummary(vm, vm.currency, locale)}</p>
+          <p className="sub rv">{buildExecSummary(vm, vm.currency, locale, sectorKey)}</p>
+          {equifyState?.profile.qualitativeDescription?.trim() ? (
+            <div className="exec-moat-callout rv">
+              <strong>{rs.moatCalloutLabel}</strong>{' '}
+              {equifyState.profile.qualitativeDescription.trim()}
+            </div>
+          ) : null}
 
           <div className="kgrid">
             <div className="kcard rv">
@@ -494,6 +561,7 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
             data={finData}
             growthNote={rs.growthNote(vm.terminalGrowthPct)}
             marginNote={rs.marginNote(vm.ebitdaMarginPct.toFixed(1))}
+            blendedNote={blendedEbitdaFootnote ?? undefined}
           />
         </div>
       </section>
@@ -737,15 +805,17 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
           </h2>
 
           <div className="weights rv" aria-label={rs.blendWeights}>
-            <div className="w1" data-w={BLEND_WEIGHTS.dcf * 100} title="DCF">
-              DCF · 50%
+            <div className="w1" data-w={blendWeights.dcf * 100} title="DCF">
+              DCF · {Math.round(blendWeights.dcf * 100)}%
             </div>
-            <div className="w2" data-w={BLEND_WEIGHTS.ebitda * 100} title={rs.blendEbitdaTitle}>
-              EBITDA · 30%
+            <div className="w2" data-w={blendWeights.ebitda * 100} title={rs.blendEbitdaTitle}>
+              EBITDA · {Math.round(blendWeights.ebitda * 100)}%
             </div>
-            <div className="w3" data-w={BLEND_WEIGHTS.rev * 100} title={rs.blendRevTitle}>
-              REV · 20%
-            </div>
+            {blendWeights.rev > 0 ? (
+              <div className="w3" data-w={blendWeights.rev * 100} title={rs.blendRevTitle}>
+                REV · {Math.round(blendWeights.rev * 100)}%
+              </div>
+            ) : null}
           </div>
 
           <div className="final-val rv">
@@ -757,26 +827,20 @@ export function EquifyResultsReport({ matrix }: EquifyResultsReportProps) {
             {rs.blendFooter(reportDate)}
           </p>
 
-          <div className="final-cta rv">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={handleDownloadHtml}
-              disabled={isDownloadingHtml || isDownloadingPdf}
-              aria-busy={isDownloadingHtml}
+          <div className="final-cta rv flex w-full min-w-0 max-w-full flex-col items-center gap-4 px-6 sm:gap-6 sm:px-0">
+            <div className="w-full min-w-0 max-w-md sm:max-w-none">
+              <ReportDownloadButtons
+                shell={shell}
+                isDownloadingPdf={isDownloadingPdf}
+                isDownloadingHtml={isDownloadingHtml}
+                onDownloadPdf={handleDownloadPdf}
+                onDownloadHtml={handleDownloadHtml}
+              />
+            </div>
+            <Link
+              className={`btn btn-ghost ${DOWNLOAD_BTN_CLASS} w-full max-w-md sm:max-w-none`}
+              href="/wizard"
             >
-              {isDownloadingHtml ? shell.htmlGenerating : shell.htmlDownload}
-            </button>
-            <button
-              type="button"
-              className="btn"
-              onClick={handleDownloadPdf}
-              disabled={isDownloadingPdf || isDownloadingHtml}
-              aria-busy={isDownloadingPdf}
-            >
-              {isDownloadingPdf ? shell.pdfGenerating : shell.pdfDownload}
-            </button>
-            <Link className="btn btn-ghost" href="/wizard">
               {rs.newValuation}
             </Link>
           </div>

@@ -14,14 +14,14 @@ export function StepsSection({ stepsGridRef, beamRef }: StepsSectionProps) {
     <section className="sec steps" id="how">
       <div className="wrap">
         <div className="sec-head">
-          <span className="eyebrow rv">איך זה עובד</span>
+          <span className="eyebrow rv">תהליך הקלט</span>
           <h2 className="sec-title rv">
-            מארבעה שלבים
+            ארבעה שלבי קלט
             <br />
-            ל<span className="hl">דוח מקצועי.</span>
+            ל<span className="hl">דוח הערכה מובנה.</span>
           </h2>
           <p className="sec-sub rv">
-            אשף מונחה שאוסף נתונים, מריץ את המודלים ומפיק דוח PDF — בלי יועץ חיצוני ובלי אקסל.
+            פרופיל, נתונים פיננסיים, מדדי סיכון ומטרת ההערכה. הדוח מופק בסיום ללא ייצוא ידני.
           </p>
         </div>
         <div className="steps-grid" id="stepsGrid" ref={stepsGridRef}>

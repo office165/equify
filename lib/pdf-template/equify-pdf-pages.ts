@@ -27,6 +27,10 @@ import {
 import { FINANCIAL_DATA_COPY, multiplesMethodologyCopy, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY } from '../i18n/equify_report_copy';
 import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import type { ValuationData } from './types';
+import {
+  buildMoatNotesCalloutHtml,
+  resolveExecutiveSummaryHtml,
+} from './exec-summary-html';
 
 const TOTAL_PAGES = 8;
 
@@ -139,7 +143,8 @@ function buildPage1Cover(data: ValuationData): string {
 function buildPage2ExecSummary(data: ValuationData): string {
   const f = pdfFmt(data.locale);
   const wf = computeWaterfallFills(data);
-  const summary = escHtml(data.executiveSummary ?? defaultExecutiveSummary(data));
+  const summary = resolveExecutiveSummaryHtml(data, defaultExecutiveSummary);
+  const moatCallout = buildMoatNotesCalloutHtml(data);
   const blendRows = data.modelBlend
     .map(
       (r) =>
@@ -155,6 +160,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
     <span class="eyebrow">02 · תקציר מנהלים</span>
     <h2>תקציר מנהלים</h2>
     <p class="sub">${summary}</p>
+    ${moatCallout}
     <div class="kgrid">
       <div class="kcard"><div class="kv hl">${f.money(data.equity)}</div><div class="kl">שווי לבעלים · בסיס</div></div>
       <div class="kcard"><div class="kv">${f.money(data.enterpriseValue)}</div><div class="kl">שווי פעילות (EV)</div></div>

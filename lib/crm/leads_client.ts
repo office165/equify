@@ -1,120 +1,56 @@
 'use client';
 
+import {
+  getOrCreateLeadSessionId,
+  persistLeadSession,
+  readLeadSession,
+  clearLeadSession,
+} from './lead_session';
+import {
+  flushFailedLeadQueue,
+  submitLeadEventToApi,
+} from './submit_lead_event';
 import type { LeadUpsertBody, ValubotLeadRecord } from './leads_types';
 
-const SESSION_ID_KEY = 'valubot.lead.sessionId';
-const LEAD_ID_KEY = 'valubot.lead.id';
-const MONDAY_ITEM_KEY = 'valubot.lead.mondayItemId';
-
-export function getOrCreateLeadSessionId(): string {
-  if (typeof window === 'undefined') return '';
-  try {
-    const existing = sessionStorage.getItem(SESSION_ID_KEY);
-    if (existing) return existing;
-    const created = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-    sessionStorage.setItem(SESSION_ID_KEY, created);
-    return created;
-  } catch {
-    return `sess_${Date.now()}`;
-  }
-}
-
-export function persistLeadSession(lead: Pick<ValubotLeadRecord, 'id' | 'sessionId' | 'mondayItemId'>): void {
-  if (typeof window === 'undefined') return;
-  try {
-    sessionStorage.setItem(SESSION_ID_KEY, lead.sessionId);
-    sessionStorage.setItem(LEAD_ID_KEY, lead.id);
-    if (lead.mondayItemId) {
-      sessionStorage.setItem(MONDAY_ITEM_KEY, lead.mondayItemId);
-    }
-  } catch {
-    // ignore quota / privacy mode
-  }
-}
-
-export function readLeadSession(): {
-  sessionId: string | null;
-  leadId: string | null;
-  mondayItemId: string | null;
-} {
-  if (typeof window === 'undefined') {
-    return { sessionId: null, leadId: null, mondayItemId: null };
-  }
-  try {
-    return {
-      sessionId: sessionStorage.getItem(SESSION_ID_KEY),
-      leadId: sessionStorage.getItem(LEAD_ID_KEY),
-      mondayItemId: sessionStorage.getItem(MONDAY_ITEM_KEY),
-    };
-  } catch {
-    return { sessionId: null, leadId: null, mondayItemId: null };
-  }
-}
-
-export function clearLeadSession(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    sessionStorage.removeItem(SESSION_ID_KEY);
-    sessionStorage.removeItem(LEAD_ID_KEY);
-    sessionStorage.removeItem(MONDAY_ITEM_KEY);
-  } catch {
-    // ignore
-  }
-}
+export {
+  getOrCreateLeadSessionId,
+  persistLeadSession,
+  readLeadSession,
+  clearLeadSession,
+};
 
 export interface LeadApiResponse {
   ok: boolean;
-  lead: ValubotLeadRecord;
-  mondayItemId: string | null;
-  mondaySynced: boolean;
-  mondayError: string | null;
+  lead?: ValubotLeadRecord;
+  mondayItemId?: string | null;
+  mondaySynced?: boolean;
+  mondayError?: string | null;
+  error?: string;
+  saved?: boolean;
 }
 
 export async function postLeadEvent(body: LeadUpsertBody): Promise<LeadApiResponse | null> {
   if (typeof window === 'undefined') return null;
 
-  const session = readLeadSession();
-  const payload: LeadUpsertBody = {
-    ...body,
-    sessionId: body.sessionId ?? session.sessionId ?? getOrCreateLeadSessionId(),
-    leadId: body.leadId ?? session.leadId ?? undefined,
-  };
+  void flushFailedLeadQueue();
 
-  console.log('🚀 MONDAY INTEGRATION INGESTION INITIATED. PAYLOAD:', {
-    event: payload.event,
-    fullName: payload.fullName,
-    companyName: payload.companyName,
-    userPhone: payload.userPhone,
-    nationalId: payload.nationalId,
-    userEmail: payload.userEmail,
-    sessionId: payload.sessionId,
+  const result = await submitLeadEventToApi(body, {
+    timeoutMs: 15_000,
+    queueOnFailure: body.event === 'pdf_downloaded',
   });
 
-  try {
-    const response = await fetch('/api/leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      keepalive: true,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ MONDAY ROUTING FAILURE:', response.status, errorText);
-      return null;
-    }
-
-    const data = (await response.json()) as LeadApiResponse;
-    if (data.lead) {
-      persistLeadSession({
-        id: data.lead.id,
-        sessionId: data.lead.sessionId,
-        mondayItemId: data.mondayItemId ?? data.lead.mondayItemId,
-      });
-    }
-    return data;
-  } catch (err) {
-    console.error('❌ MONDAY ROUTING FAILURE:', err);
+  if (!result.ok) {
     return null;
   }
+
+  const data = result.data;
+  if (data?.lead) {
+    persistLeadSession({
+      id: data.lead.id,
+      sessionId: data.lead.sessionId,
+      mondayItemId: data.mondayItemId ?? data.lead.mondayItemId,
+    });
+  }
+
+  return (data as LeadApiResponse | null) ?? { ok: true };
 }

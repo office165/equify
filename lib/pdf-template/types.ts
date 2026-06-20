@@ -158,6 +158,11 @@ export interface ValuationData {
   ebitda: number;
   effectiveMult: number;
   revenueMultiple: number;
+  /** Blended EBITDA components (₪ absolute) for report disclosure */
+  ebitdaPast?: number;
+  ebitdaCurrent?: number;
+  ebitdaProjected?: number;
+  ebitdaBlendedNote?: string;
   terminalSharePct: number;
   terminalGrowthPct?: number;
 

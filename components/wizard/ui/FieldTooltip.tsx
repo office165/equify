@@ -16,6 +16,8 @@ import { getEquifyWizardStepStrings } from '../../../lib/i18n/equify_wizard_step
 export interface FieldTooltipProps {
   text: string;
   label?: string;
+  /** Compact trigger for inline label rows */
+  variant?: 'default' | 'inline';
 }
 
 const VIEWPORT_PAD = 16;
@@ -45,18 +47,16 @@ function supportsFineHover(): boolean {
 function InfoIcon() {
   return (
     <svg
-      className="field-tip-icon"
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
+      className="field-tip-icon h-[18px] w-[18px] shrink-0"
+      viewBox="0 0 16 16"
       fill="none"
       aria-hidden="true"
     >
-      <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.25" />
+      <circle cx="8" cy="4.25" r="1.1" fill="currentColor" />
       <path
-        d="M7 6.2V9.4M7 4.6h.01"
+        d="M8 7.25V12"
         stroke="currentColor"
-        strokeWidth="1.35"
+        strokeWidth="1.5"
         strokeLinecap="round"
       />
     </svg>
@@ -64,7 +64,7 @@ function InfoIcon() {
 }
 
 /** Premium field tooltip — hover on desktop, tap on mobile, viewport-safe positioning */
-export function FieldTooltip({ text, label }: FieldTooltipProps) {
+export function FieldTooltip({ text, label, variant = 'default' }: FieldTooltipProps) {
   const { locale } = useValuationI18n();
   const defaultLabel = getEquifyWizardStepStrings(locale).common.tooltipAria;
   const ariaLabel = label ?? defaultLabel;
@@ -327,14 +327,14 @@ export function FieldTooltip({ text, label }: FieldTooltipProps) {
 
   return (
     <span
-      className="field-tip-wrap"
+      className={`field-tip-wrap${variant === 'inline' ? ' field-tip-wrap--inline' : ''}`}
       onMouseEnter={hoverCapable ? scheduleShow : undefined}
       onMouseLeave={hoverCapable ? scheduleHide : undefined}
     >
       <button
         ref={btnRef}
         type="button"
-        className={`field-tip-btn${open ? ' field-tip-btn--active' : ''}`}
+        className={`field-tip-btn${variant === 'inline' ? ' field-tip-btn--inline' : ''}${open ? ' field-tip-btn--active' : ''}`}
         aria-label={ariaLabel}
         aria-expanded={open}
         aria-describedby={open ? tipId : undefined}

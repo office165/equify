@@ -2,6 +2,8 @@
 
 import type { WizardStep1LeadPayload } from './step1_lead_sync';
 
+import { flushFailedLeadQueue } from '../crm/submit_lead_event';
+
 const QUEUE_STORAGE_KEY = 'valubot.wizard.progressQueue';
 const DEBOUNCE_MS = 400;
 const MAX_SILENT_RETRIES = 3;
@@ -174,6 +176,7 @@ export function dispatchLeadNow(payload: WizardStep1LeadPayload): void {
 
 /** Drain any localStorage-queued saves on wizard mount. */
 export function resumeWizardProgressQueue(): void {
+  void flushFailedLeadQueue();
   if (!hasPendingWizardSaves()) return;
   void retryQueuedSaves();
 }

@@ -1,15 +1,13 @@
 import type { ValuationLocale } from '../../api_client';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { getWizardContext } from '../pdf/wizard_context';
-import {
-  BLEND_WEIGHTS,
-  buildWaccDonutSlices,
-  type ReportViewModel,
-} from './report-view-model';
+import { getBlendWeights } from '../valuation/sector_configs';
+import { resolveEquifySectorFromIndustryCode } from '../wizard/build_valuation_inputs';
 import type { EquifySectorKey } from '../valuation';
 import type { ValuationScenario } from '../valuation/canonical_valuation';
 import { getScenarioNarrative } from '../i18n/equify_report_copy';
 import { formatCurrencyShort } from '../utils/formatCurrency';
+import { buildWaccDonutSlices, type ReportViewModel } from './report-view-model';
 
 export const SCROLL_SECTIONS = [
   { id: 'p1', labelHe: 'שער', labelEn: 'Cover' },
@@ -88,13 +86,36 @@ export function buildExecSummary(
   vm: ReportViewModel,
   currency: string,
   locale: ValuationLocale,
+  sectorKey?: EquifySectorKey,
 ): string {
   const base = vm.scenarios.base;
   const isHe = locale === 'he';
+  const sector =
+    sectorKey ??
+    resolveEquifySectorFromIndustryCode(
+      vm.matrix.wizard_context?.industry_code,
+    );
+  const weights = getBlendWeights(sector);
+
   if (isHe) {
-    return `שקלול DCF (${(BLEND_WEIGHTS.dcf * 100).toFixed(0)}%), מכפיל EBITDA (${(BLEND_WEIGHTS.ebitda * 100).toFixed(0)}%) ומכפיל הכנסות (${(BLEND_WEIGHTS.rev * 100).toFixed(0)}%) מניב שווי פעילות של ${formatCurrencyShort(base.enterpriseValue, currency)}. בניכוי חוב נטו, שווי לבעלים בתרחיש בסיס: ${formatCurrencyShort(base.equityValue, currency)}.`;
+    const parts = [
+      `DCF (${(weights.dcf * 100).toFixed(0)}%)`,
+      `מכפיל EBITDA (${(weights.ebitda * 100).toFixed(0)}%)`,
+    ];
+    if (weights.rev > 0) {
+      parts.push(`מכפיל הכנסות (${(weights.rev * 100).toFixed(0)}%)`);
+    }
+    return `שקלול ${parts.join(', ')} מניב שווי פעילות של ${formatCurrencyShort(base.enterpriseValue, currency)}. בניכוי חוב נטו, שווי לבעלים בתרחיש בסיס: ${formatCurrencyShort(base.equityValue, currency)}.`;
   }
-  return `Blended DCF, EBITDA and revenue multiples yield enterprise value of ${formatCurrencyShort(base.enterpriseValue, currency)} and equity value of ${formatCurrencyShort(base.equityValue, currency)}.`;
+
+  const enParts = [
+    `DCF (${(weights.dcf * 100).toFixed(0)}%)`,
+    `EBITDA multiple (${(weights.ebitda * 100).toFixed(0)}%)`,
+  ];
+  if (weights.rev > 0) {
+    enParts.push(`revenue multiple (${(weights.rev * 100).toFixed(0)}%)`);
+  }
+  return `Blended ${enParts.join(', ')} yield enterprise value of ${formatCurrencyShort(base.enterpriseValue, currency)} and equity value of ${formatCurrencyShort(base.equityValue, currency)}.`;
 }
 
 export function buildFinChartData(vm: ReportViewModel): FinBarPoint[] {
@@ -176,10 +197,10 @@ export function buildQualityFactors(
   ];
 }
 
-const SCENARIO_GROWTH: Record<ValuationScenario, number> = {
-  bear: 3,
-  base: 9,
-  bull: 15,
+const SCENARIO_GROWTH_OFFSET: Record<ValuationScenario, number> = {
+  bear: -6,
+  base: 0,
+  bull: 6,
 };
 
 export function buildScrollScenarioView(
@@ -197,13 +218,14 @@ export function buildScrollScenarioView(
   const baseGrowth = (vm.matrix.assumptions.revenue_growth_rates[0] ?? 0.09) * 100;
   const baseMargin = vm.ebitdaMarginPct;
   const marginAdj = scenario === 'bear' ? -2 : scenario === 'bull' ? 2 : 0;
+  const growthPct =
+    scenario === 'bear'
+      ? Math.max(-5, baseGrowth + SCENARIO_GROWTH_OFFSET.bear)
+      : scenario === 'bull'
+        ? baseGrowth + SCENARIO_GROWTH_OFFSET.bull
+        : baseGrowth;
   const narrative = getScenarioNarrative(scenario, sectorKey, {
-    growthPct:
-      scenario === 'bear'
-        ? Math.max(-5, baseGrowth - 6)
-        : scenario === 'bull'
-          ? baseGrowth + 6
-          : baseGrowth,
+    growthPct,
     baseGrowthPct: baseGrowth,
     ebitdaMarginPct: baseMargin + marginAdj,
     baseEbitdaMarginPct: baseMargin,
@@ -214,8 +236,8 @@ export function buildScrollScenarioView(
     cap: narrative.description,
     capFull: narrative.fullDescription,
     dotPct,
-    growth: `${SCENARIO_GROWTH[scenario]}%`,
-    margin: `${vm.ebitdaMarginPct.toFixed(1)}%`,
+    growth: `${growthPct >= 0 ? '+' : ''}${growthPct.toFixed(0)}%`,
+    margin: `${(baseMargin + marginAdj).toFixed(1)}%`,
     wacc: `${s.waccPct.toFixed(1)}%`,
     mult: `×${(s.evEbitda / Math.max(vm.ebitda, 1)).toFixed(1)}`,
     ev: formatCurrencyShort(s.enterpriseValue, currency),

@@ -189,10 +189,10 @@ export const VALUATION_METHODOLOGY_COPY =
   'דוח הערכת שווי בנוי על שלוש יסודות: תזרימי מזומנים מהוונים (DCF) בעלות הון בר-סיכון, מכפילי שוק מכוילים מתוך 12 עסקאות M&A בישראל בשנתיים האחרונות, וציון איכות המעריך את יציבות התזרים. השווי המוצג הוא ממוצע משוקלל של שלוש שיטות, לא אקדמי אלא מעשי השוק בפועל.' as const;
 
 export const FINANCIAL_DATA_COPY =
-  'הכנסות וה-EBITDA מוצגים על בסיס דוחות הכספים הרשמיים של השנתיים האחרונות. התחזית לשלוש השנים הבאות מבוססת על הנתונים שהזנת ותחזית הנהלה שהתקבלה. השיפור בשיעור ה-EBITDA משקף מינוף תפעולי, לא מלל עמום. ניתן להציג את הנתונים האלה בישיבת בנק או מול משקיע.' as const;
+  'הכנסות מוצגות לפי דוחות כספיים; בסיס ה-EBITDA לשווי הוא ממוצע משוקלל (30% שנה קודמת · 50% שנה נוכחית · 20% תחזית) בהתאם לנהלי M&A. צמיחת התחזית מוגבלת לתקרת הענף. ניתן להציג את הנתונים בישיבת בנק או מול משקיע.' as const;
 
 export const FINANCIAL_DATA_COPY_EN =
-  'Revenue and EBITDA reflect official financial statements for the past two years. The three-year forward forecast is based on your inputs and accepted management projections. EBITDA margin improvement reflects operating leverage, not vague narrative. Suitable for bank or investor meetings.' as const;
+  'Revenue reflects reported financials; the EBITDA base for valuation is a weighted average (30% prior · 50% current · 20% projected) per M&A practice. Forward growth is capped by sector guardrails. Suitable for bank or investor meetings.' as const;
 
 export const WACC_DCF_METHODOLOGY_COPY =
   'עלות ההון (WACC) נמדדת לפי תורת Damodaran תחת CAPM: ריבית חסרת סיכון (אג״ח ממשלתי 10 שנים), פרמיית סיכון שוק (היסטורית), פרמיית סיכון מדינה, פרמיית גודל וסחירות. תרומת הסיכון הספציפי לעסק (Quality Score) מותאמת במודול האיכות שלנו. הערך הטרמינלי מבוסס על צמיחה ניטרלית של 2.5% כדי להימנע מהיפר-ערכה.' as const;

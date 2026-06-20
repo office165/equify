@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { DurationValue } from '../../shared/BidiNumberUnit';
 
 /** קריאה לפעולה סופית לפני הפוטר */
 export function FinalCtaSection() {
@@ -8,14 +9,17 @@ export function FinalCtaSection() {
     <section className="final">
       <div className="wrap">
         <h2 className="f-title rv">
-          מוכן לדעת
+          שווי העסק שלך.
           <br />
-          כמה <span className="hl">שווה העסק שלך?</span>
+          <span className="hl">בנתונים.</span>
         </h2>
+        <p className="f-note rv" style={{ marginTop: '1rem', maxWidth: '32rem', marginInline: 'auto' }}>
+          DCF · מכפילי שוק · ניתוח סיכון ·{' '}
+          <DurationValue variant="long" />
+        </p>
         <Link className="btn magnetic" href="/wizard">
-          התחל עכשיו <span className="arr">←</span>
+          התחל הערכה <span className="arr">←</span>
         </Link>
-        <p className="f-note">ממוצע 12 דקות · ללא התחייבות · ללא כרטיס אשראי</p>
       </div>
     </section>
   );

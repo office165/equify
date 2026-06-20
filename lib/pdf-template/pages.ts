@@ -14,6 +14,7 @@ import {
   buildWaccStackedBarSvg,
   buildWaterfallSvg,
 } from './charts';
+import { buildMoatNotesCalloutHtml } from './exec-summary-html';
 import type { ScenarioRow, ValuationData } from './types';
 
 const TOTAL_PAGES = 8;
@@ -124,6 +125,7 @@ export function buildPage2Executive(data: ValuationData): string {
   <div class="body">
     <div class="section-divider"><span class="section-num">02</span><h2>תקציר מנהלים</h2><div class="sd-line"></div></div>
     <p class="sub">${escHtml(summary)}</p>
+    ${buildMoatNotesCalloutHtml(data)}
     <div class="cols2" style="margin-top:3mm">
       <div>
         <div class="chart-title">תרומת מודלים לשווי המשולב</div>

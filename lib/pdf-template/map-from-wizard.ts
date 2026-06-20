@@ -1,8 +1,6 @@
 import {
   computeScenarios,
   computeValuation,
-  LIFECYCLE_ADJ,
-  SECTOR_MULTIPLIERS,
   type ValuationComputed,
   type ValuationInputs,
 } from '../valuation';
@@ -23,12 +21,20 @@ import type {
 import {
   getMultiplesIntroText,
   getSectorDisplayLabel,
-  getSubSectorMultAdj,
 } from '../constants/industry_config';
 import { getScenarioNarrative } from '../i18n/equify_report_copy';
 import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import { computeNetDebtK } from '../wizard/map_equify_wizard';
+import {
+  BLENDED_EBITDA_WEIGHTS,
+  type EbitdaBlendBreakdown,
+} from '../valuation/blended_ebitda';
+import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
+
+function kToNis(k: number): number {
+  return k * 1000;
+}
 
 const LIFECYCLE_LABELS: Record<string, string> = {
   seed: 'Seed',
@@ -62,8 +68,19 @@ function goalLabel(goal: string, locale: ValuationLocale): string {
   return map[goal] ?? goal;
 }
 
-function kToNis(k: number): number {
-  return k * 1000;
+function blendedEbitdaNote(
+  blend: EbitdaBlendBreakdown,
+  locale: ValuationLocale,
+): string {
+  const w = BLENDED_EBITDA_WEIGHTS;
+  const pctPast = Math.round(w.past * 100);
+  const pctCur = Math.round(w.current * 100);
+  const pctProj = Math.round(w.projected * 100);
+  const growth = blend.dcfGrowthPct.toFixed(1);
+  if (locale === 'en') {
+    return `${pctPast}/${pctCur}/${pctProj} weighted · past ₪${(blend.past / 1000).toFixed(1)}M · current ₪${(blend.current / 1000).toFixed(1)}M · projected (+${growth}%) ₪${(blend.projected / 1000).toFixed(1)}M · base ₪${(blend.blended / 1000).toFixed(1)}M`;
+  }
+  return `שקלול ${pctPast}/${pctCur}/${pctProj} · עבר ₪${(blend.past / 1000).toFixed(1)}M · נוכחי ₪${(blend.current / 1000).toFixed(1)}M · תחזית (+${growth}%) ₪${(blend.projected / 1000).toFixed(1)}M · בסיס ₪${(blend.blended / 1000).toFixed(1)}M`;
 }
 
 function buildTrajectory(revK: number, marginPct: number, growthPct: number): TrajectoryPoint[] {
@@ -273,6 +290,51 @@ function scenarioRowsFromComputed(
   });
 }
 
+function buildModelBlendRows(
+  computed: ValuationComputed,
+  inputs: ValuationInputs,
+  locale: ValuationLocale,
+): ModelBlendRow[] {
+  const { blendWeights } = computed;
+  const dcfWeight = Math.round(blendWeights.dcf * 100);
+  const ebitdaWeight = Math.round(blendWeights.ebitda * 100);
+  const revWeight = Math.round(blendWeights.rev * 100);
+  const revMultDisplay =
+    inputs.rev > 0 ? computed.revMult / inputs.rev : computed.effectiveMult * 0.25;
+
+  const rows: ModelBlendRow[] = [
+    {
+      name: `DCF + WACC (${computed.wacc.toFixed(1)}%)`,
+      ev: kToNis(computed.dcf),
+      weightPct: dcfWeight,
+      contribution: kToNis(computed.dcf * blendWeights.dcf),
+    },
+    {
+      name:
+        locale === 'en'
+          ? `EBITDA multiple × ${computed.effectiveMult.toFixed(1)}`
+          : `מכפיל EBITDA × ${computed.effectiveMult.toFixed(1)}`,
+      ev: kToNis(computed.ebtMult),
+      weightPct: ebitdaWeight,
+      contribution: kToNis(computed.ebtMult * blendWeights.ebitda),
+    },
+  ];
+
+  if (blendWeights.rev > 0) {
+    rows.push({
+      name:
+        locale === 'en'
+          ? `Revenue multiple × ${revMultDisplay.toFixed(1)}`
+          : `מכפיל הכנסות × ${revMultDisplay.toFixed(1)}`,
+      ev: kToNis(computed.revMult),
+      weightPct: revWeight,
+      contribution: kToNis(computed.revMult * blendWeights.rev),
+    });
+  }
+
+  return rows;
+}
+
 /** ממפה מצב אשף + חישוב ל-ValuationData מלא לדוח PDF */
 export function mapWizardToValuationData(
   state: EquifyWizardState,
@@ -280,25 +342,7 @@ export function mapWizardToValuationData(
   locale: ValuationLocale = 'he',
 ): ValuationData {
   const netDebtK = computeNetDebtK(state.financials);
-  const inputs: ValuationInputs = {
-    rev: state.financials.rev,
-    margin: state.financials.margin,
-    growth: state.financials.growth,
-    debt: netDebtK,
-    grossDebt: state.financials.grossDebtK,
-    cash: state.financials.cashK,
-    normalizedOwnerSalary: state.financials.normalizedOwnerSalaryK,
-    capexLevelPct: state.financials.capexLevelPct,
-    sectorMult: SECTOR_MULTIPLIERS[state.profile.sector],
-    subSectorMult: getSubSectorMultAdj(state.profile.sector, state.profile.subSector),
-    lifecycleAdj: LIFECYCLE_ADJ[state.profile.lifecycle],
-    recurring: state.risk.recurring,
-    topCustomer: state.risk.topCustomer,
-    founderDep: state.risk.founderDep,
-    competition: state.risk.competition,
-    ip: state.risk.ip,
-    contracts: state.risk.contracts,
-  };
+  const inputs = buildValuationInputsFromEquifyState(state);
 
   const computed = computeValuation(inputs);
   const scenarios = computeScenarios(computed, inputs);
@@ -307,39 +351,12 @@ export function mapWizardToValuationData(
   const dateIso = now.toISOString().slice(0, 10);
   const dateShort = now.toLocaleDateString('he-IL');
 
-  const modelBlend: ModelBlendRow[] = [
-    {
-      name: `DCF + WACC (${computed.wacc.toFixed(1)}%)`,
-      ev: kToNis(computed.dcf),
-      weightPct: 50,
-      contribution: kToNis(computed.dcf * 0.5),
-    },
-    {
-      name: `מכפיל EBITDA × ${computed.effectiveMult.toFixed(1)}`,
-      ev: kToNis(computed.ebtMult),
-      weightPct: 30,
-      contribution: kToNis(computed.ebtMult * 0.3),
-    },
-    {
-      name: `מכפיל הכנסות × ${(computed.revMult / computed.ebitda * computed.effectiveMult / computed.effectiveMult).toFixed(1)}`,
-      ev: kToNis(computed.revMult),
-      weightPct: 20,
-      contribution: kToNis(computed.revMult * 0.2),
-    },
-  ];
+  const modelBlend: ModelBlendRow[] = buildModelBlendRows(computed, inputs, locale);
 
   const revMultDisplay =
     inputs.rev > 0 ? computed.revMult / inputs.rev : computed.effectiveMult * 0.25;
-
-  modelBlend[2] = {
-    name: `מכפיל הכנסות × ${revMultDisplay.toFixed(1)}`,
-    ev: kToNis(computed.revMult),
-    weightPct: 20,
-    contribution: kToNis(computed.revMult * 0.2),
-  };
-
-  const ebitdaK = computed.ebitda;
   const industryMult = computed.effectiveMult / inputs.sectorMult;
+  const ebitdaK = computed.ebitda;
 
   return {
     reportId: reportId ?? `EQ-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`,
@@ -380,7 +397,7 @@ export function mapWizardToValuationData(
     competition: state.risk.competition,
     ip: state.risk.ip,
     contracts: state.risk.contracts,
-    moatNotes: state.profile.qualitativeDescription || undefined,
+    moatNotes: state.profile.qualitativeDescription?.trim() || undefined,
 
     equity: kToNis(computed.equity),
     enterpriseValue: kToNis(computed.ev),
@@ -394,6 +411,10 @@ export function mapWizardToValuationData(
     qualityScore: computed.qs,
     qualityGrade: computed.qsGrade,
     ebitda: kToNis(computed.ebitda),
+    ebitdaPast: kToNis(computed.ebitdaBlend.past),
+    ebitdaCurrent: kToNis(computed.ebitdaBlend.current),
+    ebitdaProjected: kToNis(computed.ebitdaBlend.projected),
+    ebitdaBlendedNote: blendedEbitdaNote(computed.ebitdaBlend, locale),
     effectiveMult: computed.effectiveMult,
     revenueMultiple: revMultDisplay,
     terminalSharePct,
@@ -459,7 +480,7 @@ export function mapWizardToValuationData(
     ),
 
     netDebtNote: `חוב נטו ליום ההערכה: ₪${(netDebtK / 1000).toFixed(1)}M (חוב ברוטו ₪${(state.financials.grossDebtK / 1000).toFixed(1)}M פחות מזומן ₪${(state.financials.cashK / 1000).toFixed(1)}M).`,
-    keyFindings: `Quality ${computed.qsGrade} · WACC ${computed.wacc.toFixed(1)}% · מכפיל EBITDA ×${computed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
+    keyFindings: `Quality ${computed.qsGrade} · WACC ${computed.wacc.toFixed(1)}% · EBITDA base (30/50/20) ₪${(computed.ebitda / 1000).toFixed(1)}M · מכפיל ×${computed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
     multiplesIntro: getMultiplesIntroText(state.profile.sector, locale),
   };
 }

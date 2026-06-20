@@ -10,7 +10,7 @@ export function FaqSection() {
         <div className="sec-head">
           <span className="eyebrow rv">שאלות נפוצות</span>
           <h2 className="sec-title rv">
-            מה שכולם <span className="hl">שואלים.</span>
+            שאלות <span className="hl">נפוצות.</span>
           </h2>
         </div>
         <div className="faq-list">

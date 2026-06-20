@@ -11,15 +11,16 @@ import React, {
 import {
   computeScenarios,
   computeValuation,
-  LIFECYCLE_ADJ,
-  SECTOR_MULTIPLIERS,
   type EquifyGoalKey,
   type EquifyLifecycleKey,
   type EquifySectorKey,
   type ValuationComputed,
   type ValuationScenarios,
 } from '../../../lib/valuation';
-import { getIndustryConfig, getSubSectorMultAdj } from '../../../lib/constants/industry_config';
+import { getIndustryConfig } from '../../../lib/constants/industry_config';
+import {
+  buildValuationInputsFromEquifyState,
+} from '../../../lib/wizard/build_valuation_inputs';
 import {
   computeNetDebtK,
   DEFAULT_EQUIFY_WIZARD_STATE,
@@ -49,30 +50,6 @@ const WizardValuationContext = createContext<WizardValuationContextValue | null>
   null,
 );
 
-function buildInputs(state: EquifyWizardState) {
-  const { financials, risk, profile } = state;
-  const netDebt = computeNetDebtK(financials);
-  return {
-    rev: financials.rev,
-    margin: financials.margin,
-    growth: financials.growth,
-    debt: netDebt,
-    grossDebt: financials.grossDebtK,
-    cash: financials.cashK,
-    normalizedOwnerSalary: financials.normalizedOwnerSalaryK,
-    capexLevelPct: financials.capexLevelPct,
-    sectorMult: SECTOR_MULTIPLIERS[profile.sector],
-    subSectorMult: getSubSectorMultAdj(profile.sector, profile.subSector),
-    lifecycleAdj: LIFECYCLE_ADJ[profile.lifecycle],
-    recurring: risk.recurring,
-    topCustomer: risk.topCustomer,
-    founderDep: risk.founderDep,
-    competition: risk.competition,
-    ip: risk.ip,
-    contracts: risk.contracts,
-  };
-}
-
 export function WizardValuationProvider({
   children,
   initialState,
@@ -85,14 +62,14 @@ export function WizardValuationProvider({
   );
   const [step, setStep] = useState(1);
 
-  const computed = useMemo(() => computeValuation(buildInputs(state)), [state]);
+  const computed = useMemo(
+    () => computeValuation(buildValuationInputsFromEquifyState(state)),
+    [state],
+  );
   const scenarios = useMemo(() => {
-    const netDebt = computeNetDebtK(state.financials);
-    return computeScenarios(computed, {
-      growth: state.financials.growth,
-      debt: netDebt,
-    });
-  }, [computed, state.financials]);
+    const inputs = buildValuationInputsFromEquifyState(state);
+    return computeScenarios(computed, inputs);
+  }, [computed, state]);
 
   const updateProfile = useCallback((patch: Partial<EquifyWizardProfile>) => {
     setState((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }));

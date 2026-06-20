@@ -15,8 +15,7 @@
     "test:canonical": "tsx scripts/test-canonical-reconciliation.ts",
     "test:monday-leads": "tsx scripts/test-monday-leads-e2e.ts",
     "test:monday-lead": "tsx scripts/test-monday-lead.ts",
-    "monday:introspect": "tsx scripts/monday-introspect.ts",
-    "brand:icons": "node scripts/generate-brand-icons.mjs"
+    "monday:introspect": "tsx scripts/monday-introspect.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",
@@ -53,6 +52,7 @@
     "@capacitor/cli": "^6.2.1",
     "@capacitor/core": "^6.2.1",
     "@capacitor/ios": "^6.2.1",
+    "@tailwindcss/typography": "^0.5.20",
     "@types/express": "^4.17.21",
     "@types/node": "^22.0.0",
     "@types/pdfkit": "^0.13.9",

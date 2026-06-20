@@ -110,6 +110,26 @@ html {
   background: var(--turq);
 }
 
+.eyebrow-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.eyebrow-mark {
+  width: 28px;
+  height: 1px;
+  background: var(--turq);
+  flex-shrink: 0;
+}
+
+.eyebrow--no-mark::before {
+  display: none;
+}
+
 /* ============ PRELOADER ============ */
 #loader {
   position: fixed;
@@ -663,11 +683,31 @@ html {
   direction: ltr;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.15em;
+  width: 100%;
 }
 
 .stat .s-num em {
   font-style: normal;
   color: var(--turq);
+}
+
+.bidi-num-unit {
+  unicode-bidi: isolate;
+}
+
+.bidi-num-unit__num,
+.bidi-num-unit__prefix,
+.bidi-num-unit__unit {
+  unicode-bidi: isolate;
+}
+
+.bidi-num-unit__num,
+.bidi-num-unit__prefix {
+  direction: ltr;
 }
 
 .stat .s-lab {
@@ -699,6 +739,11 @@ html {
 .sec-head {
   max-width: 760px;
   margin-bottom: clamp(44px, 6vw, 72px);
+}
+
+.sec-head--center {
+  text-align: center;
+  margin-inline: auto;
 }
 
 .sec-title {

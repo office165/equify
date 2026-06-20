@@ -7,12 +7,16 @@ import {
 export interface EquifyWizardStepStrings {
   common: {
     tooltipAria: string;
+    scaleThousands: string;
+    scaleMillions: string;
+    scaleMultiplierGroup: string;
     requiredFields: string;
     back: string;
     nextFinancials: string;
     nextRisk: string;
     nextGoal: string;
     errFullName: string;
+    errCompanyName: string;
     errEmail: string;
     phoneHint: string;
     subSector: string;
@@ -32,6 +36,8 @@ export interface EquifyWizardStepStrings {
     revenueTip: string;
     margin: string;
     marginTip: string;
+    ebitdaAmount: string;
+    ebitdaPercent: string;
     ownerSalary: string;
     ownerSalaryTip: string;
     capex: string;
@@ -65,6 +71,11 @@ export interface EquifyWizardStepStrings {
     maxOwnerSalary: string;
     maxGrossDebt: string;
     maxCash: string;
+    blendedEbitdaTitle: string;
+    blendedEbitdaPast: (pct: number, amount: string) => string;
+    blendedEbitdaCurrent: (pct: number, amount: string) => string;
+    blendedEbitdaProjected: (pct: number, amount: string, growth: string) => string;
+    blendedEbitdaTotal: (amount: string) => string;
   };
   step3: {
     titlePrefix: string;
@@ -111,12 +122,16 @@ export interface EquifyWizardStepStrings {
 const HE: EquifyWizardStepStrings = {
   common: {
     tooltipAria: 'מידע נוסף',
+    scaleThousands: 'אלפים',
+    scaleMillions: 'מיליונים',
+    scaleMultiplierGroup: 'הכפלת סדר גודל',
     requiredFields: '* שדות חובה',
     back: 'חזרה',
     nextFinancials: 'המשך לנתונים פיננסיים',
     nextRisk: 'המשך לסיכון',
     nextGoal: 'המשך למטרת ההערכה',
     errFullName: 'נא להזין שם מלא',
+    errCompanyName: 'נא להזין שם חברה',
     errEmail: 'כתובת אימייל לא תקינה',
     phoneHint: 'הדוח יישלח לכאן ב-WhatsApp',
     subSector: 'תת-ענף',
@@ -136,6 +151,8 @@ const HE: EquifyWizardStepStrings = {
     revenueTip: 'הכנסות מדווחות לשנה האחרונה (₪K). בסיס לכל מודלי ההערכה.',
     margin: 'שיעור EBITDA מדווח',
     marginTip: 'EBITDA כאחוז מההכנסות לפני נרמול שכר בעלים. מקובל בענף האירוח: 18%–28%.',
+    ebitdaAmount: 'סכום ₪',
+    ebitdaPercent: 'אחוז %',
     ownerSalary: 'שכר בעלים מנורמל',
     ownerSalaryTip:
       'הפרש בין שכר שוק למה שמשולם לבעלים — מוסיף ל-EBITDA התפעולי לצורך הערכה (Big 4 normalization).',
@@ -170,6 +187,12 @@ const HE: EquifyWizardStepStrings = {
     maxOwnerSalary: '3M ₪',
     maxGrossDebt: '50M ₪',
     maxCash: '20M ₪',
+    blendedEbitdaTitle: 'בסיס EBITDA משוקלל (M&A)',
+    blendedEbitdaPast: (pct, amount) => `${pct}% שנה קודמת · ${amount}`,
+    blendedEbitdaCurrent: (pct, amount) => `${pct}% שנה נוכחית · ${amount}`,
+    blendedEbitdaProjected: (pct, amount, growth) =>
+      `${pct}% תחזית (+${growth}%) · ${amount}`,
+    blendedEbitdaTotal: (amount) => `ממוצע משוקלל · ${amount}`,
   },
   step3: {
     titlePrefix: 'מדדי סיכון',
@@ -225,12 +248,16 @@ const HE: EquifyWizardStepStrings = {
 const EN: EquifyWizardStepStrings = {
   common: {
     tooltipAria: 'More information',
+    scaleThousands: 'Thousands',
+    scaleMillions: 'Millions',
+    scaleMultiplierGroup: 'Scale multiplier',
     requiredFields: '* Required fields',
     back: 'Back',
     nextFinancials: 'Continue to financials',
     nextRisk: 'Continue to risk',
     nextGoal: 'Continue to purpose',
     errFullName: 'Please enter your full name',
+    errCompanyName: 'Please enter a company name',
     errEmail: 'Invalid email address',
     phoneHint: 'Your report will be sent here via WhatsApp',
     subSector: 'Sub-sector',
@@ -250,6 +277,8 @@ const EN: EquifyWizardStepStrings = {
     revenueTip: 'Reported revenue for the latest year (₪K). Basis for all valuation models.',
     margin: 'Reported EBITDA margin',
     marginTip: 'EBITDA as % of revenue before owner salary normalization. Hospitality norm: 18%–28%.',
+    ebitdaAmount: 'Amount ₪',
+    ebitdaPercent: 'Percent %',
     ownerSalary: 'Normalized owner salary',
     ownerSalaryTip:
       'Gap between market salary and owner pay — added to operating EBITDA (Big 4 normalization).',
@@ -284,6 +313,12 @@ const EN: EquifyWizardStepStrings = {
     maxOwnerSalary: '₪3M',
     maxGrossDebt: '₪50M',
     maxCash: '₪20M',
+    blendedEbitdaTitle: 'Blended EBITDA base (M&A)',
+    blendedEbitdaPast: (pct, amount) => `${pct}% prior year · ${amount}`,
+    blendedEbitdaCurrent: (pct, amount) => `${pct}% current year · ${amount}`,
+    blendedEbitdaProjected: (pct, amount, growth) =>
+      `${pct}% projected (+${growth}%) · ${amount}`,
+    blendedEbitdaTotal: (amount) => `Weighted average · ${amount}`,
   },
   step3: {
     titlePrefix: 'Risk metrics',

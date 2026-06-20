@@ -146,50 +146,94 @@ export async function postUnifiedBackupRelay(
 
   if (process.env.NODE_ENV === 'development') {
     console.log('[backup-relay] dispatch', {
-      hasIdentity: Boolean(wireBody.fullName && wireBody.userEmail),
+      fullName: wireBody.fullName,
+      userEmail: wireBody.userEmail,
+      sector: wireBody.sectorLabel || wireBody.industry,
       valuationMidpoint: wireBody.valuationMidpoint,
+      hasIdentity: Boolean(wireBody.fullName && wireBody.userEmail),
       pdfAttached: wireBody.pdfBase64.length > 0,
     });
   }
 
   try {
-    const response = await fetch('/api/valuation/backup-relay', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(wireBody),
-    });
+    const response = await fetchBackupRelay(wireBody);
 
     let mondayOk = false;
     let mondayItemId: string | undefined;
     let mondayError: string | undefined;
+    let responsePreview = '';
 
     try {
-      const payload = (await response.json()) as {
-        results?: {
-          monday?: {
-            ok?: boolean;
-            detail?: { item?: { itemId?: string; error?: string } };
-            error?: string;
-          };
-        };
-      };
+      responsePreview = await response.text();
+      const payload = responsePreview
+        ? (JSON.parse(responsePreview) as {
+            results?: {
+              monday?: {
+                ok?: boolean;
+                detail?: { item?: { itemId?: string; error?: string } };
+                error?: string;
+              };
+            };
+          })
+        : {};
       mondayOk = Boolean(payload.results?.monday?.ok);
       mondayItemId = payload.results?.monday?.detail?.item?.itemId;
       mondayError =
         payload.results?.monday?.error ??
         payload.results?.monday?.detail?.item?.error;
-    } catch {
+    } catch (parseErr) {
       mondayOk = false;
       mondayError = 'invalid_relay_response';
+      console.error('[backup-relay] failed to parse response JSON', {
+        parseErr,
+        status: response.status,
+        bodyPreview: responsePreview.slice(0, 500),
+      });
     }
 
-    if (response.ok) {
+    if (!response.ok) {
+      console.error('[backup-relay] HTTP error from relay route', {
+        status: response.status,
+        statusText: response.statusText,
+        bodyPreview: responsePreview.slice(0, 500),
+        payload: {
+          fullName: wireBody.fullName,
+          userEmail: wireBody.userEmail,
+          sector: wireBody.sectorLabel || wireBody.industry,
+          valuationMidpoint: wireBody.valuationMidpoint,
+        },
+      });
+    } else if (!mondayOk) {
+      console.error('[backup-relay] relay accepted but Monday sync failed', {
+        mondayError,
+        mondayItemId,
+        payload: {
+          fullName: wireBody.fullName,
+          userEmail: wireBody.userEmail,
+          sector: wireBody.sectorLabel || wireBody.industry,
+          valuationMidpoint: wireBody.valuationMidpoint,
+        },
+      });
+    }
+
+    if (response.ok && mondayOk) {
       markRelayDispatched(relayKind);
     }
 
     return { response, mondayOk, mondayItemId, mondayError };
   } catch (err) {
-    console.error('[backup-relay] unified dispatch failed', err);
+    const isTimeout = err instanceof Error && err.name === 'AbortError';
+    console.error('[backup-relay] unified dispatch failed', {
+      reason: isTimeout ? 'timeout' : 'network',
+      timeoutMs: RELAY_FETCH_TIMEOUT_MS,
+      error: err instanceof Error ? err.message : String(err),
+      payload: {
+        fullName: wireBody.fullName,
+        userEmail: wireBody.userEmail,
+        sector: wireBody.sectorLabel || wireBody.industry,
+        valuationMidpoint: wireBody.valuationMidpoint,
+      },
+    });
     return null;
   }
 }
@@ -213,9 +257,27 @@ export function queueWizardLeadCaptureRelay(): void {
 
 const RELAY_MAX_ATTEMPTS = 3;
 const RELAY_BASE_DELAY_MS = 500;
+const RELAY_FETCH_TIMEOUT_MS = 45_000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchBackupRelay(
+  wireBody: UnifiedBackupRelayWireBody,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), RELAY_FETCH_TIMEOUT_MS);
+  try {
+    return await fetch('/api/valuation/backup-relay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(wireBody),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 /** Backup-relay with retry — never throws to callers. */

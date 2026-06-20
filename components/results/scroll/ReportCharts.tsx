@@ -14,9 +14,15 @@ interface FinancialBarChartProps {
   data: FinBarPoint[];
   growthNote: string;
   marginNote: string;
+  blendedNote?: string;
 }
 
-export function FinancialBarChart({ data, growthNote, marginNote }: FinancialBarChartProps) {
+export function FinancialBarChart({
+  data,
+  growthNote,
+  marginNote,
+  blendedNote,
+}: FinancialBarChartProps) {
   const maxM = Math.max(
     ...data.flatMap((d) => [d.revenueM, d.ebitdaM]),
     4.5,
@@ -28,6 +34,7 @@ export function FinancialBarChart({ data, growthNote, marginNote }: FinancialBar
       <h3>הכנסות מול EBITDA · ₪M</h3>
       <p className="ch-sub">
         {growthNote} · {marginNote}
+        {blendedNote ? ` · ${blendedNote}` : ''}
       </p>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="גרף הכנסות ו-EBITDA">
         <defs>

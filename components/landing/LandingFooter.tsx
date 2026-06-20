@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { BRAND_NAME } from '../../lib/brand/brand-identity';
+import { LEGAL_ROUTES } from '../../lib/legal/routes';
 import { AccessibilityStatementLink } from '../AccessibilityStatementDialog';
 import { SectionReveal } from '../motion/SectionReveal';
 
@@ -50,15 +51,21 @@ export function LandingFooter() {
           <span aria-hidden className="text-[var(--eq-border-dark)]">
             |
           </span>
-          <a href="#" className="text-[var(--eq-muted-on-dark)] transition hover:text-[var(--eq-accent-mint)]">
+          <Link
+            href={LEGAL_ROUTES.terms}
+            className="text-[var(--eq-muted-on-dark)] transition hover:text-[var(--eq-accent-mint)]"
+          >
             תנאי שימוש
-          </a>
+          </Link>
           <span aria-hidden className="text-[var(--eq-border-dark)]">
             |
           </span>
-          <a href="#" className="text-[var(--eq-muted-on-dark)] transition hover:text-[var(--eq-accent-mint)]">
+          <Link
+            href={LEGAL_ROUTES.privacy}
+            className="text-[var(--eq-muted-on-dark)] transition hover:text-[var(--eq-accent-mint)]"
+          >
             פרטיות
-          </a>
+          </Link>
           <span aria-hidden className="text-[var(--eq-border-dark)]">
             |
           </span>

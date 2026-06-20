@@ -1,6 +1,6 @@
 'use client';
 
-import { LANDING_MODELS } from '../equify-data';
+import { LANDING_MODELS, VALUATION_METHODOLOGY_COPY } from '../equify-data';
 
 /** רשת כרטיסי מודלים — DCF, מכפילים, תרחישים */
 export function ModelsSection() {
@@ -8,13 +8,12 @@ export function ModelsSection() {
     <section className="sec" id="models">
       <div className="wrap">
         <div className="sec-head">
-          <span className="eyebrow rv">המנוע</span>
+          <span className="eyebrow rv">מתודולוגיה</span>
           <h2 className="sec-title rv">
-            11 מודלים. <span className="hl">דוח אחד.</span>
+            שלוש יסודות.
+            <span className="hl"> שווי משוקלל.</span>
           </h2>
-          <p className="sec-sub rv">
-            כל הערכה מריצה את מלוא הסוללה הפיננסית ומשקללת לשווי משולב אחד עם טווח רגישות.
-          </p>
+          <p className="sec-sub rv">{VALUATION_METHODOLOGY_COPY}</p>
         </div>
         <div className="models-grid">
           {LANDING_MODELS.map((m) => (

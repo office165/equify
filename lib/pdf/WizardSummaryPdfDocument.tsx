@@ -1,15 +1,12 @@
 import React from 'react';
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
-import { computeNetDebtK } from '../wizard/map_equify_wizard';
-import { getSubSectorMultAdj } from '../constants/industry_config';
+import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
 import {
   computeScenarios,
   computeValuation,
   fmtK,
   fmtM,
-  LIFECYCLE_ADJ,
-  SECTOR_MULTIPLIERS,
   type ValuationComputed,
 } from '../valuation';
 import { registerValubotPdfFonts } from './fonts/register';
@@ -69,32 +66,9 @@ export function WizardSummaryPdfDocument({
   computed: computedProp,
   reportId,
 }: WizardSummaryPdfProps) {
-  const netDebtK = computeNetDebtK(state.financials);
-  const computed =
-    computedProp ??
-    computeValuation({
-      rev: state.financials.rev,
-      margin: state.financials.margin,
-      growth: state.financials.growth,
-      debt: netDebtK,
-      grossDebt: state.financials.grossDebtK,
-      cash: state.financials.cashK,
-      normalizedOwnerSalary: state.financials.normalizedOwnerSalaryK,
-      capexLevelPct: state.financials.capexLevelPct,
-      sectorMult: SECTOR_MULTIPLIERS[state.profile.sector],
-      subSectorMult: getSubSectorMultAdj(state.profile.sector, state.profile.subSector),
-      lifecycleAdj: LIFECYCLE_ADJ[state.profile.lifecycle],
-      recurring: state.risk.recurring,
-      topCustomer: state.risk.topCustomer,
-      founderDep: state.risk.founderDep,
-      competition: state.risk.competition,
-      ip: state.risk.ip,
-      contracts: state.risk.contracts,
-    });
-  const scenarios = computeScenarios(computed, {
-    growth: state.financials.growth,
-    debt: netDebtK,
-  });
+  const inputs = buildValuationInputsFromEquifyState(state);
+  const computed = computedProp ?? computeValuation(inputs);
+  const scenarios = computeScenarios(computed, inputs);
   const today = new Date().toLocaleDateString('he-IL', {
     day: '2-digit',
     month: '2-digit',

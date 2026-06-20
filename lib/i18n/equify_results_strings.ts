@@ -35,6 +35,7 @@ export interface EquifyResultsStrings {
   finSub: string;
   growthNote: (pct: number) => string;
   marginNote: (pct: string | number) => string;
+  blendedEbitdaNote: (summary: string) => string;
   dcfEyebrow: string;
   dcfTitle: string;
   dcfTitleHl: string;
@@ -71,6 +72,7 @@ export interface EquifyResultsStrings {
   scenarioBear: string;
   scenarioBase: string;
   scenarioBull: string;
+  moatCalloutLabel: string;
 }
 
 const HE: EquifyResultsStrings = {
@@ -92,6 +94,7 @@ const HE: EquifyResultsStrings = {
   finSub: FINANCIAL_DATA_COPY,
   growthNote: (pct) => `CAGR ${pct}%`,
   marginNote: (pct) => `שיעור EBITDA ${pct}%`,
+  blendedEbitdaNote: (summary) => `בסיס EBITDA משוקלל (M&A): ${summary}`,
   dcfEyebrow: 'היוון תזרימי מזומנים',
   dcfTitle: 'DCF + WACC',
   dcfTitleHl: '(FCFF)',
@@ -129,6 +132,7 @@ const HE: EquifyResultsStrings = {
   scenarioBear: 'Bear',
   scenarioBase: 'Base',
   scenarioBull: 'Bull',
+  moatCalloutLabel: 'יתרון תחרותי / הערות:',
 };
 
 const EN: EquifyResultsStrings = {
@@ -150,6 +154,7 @@ const EN: EquifyResultsStrings = {
   finSub: FINANCIAL_DATA_COPY_EN,
   growthNote: (pct) => `CAGR ${pct}%`,
   marginNote: (pct) => `EBITDA margin ${pct}%`,
+  blendedEbitdaNote: (summary) => `Blended EBITDA base (M&A): ${summary}`,
   dcfEyebrow: 'Discounted cash flow',
   dcfTitle: 'DCF + WACC',
   dcfTitleHl: '(FCFF)',
@@ -187,6 +192,7 @@ const EN: EquifyResultsStrings = {
   scenarioBear: 'Bear',
   scenarioBase: 'Base',
   scenarioBull: 'Bull',
+  moatCalloutLabel: 'Competitive advantage / notes:',
 };
 
 export function getEquifyResultsStrings(locale: ValuationLocale): EquifyResultsStrings {

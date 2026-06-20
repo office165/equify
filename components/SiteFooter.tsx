@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
+import { LEGAL_ROUTES } from '../lib/legal/routes';
 import { useValuationI18n } from '../valuation_i18n';
 import { AccessibilityStatementLink } from './AccessibilityStatementDialog';
 import { LegalDisclaimerFooter } from './LegalDisclaimerFooter';
@@ -27,7 +29,13 @@ export function SiteFooter({ className, variant = 'default' }: SiteFooterProps) 
         )}
       >
         <span className="text-slate-500">© {new Date().getFullYear()} equify BY SBC</span>
-        <AccessibilityStatementLink />
+        <Link href={LEGAL_ROUTES.terms} className="text-slate-400 transition hover:text-mint-400">
+          תנאי שימוש
+        </Link>
+        <Link href={LEGAL_ROUTES.privacy} className="text-slate-400 transition hover:text-mint-400">
+          פרטיות
+        </Link>
+        <AccessibilityStatementLink className="!text-slate-400 hover:!text-mint-400" />
       </div>
     </div>
   );

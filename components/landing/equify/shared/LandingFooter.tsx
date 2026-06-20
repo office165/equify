@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { AccessibilityStatementLink } from '../../../AccessibilityStatementDialog';
+import { LEGAL_ROUTES } from '../../../../lib/legal/routes';
 
 /** פוטר דף הנחיתה */
 export function LandingFooter() {
@@ -14,8 +15,8 @@ export function LandingFooter() {
         </Link>
         <div className="f-links">
           <Link href="/wizard">התחל הערכה</Link>
-          <a href="#">תנאי שימוש</a>
-          <a href="#">פרטיות</a>
+          <Link href={LEGAL_ROUTES.terms}>תנאי שימוש</Link>
+          <Link href={LEGAL_ROUTES.privacy}>פרטיות</Link>
           <AccessibilityStatementLink />
           <a href="mailto:hello@equify.co.il">hello@equify.co.il</a>
         </div>

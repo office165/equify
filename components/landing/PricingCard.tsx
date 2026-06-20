@@ -3,9 +3,9 @@
 import Link from 'next/link';
 
 const FEATURES = [
-  'DCF + WACC + מכפילים ישראליים 2026',
-  'שווי משולב (DCF + מכפילים)',
-  'ניתוח AI + דוח PDF מקצועי',
+  'DCF + WACC (Damodaran CRP) ומכפילי שוק ישראליים',
+  'שווי משולב עם מטריצות רגישות',
+  'דוח PDF מובנה בן 8 עמודים',
   'תרחישי Bear / Base / Bull',
 ] as const;
 
@@ -90,10 +90,8 @@ export function PricingCard({ remaining, total, claimedPct }: PricingCardProps) 
             />
           </div>
 
-          <p className="mx-auto mt-3 max-w-[28rem] text-center text-xs leading-relaxed text-amber-200/90">
-            ⚡ הזדמנות אחרונה: {claimedPct}% מההקצאות לסבב הנוכחי נתפסו.
-            <br className="hidden sm:inline" />
-            {' '}המחיר יעלה אוטומטית עם סגירת המכסה.
+          <p className="mx-auto mt-3 max-w-[28rem] text-center text-xs leading-relaxed text-slate-400">
+            {claimedPct}% מההקצאות לסבב הנוכחי נוצלו.
           </p>
         </div>
 
@@ -101,7 +99,7 @@ export function PricingCard({ remaining, total, claimedPct }: PricingCardProps) 
           href="/wizard"
           className="pricing-fomo-cta flex w-full touch-manipulation items-center justify-center gap-2 rounded-full bg-[#00F5A0] px-8 py-4 text-base font-bold text-[#020504] transition-transform duration-200 hover:brightness-105 active:scale-[0.98]"
         >
-          נצל את המחיר ←
+          התחל הערכה ←
         </Link>
 
         <p className="text-center text-xs leading-relaxed text-slate-500">

@@ -9,7 +9,7 @@ import {
   getEquifyWizardCopy,
   getEquifyWizardSteps,
 } from '../../../lib/wizard/equify_wizard_copy';
-import { mapEquifyToWizardFormValues } from '../../../lib/wizard/map_equify_wizard';
+import { mapEquifyToWizardFormValues, type EquifyWizardState } from '../../../lib/wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../../../lib/wizard/resolve_company_display';
 import { fmtEquitySidebarM, fmtK } from '../../../lib/valuation';
 import { EquifyLanguageToggle } from '../../shared/EquifyLanguageToggle';
@@ -30,7 +30,7 @@ import './wizard-equify.css';
 export interface EquifyWizardProps {
   onRunValuation?: (
     values: ReturnType<typeof mapEquifyToWizardFormValues>,
-    options?: { locale?: ValuationLocale },
+    options?: { locale?: ValuationLocale; equifyState?: EquifyWizardState },
   ) => Promise<void>;
   isSubmitting?: boolean;
   submitError?: string | null;
@@ -89,7 +89,7 @@ function EquifyWizardShell({
 
     if (onRunValuation) {
       try {
-        await onRunValuation(formValues, { locale });
+        await onRunValuation(formValues, { locale, equifyState: state });
       } catch {
         return;
       }

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { BRAND_NAME } from '../../lib/brand/brand-identity';
 import { HERO_HEADLINE_WORDS, HERO_SUBLINE } from '../../lib/landing/methodology';
+import { DurationValue } from './shared/BidiNumberUnit';
 import { FadeRise } from './motion/FadeRise';
 
 const TRUST_STRIP = [
@@ -81,7 +82,7 @@ export function HeroSection() {
             <h1 className="landing-headline mx-auto max-w-3xl md:mx-0">
               {HERO_HEADLINE_WORDS.join(' ')}
               <span className="mt-3 block bg-gradient-to-r from-[#00F5A0] to-[#10B981] bg-clip-text text-transparent">
-                תוך 10 דקות
+                תוך <DurationValue variant="long" />
               </span>
             </h1>
 
@@ -94,7 +95,7 @@ export function HeroSection() {
                 התחל הערכת שווי ←
               </Link>
               <p className="text-sm text-[var(--eq-muted-on-dark)]">
-                ללא כרטיס אשראי · 10 דקות · PDF להורדה מיידית
+                ללא כרטיס אשראי · <DurationValue variant="long" /> · PDF להורדה מיידית
               </p>
             </div>
 

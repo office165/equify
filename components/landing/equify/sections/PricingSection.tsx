@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { RefObject } from 'react';
 import { PRICING_FEATURES } from '../equify-data';
+import { SectionEyebrow } from '../shared/SectionEyebrow';
 
 interface PricingSectionProps {
   priceCardRef: RefObject<HTMLDivElement>;
@@ -15,10 +16,10 @@ export function PricingSection({ priceCardRef, quotaNumRef, quotaBarRef }: Prici
   return (
     <section className="sec price" id="price">
       <div className="wrap">
-        <div className="sec-head text-center mx-auto">
-          <span className="eyebrow rv justify-center">תמחור</span>
+        <div className="sec-head sec-head--center">
+          <SectionEyebrow centered>תמחור</SectionEyebrow>
           <h2 className="sec-title rv">
-            דוח אחד. <span className="hl">מחיר אחד.</span>
+            דוח הערכת שווי <span className="hl">מלא.</span>
           </h2>
         </div>
         <div className="price-card rv" id="priceCard" ref={priceCardRef}>
@@ -47,7 +48,7 @@ export function PricingSection({ priceCardRef, quotaNumRef, quotaBarRef }: Prici
               ))}
             </ul>
             <Link className="btn magnetic w-full justify-center" href="/wizard">
-              נצל את המחיר <span className="arr">←</span>
+              התחל הערכה <span className="arr">←</span>
             </Link>
             <div className="p-quota">
               <div className="q-top">

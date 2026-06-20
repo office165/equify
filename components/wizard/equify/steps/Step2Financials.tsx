@@ -2,10 +2,11 @@
 
 import React, { useMemo } from 'react';
 import { fmtEquitySidebarM, fmtK } from '../../../../lib/valuation';
+import { BLENDED_EBITDA_WEIGHTS } from '../../../../lib/valuation/blended_ebitda';
 import { computeNetDebtK } from '../../../../lib/wizard/map_equify_wizard';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
-import { FieldTooltip } from '../../ui/FieldTooltip';
-import { SmartSlider } from '../../ui/SmartSlider';
+import { EbitdaSmartInput } from '../../ui/EbitdaSmartInput';
+import { SmartInput } from '../../ui/SmartInput';
 import { useWizardValuation } from '../WizardValuationContext';
 
 export interface Step2FinancialsProps {
@@ -21,6 +22,10 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
 
   const netDebtK = useMemo(() => computeNetDebtK(financials), [financials]);
 
+  const { blendWeights, ebitdaBlend } = computed;
+  const weightLabel = (base: string, w: number) =>
+    w > 0 ? `${base} · ${Math.round(w * 100)}%` : base;
+  const wEbitda = BLENDED_EBITDA_WEIGHTS;
   const maxEv = Math.max(computed.dcf, computed.ebtMult, computed.revMult, 1);
   const barPct = (v: number) => `${(v / maxEv) * 90}%`;
   const qsArc = (computed.qs / 100) * 163.4;
@@ -36,127 +41,68 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
       <p className="pane-sub rv">{t.step2.sub}</p>
 
       <div className="fin-layout">
-        <div className="fin-sliders stagger">
-          <SmartSlider
-            label={
-              <>
-                {t.step2.revenue}
-                <FieldTooltip text={t.step2.revenueTip} />
-              </>
-            }
+        <div className="fin-inputs stagger w-full min-w-0 max-w-full overflow-x-clip">
+          <SmartInput
+            label={t.step2.revenue}
+            tooltip={t.step2.revenueTip}
             value={financials.rev}
-            min={500}
-            max={200000}
-            step={500}
-            unit="₪K"
+            variant="currency"
             required
             ariaLabel={t.step2.revenue}
-            minLabel={t.step2.minRev}
-            maxLabel={t.step2.maxRev}
             onChange={(v) => updateFinancials({ rev: v })}
           />
-          <SmartSlider
-            label={
-              <>
-                {t.step2.margin}
-                <FieldTooltip text={t.step2.marginTip} />
-              </>
-            }
-            value={financials.margin}
-            min={0}
-            max={60}
-            step={0.5}
-            unit="%"
+          <EbitdaSmartInput
+            label={t.step2.margin}
+            tooltip={t.step2.marginTip}
+            marginPct={financials.margin}
+            revenueK={financials.rev}
+            amountLabel={t.step2.ebitdaAmount}
+            percentLabel={t.step2.ebitdaPercent}
             required
             ariaLabel={t.step2.margin}
-            minLabel="0%"
-            maxLabel="60%"
-            onChange={(v) => updateFinancials({ margin: v })}
+            onChangeMargin={(v) => updateFinancials({ margin: v })}
           />
-          <SmartSlider
-            label={
-              <>
-                {t.step2.ownerSalary}
-                <FieldTooltip text={t.step2.ownerSalaryTip} />
-              </>
-            }
+          <SmartInput
+            label={t.step2.ownerSalary}
+            tooltip={t.step2.ownerSalaryTip}
             value={financials.normalizedOwnerSalaryK}
-            min={0}
-            max={3000}
-            step={50}
-            unit="₪K"
+            variant="currency"
             ariaLabel={t.step2.ownerSalary}
-            minLabel={t.step2.minZero}
-            maxLabel={t.step2.maxOwnerSalary}
             onChange={(v) => updateFinancials({ normalizedOwnerSalaryK: v })}
           />
-          <SmartSlider
-            label={
-              <>
-                {t.step2.capex}
-                <FieldTooltip text={t.step2.capexTip} />
-              </>
-            }
+          <SmartInput
+            label={t.step2.capex}
+            tooltip={t.step2.capexTip}
             value={financials.capexLevelPct}
-            min={0}
-            max={25}
-            step={1}
-            unit="%"
+            variant="percent"
+            showMultipliers={false}
             ariaLabel={t.step2.capex}
-            minLabel="0%"
-            maxLabel="25%"
             onChange={(v) => updateFinancials({ capexLevelPct: v })}
           />
-          <SmartSlider
-            label={
-              <>
-                {t.step2.growth}
-                <FieldTooltip text={t.step2.growthTip} />
-              </>
-            }
+          <SmartInput
+            label={t.step2.growth}
+            tooltip={t.step2.growthTip}
             value={financials.growth}
-            min={-10}
-            max={50}
-            step={1}
-            unit="%"
+            variant="percent"
+            showMultipliers={false}
             required
             ariaLabel={t.step2.growth}
-            minLabel={t.step2.minGrowth}
-            maxLabel={t.step2.maxGrowth}
             onChange={(v) => updateFinancials({ growth: v })}
           />
-          <SmartSlider
-            label={
-              <>
-                {t.step2.grossDebt}
-                <FieldTooltip text={t.step2.grossDebtTip} />
-              </>
-            }
+          <SmartInput
+            label={t.step2.grossDebt}
+            tooltip={t.step2.grossDebtTip}
             value={financials.grossDebtK}
-            min={0}
-            max={50000}
-            step={100}
-            unit="₪K"
+            variant="currency"
             ariaLabel={t.step2.grossDebt}
-            minLabel={t.step2.minZero}
-            maxLabel={t.step2.maxGrossDebt}
             onChange={(v) => updateFinancials({ grossDebtK: v })}
           />
-          <SmartSlider
-            label={
-              <>
-                {t.step2.cash}
-                <FieldTooltip text={t.step2.cashTip} />
-              </>
-            }
+          <SmartInput
+            label={t.step2.cash}
+            tooltip={t.step2.cashTip}
             value={financials.cashK}
-            min={0}
-            max={20000}
-            step={50}
-            unit="₪K"
+            variant="currency"
             ariaLabel={t.step2.cash}
-            minLabel={t.step2.minZero}
-            maxLabel={t.step2.maxCash}
             onChange={(v) => updateFinancials({ cashK: v })}
           />
 
@@ -202,16 +148,41 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
           <div className="cl-sub mono">
             {t.step2.waccQuality(computed.wacc.toFixed(1), computed.qsGrade)}
           </div>
+          <div className="cl-ebitda-blend">
+            <div className="cl-ebitda-blend-hd">{t.step2.blendedEbitdaTitle}</div>
+            <div className="cl-ebitda-blend-row">
+              {t.step2.blendedEbitdaPast(
+                Math.round(wEbitda.past * 100),
+                fmtK(ebitdaBlend.past, locale),
+              )}
+            </div>
+            <div className="cl-ebitda-blend-row">
+              {t.step2.blendedEbitdaCurrent(
+                Math.round(wEbitda.current * 100),
+                fmtK(ebitdaBlend.current, locale),
+              )}
+            </div>
+            <div className="cl-ebitda-blend-row">
+              {t.step2.blendedEbitdaProjected(
+                Math.round(wEbitda.projected * 100),
+                fmtK(ebitdaBlend.projected, locale),
+                ebitdaBlend.dcfGrowthPct.toFixed(1),
+              )}
+            </div>
+            <div className="cl-ebitda-blend-total mono">
+              {t.step2.blendedEbitdaTotal(fmtK(ebitdaBlend.blended, locale))}
+            </div>
+          </div>
           <div className="cl-models">
             <div className="cl-row">
-              <span>{t.step2.modelDcf}</span>
+              <span>{weightLabel(t.step2.modelDcf, blendWeights.dcf)}</span>
               <div className="cl-bar-wrap">
                 <div className="cl-bar-fill" style={{ width: barPct(computed.dcf) }} />
               </div>
               <b className="mono">{fmtK(computed.dcf, locale)}</b>
             </div>
             <div className="cl-row">
-              <span>{t.step2.modelEbitda}</span>
+              <span>{weightLabel(t.step2.modelEbitda, blendWeights.ebitda)}</span>
               <div className="cl-bar-wrap">
                 <div
                   className="cl-bar-fill"
@@ -220,16 +191,18 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
               </div>
               <b className="mono">{fmtK(computed.ebtMult, locale)}</b>
             </div>
-            <div className="cl-row">
-              <span>{t.step2.modelRevenue}</span>
-              <div className="cl-bar-wrap">
-                <div
-                  className="cl-bar-fill"
-                  style={{ width: barPct(computed.revMult) }}
-                />
+            {blendWeights.rev > 0 ? (
+              <div className="cl-row">
+                <span>{weightLabel(t.step2.modelRevenue, blendWeights.rev)}</span>
+                <div className="cl-bar-wrap">
+                  <div
+                    className="cl-bar-fill"
+                    style={{ width: barPct(computed.revMult) }}
+                  />
+                </div>
+                <b className="mono">{fmtK(computed.revMult, locale)}</b>
               </div>
-              <b className="mono">{fmtK(computed.revMult, locale)}</b>
-            </div>
+            ) : null}
           </div>
           <div className="scen-row">
             <div className="scen-badge bear">

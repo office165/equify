@@ -3,6 +3,7 @@ import { Assistant, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { BRAND_NAME } from '../lib/brand/brand-identity';
 import { rootMetadata } from './site-metadata';
+import { AppProviders } from '../components/shared/AppProviders';
 
 const assistant = Assistant({
   subsets: ['hebrew', 'latin'],
@@ -48,18 +49,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
-      <head>
-        <link rel="manifest" href="/manifest.webmanifest" />
-        <link rel="icon" href="/brand/equify-mark.svg" type="image/svg+xml" />
-        <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-      </head>
       <body
         className={`${assistant.variable} ${ibmPlexMono.variable} ${assistant.className} min-h-[100dvh] bg-[#020504] pb-safe text-slate-50 antialiased`}
       >
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

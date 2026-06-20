@@ -3,9 +3,12 @@
 import Link from 'next/link';
 import { useCallback, useRef, useState } from 'react';
 import { AccessibilityStatementLink } from '../../AccessibilityStatementDialog';
+import { LEGAL_ROUTES } from '../../../lib/legal/routes';
 import { useReducedMotion } from '../motion/useReducedMotion';
 import { MicroCalculator } from './MicroCalculator';
 import { useCashFlowTerrain } from './useCashFlowTerrain';
+import { BidiNumberUnit, DurationValue, durationUnit } from '../shared/BidiNumberUnit';
+import { SectionEyebrow } from '../equify/shared/SectionEyebrow';
 import { useLandingMotion } from './useLandingMotion';
 import './landing-v2.css';
 
@@ -185,21 +188,18 @@ export function LandingPageV2() {
         <div id="terrain" ref={terrainRef} aria-hidden="true" />
         <div className="wrap hero-in">
           <div>
-            <span className="eyebrow rv">מנוע הערכת שווי · ישראל 2026</span>
+            <span className="eyebrow rv">equify BY SBC · שוק ישראל 2026</span>
             <h1 className="h-title">
               <span className="ln">
-                <span>כמה שווה</span>
+                <span>שווי העסק שלך.</span>
               </span>
               <span className="ln">
-                <span>העסק שלך —</span>
-              </span>
-              <span className="ln">
-                <span className="hl">במספר אחד.</span>
+                <span className="hl">בנתונים.</span>
               </span>
             </h1>
             <p className="h-sub rv">
-              מנוע פיננסי שמריץ <b>DCF + WACC, מכפיל EBITDA, מכפיל הכנסות</b> ועוד 7 מכפילים
-              מכוילים לשוק הישראלי — ומפיק דוח PDF מוסמך תוך 10 דקות.
+              שלוש שיטות הערכה — DCF, מכפילי שוק וניתוח סיכון — ממד אחד. דוח עם מתודולוגיה ברורה, טבלאות
+              רגישות וציון איכות.
             </p>
             <div className="h-cta rv">
               <Link className="btn magnetic" href="/wizard">
@@ -214,7 +214,8 @@ export function LandingPageV2() {
                 <i />ללא כרטיס אשראי
               </span>
               <span>
-                <i />10 דקות
+                <i />
+                <DurationValue variant="long" />
               </span>
               <span>
                 <i />PDF להורדה מיידית
@@ -283,16 +284,20 @@ export function LandingPageV2() {
           <div className="stats-grid">
             <div className="stat rv">
               <div className="s-num">
-                <span className="count" data-to="500">
-                  0
-                </span>
-                <em>+</em>
+                <BidiNumberUnit
+                  number={
+                    <span className="count" data-to="500">
+                      0
+                    </span>
+                  }
+                  unit={<em>+</em>}
+                />
               </div>
               <div className="s-lab">עסקים הוערכו במערכת</div>
             </div>
             <div className="stat rv">
               <div className="s-num">
-                <span className="count" data-to="11">
+                <span className="count bidi-num-unit__num" data-to="11">
                   0
                 </span>
               </div>
@@ -300,19 +305,27 @@ export function LandingPageV2() {
             </div>
             <div className="stat rv">
               <div className="s-num">
-                <span className="count" data-to="10">
-                  0
-                </span>
-                <em>min</em>
+                <BidiNumberUnit
+                  number={
+                    <span className="count" data-to="10">
+                      0
+                    </span>
+                  }
+                  unit={<em>{durationUnit('he', 'short')}</em>}
+                />
               </div>
               <div className="s-lab">זמן ממוצע להשלמת דוח</div>
             </div>
             <div className="stat rv">
               <div className="s-num">
-                <em>20</em>
-                <span className="count" data-to="26">
-                  0
-                </span>
+                <BidiNumberUnit
+                  prefix={<em>20</em>}
+                  number={
+                    <span className="count" data-to="26">
+                      0
+                    </span>
+                  }
+                />
               </div>
               <div className="s-lab">נתוני שוק ישראלי מעודכנים</div>
             </div>
@@ -400,10 +413,8 @@ export function LandingPageV2() {
 
       <section className="sec price" id="price">
         <div className="wrap">
-          <div className="sec-head" style={{ textAlign: 'center', marginInline: 'auto' }}>
-            <span className="eyebrow rv" style={{ justifyContent: 'center' }}>
-              תמחור
-            </span>
+          <div className="sec-head sec-head--center">
+            <SectionEyebrow centered>תמחור</SectionEyebrow>
             <h2 className="sec-title rv">
               דוח אחד. <span className="hl">מחיר אחד.</span>
             </h2>
@@ -507,8 +518,8 @@ export function LandingPageV2() {
           </Link>
           <div className="f-links">
             <Link href="/wizard">התחל הערכה</Link>
-            <a href="#">תנאי שימוש</a>
-            <a href="#">פרטיות</a>
+            <Link href={LEGAL_ROUTES.terms}>תנאי שימוש</Link>
+            <Link href={LEGAL_ROUTES.privacy}>פרטיות</Link>
             <AccessibilityStatementLink />
             <a href="mailto:hello@equify.co.il">hello@equify.co.il</a>
           </div>

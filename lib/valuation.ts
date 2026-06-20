@@ -1,4 +1,16 @@
 import type { ValuationLocale } from '../api_client';
+import {
+  capGrowthPctForSector,
+  getSectorValuationConfig,
+  normalizeBlendWeights,
+} from './valuation/sector_configs';
+import {
+  computeBlendedEbitda,
+  type EbitdaBlendBreakdown,
+} from './valuation/blended_ebitda';
+
+export type { EbitdaBlendBreakdown } from './valuation/blended_ebitda';
+export { BLENDED_EBITDA_WEIGHTS } from './valuation/blended_ebitda';
 
 /**
  * מנוע הערכת שווי equify — פונקציות טהורות (פורט מה-HTML)
@@ -37,6 +49,7 @@ export interface ValuationInputs {
   growth: number;
   /** חוב נטו (₪K) — grossDebt − cash */
   debt: number;
+  sector?: EquifySectorKey;
   sectorMult: number;
   subSectorMult?: number;
   lifecycleAdj: number;
@@ -55,16 +68,21 @@ export interface ValuationInputs {
 }
 
 export interface ValuationComputed {
+  /** Blended EBITDA base (30/50/20) — used for multiples & DCF. */
   ebitda: number;
+  ebitdaBlend: EbitdaBlendBreakdown;
   wacc: number;
   qs: number;
   qsGrade: QualityGrade;
   effectiveMult: number;
   ebtMult: number;
   revMult: number;
+  revMultiplier: number;
   dcf: number;
   ev: number;
   equity: number;
+  blendWeights: { dcf: number; ebitda: number; rev: number };
+  dcfGrowthPct: number;
 }
 
 export interface ScenarioRow {
@@ -114,6 +132,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     margin,
     growth,
     debt,
+    sector = 'other',
     sectorMult,
     subSectorMult = 1,
     lifecycleAdj,
@@ -127,8 +146,13 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     capexLevelPct = 0,
   } = inputs;
 
-  const reportedEbitda = rev * (margin / 100);
-  const ebitda = reportedEbitda + normalizedOwnerSalary;
+  const sectorConfig = getSectorValuationConfig(sector);
+  const dcfGrowthPct = capGrowthPctForSector(growth, sector);
+  const ebitdaBlend = computeBlendedEbitda(
+    { rev, margin, normalizedOwnerSalary },
+    dcfGrowthPct,
+  );
+  const ebitda = ebitdaBlend.blended;
 
   const rf = 4.3;
   const erp = 5.4;
@@ -158,20 +182,30 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   );
   const qsGrade = qualityScoreGrade(qs);
 
+  const blendWeights = normalizeBlendWeights(sectorConfig);
+
   const combinedSectorMult = sectorMult * subSectorMult;
   const baseM = 5.2;
-  const growthM = Math.min(3.5, growth * 0.14);
+  const growthM = Math.min(3.5, dcfGrowthPct * 0.14);
   const qualM = ((qs - 50) / 100) * 2.8;
-  const effectiveMult = Math.max(
-    2.5,
-    Math.min(13, baseM + growthM + qualM) * combinedSectorMult,
+  let effectiveMult =
+    (baseM + growthM + qualM) * combinedSectorMult;
+  effectiveMult = Math.max(
+    sectorConfig.minMultiple,
+    Math.min(sectorConfig.maxMultiple, effectiveMult),
   );
   const ebtMult = ebitda * effectiveMult;
 
-  const revMultiplier = Math.max(
-    0.5,
-    Math.min(4.5, (margin / 100) * 8 + (growth / 100) * 6 + 0.8) * combinedSectorMult,
-  );
+  const revMultiplier =
+    blendWeights.rev > 0
+      ? Math.max(
+          0.5,
+          Math.min(
+            4.5,
+            (margin / 100) * 8 + (dcfGrowthPct / 100) * 6 + 0.8,
+          ) * combinedSectorMult,
+        )
+      : 0;
   const revMult = rev * revMultiplier;
 
   const capexK = rev * (capexLevelPct / 100);
@@ -179,7 +213,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
 
   let pv = 0;
   let fcff = ebitda * fcffConversion - capexK * 0.15;
-  const g = Math.max(-0.05, growth / 100);
+  const g = Math.max(-0.05, dcfGrowthPct / 100);
   const w = wacc / 100;
   for (let i = 1; i <= 5; i += 1) {
     fcff *= 1 + g;
@@ -189,20 +223,27 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   const tv = (fcff * (1 + gTerm)) / (w - gTerm) / (1 + w) ** 5;
   const dcf = pv + tv;
 
-  const ev = dcf * 0.5 + ebtMult * 0.3 + revMult * 0.2;
+  const ev =
+    dcf * blendWeights.dcf +
+    ebtMult * blendWeights.ebitda +
+    revMult * blendWeights.rev;
   const equity = Math.max(0, ev - debt);
 
   return {
     ebitda,
+    ebitdaBlend,
     wacc,
     qs,
     qsGrade,
     effectiveMult,
     ebtMult,
     revMult,
+    revMultiplier,
     dcf,
     ev,
     equity,
+    blendWeights,
+    dcfGrowthPct,
   };
 }
 
@@ -218,13 +259,20 @@ export function qualityScoreGrade(qs: number): QualityGrade {
 /** תרחישי Bear / Base / Bull */
 export function computeScenarios(
   computed: ValuationComputed,
-  inputs: Pick<ValuationInputs, 'growth' | 'debt'>,
+  inputs: Pick<ValuationInputs, 'growth' | 'debt' | 'sector'>,
 ): ValuationScenarios {
-  const { dcf, ebtMult, revMult, ev, equity, wacc, effectiveMult } = computed;
+  const { dcf, ebtMult, revMult, ev, equity, wacc, effectiveMult, blendWeights } =
+    computed;
   const { growth, debt } = inputs;
 
-  const bearEv = dcf * 0.5 * 0.72 + ebtMult * 0.3 * 0.78 + revMult * 0.2 * 0.8;
-  const bullEv = dcf * 0.5 * 1.28 + ebtMult * 0.3 * 1.24 + revMult * 0.2 * 1.18;
+  const bearEv =
+    dcf * blendWeights.dcf * 0.72 +
+    ebtMult * blendWeights.ebitda * 0.78 +
+    revMult * blendWeights.rev * 0.8;
+  const bullEv =
+    dcf * blendWeights.dcf * 1.28 +
+    ebtMult * blendWeights.ebitda * 1.24 +
+    revMult * blendWeights.rev * 1.18;
   const bearEq = Math.max(0, bearEv - debt);
   const bullEq = Math.max(0, bullEv - debt);
 

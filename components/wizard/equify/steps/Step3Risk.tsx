@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
+import { SmartFieldLabel } from '../../ui/SmartFieldLabel';
 import { SmartSlider } from '../../ui/SmartSlider';
-import { FieldTooltip } from '../../ui/FieldTooltip';
 import { useWizardValuation } from '../WizardValuationContext';
 
 export interface Step3RiskProps {
@@ -62,12 +62,11 @@ export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
           <h4>{t.step3.revenueStability}</h4>
           <div className="risk-fields">
             <SmartSlider
-              label={
-                <>
-                  {t.step3.recurring}
-                  <FieldTooltip text={t.step3.recurringTip} />
-                </>
-              }
+            label={
+              <SmartFieldLabel tooltip={t.step3.recurringTip}>
+                {t.step3.recurring}
+              </SmartFieldLabel>
+            }
               value={risk.recurring}
               min={0}
               max={100}
@@ -78,12 +77,11 @@ export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
               onChange={(v) => updateRisk({ recurring: v })}
             />
             <SmartSlider
-              label={
-                <>
-                  {t.step3.concentration}
-                  <FieldTooltip text={t.step3.concentrationTip(concWaccBps)} />
-                </>
-              }
+            label={
+              <SmartFieldLabel tooltip={t.step3.concentrationTip(concWaccBps)}>
+                {t.step3.concentration}
+              </SmartFieldLabel>
+            }
               value={risk.topCustomer}
               min={0}
               max={100}

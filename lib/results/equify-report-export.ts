@@ -2,7 +2,11 @@
 
 import type { ValuationLocale } from '../../api_client';
 import { getIndustryLabel } from '../constants/industries';
-import { queueLeadPersistenceBeforeExport } from '../pdf/lead_persistence_queue';
+import { getSectorDisplayLabel } from '../constants/industry_config';
+import {
+  captureLeadAfterReportExport,
+  type LeadPersistenceInput,
+} from '../pdf/lead_persistence_queue';
 import {
   DEFAULT_EQUIFY_WIZARD_STATE,
   type EquifyWizardState,
@@ -110,21 +114,26 @@ export function buildEquifyReportExportPayload(
   };
 }
 
-function queueLeadIfNeeded(
+function buildLeadPersistenceInput(
   options: EquifyReportExportOptions,
   payload: EquifyReportExportPayload,
-): void {
+): LeadPersistenceInput {
   const formValues = mapEquifyToWizardFormValues(payload.state);
   const ids = captureWizardLeadIdentifiers(formValues);
   const displayCompany = resolveDisplayCompanyName(
     options.companyName ?? payload.state.profile.companyName,
     payload.locale,
   );
-  const sectorLabel = options.industryCode
-    ? getIndustryLabel(options.industryCode, payload.locale)
-    : undefined;
+  const industryCode = options.industryCode ?? formValues.industry;
+  const sectorLabel =
+    (industryCode ? getIndustryLabel(industryCode, payload.locale) : undefined) ||
+    getSectorDisplayLabel(
+      payload.state.profile.sector,
+      payload.state.profile.subSector,
+      payload.locale,
+    );
 
-  queueLeadPersistenceBeforeExport({
+  return {
     fullName: ids.fullName,
     companyName: displayCompany,
     nationalId: ids.nationalId,
@@ -132,10 +141,21 @@ function queueLeadIfNeeded(
     userPhone: ids.userPhone,
     userEmail: ids.userEmail,
     valuationMidpoint: options.equityValue,
-    industry: options.industryCode ?? formValues.industry,
+    industry: industryCode,
     sectorLabel,
     locale: payload.locale,
-  });
+  };
+}
+
+async function captureLeadAfterSuccessfulExport(
+  options: EquifyReportExportOptions,
+  payload: EquifyReportExportPayload,
+): Promise<void> {
+  try {
+    await captureLeadAfterReportExport(buildLeadPersistenceInput(options, payload));
+  } catch (err) {
+    console.error('[equify-export] CRM capture failed (export already succeeded)', err);
+  }
 }
 
 async function downloadFromReportApi(
@@ -195,8 +215,8 @@ export async function downloadEquifyPdf(options: EquifyReportExportOptions): Pro
   if (typeof window === 'undefined') return;
 
   const payload = buildEquifyReportExportPayload(options, 'pdf');
-  queueLeadIfNeeded(options, payload);
   await downloadFromReportApi('/api/generate-pdf', payload, payload.filename, payload.locale);
+  await captureLeadAfterSuccessfulExport(options, payload);
 }
 
 /** Downloads the same dynamic 8-page HTML report as a standalone .html file. */
@@ -204,6 +224,6 @@ export async function downloadEquifyHtml(options: EquifyReportExportOptions): Pr
   if (typeof window === 'undefined') return;
 
   const payload = buildEquifyReportExportPayload(options, 'html');
-  queueLeadIfNeeded(options, payload);
   await downloadFromReportApi('/api/generate-html', payload, payload.filename, payload.locale);
+  await captureLeadAfterSuccessfulExport(options, payload);
 }

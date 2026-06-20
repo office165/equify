@@ -45,6 +45,7 @@ module.exports = {
     },
   },
   plugins: [
+    require('@tailwindcss/typography'),
     function printCompliancePlugin({ addComponents }) {
       addComponents({
         '.print-a4-root': {

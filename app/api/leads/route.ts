@@ -57,13 +57,12 @@ export async function POST(request: Request) {
 
   const body = parsed.data as LeadUpsertBody;
 
-  console.log('🚀 MONDAY INTEGRATION INGESTION INITIATED. PAYLOAD:', {
+  console.log('[api/leads] ingestion', {
     event: body.event,
     fullName: body.fullName,
-    companyName: body.companyName,
-    userPhone: body.userPhone,
-    nationalId: body.nationalId,
     userEmail: body.userEmail,
+    sector: body.sectorLabel ?? body.industryCode,
+    valuationMidpoint: body.valuationMidpoint,
     sessionId: body.sessionId,
     leadId: body.leadId,
   });

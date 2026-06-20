@@ -10,7 +10,18 @@ import {
   type ValuationScenario,
 } from '../valuation/canonical_valuation';
 
+import type { EquifySectorKey, ValuationComputed, ValuationScenarios } from '../valuation';
+import type { EbitdaBlendBreakdown } from '../valuation/blended_ebitda';
+import { getBlendWeights } from '../valuation/sector_configs';
+import { syncMatrixFromEquifyState } from '../valuation/sync_matrix_from_equify';
+import { resolveEquifySectorFromIndustryCode } from '../wizard/build_valuation_inputs';
+import type { EquifyWizardState } from '../wizard/map_equify_wizard';
+import { computeNetDebtK } from '../wizard/map_equify_wizard';
+
+/** @deprecated Use getBlendWeights(sector) — kept for legacy imports */
 export const BLEND_WEIGHTS = { dcf: 0.5, ebitda: 0.3, rev: 0.2 } as const;
+
+export { getBlendWeights };
 
 export const WACC_COMPONENTS = {
   riskFree: 4.3,
@@ -80,6 +91,7 @@ export interface ReportViewModel {
   ebitdaMarginPct: number;
   revenue: number;
   ebitda: number;
+  ebitdaBlend?: EbitdaBlendBreakdown;
 }
 
 export function confidenceToGrade(score: number): string {
@@ -221,12 +233,14 @@ function buildScenarioMetrics(
   baseWaccPct: number,
   evEbitda: number,
   evRev: number,
+  sector: EquifySectorKey,
 ): ScenarioMetrics {
   const evDcf = canonical.ev_dcf_by_scenario[scenario];
+  const weights = getBlendWeights(sector);
   const blendedEv =
-    BLEND_WEIGHTS.dcf * evDcf +
-    BLEND_WEIGHTS.ebitda * evEbitda +
-    BLEND_WEIGHTS.rev * evRev;
+    weights.dcf * evDcf +
+    weights.ebitda * evEbitda +
+    weights.rev * evRev;
   const equity = canonical.equity_by_scenario[scenario];
   const ev = canonical.ev_blended_by_scenario[scenario] || blendedEv;
 
@@ -243,33 +257,148 @@ function buildScenarioMetrics(
   };
 }
 
+function buildEquifyScenarioMetrics(
+  computed: ValuationComputed,
+  valScenarios: ValuationScenarios,
+  netDebtK: number,
+): Record<ValuationScenario, ScenarioMetrics> {
+  const kToAbs = (k: number) => k * 1000;
+  const evDcf = kToAbs(computed.dcf);
+  const evEbitda = kToAbs(computed.ebtMult);
+  const evRev = kToAbs(computed.revMult);
+  const netDebtAbs = kToAbs(netDebtK);
+
+  const defs: Array<{
+    key: ValuationScenario;
+    evK: number;
+    eqK: number;
+    waccPct: number;
+  }> = [
+    {
+      key: 'bear',
+      evK: valScenarios.bearEv,
+      eqK: valScenarios.bearEq,
+      waccPct: valScenarios.rows[0]?.waccPct ?? computed.wacc + SCENARIO_WACC_OFFSET.bear,
+    },
+    {
+      key: 'base',
+      evK: computed.ev,
+      eqK: computed.equity,
+      waccPct: valScenarios.rows[1]?.waccPct ?? computed.wacc,
+    },
+    {
+      key: 'bull',
+      evK: valScenarios.bullEv,
+      eqK: valScenarios.bullEq,
+      waccPct: valScenarios.rows[2]?.waccPct ?? computed.wacc + SCENARIO_WACC_OFFSET.bull,
+    },
+  ];
+
+  return defs.reduce(
+    (acc, { key, evK, eqK, waccPct }) => {
+      const enterpriseValue = kToAbs(evK);
+      const equityValue = kToAbs(eqK);
+      acc[key] = {
+        scenario: key,
+        waccPct,
+        equityValue,
+        enterpriseValue,
+        evDcf,
+        evEbitda,
+        evRev,
+        blendedEv: enterpriseValue,
+        waterfall: buildWaterfall(enterpriseValue, netDebtAbs, equityValue),
+      };
+      return acc;
+    },
+    {} as Record<ValuationScenario, ScenarioMetrics>,
+  );
+}
+
 export function buildReportViewModel(
   matrix: ForecastMatrixWithDiagnostics,
   locale: ValuationLocale,
+  equifyState?: EquifyWizardState | null,
 ): ReportViewModel {
-  const liveScenarios = resolveLiveScenarios(matrix);
-  const canonical = buildCanonicalValuation(matrix, liveScenarios);
-  const reportData = mapMatrixToReportData(matrix, locale, {
-    canonicalValuation: canonical,
-  });
-  const clientIdentity = harvestPdfClientIdentity(matrix);
-  const baseWaccPct = matrix.assumptions.wacc * 100;
-  const evEbitda = resolveEvEbitda(canonical, reportData);
-  const evRev = resolveEvRev(canonical, reportData);
-  const qualityScore = matrix.meta.confidence_score ?? reportData.confidenceScore ?? 78;
+  const equifySync = equifyState
+    ? syncMatrixFromEquifyState(matrix, equifyState, locale)
+    : null;
+  const syncedMatrix = equifySync?.matrix ?? matrix;
+  const equifyComputed = equifySync?.computed;
+  const equifyScenarios = equifySync?.scenarios;
 
-  const scenarios: Record<ValuationScenario, ScenarioMetrics> = {
-    bear: buildScenarioMetrics('bear', canonical, baseWaccPct, evEbitda, evRev),
-    base: buildScenarioMetrics('base', canonical, baseWaccPct, evEbitda, evRev),
-    bull: buildScenarioMetrics('bull', canonical, baseWaccPct, evEbitda, evRev),
-  };
+  const liveScenarios = resolveLiveScenarios(syncedMatrix);
+  const canonical = buildCanonicalValuation(syncedMatrix, liveScenarios);
+  const reportData = mapMatrixToReportData(syncedMatrix, locale, {
+    canonicalValuation: canonical,
+    baseEV: equifyComputed ? equifyComputed.ev * 1000 : undefined,
+    bearEV: equifyScenarios ? equifyScenarios.bearEv * 1000 : undefined,
+    bullEV: equifyScenarios ? equifyScenarios.bullEv * 1000 : undefined,
+    evDcf: equifyComputed ? equifyComputed.dcf * 1000 : undefined,
+  });
+  const clientIdentity = harvestPdfClientIdentity(syncedMatrix);
+  const baseWaccPct = equifyComputed?.wacc ?? syncedMatrix.assumptions.wacc * 100;
+  const evEbitda = equifyComputed
+    ? equifyComputed.ebtMult * 1000
+    : resolveEvEbitda(canonical, reportData);
+  const evRev = equifyComputed
+    ? equifyComputed.revMult * 1000
+    : resolveEvRev(canonical, reportData);
+  const qualityScore =
+    equifyComputed?.qs ??
+    syncedMatrix.meta.confidence_score ??
+    reportData.confidenceScore ??
+    78;
+  const sector = equifyState?.profile.sector ??
+    resolveEquifySectorFromIndustryCode(
+      syncedMatrix.wizard_context?.industry_code,
+    );
+
+  const scenarios: Record<ValuationScenario, ScenarioMetrics> =
+    equifyComputed && equifyScenarios
+      ? buildEquifyScenarioMetrics(
+          equifyComputed,
+          equifyScenarios,
+          computeNetDebtK(equifyState!.financials),
+        )
+      : {
+          bear: buildScenarioMetrics('bear', canonical, baseWaccPct, evEbitda, evRev, sector),
+          base: buildScenarioMetrics('base', canonical, baseWaccPct, evEbitda, evRev, sector),
+          bull: buildScenarioMetrics('bull', canonical, baseWaccPct, evEbitda, evRev, sector),
+        };
+
+  const revenue = equifyState
+    ? equifyState.financials.rev * 1000
+    : reportData.revenue;
+  const ebitda = equifyComputed
+    ? equifyComputed.ebitda * 1000
+    : reportData.ebitda;
+  const ebitdaMarginPct = equifyState
+    ? equifyState.financials.margin
+    : reportData.ebitdaMargin;
 
   return {
-    matrix,
-    reportData,
+    matrix: syncedMatrix,
+    reportData: equifyComputed
+      ? {
+          ...reportData,
+          wacc: equifyComputed.wacc,
+          baseEV: equifyComputed.ev * 1000,
+          bearEV: equifyScenarios!.bearEv * 1000,
+          bullEV: equifyScenarios!.bullEv * 1000,
+          baseEquity: equifyComputed.equity * 1000,
+          bearEquity: equifyScenarios!.bearEq * 1000,
+          bullEquity: equifyScenarios!.bullEq * 1000,
+          evDcf: equifyComputed.dcf * 1000,
+          revenue,
+          ebitda,
+          ebitdaMargin: ebitdaMarginPct,
+          confidenceScore: equifyComputed.qs,
+        }
+      : reportData,
     canonical,
     clientIdentity,
-    currency: matrix.meta.currency ?? 'ILS',
+    currency: syncedMatrix.meta.currency ?? 'ILS',
     companyName: reportData.companyName,
     qualityScore,
     qualityGrade: confidenceToGrade(qualityScore),
@@ -281,8 +410,9 @@ export function buildReportViewModel(
     industrySector: reportData.industrySector,
     lifecycleStage: reportData.lifecycleStage,
     terminalGrowthPct: reportData.terminalGrowth,
-    ebitdaMarginPct: reportData.ebitdaMargin,
-    revenue: reportData.revenue,
-    ebitda: reportData.ebitda,
+    ebitdaMarginPct,
+    revenue,
+    ebitda,
+    ebitdaBlend: equifyComputed?.ebitdaBlend,
   };
 }

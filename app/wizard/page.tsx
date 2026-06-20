@@ -11,6 +11,9 @@ import {
   captureWizardLeadIdentifiers,
   lockLeadPayload,
 } from '../../lib/wizard/lead_wire';
+import { syncMatrixFromEquifyState } from '../../lib/valuation/sync_matrix_from_equify';
+import { loadEquifyWizardState, saveEquifyWizardState } from '../../lib/wizard/equify_storage';
+import type { EquifyWizardState } from '../../lib/wizard/map_equify_wizard';
 import { resolveBaseEquityValue } from '../../lib/wizard/resolve_base_equity';
 import { toLeadUpsertBody } from '../../lib/wizard/secured_lead_dispatch';
 import { resumeWizardProgressQueue } from '../../lib/wizard/wizard_progress_queue';
@@ -49,12 +52,16 @@ export default function WizardPage() {
   const handleRunValuation = useCallback(
     async (
       values: Parameters<typeof runValuationFlow>[0],
-      options?: { locale?: ValuationLocale },
+      options?: { locale?: ValuationLocale; equifyState?: EquifyWizardState },
     ) => {
       setIsSubmitting(true);
       setSubmitError(null);
       try {
         const locale = options?.locale ?? 'he';
+        const equifyState = options?.equifyState;
+        if (equifyState) {
+          saveEquifyWizardState(equifyState);
+        }
         const lockedPayload = lockLeadPayload(values, locale);
         const sectorLabel = values.industry
           ? getIndustryLabel(values.industry, locale)
@@ -89,9 +96,17 @@ export default function WizardPage() {
         });
 
         try {
+          const stateForSync = equifyState ?? loadEquifyWizardState();
+          const matrixJson = stateForSync
+            ? syncMatrixFromEquifyState(
+                result.forecast_matrix_json,
+                stateForSync,
+                locale,
+              ).matrix
+            : result.forecast_matrix_json;
           sessionStorage.setItem(
             'valubot.lastValuationMatrix',
-            JSON.stringify(result.forecast_matrix_json),
+            JSON.stringify(matrixJson),
           );
         } catch {
           // ignore quota errors
