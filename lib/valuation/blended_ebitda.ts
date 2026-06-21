@@ -20,6 +20,10 @@ export interface EbitdaBlendBreakdown {
   revProjectedK: number;
 }
 
+function isPositiveFinite(n: unknown): n is number {
+  return typeof n === 'number' && Number.isFinite(n) && n > 0;
+}
+
 function ebitdaAtRevenueK(
   revK: number,
   marginPct: number,
@@ -30,17 +34,48 @@ function ebitdaAtRevenueK(
 
 /**
  * Blended EBITDA base: 30% prior year · 50% current · 20% forward (capped growth).
+ * Uses explicit 2024–2026 EBITDA when supplied; otherwise derives from revenue run-rate.
  * All values in ₪K.
  */
 export function computeBlendedEbitda(
   inputs: Pick<
     ValuationInputs,
-    'rev' | 'margin' | 'normalizedOwnerSalary'
+    | 'rev'
+    | 'margin'
+    | 'normalizedOwnerSalary'
+    | 'ebitda2024K'
+    | 'ebitda2025K'
+    | 'ebitda2026K'
   >,
   dcfGrowthPct: number,
 ): EbitdaBlendBreakdown {
   const { rev, margin, normalizedOwnerSalary = 0 } = inputs;
   const g = Math.max(-0.05, dcfGrowthPct / 100);
+
+  if (
+    isPositiveFinite(inputs.ebitda2024K) &&
+    isPositiveFinite(inputs.ebitda2025K) &&
+    isPositiveFinite(inputs.ebitda2026K)
+  ) {
+    const past = inputs.ebitda2024K;
+    const current = inputs.ebitda2026K;
+    const projected = inputs.ebitda2026K * (1 + g);
+    const { past: wPast, current: wCurrent, projected: wProjected } =
+      BLENDED_EBITDA_WEIGHTS;
+    const blended = wPast * past + wCurrent * current + wProjected * projected;
+
+    return {
+      past,
+      current,
+      projected,
+      blended,
+      weights: BLENDED_EBITDA_WEIGHTS,
+      dcfGrowthPct,
+      revPastK: rev / (1 + g || 1),
+      revCurrentK: rev,
+      revProjectedK: rev * (1 + g),
+    };
+  }
 
   const revPastK = g !== 0 ? rev / (1 + g) : rev;
   const revProjectedK = rev * (1 + g);

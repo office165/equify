@@ -1,19 +1,32 @@
 import type { ValuationLocale } from '../api_client';
-import {
-  capGrowthPctForSector,
-  getSectorValuationConfig,
-  normalizeBlendWeights,
-} from './valuation/sector_configs';
-import {
-  computeBlendedEbitda,
-  type EbitdaBlendBreakdown,
-} from './valuation/blended_ebitda';
+import type { EbitdaBlendBreakdown } from './valuation/blended_ebitda';
+import type { ValuationStrategyKind } from './valuation/sector_methodology_matrix';
 
 export type { EbitdaBlendBreakdown } from './valuation/blended_ebitda';
 export { BLENDED_EBITDA_WEIGHTS } from './valuation/blended_ebitda';
+export type { SectorMethodologyKey, ValuationStrategyKind } from './valuation/sector_methodology_matrix';
+export {
+  sectorConfigs,
+  SECTOR_METHODOLOGY_MATRIX,
+} from './valuation/sector_methodology_matrix';
+export {
+  EQUIFY_SECTOR_TO_METHODOLOGY,
+  resolveSectorMethodologyConfig,
+  resolveSectorMethodologyKey,
+} from './valuation/sector_methodology_resolver';
+export {
+  applyBacklogInflectionAccelerator,
+  BACKLOG_INFLECTION_TARGETS,
+} from './valuation/backlog_inflection_accelerator';
+export { createValuationStrategy } from './valuation/strategies/valuation_strategy';
+export {
+  computeValuation,
+  computeScenarios,
+  runValuationEngine,
+} from './valuation/valuation_engine';
 
 /**
- * מנוע הערכת שווי equify — פונקציות טהורות (פורט מה-HTML)
+ * Equify valuation — public types, constants, and engine re-exports.
  */
 
 export type EquifySectorKey =
@@ -42,12 +55,11 @@ export type EquifyGoalKey =
 
 export type QualityGrade = 'A' | 'A−' | 'B+' | 'B' | 'B−' | 'C+';
 
-/** קלט גולמי לאשף — כל הערכים ב-₪K למעט אחוזים */
+/** Wizard / API raw inputs — monetary values in ₪K unless noted as %. */
 export interface ValuationInputs {
   rev: number;
   margin: number;
   growth: number;
-  /** חוב נטו (₪K) — grossDebt − cash */
   debt: number;
   sector?: EquifySectorKey;
   sectorMult: number;
@@ -59,16 +71,20 @@ export interface ValuationInputs {
   competition: boolean;
   ip: boolean;
   contracts: boolean;
-  /** שכר בעלים מנורמל (₪K) — מוסיף ל-EBITDA התפעולי */
   normalizedOwnerSalary?: number;
-  /** CAPEX כ-% מהכנסות — מוריד מ-FCFF */
   capexLevelPct?: number;
   grossDebt?: number;
   cash?: number;
+  ebitda2024K?: number;
+  ebitda2025K?: number;
+  ebitda2026K?: number;
+  revenue2026K?: number;
+  ebitda2027K?: number | null;
+  hasSignificantBacklog?: boolean;
+  backlogSignedK?: number;
 }
 
 export interface ValuationComputed {
-  /** Blended EBITDA base (30/50/20) — used for multiples & DCF. */
   ebitda: number;
   ebitdaBlend: EbitdaBlendBreakdown;
   wacc: number;
@@ -83,6 +99,10 @@ export interface ValuationComputed {
   equity: number;
   blendWeights: { dcf: number; ebitda: number; rev: number };
   dcfGrowthPct: number;
+  baseEbitdaForMultiple: number;
+  /** 0–1 backlog inflection strength applied to weights & growth. */
+  inflectionIntensity: number;
+  methodologyStrategy: ValuationStrategyKind;
 }
 
 export interface ScenarioRow {
@@ -125,128 +145,6 @@ export const LIFECYCLE_ADJ: Record<EquifyLifecycleKey, number> = {
   mature: 0.04,
 };
 
-/** מחשב שווי פעילות, הון עצמי, WACC וציון איכות */
-export function computeValuation(inputs: ValuationInputs): ValuationComputed {
-  const {
-    rev,
-    margin,
-    growth,
-    debt,
-    sector = 'other',
-    sectorMult,
-    subSectorMult = 1,
-    lifecycleAdj,
-    recurring,
-    topCustomer,
-    founderDep,
-    competition,
-    ip,
-    contracts,
-    normalizedOwnerSalary = 0,
-    capexLevelPct = 0,
-  } = inputs;
-
-  const sectorConfig = getSectorValuationConfig(sector);
-  const dcfGrowthPct = capGrowthPctForSector(growth, sector);
-  const ebitdaBlend = computeBlendedEbitda(
-    { rev, margin, normalizedOwnerSalary },
-    dcfGrowthPct,
-  );
-  const ebitda = ebitdaBlend.blended;
-
-  const rf = 4.3;
-  const erp = 5.4;
-  const crp = 1.6;
-  const sizePr = 3.1;
-  const qualityPr =
-    (founderDep ? 0.6 : 0) +
-    (competition ? 0.4 : 0) +
-    (ip ? -0.3 : 0) +
-    (contracts ? -0.2 : 0);
-  const recurPr = (1 - recurring / 100) * 0.8;
-  const concPr = topCustomer > 40 ? 0.8 : topCustomer > 20 ? 0.4 : 0;
-  const wacc = Math.max(
-    10,
-    Math.min(25, rf + erp + crp + sizePr + qualityPr + recurPr + concPr - lifecycleAdj * 3),
-  );
-
-  const qRec = recurring * 0.28;
-  const qConc = (1 - topCustomer / 100) * 22;
-  const qFound = founderDep ? 0 : 14;
-  const qComp = competition ? 0 : 10;
-  const qIP = ip ? 12 : 0;
-  const qContr = contracts ? 10 : 0;
-  const qGrowth = Math.min(14, growth * 0.5);
-  const qs = Math.round(
-    Math.min(100, qRec + qConc + qFound + qComp + qIP + qContr + qGrowth),
-  );
-  const qsGrade = qualityScoreGrade(qs);
-
-  const blendWeights = normalizeBlendWeights(sectorConfig);
-
-  const combinedSectorMult = sectorMult * subSectorMult;
-  const baseM = 5.2;
-  const growthM = Math.min(3.5, dcfGrowthPct * 0.14);
-  const qualM = ((qs - 50) / 100) * 2.8;
-  let effectiveMult =
-    (baseM + growthM + qualM) * combinedSectorMult;
-  effectiveMult = Math.max(
-    sectorConfig.minMultiple,
-    Math.min(sectorConfig.maxMultiple, effectiveMult),
-  );
-  const ebtMult = ebitda * effectiveMult;
-
-  const revMultiplier =
-    blendWeights.rev > 0
-      ? Math.max(
-          0.5,
-          Math.min(
-            4.5,
-            (margin / 100) * 8 + (dcfGrowthPct / 100) * 6 + 0.8,
-          ) * combinedSectorMult,
-        )
-      : 0;
-  const revMult = rev * revMultiplier;
-
-  const capexK = rev * (capexLevelPct / 100);
-  const fcffConversion = Math.max(0.55, 0.85 - capexLevelPct / 100);
-
-  let pv = 0;
-  let fcff = ebitda * fcffConversion - capexK * 0.15;
-  const g = Math.max(-0.05, dcfGrowthPct / 100);
-  const w = wacc / 100;
-  for (let i = 1; i <= 5; i += 1) {
-    fcff *= 1 + g;
-    pv += fcff / (1 + w) ** i;
-  }
-  const gTerm = 0.025;
-  const tv = (fcff * (1 + gTerm)) / (w - gTerm) / (1 + w) ** 5;
-  const dcf = pv + tv;
-
-  const ev =
-    dcf * blendWeights.dcf +
-    ebtMult * blendWeights.ebitda +
-    revMult * blendWeights.rev;
-  const equity = Math.max(0, ev - debt);
-
-  return {
-    ebitda,
-    ebitdaBlend,
-    wacc,
-    qs,
-    qsGrade,
-    effectiveMult,
-    ebtMult,
-    revMult,
-    revMultiplier,
-    dcf,
-    ev,
-    equity,
-    blendWeights,
-    dcfGrowthPct,
-  };
-}
-
 export function qualityScoreGrade(qs: number): QualityGrade {
   if (qs >= 85) return 'A';
   if (qs >= 75) return 'A−';
@@ -256,86 +154,22 @@ export function qualityScoreGrade(qs: number): QualityGrade {
   return 'C+';
 }
 
-/** תרחישי Bear / Base / Bull */
-export function computeScenarios(
-  computed: ValuationComputed,
-  inputs: Pick<ValuationInputs, 'growth' | 'debt' | 'sector'>,
-): ValuationScenarios {
-  const { dcf, ebtMult, revMult, ev, equity, wacc, effectiveMult, blendWeights } =
-    computed;
-  const { growth, debt } = inputs;
-
-  const bearEv =
-    dcf * blendWeights.dcf * 0.72 +
-    ebtMult * blendWeights.ebitda * 0.78 +
-    revMult * blendWeights.rev * 0.8;
-  const bullEv =
-    dcf * blendWeights.dcf * 1.28 +
-    ebtMult * blendWeights.ebitda * 1.24 +
-    revMult * blendWeights.rev * 1.18;
-  const bearEq = Math.max(0, bearEv - debt);
-  const bullEq = Math.max(0, bullEv - debt);
-
-  const bearGrowth = Math.max(-5, growth - 6);
-  const bullGrowth = growth + 6;
-
-  return {
-    bearEv,
-    bullEv,
-    bearEq,
-    bullEq,
-    baseEq: equity,
-    rows: [
-      {
-        label: 'bear',
-        growthPct: bearGrowth,
-        ebitdaAdj: '−2%',
-        waccPct: wacc + 1.6,
-        multDisplay: `×${(effectiveMult * 0.78).toFixed(1)}`,
-        ev: bearEv,
-        equity: bearEq,
-      },
-      {
-        label: 'base',
-        growthPct: growth,
-        ebitdaAdj: '—',
-        waccPct: wacc,
-        multDisplay: `×${effectiveMult.toFixed(1)}`,
-        ev,
-        equity,
-      },
-      {
-        label: 'bull',
-        growthPct: bullGrowth,
-        ebitdaAdj: '+2%',
-        waccPct: wacc - 1.4,
-        multDisplay: `×${(effectiveMult * 1.18).toFixed(1)}`,
-        ev: bullEv,
-        equity: bullEq,
-      },
-    ],
-  };
-}
-
 function formatKAmount(k: number): string {
   if (k >= 1_000_000) return `${(k / 1_000_000).toFixed(1)}M`;
   if (k >= 1000) return `${(k / 1000).toFixed(1)}M`;
   return `${Math.round(k)}K`;
 }
 
-/** פורמט ₪K — RTL: 12.0M ₪ · LTR: ₪12.0M */
 export function fmtK(k: number, locale: ValuationLocale = 'he'): string {
   const amount = formatKAmount(k);
   const sym = '₪';
   return locale === 'he' ? `${amount} ${sym}` : `${sym}${amount}`;
 }
 
-/** המרה ל-M (מספר בלבד) */
 export function fmtM(k: number): string {
   return (k / 1000).toFixed(1);
 }
 
-/** תצוגת שווי לבעלים בסרגל הצד */
 export function fmtEquitySidebarM(
   equityK: number,
   locale: ValuationLocale = 'he',
@@ -345,7 +179,6 @@ export function fmtEquitySidebarM(
   return locale === 'he' ? `${amount} ${sym}` : `${sym}${amount}`;
 }
 
-/** חלקי תצוגת מיליוני ₪ לספירה אנימטיבית (cover / scenario) */
 export function fmtMillionParts(
   locale: ValuationLocale,
 ): { prefix: string; suffix: string } {
@@ -354,8 +187,14 @@ export function fmtMillionParts(
     : { prefix: '₪', suffix: 'M' };
 }
 
-/** אחוז ערך טרמינלי מ-DCF */
 export function terminalValuePct(dcf: number): number {
   if (dcf <= 0) return 0;
   return Math.round(((dcf * 0.57) / dcf) * 100);
 }
+
+export {
+  capGrowthPctForSector,
+  getBlendWeights,
+  getSectorValuationConfig,
+  SECTOR_VALUATION_CONFIGS,
+} from './valuation/sector_configs';
