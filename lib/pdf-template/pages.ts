@@ -1,4 +1,4 @@
-import { escHtml, fmtMoneyCompact } from '../pdf/print/print_formatters';
+import { escHtml, equityCoverValHtml, fmtMoneyCompact } from '../pdf/print/print_formatters';
 import {
   buildCoverRingsSvg,
   buildDcfTimelineSvg,
@@ -83,7 +83,7 @@ export function buildPage1Cover(data: ValuationData): string {
         <div class="eyebrow" style="justify-content:center">הערכת שווי מוסדית · equify Engine · ${escHtml(data.valuationDate)}</div>
         <div class="cv-company" style="margin-top:3mm">${escHtml(data.companyName)}</div>
         <div class="cv-meta">${metaLine(data)}</div>
-        <div class="cv-big">₪<span>${equityM(data)}</span>M</div>
+        <div class="cv-big">${equityCoverValHtml(data.equity)}</div>
         <div class="cv-range">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח <b>${escHtml(fmtMoneyCompact(data.bearEquity))} – ${escHtml(fmtMoneyCompact(data.bullEquity))}</b></div>
         <div class="seal"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY · IFRS COMPLIANT</div>
       </div>
@@ -387,7 +387,7 @@ export function buildPage8Conclusion(data: ValuationData): string {
       <div class="section-divider"><span class="section-num">08</span><h2>שווי משולב — Conclusion</h2><div class="sd-line"></div></div>
       <div style="display:flex;height:14mm;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:4mm 0">${blendBar}</div>
       <div style="text-align:center;margin:4mm 0">
-        <div style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:60px;color:#163530;direction:ltr;line-height:1">₪${equityM(data)}M</div>
+        <div class="c-val" style="margin:10mm 0 2mm">${equityCoverValHtml(data.equity)}</div>
         <div style="font-size:10px;color:var(--dim);margin-top:1.5mm">שווי לבעלים · תרחיש בסיס · טווח ${escHtml(fmtMoneyCompact(data.bearEquity))} – ${escHtml(fmtMoneyCompact(data.bullEquity))} · נכון ל-${escHtml(data.valuationDateShort ?? data.valuationDate)}</div>
         <div class="seal" style="margin:4mm auto 0;display:inline-flex"><i></i>CERTIFIED ALGORITHMIC VALUATION · equify BY SBC</div>
       </div>

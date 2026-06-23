@@ -9,7 +9,7 @@ import {
   buildScenarioRangeSvg,
   buildWaccDonutSvg,
 } from './valuation_pdf_charts';
-import { escHtml, fmtMoneyCompact } from './print_formatters';
+import { escHtml, equityCoverValHtml, fmtMoneyCompact } from './print_formatters';
 import { buildValuationPdfSheetCss } from './valuation_pdf_styles';
 import {
   buildValuationPdfViewModel,
@@ -65,10 +65,10 @@ function buildPage1Cover(vm: ValuationPdfViewModel): string {
       <span class="eyebrow" style="justify-content:center">דוח הערכת שווי · ${escHtml(vm.valuationDate)}</span>
       <div class="c-comp">${escHtml(vm.companyName)}</div>
       <div class="c-meta">${metaParts.join(' · ')}</div>
-      <div class="c-val">₪${escHtml(vm.finalValueM)}<em>M</em></div>
+      <div class="c-val">${equityCoverValHtml(vm.finalEquity)}</div>
       <div class="c-cap">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח <b class="num">${escHtml(fmtMoneyCompact(vm.bearEquity))} – ${escHtml(fmtMoneyCompact(vm.bullEquity))}</b></div>
       <div class="seal"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY</div>
-      <div class="c-grid">
+      <div class="c-grid c-grid--cover">
         <div><b>${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</b><span>שווי פעילות (EV)</span></div>
         <div><b>${vm.waccPct.toFixed(1)}%</b><span>WACC אפקטיבי</span></div>
         <div><b>${vm.qualityScore} / ${escHtml(vm.qualityGrade)}</b><span>Quality Score</span></div>
@@ -290,7 +290,7 @@ function buildPage7Combined(vm: ValuationPdfViewModel, locale: ValuationLocale):
       <div class="blend-seg" style="width:30%;background:#4DD6CE;color:#0F2E29">EBITDA · 30%</div>
       <div class="blend-seg" style="width:20%;background:#C5EDE9;color:#0F2E29">REV · 20%</div>
     </div>
-    <div class="c-val" style="margin:10mm 0 2mm">₪${escHtml(vm.finalValueM)}<em>M</em></div>
+    <div class="c-val" style="margin:10mm 0 2mm">${equityCoverValHtml(vm.finalEquity)}</div>
     <div class="c-cap">שווי לבעלים · תרחיש בסיס · טווח <b class="num">${escHtml(fmtMoneyCompact(vm.bearEquity))} – ${escHtml(fmtMoneyCompact(vm.bullEquity))}</b> · נכון ל-${escHtml(vm.valuationDateShort)}</div>
     <div class="seal" style="margin:9mm auto 0"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY</div>
     <p class="note" style="text-align:right;margin-top:12mm"><b>גילוי נאות:</b> ${escHtml(disclaimer)}</p>

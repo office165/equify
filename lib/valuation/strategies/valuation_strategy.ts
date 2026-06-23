@@ -1,14 +1,9 @@
 import type { ValuationInputs } from '../../valuation';
 import type { EbitdaBlendBreakdown } from '../blended_ebitda';
-import type { BacklogInflectionResult } from '../backlog_inflection_accelerator';
-import {
-  resolveCurrentYearEbitdaK,
-  resolveHistoricalEbitdaAverage,
-} from '../backlog_valuation';
+import type { BacklogInflectionResult } from '../backlog_metrics';
 import type { SectorMethodologyConfig } from '../sector_methodology_matrix';
 
 export interface ValuationStrategyLegs {
-  /** EBITDA (₪K) base used for the multiples leg. */
   ebitdaBaseForMultiple: number;
   ebtMult: number;
   revMult: number;
@@ -29,46 +24,43 @@ export interface ValuationStrategy {
   computeLegs(ctx: ValuationStrategyContext): ValuationStrategyLegs;
 }
 
-export function createValuationStrategy(
-  config: SectorMethodologyConfig,
-): ValuationStrategy {
-  switch (config.strategy) {
-    case 'current_run_rate_revenue':
-      return {
-        computeLegs(ctx) {
-          const revBase = ctx.revenueRunRateK;
-          const revMultiplier = ctx.effectiveMult;
-          const revMult = revBase * revMultiplier;
-          const ebitdaBase = ctx.backlog.forwardEbitda2027K ?? ctx.currentYearEbitdaK;
-          const ebtMult =
-            config.weightEbitda > 0 ? ebitdaBase * ctx.effectiveMult : 0;
-          return {
-            ebitdaBaseForMultiple: ebitdaBase,
-            ebtMult,
-            revMult,
-            revMultiplier,
-          };
-        },
-      };
-    case 'historical_blended_ebitda':
-    default:
-      return {
-        computeLegs(ctx) {
-          const ebitdaBase =
-            ctx.backlog.inflectionIntensity > 0
-              ? ctx.backlog.forwardEbitda2027K ?? ctx.currentYearEbitdaK
-              : resolveHistoricalEbitdaAverage(ctx.inputs);
-
-          const ebtMult = ebitdaBase * ctx.effectiveMult;
-          return {
-            ebitdaBaseForMultiple: ebitdaBase,
-            ebtMult,
-            revMult: 0,
-            revMultiplier: 0,
-          };
-        },
-      };
+/** historical_blended_ebitda — EBITDA multiple leg from backlog-resolved base. */
+class HistoricalBlendedEbitdaStrategy implements ValuationStrategy {
+  computeLegs(ctx: ValuationStrategyContext): ValuationStrategyLegs {
+    const base = ctx.backlog.baseEbitdaForMultiple;
+    return {
+      ebitdaBaseForMultiple: base,
+      ebtMult: base * ctx.effectiveMult,
+      revMult: 0,
+      revMultiplier: 0,
+    };
   }
 }
 
-export { resolveCurrentYearEbitdaK };
+/** current_run_rate_revenue — revenue run-rate multiple (2026) + optional EBITDA reference. */
+class CurrentRunRateRevenueStrategy implements ValuationStrategy {
+  computeLegs(ctx: ValuationStrategyContext): ValuationStrategyLegs {
+    const revMultiplier = ctx.effectiveMult;
+    return {
+      ebitdaBaseForMultiple: ctx.currentYearEbitdaK,
+      ebtMult: 0,
+      revMult: ctx.revenueRunRateK * revMultiplier,
+      revMultiplier,
+    };
+  }
+}
+
+const STRATEGY_REGISTRY: Record<
+  SectorMethodologyConfig['strategy'],
+  ValuationStrategy
+> = {
+  historical_blended_ebitda: new HistoricalBlendedEbitdaStrategy(),
+  current_run_rate_revenue: new CurrentRunRateRevenueStrategy(),
+};
+
+/** Strategy factory — selects methodology from sectorConfigs.profile.strategy. */
+export function createValuationStrategy(
+  config: SectorMethodologyConfig,
+): ValuationStrategy {
+  return STRATEGY_REGISTRY[config.strategy] ?? STRATEGY_REGISTRY.historical_blended_ebitda;
+}

@@ -1,5 +1,7 @@
 /** Print-safe formatting — thousands separators, consistent ₪, no raw zeros */
 
+import { splitCompactAmount } from '../../utils/formatCurrency';
+
 export type PdfLocale = 'he' | 'en';
 
 export function resolvePdfLocale(locale?: string): PdfLocale {
@@ -46,20 +48,12 @@ export function fmtMoneyILS(value: number | null | undefined): string {
   return formatted.replace(/\u00a0/g, ' ');
 }
 
-/** Compact ₪ for blend breakdown lines (e.g. ₪328.1M). */
+/** Compact ₪ for blend breakdown lines (e.g. ₪328.1M, ₪22.0B). */
 export function fmtMoneyCompact(value: number | null | undefined): string {
   if (!isMeaningfulNumber(value, { allowZero: true })) return '—';
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000_000) {
-    return `₪${(value / 1_000_000_000).toFixed(2)}B`;
-  }
-  if (abs >= 1_000_000) {
-    return `₪${(value / 1_000_000).toFixed(1)}M`;
-  }
-  if (abs >= 1_000) {
-    return `₪${(value / 1_000).toFixed(0)}K`;
-  }
-  return fmtMoneyILS(value);
+  const parts = compactMoneyParts(value!);
+  if (!parts) return fmtMoneyILS(value);
+  return `₪${parts.amount}${parts.suffix}`;
 }
 
 /** LTR-isolated numeric span for mixed RTL/LTR PDF copy */
@@ -77,17 +71,9 @@ export function multHtml(value: number, decimals = 1): string {
 }
 
 function compactMoneyParts(value: number): { amount: string; suffix: string } | null {
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000_000) {
-    return { amount: (value / 1_000_000_000).toFixed(2), suffix: 'B' };
-  }
-  if (abs >= 1_000_000) {
-    return { amount: (value / 1_000_000).toFixed(1), suffix: 'M' };
-  }
-  if (abs >= 1_000) {
-    return { amount: (value / 1_000).toFixed(0), suffix: 'K' };
-  }
-  return null;
+  const { amount, unit } = splitCompactAmount(value);
+  if (!unit) return null;
+  return { amount, suffix: unit };
 }
 
 /** Currency in PDF: RTL → amount then ₪; LTR → ₪ then amount */
@@ -114,10 +100,18 @@ export function fmtMoneyCompactSignedHtml(
   return fmtMoneyCompactHtml(value, locale);
 }
 
-/** Cover hero equity — RTL: 12.3M ₪ · LTR: ₪12.3M */
+/** Cover hero equity — RTL: 22.0B ₪ · LTR: ₪22.0B (auto B/M/K scale) */
 export function equityCoverValHtml(equity: number, locale?: string): string {
-  const core = `${(equity / 1_000_000).toFixed(1)}<em>M</em>`;
+  const parts = compactMoneyParts(equity);
   const rtl = pdfDocumentDir(locale) === 'rtl';
+  if (!parts) {
+    const stripped = fmtMoneyILS(equity).replace(/[₪\s\u00a0]/g, '').trim();
+    const core = escHtml(stripped);
+    return rtl
+      ? `<span dir="ltr" class="num c-val">${core}</span> ₪`
+      : `<span dir="ltr" class="num c-val">₪${core}</span>`;
+  }
+  const core = `${escHtml(parts.amount)}<em>${escHtml(parts.suffix)}</em>`;
   return rtl
     ? `<span dir="ltr" class="num c-val">${core}</span> ₪`
     : `<span dir="ltr" class="num c-val">₪${core}</span>`;

@@ -29,6 +29,7 @@ import {
   type EquifyWizardRisk,
   type EquifyWizardState,
 } from '../../../lib/wizard/map_equify_wizard';
+import { syncFinancialsDerived } from '../../../lib/wizard/financial_history';
 
 export interface WizardValuationContextValue {
   state: EquifyWizardState;
@@ -77,11 +78,11 @@ export function WizardValuationProvider({
 
   const updateFinancials = useCallback((patch: Partial<EquifyWizardFinancials>) => {
     setState((prev) => {
-      const next = { ...prev.financials, ...patch };
-      const netDebt = computeNetDebtK(next);
+      const merged = { ...prev.financials, ...patch };
+      const next = syncFinancialsDerived(merged);
       return {
         ...prev,
-        financials: { ...next, debt: netDebt },
+        financials: next,
       };
     });
   }, []);

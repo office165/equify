@@ -1,3 +1,4 @@
+import { fmtMoneyCompact } from '../pdf/print/print_formatters';
 import type { MultiplePositionRow, TrajectoryPoint, WaccSegment } from './types';
 
 const BAR_BASE_Y = 240;
@@ -87,17 +88,17 @@ function multiplesRowSvg(row: MultiplePositionRow, y: number, titleY: number): s
   const bandW = Math.max(bandEnd - bandX, 2);
   const marker =
     row.id === 'dcf'
-      ? `₪${(row.impliedEv / 1_000_000).toFixed(1)}M`
+      ? fmtMoneyCompact(row.impliedEv)
       : `×${row.multiple.toFixed(1)}`;
-  const evLabel = `₪${(row.impliedEv / 1_000_000).toFixed(1)}M`;
+  const evLabel = fmtMoneyCompact(row.impliedEv);
   const color = row.color ?? '#00A89F';
 
   return `<text x="712" y="${titleY}" text-anchor="end" style="font-family:'Assistant';font-size:12px;font-weight:600;fill:#1E3A36">${title}</text>
     <rect x="${TRACK_X}" y="${y}" width="${TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
     ${row.id !== 'dcf' ? `<rect x="${bandX.toFixed(1)}" y="${y}" width="${bandW.toFixed(1)}" height="10" rx="5" fill="#C5EDE9"/>` : ''}
     <circle cx="${cx.toFixed(1)}" cy="${y + 5}" r="8" fill="${color}"/>
-    <text class="axis" x="${TRACK_X}" y="${y + 26}">${row.id === 'dcf' ? `₪${row.rangeMin.toFixed(0)}M` : `×${row.rangeMin.toFixed(1)}`}</text>
-    <text class="axis" x="${TRACK_X + TRACK_W}" y="${y + 26}" text-anchor="end">${row.id === 'dcf' ? `₪${row.rangeMax.toFixed(0)}M` : `×${row.rangeMax.toFixed(1)}`}</text>
+    <text class="axis" x="${TRACK_X}" y="${y + 26}">${row.id === 'dcf' ? fmtMoneyCompact(row.rangeMin * 1_000_000) : `×${row.rangeMin.toFixed(1)}`}</text>
+    <text class="axis" x="${TRACK_X + TRACK_W}" y="${y + 26}" text-anchor="end">${row.id === 'dcf' ? fmtMoneyCompact(row.rangeMax * 1_000_000) : `×${row.rangeMax.toFixed(1)}`}</text>
     <text x="${cx.toFixed(1)}" y="${titleY - 2}" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:13px;font-weight:600;fill:${color}">${marker}</text>
     <text x="56" y="${y + 8}" style="font-family:'IBM Plex Mono';font-size:11px;fill:#527570">${evLabel}</text>`;
 }
@@ -111,22 +112,26 @@ export function buildEquifyMultiplesTracksSvg(rows: MultiplePositionRow[]): stri
   const dcfSvg = `<text x="712" y="168" text-anchor="end" style="font-family:'Assistant';font-size:12px;font-weight:600;fill:#1E3A36">${MULTIPLE_TITLES.dcf}</text>
     <rect x="${TRACK_X}" y="178" width="${TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
     <circle cx="${dcfCx.toFixed(1)}" cy="183" r="8" fill="#A8842E"/>
-    <text class="axis" x="${TRACK_X}" y="199">₪${dcf.rangeMin.toFixed(0)}M</text>
-    <text class="axis" x="${TRACK_X + TRACK_W}" y="199" text-anchor="end">₪${dcf.rangeMax.toFixed(0)}M</text>
-    <text x="${dcfCx.toFixed(1)}" y="166" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:13px;font-weight:600;fill:#A8842E">₪${(dcf.impliedEv / 1_000_000).toFixed(1)}M</text>`;
+    <text class="axis" x="${TRACK_X}" y="199">${fmtMoneyCompact(dcf.rangeMin * 1_000_000)}</text>
+    <text class="axis" x="${TRACK_X + TRACK_W}" y="199" text-anchor="end">${fmtMoneyCompact(dcf.rangeMax * 1_000_000)}</text>
+    <text x="${dcfCx.toFixed(1)}" y="166" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:13px;font-weight:600;fill:#A8842E">${fmtMoneyCompact(dcf.impliedEv)}</text>`;
 
   return `<svg viewBox="0 0 720 200" style="width:100%">${multiplesRowSvg(ebitda, 38, 28)}${multiplesRowSvg(revenue, 108, 98)}${dcfSvg}</svg>`;
 }
 
-export function buildEquifyScenarioRangeSvg(bearM: number, baseM: number, bullM: number): string {
+export function buildEquifyScenarioRangeSvg(
+  bearEquity: number,
+  baseEquity: number,
+  bullEquity: number,
+): string {
   return `<svg viewBox="0 0 720 90" style="width:100%">
     <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C24A4A"/><stop offset=".5" stop-color="#00A89F"/><stop offset="1" stop-color="#A8842E"/></linearGradient></defs>
     <rect x="50" y="34" width="620" height="12" rx="6" fill="#F0F8F6"/>
     <rect x="50" y="34" width="620" height="12" rx="6" fill="url(#rg)" opacity=".75"/>
     <circle cx="50" cy="40" r="7" fill="#C24A4A"/><circle cx="360" cy="40" r="9" fill="#00A89F" stroke="#fff" stroke-width="2.5"/><circle cx="670" cy="40" r="7" fill="#A8842E"/>
-    <text x="50" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#C24A4A">₪${bearM.toFixed(1)}M</text>
-    <text x="360" y="22" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:14px;font-weight:600;fill:#163530">₪${baseM.toFixed(1)}M</text>
-    <text x="670" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#A8842E">₪${bullM.toFixed(1)}M</text></svg>`;
+    <text x="50" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#C24A4A">${fmtMoneyCompact(bearEquity)}</text>
+    <text x="360" y="22" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:14px;font-weight:600;fill:#163530">${fmtMoneyCompact(baseEquity)}</text>
+    <text x="670" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#A8842E">${fmtMoneyCompact(bullEquity)}</text></svg>`;
 }
 
 export function buildEquifyQualityGaugeSvg(score: number, grade: string): string {

@@ -15,6 +15,8 @@ export interface SectorMethodologyConfig {
   maxMultiple: number;
   /** Decimal cap (e.g. 0.25 = 25%). */
   growthCap: number;
+  /** Institutional max historical EBITDA / revenue — anti-anomaly winsorization. */
+  maxHistoricalMargin: number;
 }
 
 export const sectorConfigs = {
@@ -26,6 +28,7 @@ export const sectorConfigs = {
     minMultiple: 5.0,
     maxMultiple: 7.5,
     growthCap: 0.25,
+    maxHistoricalMargin: 0.22,
   },
   services: {
     strategy: 'historical_blended_ebitda',
@@ -35,6 +38,7 @@ export const sectorConfigs = {
     minMultiple: 4.0,
     maxMultiple: 6.0,
     growthCap: 0.15,
+    maxHistoricalMargin: 0.28,
   },
   saas: {
     strategy: 'current_run_rate_revenue',
@@ -44,6 +48,7 @@ export const sectorConfigs = {
     minMultiple: 4.0,
     maxMultiple: 8.0,
     growthCap: 0.6,
+    maxHistoricalMargin: 0.35,
   },
 } as const satisfies Record<string, SectorMethodologyConfig>;
 

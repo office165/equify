@@ -13,6 +13,7 @@
     "start": "node dist/main.js",
     "test:pdf": "tsx scripts/test-maximal-pdf.ts",
     "test:canonical": "tsx scripts/test-canonical-reconciliation.ts",
+    "test:omwise-calibration": "tsx scripts/test-omwise-calibration.ts",
     "test:monday-leads": "tsx scripts/test-monday-leads-e2e.ts",
     "test:monday-lead": "tsx scripts/test-monday-lead.ts",
     "monday:introspect": "tsx scripts/monday-introspect.ts"
@@ -34,6 +35,7 @@
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
     "lenis": "^1.3.23",
+    "lucide-react": "^1.21.0",
     "next": "^14.2.0",
     "pdfkit": "^0.15.2",
     "pg": "^8.13.0",

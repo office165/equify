@@ -6,7 +6,6 @@ import {
   computeScenarios,
   computeValuation,
   fmtK,
-  fmtM,
   type ValuationComputed,
 } from '../valuation';
 import { registerValubotPdfFonts } from './fonts/register';
@@ -34,10 +33,20 @@ const styles = StyleSheet.create({
   rid: { fontSize: 8, color: '#527570' },
   hero: { fontSize: 48, fontWeight: 700, color: '#163530', textAlign: 'center', marginVertical: 16 },
   sub: { fontSize: 10, color: '#527570', textAlign: 'center', marginBottom: 12 },
-  krow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  kc: { flex: 1, borderWidth: 1, borderColor: '#D6E8E4', borderRadius: 6, padding: 8 },
-  kcVal: { fontSize: 14, fontWeight: 700, color: '#163530' },
-  kcLbl: { fontSize: 8, color: '#527570', marginTop: 2 },
+  krow: { flexDirection: 'row', gap: 10, marginTop: 50 },
+  kc: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#D6E8E4',
+    borderRadius: 8,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    minHeight: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  kcVal: { fontSize: 26, fontWeight: 700, color: '#163530', textAlign: 'center' },
+  kcLbl: { fontSize: 13, fontWeight: 700, color: '#1E3A36', marginTop: 6, textAlign: 'center' },
   table: { marginTop: 12 },
   row: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#D6E8E4', paddingVertical: 6 },
   cell: { flex: 1, fontSize: 10 },
@@ -97,15 +106,15 @@ export function WizardSummaryPdfDocument({
           מטרת ההערכה: {state.goal || 'כללי'} · מוגש ל: {state.profile.fullName}
         </Text>
 
-        <Text style={styles.hero}>₪{fmtM(computed.equity)}M</Text>
+        <Text style={styles.hero}>{fmtK(computed.equity)}</Text>
         <Text style={styles.sub}>
-          שווי לבעלים (Equity Value) · תרחיש בסיס · טווח ₪{fmtM(scenarios.bearEq)}M
-          – ₪{fmtM(scenarios.bullEq)}M
+          שווי לבעלים (Equity Value) · תרחיש בסיס · טווח {fmtK(scenarios.bearEq)} –{' '}
+          {fmtK(scenarios.bullEq)}
         </Text>
 
         <View style={styles.krow}>
           <View style={styles.kc}>
-            <Text style={styles.kcVal}>₪{fmtM(computed.ev)}M</Text>
+            <Text style={styles.kcVal}>{fmtK(computed.ev)}</Text>
             <Text style={styles.kcLbl}>שווי פעילות (EV)</Text>
           </View>
           <View style={styles.kc}>

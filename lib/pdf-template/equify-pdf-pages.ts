@@ -52,10 +52,6 @@ function pdfFmt(locale?: ValuationData['locale']) {
   };
 }
 
-function equityM(val: number): number {
-  return val / 1_000_000;
-}
-
 function head(rid: string): string {
   return `<div class="head"><span class="logo">equify<em>.</em><small>BY SBC</small></span><span class="rid">${rid}</span></div>`;
 }
@@ -130,7 +126,7 @@ function buildPage1Cover(data: ValuationData): string {
       <div class="c-val">${f.equityCover(data.equity)}</div>
       <div class="c-cap">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח ${f.money(data.bearEquity)} – ${f.money(data.bullEquity)}</div>
       <div class="seal"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY</div>
-      <div class="c-grid">
+      <div class="c-grid c-grid--cover">
         <div><b>${f.money(data.enterpriseValue)}</b><span>שווי פעילות (EV)</span></div>
         <div><b>${f.pct(data.waccPct)}</b><span>WACC אפקטיבי</span></div>
         <div><b>${f.int(data.qualityScore)} / ${escHtml(data.qualityGrade)}</b><span>Quality Score</span></div>
@@ -195,6 +191,13 @@ function buildPage3Financials(data: ValuationData): string {
     })
     .join('');
   const unitLabel = data.locale === 'en' ? 'M ₪' : '₪M';
+  const currentYearPoint =
+    [...data.trajectory].reverse().find((t) => !t.forecast) ??
+    data.trajectory.at(-1);
+  const currentMarginPct =
+    currentYearPoint && currentYearPoint.revenueM > 0
+      ? (currentYearPoint.ebitdaM / currentYearPoint.revenueM) * 100
+      : data.marginPct;
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
@@ -205,7 +208,7 @@ function buildPage3Financials(data: ValuationData): string {
     <p class="sub">${escHtml(FINANCIAL_DATA_COPY)}</p>
     <div class="box"><h3>הכנסות מול EBITDA · ${unitLabel}</h3>${buildEquifyFinancialBarChartSvg(data.trajectory)}</div>
     <table><tr><th>${unitLabel}</th>${cols}</tr><tr><td>הכנסות</td>${revRow}</tr><tr><td>EBITDA</td>${ebtRow}</tr><tr class="sum"><td>שיעור EBITDA</td>${marginRow}</tr></table>
-    <p class="note">CAGR ${f.pct(data.growthPct, 0)} · שיעור EBITDA ${f.pct(data.marginPct)}. ${data.netDebtNote ? escHtml(data.netDebtNote) : `חוב נטו: ${f.money(data.netDebt)}.`}</p>
+    <p class="note">CAGR ${f.pct(data.growthPct, 0)} · שיעור EBITDA ${f.pct(currentMarginPct)}. ${data.netDebtNote ? escHtml(data.netDebtNote) : `חוב נטו: ${f.money(data.netDebt)}.`}</p>
   </div>`;
   return wrapSheet(3, '', body, data.locale);
 }
@@ -249,10 +252,14 @@ function buildPage4Dcf(data: ValuationData): string {
 
 function multiplesInterpretation(data: ValuationData): string {
   const f = pdfFmt(data.locale);
-  const ebitdaMed = data.industryEbitdaMedian ?? data.effectiveMult;
+  const ebitdaMed = data.industryEbitdaMedian ?? data.multipleBase ?? data.effectiveMult;
   const revMed = data.industryRevenueMedian ?? data.revenueMultiple;
   const marginMed = data.industryEbitdaMarginPct ?? data.marginPct;
-  return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${f.multiple(ebitdaMed)}</td><td>מכויל מול ענף</td></tr>
+  const penaltyNote =
+    data.multipleConcentrationPenalty && data.multipleConcentrationPenalty > 0
+      ? ` · −${f.fixed(data.multipleConcentrationPenalty, 1)}× ריכוז לקוחות`
+      : '';
+  return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${f.multiple(ebitdaMed)}</td><td>QS ${f.int(data.qualityScore)}/${data.qualityGrade}${penaltyNote}</td></tr>
     <tr><td>מכפיל הכנסות</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">${f.multiple(revMed)}</td><td>בטווח השוק</td></tr>
     <tr><td>שיעור EBITDA</td><td class="n">${f.pctLabel(data.marginPct)}</td><td class="n">${f.pctLabel(marginMed)}</td><td>רווחיות יחסית לענף</td></tr>`;
 }
@@ -335,7 +342,7 @@ function buildPage6Scenarios(data: ValuationData): string {
     <h2>${en ? 'Equity range by scenario' : 'טווח שווי לפי תרחיש'}</h2>
     <p class="sub">${escHtml(scenariosIntroFromRows(data.scenarios, data.locale))}</p>
     <table><tr><th>${en ? 'Scenario' : 'תרחיש'}</th><th>${en ? 'Growth' : 'צמיחה'}</th><th>${en ? 'EBITDA %' : 'שיעור EBITDA'}</th><th>WACC</th><th>${en ? 'Multiple' : 'מכפיל'}</th><th>EV</th><th>${en ? 'Equity value' : 'שווי לבעלים'}</th></tr>${scenarioRows}</table>
-    <div class="box"><h3>${en ? 'Equity value range' : 'טווח השווי לבעלים'}</h3>${buildEquifyScenarioRangeSvg(equityM(data.bearEquity), equityM(data.equity), equityM(data.bullEquity))}</div>
+    <div class="box"><h3>${en ? 'Equity value range' : 'טווח השווי לבעלים'}</h3>${buildEquifyScenarioRangeSvg(data.bearEquity, data.equity, data.bullEquity)}</div>
     ${buildScenarioNarrativesBlock(data)}
   </div>`;
   return wrapSheet(6, '', body, data.locale);

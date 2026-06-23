@@ -25,8 +25,21 @@ export interface EquifyWizardProfile {
   fiscalYear: string;
 }
 
+export interface YearFinancialsK {
+  revenueK: number;
+  ebitdaK: number;
+}
+
 export interface EquifyWizardFinancials {
+  /** Reported actuals 2024 (₪K) */
+  y2024: YearFinancialsK;
+  /** Reported actuals 2025 (₪K) */
+  y2025: YearFinancialsK;
+  /** Current year 2026 (₪K) */
+  y2026: YearFinancialsK;
+  /** Mirrors y2026.revenueK for downstream compat */
   rev: number;
+  /** Derived from y2026 EBITDA / revenue */
   margin: number;
   growth: number;
   /** חוב ברוטו (₪K) */
@@ -37,6 +50,10 @@ export interface EquifyWizardFinancials {
   normalizedOwnerSalaryK: number;
   /** רמת השקעות CAPEX (% מהכנסות) */
   capexLevelPct: number;
+  /** Forward EBITDA: [2027F, 2028F, 2029F] (₪K) */
+  projectedEbitdaK: [number, number, number];
+  /** Contracted forward backlog (₪K) — inflection when / revenue_2026 >= 50% */
+  backlogSignedK: number;
   /** @deprecated use grossDebtK − cashK */
   debt: number;
 }
@@ -87,8 +104,7 @@ export function mapEquifyToWizardFormValues(
 ): ValuationWizardFormValues {
   const { profile, financials, risk, goal } = state;
   const netDebtK = computeNetDebtK(financials);
-  const ebitdaK =
-    financials.rev * (financials.margin / 100) + financials.normalizedOwnerSalaryK;
+  const ebitdaK = financials.y2026.ebitdaK;
 
   return {
     userMobilePhone: profile.userMobilePhone,
@@ -102,7 +118,7 @@ export function mapEquifyToWizardFormValues(
     currency: profile.currency,
     incorporationCountry: 'IL',
     foundedYear: profile.foundedYear,
-    annualRevenue: kToAbsoluteString(financials.rev),
+    annualRevenue: kToAbsoluteString(financials.y2026.revenueK),
     annualChurnRate: '',
     ebitda: kToAbsoluteString(ebitdaK),
     freeCashFlow: kToAbsoluteString(
@@ -160,6 +176,9 @@ export const DEFAULT_EQUIFY_WIZARD_STATE: EquifyWizardState = {
     fiscalYear: String(new Date().getFullYear()),
   },
   financials: {
+    y2024: { revenueK: 10000, ebitdaK: 2340 },
+    y2025: { revenueK: 11000, ebitdaK: 2620 },
+    y2026: { revenueK: 12000, ebitdaK: 3132 },
     rev: 12000,
     margin: 22.6,
     growth: 9,
@@ -167,6 +186,8 @@ export const DEFAULT_EQUIFY_WIZARD_STATE: EquifyWizardState = {
     cashK: 800,
     normalizedOwnerSalaryK: 420,
     capexLevelPct: 6,
+    projectedEbitdaK: [0, 0, 0],
+    backlogSignedK: 0,
     debt: 4400,
   },
   risk: {

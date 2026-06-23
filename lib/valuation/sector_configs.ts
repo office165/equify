@@ -28,6 +28,7 @@ export interface SectorValuationConfig {
   maxMultiple: number;
   growthCap: number;
   strategy?: string;
+  maxHistoricalMargin?: number;
 }
 
 function toLegacyConfig(config: SectorMethodologyConfig): SectorValuationConfig {
@@ -39,6 +40,7 @@ function toLegacyConfig(config: SectorMethodologyConfig): SectorValuationConfig 
     maxMultiple: config.maxMultiple,
     growthCap: config.growthCap,
     strategy: config.strategy,
+    maxHistoricalMargin: config.maxHistoricalMargin,
   };
 }
 

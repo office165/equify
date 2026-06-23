@@ -4,12 +4,13 @@ import type {
   ValuationInputs,
   ValuationScenarios,
 } from '../valuation';
+import {
+  applySectorMarginGuardrails,
+  computeDynamicMultiple,
+} from './adaptive_calibration';
 import { computeBlendedEbitda } from './blended_ebitda';
 import { applyBacklogInflectionAccelerator } from './backlog_inflection_accelerator';
-import {
-  resolveBaseEbitdaForMultiple,
-  resolveCurrentYearEbitdaK,
-} from './backlog_valuation';
+import { resolveCurrentYearEbitdaK } from './backlog_valuation';
 import { capGrowthPctForMethodology } from './sector_methodology_matrix';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
 import { createValuationStrategy } from './strategies/valuation_strategy';
@@ -86,26 +87,6 @@ function computeQualityScore(
   );
 }
 
-function computeEffectiveMultiple(params: {
-  sectorMult: number;
-  subSectorMult: number;
-  dcfGrowthPct: number;
-  qs: number;
-  minMultiple: number;
-  maxMultiple: number;
-}): number {
-  const { sectorMult, subSectorMult, dcfGrowthPct, qs, minMultiple, maxMultiple } =
-    params;
-
-  const combinedSectorMult = sectorMult * subSectorMult;
-  const baseM = 5.2;
-  const growthM = Math.min(3.5, dcfGrowthPct * 0.14);
-  const qualM = ((qs - 50) / 100) * 2.8;
-  const raw = (baseM + growthM + qualM) * combinedSectorMult;
-
-  return Math.max(minMultiple, Math.min(maxMultiple, raw));
-}
-
 function computeDcf(params: {
   ebitdaK: number;
   revK: number;
@@ -133,25 +114,27 @@ function computeDcf(params: {
 }
 
 /**
- * Core valuation engine — sector strategy pattern + backlog inflection accelerator.
+ * Core valuation engine — Adaptive calibration layer + sectorConfigs + Backlog Inflection.
  *
  * Pipeline:
- * 1. Resolve sectorConfigs profile
- * 2. Cap growth at growthCap
- * 3. Apply backlog inflection (weights, DCF growth, forward EBITDA)
- * 4. Blended historical EBITDA for DCF FCFF
- * 5. Strategy pattern → EBITDA / revenue legs
- * 6. Combined EV = Σ (leg × sector/backlog weight) — includes weightRev for SaaS
+ * 1. Resolve sectorConfigs profile (industry | services | saas)
+ * 2. Winsorize per-year EBITDA margins (maxHistoricalMargin guardrails)
+ * 3. Cap growth at sector growthCap
+ * 4. Apply backlog inflection (70/30 weights, forward EBITDA, WACC −1%)
+ * 5. DCF on blended historical EBITDA (2024–2026)
+ * 6. Quality-score linear multiple + concentration penalty
+ * 7. EV = Σ (leg × effective weight)
  */
 export function computeValuation(inputs: ValuationInputs): ValuationComputed {
+  const sectorConfig = resolveSectorMethodologyConfig(inputs.sector);
+  const calibration = applySectorMarginGuardrails(inputs, sectorConfig);
+  const calibrated = calibration.inputs;
+
   const {
     rev,
     margin,
     growth,
     debt,
-    sector = 'other',
-    sectorMult,
-    subSectorMult = 1,
     lifecycleAdj,
     recurring,
     topCustomer,
@@ -166,46 +149,51 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     ebitda2026K,
     revenue2026K,
     ebitda2027K,
-    hasSignificantBacklog,
-    backlogSignedK = 0,
-  } = inputs;
+    backlogSignedK,
+    projectedEbitdaK,
+  } = calibrated;
 
-  const methodologyConfig = resolveSectorMethodologyConfig(sector);
-  const cappedGrowthPct = capGrowthPctForMethodology(growth, methodologyConfig);
+  const cappedGrowthPct = capGrowthPctForMethodology(growth, sectorConfig);
+  const revK = revenue2026K ?? rev;
+  const currentYearEbitdaK =
+    ebitda2026K ??
+    resolveCurrentYearEbitdaK({ ebitda2026K, rev: revK, margin });
 
-  const backlogInflection = applyBacklogInflectionAccelerator({
-    sectorConfig: methodologyConfig,
+  const backlog = applyBacklogInflectionAccelerator({
+    sectorConfig,
     inputs: {
-      hasSignificantBacklog,
       backlogSignedK,
-      growth,
+      projectedEbitdaK,
+      ebitda2027K,
+      ebitda2026K: currentYearEbitdaK,
+      ebitda2024K,
+      ebitda2025K,
       rev,
       margin,
-      revenue2026K,
-      ebitda2027K,
-      ebitda2026K,
-      normalizedOwnerSalary,
+      revenue2026K: revK,
     },
     cappedGrowthPct,
+    historicalAvgMarginPct: calibration.historicalAvgMarginPct,
   });
 
-  const dcfGrowthPct = backlogInflection.acceleratedGrowthPct;
-  const blendWeights = backlogInflection.blendWeights;
+  const dcfGrowthPct = backlog.acceleratedGrowthPct;
+  const blendWeights = backlog.blendWeights;
+  const baseEbitdaForMultiple = backlog.baseEbitdaForMultiple;
 
   const ebitdaBlend = computeBlendedEbitda(
     {
-      rev: revenue2026K ?? rev,
+      rev: revK,
       margin,
       normalizedOwnerSalary,
       ebitda2024K,
       ebitda2025K,
-      ebitda2026K,
+      ebitda2026K: currentYearEbitdaK,
     },
     dcfGrowthPct,
   );
   const ebitda = ebitdaBlend.blended;
 
-  const wacc = computeWacc({
+  const waccBase = computeWacc({
     lifecycleAdj,
     recurring,
     topCustomer,
@@ -214,6 +202,8 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     ip,
     contracts,
   });
+  const waccBacklogAdjustment = backlog.waccAdjustmentPct;
+  const wacc = Math.max(10, Math.min(25, waccBase + waccBacklogAdjustment));
 
   const qs = computeQualityScore({
     recurring,
@@ -226,62 +216,36 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   });
   const qsGrade = qualityScoreGrade(qs);
 
-  const effectiveMult = computeEffectiveMultiple({
-    sectorMult,
-    subSectorMult,
-    dcfGrowthPct,
-    qs,
-    minMultiple: methodologyConfig.minMultiple,
-    maxMultiple: methodologyConfig.maxMultiple,
+  const multipleResult = computeDynamicMultiple({
+    config: sectorConfig,
+    qualityScore: qs,
+    topCustomerPct: topCustomer,
   });
-
-  const strategy = createValuationStrategy(methodologyConfig);
-  const currentYearEbitdaK = resolveCurrentYearEbitdaK({
-    ebitda2026K,
-    rev: revenue2026K ?? rev,
-    margin,
-  });
-  const revenueRunRateK = revenue2026K ?? rev;
-
-  const strategyLegs = strategy.computeLegs({
-    inputs,
-    config: methodologyConfig,
-    effectiveMult,
-    ebitdaBlend,
-    backlog: backlogInflection,
-    currentYearEbitdaK,
-    revenueRunRateK,
-  });
-
-  const baseEbitdaForMultiple = resolveBaseEbitdaForMultiple(
-    {
-      ebitda2024K,
-      ebitda2025K,
-      ebitda2027K,
-      ebitda2026K,
-      rev: revenue2026K ?? rev,
-      margin,
-    },
-    backlogInflection.forwardEbitda2027K ?? strategyLegs.ebitdaBaseForMultiple,
-    backlogInflection.inflectionIntensity > 0,
-  );
+  const effectiveMult = multipleResult.multiple;
 
   const dcf = computeDcf({
     ebitdaK: ebitda,
-    revK: revenue2026K ?? rev,
+    revK,
     capexLevelPct,
     dcfGrowthPct,
     wacc,
   });
 
-  const ebtMult = strategyLegs.ebtMult;
-  const revMult = strategyLegs.revMult;
-  const revMultiplier = strategyLegs.revMultiplier;
+  const strategy = createValuationStrategy(sectorConfig);
+  const legs = strategy.computeLegs({
+    inputs: calibrated,
+    config: sectorConfig,
+    effectiveMult,
+    ebitdaBlend,
+    backlog,
+    currentYearEbitdaK,
+    revenueRunRateK: revK,
+  });
 
   const ev =
     dcf * blendWeights.dcf +
-    ebtMult * blendWeights.ebitda +
-    revMult * blendWeights.rev;
+    legs.ebtMult * blendWeights.ebitda +
+    legs.revMult * blendWeights.rev;
   const equity = Math.max(0, ev - debt);
 
   return {
@@ -291,17 +255,26 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     qs,
     qsGrade,
     effectiveMult,
-    ebtMult,
-    revMult,
-    revMultiplier,
+    ebtMult: legs.ebtMult,
+    revMult: legs.revMult,
+    revMultiplier: legs.revMultiplier,
     dcf,
     ev,
     equity,
     blendWeights,
     dcfGrowthPct,
     baseEbitdaForMultiple,
-    inflectionIntensity: backlogInflection.inflectionIntensity,
-    methodologyStrategy: methodologyConfig.strategy,
+    inflectionIntensity: backlog.inflectionIntensity,
+    methodologyStrategy: sectorConfig.strategy,
+    backlogInflectionActive: backlog.backlogInflectionActive,
+    backlogRatio: backlog.backlogRatio,
+    calibrationWarnings: calibration.warnings.map((w) => w.message),
+    calibratedYears: calibration.calibratedYears,
+    historicalAvgMarginPct: calibration.historicalAvgMarginPct,
+    forwardEbitda2027K: backlog.forwardEbitda2027K,
+    waccBacklogAdjustment,
+    multipleBase: multipleResult.baseMultiple,
+    multipleConcentrationPenalty: multipleResult.concentrationPenalty,
   };
 }
 
@@ -366,7 +339,7 @@ export function computeScenarios(
   };
 }
 
-/** Pure runner for tests, PDF pipeline, and hooks. */
+/** Pure runner for tests, PDF pipeline, and useValuation hook. */
 export function runValuationEngine(inputs: ValuationInputs): {
   computed: ValuationComputed;
   scenarios: ValuationScenarios;

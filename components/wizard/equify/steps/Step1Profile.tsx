@@ -9,6 +9,10 @@ import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_w
 import { scheduleWizardProgressSave } from '../../../../lib/wizard/wizard_progress_queue';
 import { useWizardValuation } from '../WizardValuationContext';
 import { isAcceptedLogoFile, MAX_LOGO_BYTES } from '../../../../lib/utils/logo_data_url';
+import {
+  sanitizePhoneInput,
+  validateStep1Phone,
+} from '../../../../lib/wizard/step1_profile_schema';
 
 const LIFECYCLES_HE: {
   key: EquifyLifecycleKey;
@@ -61,7 +65,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
     const nextErrors: Record<string, boolean> = {
       name: !profile.fullName.trim(),
       email: !emailRe.test(profile.userEmail),
-      phone: !profile.userMobilePhone.trim(),
+      phone: validateStep1Phone(profile.userMobilePhone) !== null,
       companyName: !profile.companyName.trim(),
       sector: !profile.sector,
     };
@@ -109,6 +113,17 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
       if (fileRef.current) fileRef.current.value = '';
     },
     [updateProfile],
+  );
+
+  const handlePhoneChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const sanitized = sanitizePhoneInput(e.target.value);
+      updateProfile({ userMobilePhone: sanitized });
+      if (errors.phone) {
+        setErrors((prev) => ({ ...prev, phone: false }));
+      }
+    },
+    [errors.phone, updateProfile],
   );
 
   return (
@@ -159,11 +174,16 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
           <input
             className={`inp${errors.phone ? ' err' : profile.userMobilePhone ? ' ok' : ''}`}
             type="tel"
+            inputMode="tel"
+            autoComplete="tel"
             placeholder="050-0000000"
             dir="ltr"
             value={profile.userMobilePhone}
-            onChange={(e) => updateProfile({ userMobilePhone: e.target.value })}
+            onChange={handlePhoneChange}
           />
+          {errors.phone ? (
+            <span className="v-msg err show">{t.common.errPhone}</span>
+          ) : null}
         </div>
         <div className="field">
           <label>

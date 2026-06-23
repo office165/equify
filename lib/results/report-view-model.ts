@@ -17,6 +17,12 @@ import { syncMatrixFromEquifyState } from '../valuation/sync_matrix_from_equify'
 import { resolveEquifySectorFromIndustryCode } from '../wizard/build_valuation_inputs';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
 import { computeNetDebtK } from '../wizard/map_equify_wizard';
+import {
+  buildCalibratedFinancialTrajectory,
+  buildFinancialTrajectoryFromEquifyState,
+  ebitdaMarginPctFromYear,
+  syncFinancialsDerived,
+} from '../wizard/financial_history';
 
 /** @deprecated Use getBlendWeights(sector) — kept for legacy imports */
 export const BLEND_WEIGHTS = { dcf: 0.5, ebitda: 0.3, rev: 0.2 } as const;
@@ -154,6 +160,16 @@ function resolveEvRev(
   );
   if (fromPanel?.impliedEV) return fromPanel.impliedEV;
   return canonical.ev_dcf * 0.85;
+}
+
+function buildTrajectoryFromEquifyState(
+  state: EquifyWizardState,
+): TrajectoryPoint[] {
+  return buildFinancialTrajectoryFromEquifyState(state.financials).map((row) => ({
+    year: row.label,
+    revenue: row.revenueM * 1_000_000,
+    ebitda: row.ebitdaM * 1_000_000,
+  }));
 }
 
 function buildTrajectory(dcfRows: DcfRow[]): TrajectoryPoint[] {
@@ -320,8 +336,11 @@ export function buildReportViewModel(
   locale: ValuationLocale,
   equifyState?: EquifyWizardState | null,
 ): ReportViewModel {
-  const equifySync = equifyState
-    ? syncMatrixFromEquifyState(matrix, equifyState, locale)
+  const syncedEquifyState = equifyState
+    ? { ...equifyState, financials: syncFinancialsDerived(equifyState.financials) }
+    : null;
+  const equifySync = syncedEquifyState
+    ? syncMatrixFromEquifyState(matrix, syncedEquifyState, locale)
     : null;
   const syncedMatrix = equifySync?.matrix ?? matrix;
   const equifyComputed = equifySync?.computed;
@@ -349,7 +368,7 @@ export function buildReportViewModel(
     syncedMatrix.meta.confidence_score ??
     reportData.confidenceScore ??
     78;
-  const sector = equifyState?.profile.sector ??
+  const sector = syncedEquifyState?.profile.sector ??
     resolveEquifySectorFromIndustryCode(
       syncedMatrix.wizard_context?.industry_code,
     );
@@ -359,7 +378,7 @@ export function buildReportViewModel(
       ? buildEquifyScenarioMetrics(
           equifyComputed,
           equifyScenarios,
-          computeNetDebtK(equifyState!.financials),
+          computeNetDebtK(syncedEquifyState!.financials),
         )
       : {
           bear: buildScenarioMetrics('bear', canonical, baseWaccPct, evEbitda, evRev, sector),
@@ -367,14 +386,15 @@ export function buildReportViewModel(
           bull: buildScenarioMetrics('bull', canonical, baseWaccPct, evEbitda, evRev, sector),
         };
 
-  const revenue = equifyState
-    ? equifyState.financials.rev * 1000
+  const revenue = syncedEquifyState
+    ? syncedEquifyState.financials.rev * 1000
     : reportData.revenue;
   const ebitda = equifyComputed
     ? equifyComputed.ebitda * 1000
     : reportData.ebitda;
-  const ebitdaMarginPct = equifyState
-    ? equifyState.financials.margin
+  const ebitdaMarginPct = syncedEquifyState
+    ? equifyComputed?.calibratedYears?.y2026.marginPct ??
+      ebitdaMarginPctFromYear(syncedEquifyState.financials.y2026)
     : reportData.ebitdaMargin;
 
   return {
@@ -402,7 +422,17 @@ export function buildReportViewModel(
     companyName: reportData.companyName,
     qualityScore,
     qualityGrade: confidenceToGrade(qualityScore),
-    trajectory: buildTrajectory(reportData.dcfRows),
+    trajectory: syncedEquifyState && equifyComputed?.calibratedYears
+      ? buildCalibratedFinancialTrajectory(equifyComputed, syncedEquifyState.financials).map(
+          (row) => ({
+            year: row.label,
+            revenue: row.revenueM * 1_000_000,
+            ebitda: row.ebitdaM * 1_000_000,
+          }),
+        )
+      : syncedEquifyState
+        ? buildTrajectoryFromEquifyState(syncedEquifyState)
+        : buildTrajectory(reportData.dcfRows),
     waccDonutBase: buildWaccDonutSlices(baseWaccPct),
     scenarios,
     findings: reportData.findings,

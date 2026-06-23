@@ -18,8 +18,8 @@ function toM(nis: number): number {
   return nis / 1_000_000;
 }
 
-function fmtM(nis: number, digits = 1): string {
-  return `₪${toM(nis).toFixed(digits)}M`;
+function fmtM(nis: number): string {
+  return fmtMoneyCompact(nis);
 }
 
 export function buildCoverRingsSvg(): string {

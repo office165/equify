@@ -8,17 +8,26 @@ import {
   type EquifySectorKey,
   type ValuationInputs,
 } from '../valuation';
+import { BACKLOG_INFLECTION_RATIO_THRESHOLD } from '../valuation/backlog_inflection_accelerator';
 import type { EquifyWizardState } from './map_equify_wizard';
 import { computeNetDebtK } from './map_equify_wizard';
+import { normalizeEquifyFinancials } from './financial_history';
 
 /** Single builder for wizard valuation inputs — live UI, PDF, matrix patch. */
 export function buildValuationInputsFromEquifyState(
   state: EquifyWizardState,
 ): ValuationInputs {
-  const { financials, risk, profile } = state;
+  const { risk, profile } = state;
+  const financials = normalizeEquifyFinancials(state.financials);
   const netDebt = computeNetDebtK(financials);
+  const { y2024, y2025, y2026 } = financials;
+  const backlogSignedK = financials.backlogSignedK ?? 0;
+  const revenue2026K = y2026.revenueK ?? 0;
+  const backlogRatio =
+    revenue2026K > 0 && backlogSignedK > 0 ? backlogSignedK / revenue2026K : 0;
+
   return {
-    rev: financials.rev,
+    rev: y2026.revenueK,
     margin: financials.margin,
     growth: financials.growth,
     debt: netDebt,
@@ -36,6 +45,17 @@ export function buildValuationInputsFromEquifyState(
     competition: risk.competition,
     ip: risk.ip,
     contracts: risk.contracts,
+    backlogSignedK,
+    hasSignificantBacklog: backlogRatio >= BACKLOG_INFLECTION_RATIO_THRESHOLD,
+    projectedEbitdaK: financials.projectedEbitdaK,
+    revenue2026K,
+    revenue2024K: y2024.revenueK,
+    revenue2025K: y2025.revenueK,
+    ebitda2024K: y2024.ebitdaK,
+    ebitda2025K: y2025.ebitdaK,
+    ebitda2026K: y2026.ebitdaK,
+    ebitda2027K:
+      financials.projectedEbitdaK[0] > 0 ? financials.projectedEbitdaK[0] : undefined,
   };
 }
 

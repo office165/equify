@@ -1,170 +1,121 @@
 import type { ValuationInputs } from '../valuation';
 import {
+  BACKLOG_INFLECTION_TARGETS,
+  computeBacklogRatio,
   resolveCurrentYearEbitdaK,
-  resolveForwardEbitda2027K,
-} from './backlog_valuation';
+  resolveForwardBlendedMultipleBaseEbitda,
+  resolveHistoricalThreeYearEbitdaAverage,
+  resolveInflectionForwardEbitda2027K,
+  type BacklogInflectionResult,
+} from './backlog_metrics';
+import {
+  computeInflectionForwardEbitda2027K,
+} from './adaptive_calibration';
 import {
   normalizeMethodologyWeights,
   type SectorMethodologyConfig,
 } from './sector_methodology_matrix';
 
-/** Target blend when backlog inflection is fully engaged. */
-export const BACKLOG_INFLECTION_TARGETS = {
-  dcf: 0.7,
-  ebitda: 0.3,
-  rev: 0.0,
-} as const;
+export const BACKLOG_INFLECTION_WACC_PREMIUM = -1.0;
 
-export interface BacklogInflectionResult {
-  /** 0–1 strength of backlog-driven inflection. */
-  inflectionIntensity: number;
-  acceleratedGrowthPct: number;
-  blendWeights: { dcf: number; ebitda: number; rev: number };
-  forwardEbitda2027K: number | null;
-}
+export {
+  BACKLOG_INFLECTION_RATIO_THRESHOLD,
+  BACKLOG_INFLECTION_TARGETS,
+} from './backlog_metrics';
 
-function isPositiveFinite(n: unknown): n is number {
-  return typeof n === 'number' && Number.isFinite(n) && n > 0;
-}
-
-function lerp(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
+export type { BacklogInflectionResult } from './backlog_metrics';
 
 /**
- * Inflection intensity from signed backlog magnitude vs current-year revenue,
- * with a floor when the boolean backlog flag is set.
- */
-export function computeInflectionIntensity(
-  hasSignificantBacklog: boolean | undefined,
-  backlogSignedK: number | undefined,
-  revenue2026K: number,
-): number {
-  let intensity = 0;
-
-  if (hasSignificantBacklog === true) {
-    intensity = 0.55;
-  }
-
-  if (isPositiveFinite(backlogSignedK) && isPositiveFinite(revenue2026K)) {
-    const backlogRatio = backlogSignedK / revenue2026K;
-    intensity = Math.max(intensity, Math.min(1, backlogRatio * 1.15));
-  }
-
-  return Math.min(1, Math.max(0, intensity));
-}
-
-function morphBlendWeights(
-  base: { dcf: number; ebitda: number; rev: number },
-  intensity: number,
-  preserveRev: number,
-): { dcf: number; ebitda: number; rev: number } {
-  if (intensity <= 0) return base;
-
-  const dcf = lerp(base.dcf, BACKLOG_INFLECTION_TARGETS.dcf, intensity);
-  const ebitda = lerp(base.ebitda, BACKLOG_INFLECTION_TARGETS.ebitda, intensity);
-  const rev = lerp(base.rev, preserveRev, intensity);
-  const sum = dcf + ebitda + rev;
-  if (sum <= 0) return base;
-
-  return { dcf: dcf / sum, ebitda: ebitda / sum, rev: rev / sum };
-}
-
-function deriveForwardEbitdaFromBacklog(params: {
-  revenue2026K: number;
-  marginPct: number;
-  normalizedOwnerSalaryK: number;
-  backlogSignedK: number;
-}): number {
-  const { revenue2026K, marginPct, normalizedOwnerSalaryK, backlogSignedK } = params;
-  const recognitionRate = 0.85;
-  const forwardRevK = revenue2026K + backlogSignedK * recognitionRate;
-  return forwardRevK * (marginPct / 100) + normalizedOwnerSalaryK;
-}
-
-/**
- * Backlog Inflection Accelerator — morphs sector baseline weights toward DCF-heavy
- * inflection, lifts DCF growth toward backlog-implied run-rate, and resolves 2027F EBITDA.
+ * Backlog Inflection Accelerator — ratio-driven overlay on sectorConfigs.
  *
- * Applies ONLY to industry/services (historical_blended_ebitda). Never SaaS.
+ * industry / services (historical_blended_ebitda):
+ *   backlog_signed / revenue_2026 >= 0.5 → 70/30 weights + forward EBITDA blend
+ *   else → sector baseline weights + 3-year EBITDA average
+ *
+ * saas: sectorConfigs weights; backlog ignored; revenue multiple on 2026 run-rate.
  */
 export function applyBacklogInflectionAccelerator(params: {
   sectorConfig: SectorMethodologyConfig;
   inputs: Pick<
     ValuationInputs,
-    | 'hasSignificantBacklog'
     | 'backlogSignedK'
-    | 'growth'
+    | 'projectedEbitdaK'
+    | 'ebitda2027K'
+    | 'ebitda2026K'
+    | 'ebitda2024K'
+    | 'ebitda2025K'
     | 'rev'
     | 'margin'
     | 'revenue2026K'
-    | 'ebitda2027K'
-    | 'ebitda2026K'
-    | 'normalizedOwnerSalary'
   >;
   cappedGrowthPct: number;
+  /** Post-guardrail mean margin % across 2024–2026. */
+  historicalAvgMarginPct?: number;
 }): BacklogInflectionResult {
-  const { sectorConfig, inputs, cappedGrowthPct } = params;
-  const baseWeights = normalizeMethodologyWeights(sectorConfig);
+  const { sectorConfig, inputs, cappedGrowthPct, historicalAvgMarginPct = 0 } = params;
+  const sectorBaseline = normalizeMethodologyWeights(sectorConfig);
+  const revenue2026K = inputs.revenue2026K ?? inputs.rev ?? 0;
+
+  const ebitdaContext = {
+    ebitda2024K: inputs.ebitda2024K,
+    ebitda2025K: inputs.ebitda2025K,
+    ebitda2026K: inputs.ebitda2026K,
+    ebitda2027K: inputs.ebitda2027K,
+    rev: revenue2026K,
+    margin: inputs.margin,
+  };
+
+  const historicalThreeYearEbitdaAvg =
+    resolveHistoricalThreeYearEbitdaAverage(ebitdaContext);
+
+  const backlogSignedK = inputs.backlogSignedK ?? 0;
+  const inflectionForwardEbitda2027K =
+    historicalAvgMarginPct > 0 && backlogSignedK > 0
+      ? computeInflectionForwardEbitda2027K(
+          historicalAvgMarginPct,
+          backlogSignedK,
+        )
+      : resolveInflectionForwardEbitda2027K(inputs.projectedEbitdaK, ebitdaContext);
 
   if (sectorConfig.strategy === 'current_run_rate_revenue') {
     return {
       inflectionIntensity: 0,
       acceleratedGrowthPct: cappedGrowthPct,
-      blendWeights: baseWeights,
-      forwardEbitda2027K: null,
+      blendWeights: sectorBaseline,
+      baseEbitdaForMultiple: resolveCurrentYearEbitdaK(ebitdaContext),
+      backlogInflectionActive: false,
+      backlogRatio: 0,
+      historicalThreeYearEbitdaAvg,
+      forwardEbitda2027K: inflectionForwardEbitda2027K,
+      waccAdjustmentPct: 0,
     };
   }
 
-  const revenue2026K = inputs.revenue2026K ?? inputs.rev ?? 0;
-  const currentYearEbitdaK = resolveCurrentYearEbitdaK(inputs);
-  const explicit2027 = resolveForwardEbitda2027K(inputs);
+  const backlogCheck = computeBacklogRatio(inputs.backlogSignedK, revenue2026K);
+  const backlogInflectionActive = backlogCheck.triggerInflection;
 
-  const intensity = computeInflectionIntensity(
-    inputs.hasSignificantBacklog,
-    inputs.backlogSignedK,
-    revenue2026K,
-  );
+  const blendWeights = backlogInflectionActive
+    ? { ...BACKLOG_INFLECTION_TARGETS }
+    : sectorBaseline;
 
-  const blendWeights = morphBlendWeights(
-    baseWeights,
-    intensity,
-    sectorConfig.weightRev,
-  );
-
-  const backlogSignedK = inputs.backlogSignedK ?? 0;
-  const backlogImpliedGrowthPct =
-    isPositiveFinite(backlogSignedK) && isPositiveFinite(revenue2026K)
-      ? (backlogSignedK / revenue2026K) * 100 * 0.4
-      : 0;
-
-  // Inflection Accelerator changes WEIGHTING methodology only — sector growth ceiling is unchanged.
-  const growthCapPct = sectorConfig.growthCap * 100;
-  const acceleratedGrowthPct = Math.min(
-    growthCapPct,
-    cappedGrowthPct + intensity * backlogImpliedGrowthPct,
-  );
-
-  let forwardEbitda2027K: number | null = null;
-  if (intensity > 0) {
-    if (isPositiveFinite(explicit2027)) {
-      forwardEbitda2027K = explicit2027;
-    } else if (isPositiveFinite(backlogSignedK)) {
-      forwardEbitda2027K = deriveForwardEbitdaFromBacklog({
-        revenue2026K,
-        marginPct: inputs.margin,
-        normalizedOwnerSalaryK: inputs.normalizedOwnerSalary ?? 0,
-        backlogSignedK,
-      });
-    } else if (inputs.hasSignificantBacklog === true) {
-      forwardEbitda2027K = currentYearEbitdaK;
-    }
-  }
+  const baseEbitdaForMultiple = backlogInflectionActive
+    ? resolveForwardBlendedMultipleBaseEbitda(
+        historicalThreeYearEbitdaAvg,
+        inflectionForwardEbitda2027K,
+      )
+    : historicalThreeYearEbitdaAvg;
 
   return {
-    inflectionIntensity: intensity,
-    acceleratedGrowthPct,
+    inflectionIntensity: backlogInflectionActive ? 1 : 0,
+    acceleratedGrowthPct: cappedGrowthPct,
     blendWeights,
-    forwardEbitda2027K,
+    baseEbitdaForMultiple,
+    backlogInflectionActive,
+    backlogRatio: backlogCheck.backlogRatio,
+    historicalThreeYearEbitdaAvg,
+    forwardEbitda2027K: inflectionForwardEbitda2027K,
+    waccAdjustmentPct: backlogInflectionActive
+      ? BACKLOG_INFLECTION_WACC_PREMIUM
+      : 0,
   };
 }

@@ -105,6 +105,7 @@ function EquifyWizardShell({
         mounted ? 'eqw-mounted' : '',
         mounted && !reducedMotion ? 'eqw-animate' : '',
         revealed ? 'eqw-revealed' : '',
+        step === 2 ? 'eqw-step-financials' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -150,37 +151,39 @@ function EquifyWizardShell({
             })}
           </nav>
 
-          <div className="lv-panel">
-            <div className="lv-top">
-              <span>{copy.ownerValue}</span>
-              <span className="lv-dot" />
+          {step !== 2 ? (
+            <div className="lv-panel">
+              <div className="lv-top">
+                <span>{copy.ownerValue}</span>
+                <span className="lv-dot" />
+              </div>
+              <div className="lv-val mono">{fmtEquitySidebarM(computed.equity, locale)}</div>
+              <div className="lv-sub">{copy.liveUpdating}</div>
+              {displayCompanyName ? (
+                <div className="lv-sub" style={{ marginTop: 4, opacity: 0.85 }}>
+                  {displayCompanyName}
+                </div>
+              ) : null}
+              <div className="lv-rows">
+                <div className="lv-row">
+                  <span>{copy.dcfWeight}</span>
+                  <b className="mono">{fmtK(computed.dcf, locale)}</b>
+                </div>
+                <div className="lv-row">
+                  <span>{copy.ebitdaWeight}</span>
+                  <b className="mono">{fmtK(computed.ebtMult, locale)}</b>
+                </div>
+                <div className="lv-row">
+                  <span>{copy.revWeight}</span>
+                  <b className="mono">{fmtK(computed.revMult, locale)}</b>
+                </div>
+                <div className="lv-row hl">
+                  <span>{copy.enterpriseValue}</span>
+                  <b className="mono">{fmtK(computed.ev, locale)}</b>
+                </div>
+              </div>
             </div>
-            <div className="lv-val mono">{fmtEquitySidebarM(computed.equity, locale)}</div>
-            <div className="lv-sub">{copy.liveUpdating}</div>
-            {displayCompanyName ? (
-              <div className="lv-sub" style={{ marginTop: 4, opacity: 0.85 }}>
-                {displayCompanyName}
-              </div>
-            ) : null}
-            <div className="lv-rows">
-              <div className="lv-row">
-                <span>{copy.dcfWeight}</span>
-                <b className="mono">{fmtK(computed.dcf, locale)}</b>
-              </div>
-              <div className="lv-row">
-                <span>{copy.ebitdaWeight}</span>
-                <b className="mono">{fmtK(computed.ebtMult, locale)}</b>
-              </div>
-              <div className="lv-row">
-                <span>{copy.revWeight}</span>
-                <b className="mono">{fmtK(computed.revMult, locale)}</b>
-              </div>
-              <div className="lv-row hl">
-                <span>{copy.enterpriseValue}</span>
-                <b className="mono">{fmtK(computed.ev, locale)}</b>
-              </div>
-            </div>
-          </div>
+          ) : null}
         </aside>
 
         <main className="main">

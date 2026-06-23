@@ -1,5 +1,6 @@
 import type { ValuationLocale } from '../../api_client';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
+import { syncFinancialsDerived } from '../wizard/financial_history';
 import { mapWizardToValuationData } from './map-from-wizard';
 import {
   isEquifyReportApiPayload,
@@ -41,8 +42,12 @@ export function resolveValuationDataFromBody(body: GenerateReportBody): {
 
   if (body.state?.profile) {
     const pdfLocale = body.locale ?? body.language ?? 'he';
+    const syncedState = {
+      ...body.state,
+      financials: syncFinancialsDerived(body.state.financials),
+    };
     return {
-      valuationData: mapWizardToValuationData(body.state, body.reportId, pdfLocale),
+      valuationData: mapWizardToValuationData(syncedState, body.reportId, pdfLocale),
     };
   }
 

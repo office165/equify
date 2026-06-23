@@ -37,7 +37,6 @@ import {
   formatReportDate,
   resolvePurposeLabel,
   SCROLL_SECTIONS,
-  toMillions,
 } from '../../lib/results/scroll-report-vm';
 import {
   FinancialBarChart,
@@ -283,6 +282,7 @@ export function EquifyResultsReport({
         companyName: displayCompanyName,
         industryCode,
         locale,
+        state: equifyState ?? stored ?? undefined,
       });
     } catch (err) {
       const message =
@@ -291,7 +291,7 @@ export function EquifyResultsReport({
     } finally {
       setIsDownloadingPdf(false);
     }
-  }, [base, displayCompanyName, locale, shell.exportFailed, vm]);
+  }, [base, displayCompanyName, equifyState, locale, shell.exportFailed, vm]);
 
   const handleDownloadHtml = useCallback(async () => {
     if (!vm || !base) return;
@@ -308,6 +308,7 @@ export function EquifyResultsReport({
         companyName: displayCompanyName,
         industryCode,
         locale,
+        state: equifyState ?? stored ?? undefined,
       });
     } catch (err) {
       const message =
@@ -316,14 +317,14 @@ export function EquifyResultsReport({
     } finally {
       setIsDownloadingHtml(false);
     }
-  }, [base, displayCompanyName, locale, shell.exportFailed, vm]);
+  }, [base, displayCompanyName, equifyState, locale, shell.exportFailed, vm]);
 
   const handleScenario = useCallback(
     (key: ValuationScenario) => {
       if (!vm) return;
       setScenario(key);
       const view = buildScrollScenarioView(vm, key, vm.currency, sectorKey);
-      setScVal(view.equityM.toFixed(1));
+      setScVal(view.equityAmount);
     },
     [sectorKey, vm],
   );
@@ -350,12 +351,15 @@ export function EquifyResultsReport({
 
   const waccSlices = buildWaccDonutSlices(base.waccPct);
   const reportDate = formatReportDate(locale);
-  const equityDisplay = scVal ?? scrollScenario.equityM.toFixed(1);
+  const equityDisplay = scVal ?? scrollScenario.equityAmount;
   const scColor =
     scenario === 'bear' ? '#D97575' : scenario === 'bull' ? '#C49A3C' : '#9EEEE6';
-  const millionParts = fmtMillionParts(locale);
-  const equityM = toMillions(base.equityValue);
-  const evM = toMillions(base.enterpriseValue);
+  const equityParts = fmtMillionParts(locale, base.equityValue);
+  const evParts = fmtMillionParts(locale, base.enterpriseValue);
+  const scenarioEquityParts = fmtMillionParts(
+    locale,
+    vm.scenarios[scenario].equityValue,
+  );
   const scenarioLabel = (key: ValuationScenario) => {
     if (key === 'bear') return rs.scenarioBear;
     if (key === 'bull') return rs.scenarioBull;
@@ -436,9 +440,9 @@ export function EquifyResultsReport({
             </p>
           </div>
           <div className="c-val num">
-            {millionParts.prefix ? <span>{millionParts.prefix}</span> : null}
-            <span id="coverVal">{equityM.toFixed(1)}</span>
-            {millionParts.suffix}
+            {equityParts.prefix ? <span>{equityParts.prefix}</span> : null}
+            <span id="coverVal">{equityParts.amount}</span>
+            {equityParts.suffix}
           </div>
           <p className="c-cap">
             {rs.coverCaption}{' '}
@@ -479,17 +483,17 @@ export function EquifyResultsReport({
           <div className="kgrid">
             <div className="kcard rv">
               <div className="kv num" style={{ color: 'var(--mint)' }}>
-                {millionParts.prefix}
-                {equityM.toFixed(1)}
-                {millionParts.suffix}
+                {equityParts.prefix}
+                {equityParts.amount}
+                {equityParts.suffix}
               </div>
               <div className="kl">{rs.kEquity}</div>
             </div>
             <div className="kcard rv">
               <div className="kv num">
-                {millionParts.prefix}
-                {evM.toFixed(1)}
-                {millionParts.suffix}
+                {evParts.prefix}
+                {evParts.amount}
+                {evParts.suffix}
               </div>
               <div className="kl">{rs.kEv}</div>
             </div>
@@ -702,9 +706,9 @@ export function EquifyResultsReport({
           <div className="scen-stage">
             <div className="rv">
               <div className="sc-val" style={{ color: scColor }}>
-                {millionParts.prefix}
+                {scenarioEquityParts.prefix}
                 <span id="scVal">{equityDisplay}</span>
-                {millionParts.suffix}
+                {scenarioEquityParts.suffix}
               </div>
               <p className="sc-cap" id="scCap">
                 {scrollScenario.cap}
@@ -819,9 +823,9 @@ export function EquifyResultsReport({
           </div>
 
           <div className="final-val rv">
-            {millionParts.prefix}
-            <span id="finalVal">{equityM.toFixed(1)}</span>
-            {millionParts.suffix}
+            {equityParts.prefix}
+            <span id="finalVal">{equityParts.amount}</span>
+            {equityParts.suffix}
           </div>
           <p className="final-cap rv">
             {rs.blendFooter(reportDate)}

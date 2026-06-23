@@ -2,8 +2,8 @@
 
 import React, { useMemo } from 'react';
 import {
+  fmtEquitySidebarM,
   fmtK,
-  fmtM,
   terminalValuePct,
 } from '../../../lib/valuation';
 import { computeNetDebtK } from '../../../lib/wizard/map_equify_wizard';
@@ -40,9 +40,7 @@ export function ResultsScreen({
     <section className="eqw-results" aria-label="תוצאות הערכת השווי">
       <div className="res-hero">
         <div className="res-eyebrow">שווי לבעלים · תרחיש בסיס</div>
-        <div className="res-val mono">
-          <span>{fmtM(computed.equity)}</span>M ₪
-        </div>
+        <div className="res-val mono">{fmtEquitySidebarM(computed.equity)}</div>
         <div className="res-cap">
           שווי פעילות <span className="mono">{fmtK(computed.ev)}</span> בניכוי חוב
           נטו <span className="mono">{fmtK(netDebtK)}</span>
@@ -128,6 +126,18 @@ export function ResultsScreen({
       </div>
 
       <div className="model-list stagger">
+        {computed.backlogInflectionActive ? (
+          <div className="ml-row" style={{ marginBottom: 12, opacity: 0.92 }}>
+            <div>
+              <div className="mr-name">מתודולוגיית Inflection (צבר הזמנות)</div>
+              <div className="mr-desc">
+                DCF {Math.round(computed.blendWeights.dcf * 100)}% · מכפיל EBITDA{' '}
+                {Math.round(computed.blendWeights.ebitda * 100)}% · בסיס{' '}
+                {fmtK(computed.baseEbitdaForMultiple)}
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="ml-row">
           <div>
             <div className="mr-name">DCF + WACC</div>
@@ -135,7 +145,9 @@ export function ResultsScreen({
           </div>
           <div style={{ textAlign: 'left' }}>
             <div className="mr-val mono">{fmtK(computed.dcf)}</div>
-            <div className="mr-weight">50% · EV</div>
+            <div className="mr-weight">
+              {Math.round(computed.blendWeights.dcf * 100)}% · EV
+            </div>
           </div>
         </div>
         <div className="ml-row">
@@ -145,19 +157,25 @@ export function ResultsScreen({
           </div>
           <div style={{ textAlign: 'left' }}>
             <div className="mr-val mono">{fmtK(computed.ebtMult)}</div>
-            <div className="mr-weight">30% · EV</div>
+            <div className="mr-weight">
+              {Math.round(computed.blendWeights.ebitda * 100)}% · EV
+            </div>
           </div>
         </div>
-        <div className="ml-row">
-          <div>
-            <div className="mr-name">מכפיל הכנסות</div>
-            <div className="mr-desc">Revenue Multiple — עם התאמת ענף ושלב</div>
+        {computed.blendWeights.rev > 0 ? (
+          <div className="ml-row">
+            <div>
+              <div className="mr-name">מכפיל הכנסות</div>
+              <div className="mr-desc">Revenue Multiple — עם התאמת ענף ושלב</div>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div className="mr-val mono">{fmtK(computed.revMult)}</div>
+              <div className="mr-weight">
+                {Math.round(computed.blendWeights.rev * 100)}% · EV
+              </div>
+            </div>
           </div>
-          <div style={{ textAlign: 'left' }}>
-            <div className="mr-val mono">{fmtK(computed.revMult)}</div>
-            <div className="mr-weight">20% · EV</div>
-          </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="scen-table stagger">

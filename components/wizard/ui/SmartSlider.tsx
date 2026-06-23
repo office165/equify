@@ -8,6 +8,7 @@ import {
   parseFinancialInput,
   type FinancialInputUnit,
 } from '../../../lib/utils/financial_input_parser';
+import { fluidNumericInputClasses } from './fluidInputTypography';
 
 export type SmartSliderUnit = FinancialInputUnit;
 
@@ -278,6 +279,7 @@ export function SmartSlider({
   const trackStyle = { '--p': `${p}%` } as React.CSSProperties;
   const idleValue = formatFinancialInputValue(displayValue, unit);
   const displayText = editing ? draft : idleValue;
+  const fluidClasses = fluidNumericInputClasses(displayText, '!text-right');
 
   return (
     <div className={`smart-num${dragging ? ' is-dragging' : ''}`}>
@@ -286,7 +288,7 @@ export function SmartSlider({
           {label}
           {required ? <span className="req"> *</span> : null}
         </label>
-        <div className="sn-value-wrap">
+        <div className="sn-value-wrap w-full min-w-0">
           {unit === '₪K' && !editing ? (
             <span className="sn-currency" aria-hidden="true">
               ₪
@@ -299,7 +301,8 @@ export function SmartSlider({
             enterKeyHint="done"
             autoComplete="off"
             spellCheck={false}
-            className={`sn-input mono${editing ? ' is-editing' : ''}`}
+            dir="ltr"
+            className={`sn-input mono w-full min-w-0 text-right ${fluidClasses}${editing ? ' is-editing' : ''}`}
             value={displayText}
             onFocus={handleInputFocus}
             onChange={handleInputChange}

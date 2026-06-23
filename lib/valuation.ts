@@ -1,4 +1,7 @@
 import type { ValuationLocale } from '../api_client';
+import type { CompactAmountUnit } from './utils/formatCurrency';
+import { formatCompactAmount, splitCompactAmount } from './utils/formatCurrency';
+import type { CalibratedYearSlice } from './valuation/adaptive_calibration';
 import type { EbitdaBlendBreakdown } from './valuation/blended_ebitda';
 import type { ValuationStrategyKind } from './valuation/sector_methodology_matrix';
 
@@ -24,6 +27,17 @@ export {
   computeScenarios,
   runValuationEngine,
 } from './valuation/valuation_engine';
+export {
+  computeValuation as calculateValuation,
+  runValuationEngine as runValuation,
+} from './valuation/valuationEngine';
+export {
+  applySectorMarginGuardrails,
+  computeDynamicMultiple,
+  computeInflectionForwardEbitda2027K,
+  type CalibrationWarning,
+  type CalibratedYearSlice,
+} from './valuation/adaptive_calibration';
 
 /**
  * Equify valuation — public types, constants, and engine re-exports.
@@ -78,10 +92,16 @@ export interface ValuationInputs {
   ebitda2024K?: number;
   ebitda2025K?: number;
   ebitda2026K?: number;
+  revenue2024K?: number;
+  revenue2025K?: number;
   revenue2026K?: number;
   ebitda2027K?: number | null;
-  hasSignificantBacklog?: boolean;
+  /** User-entered forward EBITDA projections (₪K), index 0 = NTM year 1, 1 = year 2. */
+  projectedEbitdaK?: number[];
+  /** Contracted forward backlog (₪K) — ratio vs revenue_2026 triggers inflection. */
   backlogSignedK?: number;
+  /** @deprecated Derived from backlogSignedK / revenue2026K >= 0.5 */
+  hasSignificantBacklog?: boolean;
 }
 
 export interface ValuationComputed {
@@ -100,9 +120,24 @@ export interface ValuationComputed {
   blendWeights: { dcf: number; ebitda: number; rev: number };
   dcfGrowthPct: number;
   baseEbitdaForMultiple: number;
-  /** 0–1 backlog inflection strength applied to weights & growth. */
+  /** 0 or 1 — backlog inflection methodology engaged. */
   inflectionIntensity: number;
   methodologyStrategy: ValuationStrategyKind;
+  /** True when backlog_signed / revenue_2026 >= 0.5 drives 70/30 DCF/EBITDA weighting. */
+  backlogInflectionActive: boolean;
+  backlogRatio: number;
+  /** Engine winsorization / inflection diagnostics for PDF & UI sync. */
+  calibrationWarnings: string[];
+  calibratedYears?: {
+    y2024: CalibratedYearSlice;
+    y2025: CalibratedYearSlice;
+    y2026: CalibratedYearSlice;
+  };
+  historicalAvgMarginPct: number;
+  forwardEbitda2027K: number;
+  waccBacklogAdjustment: number;
+  multipleBase: number;
+  multipleConcentrationPenalty: number;
 }
 
 export interface ScenarioRow {
@@ -154,10 +189,10 @@ export function qualityScoreGrade(qs: number): QualityGrade {
   return 'C+';
 }
 
+/** Compact display from internal ₪K storage (×1000 → absolute NIS thresholds). */
 function formatKAmount(k: number): string {
-  if (k >= 1_000_000) return `${(k / 1_000_000).toFixed(1)}M`;
-  if (k >= 1000) return `${(k / 1000).toFixed(1)}M`;
-  return `${Math.round(k)}K`;
+  if (!Number.isFinite(k)) return '—';
+  return formatCompactAmount(k * 1000);
 }
 
 export function fmtK(k: number, locale: ValuationLocale = 'he'): string {
@@ -166,25 +201,38 @@ export function fmtK(k: number, locale: ValuationLocale = 'he'): string {
   return locale === 'he' ? `${amount} ${sym}` : `${sym}${amount}`;
 }
 
+/** Numeric portion for split hero displays (amount without B/M/K suffix). */
 export function fmtM(k: number): string {
-  return (k / 1000).toFixed(1);
+  return splitCompactAmount(k * 1000).amount;
+}
+
+/** Scale suffix for split hero displays paired with {@link fmtM}. */
+export function fmtMScale(k: number): CompactAmountUnit {
+  const unit = splitCompactAmount(k * 1000).unit;
+  return unit || 'M';
 }
 
 export function fmtEquitySidebarM(
   equityK: number,
   locale: ValuationLocale = 'he',
 ): string {
-  const amount = `${fmtM(equityK)}M`;
-  const sym = '₪';
-  return locale === 'he' ? `${amount} ${sym}` : `${sym}${amount}`;
+  return fmtK(equityK, locale);
 }
 
 export function fmtMillionParts(
   locale: ValuationLocale,
-): { prefix: string; suffix: string } {
-  return locale === 'he'
-    ? { prefix: '', suffix: 'M ₪' }
-    : { prefix: '₪', suffix: 'M' };
+  valueNis?: number,
+): { prefix: string; suffix: string; amount: string } {
+  const { amount, unit } =
+    valueNis != null && Number.isFinite(valueNis)
+      ? splitCompactAmount(valueNis)
+      : { amount: '', unit: 'M' as CompactAmountUnit };
+  const scale = unit || 'M';
+  const sym = '₪';
+  if (locale === 'he') {
+    return { prefix: '', suffix: `${scale} ${sym}`, amount };
+  }
+  return { prefix: sym, suffix: scale, amount };
 }
 
 export function terminalValuePct(dcf: number): number {

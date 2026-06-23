@@ -1,7 +1,23 @@
 import type { ValuationInputs } from '../valuation';
 import { applyBacklogInflectionAccelerator } from './backlog_inflection_accelerator';
+import {
+  resolveCurrentYearEbitdaK,
+  resolveForwardEbitda2027K,
+  resolveHistoricalThreeYearEbitdaAverage,
+  resolveInflectionForwardEbitda2027K,
+} from './backlog_metrics';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
 import { normalizeMethodologyWeights } from './sector_methodology_matrix';
+
+export {
+  resolveCurrentYearEbitdaK,
+  resolveHistoricalThreeYearEbitdaAverage,
+  resolveHistoricalThreeYearEbitdaAverage as resolveHistoricalEbitdaAverage,
+  resolveInflectionForwardEbitda2027K,
+  resolveForwardEbitda2027K,
+  computeBacklogRatio,
+  BACKLOG_INFLECTION_RATIO_THRESHOLD,
+} from './backlog_metrics';
 
 /** @deprecated Prefer sector methodology + backlog inflection accelerator. */
 export const STANDARD_BLEND_WEIGHTS = {
@@ -17,55 +33,32 @@ export const BACKLOG_BLEND_WEIGHTS = {
   rev: 0,
 } as const;
 
-function isPositiveFinite(n: unknown): n is number {
-  return typeof n === 'number' && Number.isFinite(n) && n > 0;
-}
-
-/** Reported / manual 2026 EBITDA (₪K). */
-export function resolveCurrentYearEbitdaK(
-  inputs: Pick<ValuationInputs, 'ebitda2026K' | 'rev' | 'margin'>,
-): number {
-  if (isPositiveFinite(inputs.ebitda2026K)) {
-    return inputs.ebitda2026K;
-  }
-  if (isPositiveFinite(inputs.rev) && Number.isFinite(inputs.margin)) {
-    return inputs.rev * (inputs.margin / 100);
-  }
-  return 0;
-}
-
 /**
- * Three-year historical average for historical_blended_ebitda (no inflection).
- * Falls back to current-year EBITDA when history is incomplete.
+ * First projected year EBITDA — user-supplied forward projections only.
+ * Tries projectedEbitdaK[0], then [1], then [2], then legacy ebitda2027K; falls back to current year.
  */
-export function resolveHistoricalEbitdaAverage(
+export function resolveForwardProjectedEbitdaK(
+  projectedEbitdaK: number[] | undefined,
   inputs: Pick<
     ValuationInputs,
-    'ebitda2024K' | 'ebitda2025K' | 'ebitda2026K' | 'rev' | 'margin'
+    'ebitda2027K' | 'ebitda2026K' | 'rev' | 'margin'
   >,
 ): number {
-  const current = resolveCurrentYearEbitdaK(inputs);
-  const samples = [
-    inputs.ebitda2024K,
-    inputs.ebitda2025K,
-    inputs.ebitda2026K ?? current,
-  ].filter(isPositiveFinite);
+  const y0 = projectedEbitdaK?.[0];
+  const y1 = projectedEbitdaK?.[1];
+  const y2 = projectedEbitdaK?.[2];
+  if (isPositiveFinite(y0)) return y0;
+  if (isPositiveFinite(y1)) return y1;
+  if (isPositiveFinite(y2)) return y2;
 
-  if (samples.length === 0) return current;
-  return samples.reduce((sum, value) => sum + value, 0) / samples.length;
+  const legacyForward = resolveForwardEbitda2027K(inputs);
+  if (legacyForward != null) return legacyForward;
+
+  return resolveCurrentYearEbitdaK(inputs);
 }
 
-/**
- * First projected year (2027F) EBITDA — explicit user input only.
- * Returns null when missing so callers fall back to 2026.
- */
-export function resolveForwardEbitda2027K(
-  inputs: Pick<ValuationInputs, 'ebitda2027K'>,
-): number | null {
-  if (isPositiveFinite(inputs.ebitda2027K)) {
-    return inputs.ebitda2027K;
-  }
-  return null;
+function isPositiveFinite(n: unknown): n is number {
+  return typeof n === 'number' && Number.isFinite(n) && n > 0;
 }
 
 /** Sector baseline blend weights (before backlog inflection). */
@@ -85,15 +78,16 @@ export function resolveBlendWeights(
   sector: ValuationInputs['sector'],
   inputs: Pick<
     ValuationInputs,
-    | 'hasSignificantBacklog'
     | 'backlogSignedK'
+    | 'projectedEbitdaK'
     | 'growth'
     | 'rev'
     | 'margin'
     | 'revenue2026K'
     | 'ebitda2027K'
     | 'ebitda2026K'
-    | 'normalizedOwnerSalary'
+    | 'ebitda2024K'
+    | 'ebitda2025K'
   >,
   cappedGrowthPct: number,
 ): { dcf: number; ebitda: number; rev: number } {
@@ -120,9 +114,8 @@ export function resolveBaseEbitdaForMultiple(
   }
 
   if (inflectionActive) {
-    const forward2027 = resolveForwardEbitda2027K(inputs);
-    return forward2027 ?? resolveCurrentYearEbitdaK(inputs);
+    return resolveInflectionForwardEbitda2027K(undefined, inputs);
   }
 
-  return resolveHistoricalEbitdaAverage(inputs);
+  return resolveHistoricalThreeYearEbitdaAverage(inputs);
 }

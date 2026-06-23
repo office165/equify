@@ -25,6 +25,7 @@ export interface UseValuationResult {
   methodologyKey: SectorMethodologyKey;
   sectorConfig: SectorMethodologyConfig;
   strategy: ValuationStrategyKind;
+  calibrationWarnings: string[];
 }
 
 /**
@@ -43,6 +44,7 @@ export function useValuation(inputs: ValuationInputs): UseValuationResult {
       methodologyKey,
       sectorConfig,
       strategy: sectorConfig.strategy,
+      calibrationWarnings: computed.calibrationWarnings,
     };
   }, [inputs]);
 }

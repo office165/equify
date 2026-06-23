@@ -15,6 +15,7 @@ import { loadEquifyWizardState } from '../wizard/equify_storage';
 import { captureWizardLeadIdentifiers } from '../wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
+import { syncFinancialsDerived } from '../wizard/financial_history';
 
 const MATRIX_STORAGE_KEY = 'valubot.lastValuationMatrix';
 
@@ -24,6 +25,8 @@ export interface EquifyReportExportOptions {
   companyName?: string;
   industryCode?: string;
   locale?: ValuationLocale;
+  /** Live wizard state — preferred over sessionStorage when exporting PDF/HTML. */
+  state?: EquifyWizardState | null;
 }
 
 export interface EquifyReportExportPayload {
@@ -72,8 +75,9 @@ function readMatrixCompanyName(): string | undefined {
 function resolvePdfWizardState(
   locale: ValuationLocale,
   companyNameHint?: string,
+  stateOverride?: EquifyWizardState | null,
 ): EquifyWizardState {
-  const stored = loadEquifyWizardState();
+  const stored = stateOverride ?? loadEquifyWizardState();
   const base = stored ?? DEFAULT_EQUIFY_WIZARD_STATE;
   const rawName =
     stored?.profile?.companyName?.trim() ||
@@ -88,6 +92,7 @@ function resolvePdfWizardState(
       ...base.profile,
       companyName: displayName,
     },
+    financials: syncFinancialsDerived(base.financials),
   };
 }
 
@@ -97,7 +102,7 @@ export function buildEquifyReportExportPayload(
   format: 'pdf' | 'html',
 ): EquifyReportExportPayload {
   const locale = options.locale ?? 'he';
-  const state = resolvePdfWizardState(locale, options.companyName);
+  const state = resolvePdfWizardState(locale, options.companyName, options.state);
   const displayCompany = resolveDisplayCompanyName(
     options.companyName ?? state.profile.companyName,
     locale,

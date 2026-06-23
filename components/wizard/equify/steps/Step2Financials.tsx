@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { BACKLOG_INFLECTION_RATIO_THRESHOLD } from '../../../../lib/valuation/backlog_inflection_accelerator';
 import { fmtEquitySidebarM, fmtK } from '../../../../lib/valuation';
 import { BLENDED_EBITDA_WEIGHTS } from '../../../../lib/valuation/blended_ebitda';
+import { patchFinancialHistoryYear } from '../../../../lib/wizard/financial_history';
 import { computeNetDebtK } from '../../../../lib/wizard/map_equify_wizard';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
-import { EbitdaSmartInput } from '../../ui/EbitdaSmartInput';
+import { SmartFieldLabel } from '../../ui/SmartFieldLabel';
 import { SmartInput } from '../../ui/SmartInput';
+import { SmartSlider } from '../../ui/SmartSlider';
 import { useWizardValuation } from '../WizardValuationContext';
 
 export interface Step2FinancialsProps {
@@ -14,13 +17,32 @@ export interface Step2FinancialsProps {
   onNext: () => void;
 }
 
+function safeK(value: number | undefined | null): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
 export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
   const { shell, steps: t, isHe, locale } = useEquifyStrings();
   const { state, computed, scenarios, updateFinancials, updateProfile } =
     useWizardValuation();
   const { financials, profile } = state;
+  const [auditOpen, setAuditOpen] = useState(false);
+
+  const y2024 = financials.y2024 ?? { revenueK: 0, ebitdaK: 0 };
+  const y2025 = financials.y2025 ?? { revenueK: 0, ebitdaK: 0 };
+  const y2026 = financials.y2026 ?? { revenueK: 0, ebitdaK: 0 };
+  const projected = financials.projectedEbitdaK ?? [0, 0, 0];
 
   const netDebtK = useMemo(() => computeNetDebtK(financials), [financials]);
+
+  const backlogRatio = useMemo(() => {
+    const rev = safeK(y2026.revenueK);
+    const backlog = safeK(financials.backlogSignedK);
+    if (rev <= 0 || backlog <= 0) return 0;
+    return backlog / rev;
+  }, [financials.backlogSignedK, y2026.revenueK]);
+
+  const inflectionEligible = backlogRatio >= BACKLOG_INFLECTION_RATIO_THRESHOLD;
 
   const { blendWeights, ebitdaBlend } = computed;
   const weightLabel = (base: string, w: number) =>
@@ -40,78 +62,191 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
       </h2>
       <p className="pane-sub rv">{t.step2.sub}</p>
 
-      <div className="fin-layout">
-        <div className="fin-inputs stagger w-full min-w-0 max-w-full overflow-x-clip">
+      <div className="fin-layout fin-layout--live-first">
+        <div className="fin-inputs stagger w-full min-w-0 max-w-full">
+          <div className="fin-field-grid">
+            <SmartInput
+              label={t.step2.hist2026Revenue}
+              tooltip={t.step2.histYearTip}
+              value={safeK(y2026.revenueK)}
+              variant="currency"
+              required
+              ariaLabel={t.step2.hist2026Revenue}
+              onChange={(v) =>
+                updateFinancials(
+                  patchFinancialHistoryYear(financials, 'y2026', { revenueK: v }),
+                )
+              }
+            />
+            <SmartInput
+              label={t.step2.hist2026Ebitda}
+              tooltip={t.step2.histYearTip}
+              value={safeK(y2026.ebitdaK)}
+              variant="currency"
+              required
+              ariaLabel={t.step2.hist2026Ebitda}
+              onChange={(v) =>
+                updateFinancials(
+                  patchFinancialHistoryYear(financials, 'y2026', { ebitdaK: v }),
+                )
+              }
+            />
+          </div>
+
           <SmartInput
-            label={t.step2.revenue}
-            tooltip={t.step2.revenueTip}
-            value={financials.rev}
+            label={t.step2.backlogSigned}
+            tooltip={t.step2.backlogSignedTip}
+            value={safeK(financials.backlogSignedK)}
             variant="currency"
-            required
-            ariaLabel={t.step2.revenue}
-            onChange={(v) => updateFinancials({ rev: v })}
+            ariaLabel={t.step2.backlogSigned}
+            onChange={(v) => updateFinancials({ backlogSignedK: v })}
           />
-          <EbitdaSmartInput
-            label={t.step2.margin}
-            tooltip={t.step2.marginTip}
-            marginPct={financials.margin}
-            revenueK={financials.rev}
-            amountLabel={t.step2.ebitdaAmount}
-            percentLabel={t.step2.ebitdaPercent}
-            required
-            ariaLabel={t.step2.margin}
-            onChangeMargin={(v) => updateFinancials({ margin: v })}
-          />
+
+          {inflectionEligible ? (
+            <SmartInput
+              label={t.step2.projected2027F}
+              tooltip={t.step2.projectedForwardTip}
+              value={safeK(projected[0])}
+              variant="currency"
+              ariaLabel={t.step2.projected2027F}
+              onChange={(v) =>
+                updateFinancials({
+                  projectedEbitdaK: [v, projected[1] ?? 0, projected[2] ?? 0],
+                })
+              }
+            />
+          ) : null}
+
+          <details
+            className="fin-audit-accordion rv"
+            open={auditOpen}
+            onToggle={(e) => setAuditOpen(e.currentTarget.open)}
+          >
+            <summary className="fin-audit-accordion-summary">
+              {t.step2.auditedHistoryAccordion}
+            </summary>
+            <div className="fin-audit-accordion-body">
+            <div className="fin-field-grid">
+              <SmartInput
+                label={t.step2.hist2024Revenue}
+                  tooltip={t.step2.histYearTip}
+                  value={safeK(y2024.revenueK)}
+                  variant="currency"
+                  ariaLabel={t.step2.hist2024Revenue}
+                  onChange={(v) =>
+                    updateFinancials(
+                      patchFinancialHistoryYear(financials, 'y2024', { revenueK: v }),
+                    )
+                  }
+                />
+                <SmartInput
+                  label={t.step2.hist2024Ebitda}
+                  tooltip={t.step2.histYearTip}
+                  value={safeK(y2024.ebitdaK)}
+                  variant="currency"
+                  ariaLabel={t.step2.hist2024Ebitda}
+                  onChange={(v) =>
+                    updateFinancials(
+                      patchFinancialHistoryYear(financials, 'y2024', { ebitdaK: v }),
+                    )
+                  }
+                />
+              </div>
+              <div className="fin-field-grid">
+                <SmartInput
+                  label={t.step2.hist2025Revenue}
+                  tooltip={t.step2.histYearTip}
+                  value={safeK(y2025.revenueK)}
+                  variant="currency"
+                  ariaLabel={t.step2.hist2025Revenue}
+                  onChange={(v) =>
+                    updateFinancials(
+                      patchFinancialHistoryYear(financials, 'y2025', { revenueK: v }),
+                    )
+                  }
+                />
+                <SmartInput
+                  label={t.step2.hist2025Ebitda}
+                  tooltip={t.step2.histYearTip}
+                  value={safeK(y2025.ebitdaK)}
+                  variant="currency"
+                  ariaLabel={t.step2.hist2025Ebitda}
+                  onChange={(v) =>
+                    updateFinancials(
+                      patchFinancialHistoryYear(financials, 'y2025', { ebitdaK: v }),
+                    )
+                  }
+                />
+              </div>
+            </div>
+          </details>
+
           <SmartInput
             label={t.step2.ownerSalary}
             tooltip={t.step2.ownerSalaryTip}
-            value={financials.normalizedOwnerSalaryK}
+            value={safeK(financials.normalizedOwnerSalaryK)}
             variant="currency"
             ariaLabel={t.step2.ownerSalary}
             onChange={(v) => updateFinancials({ normalizedOwnerSalaryK: v })}
           />
-          <SmartInput
-            label={t.step2.capex}
-            tooltip={t.step2.capexTip}
-            value={financials.capexLevelPct}
-            variant="percent"
-            showMultipliers={false}
-            ariaLabel={t.step2.capex}
-            onChange={(v) => updateFinancials({ capexLevelPct: v })}
-          />
-          <SmartInput
-            label={t.step2.growth}
-            tooltip={t.step2.growthTip}
-            value={financials.growth}
-            variant="percent"
-            showMultipliers={false}
-            required
+
+          <SmartSlider
+            label={
+              <SmartFieldLabel tooltip={t.step2.growthTip} required>
+                {t.step2.growth}
+              </SmartFieldLabel>
+            }
+            value={safeK(financials.growth)}
+            min={-10}
+            max={50}
+            step={1}
+            unit="%"
+            minLabel={t.step2.minGrowth}
+            maxLabel={t.step2.maxGrowth}
             ariaLabel={t.step2.growth}
             onChange={(v) => updateFinancials({ growth: v })}
           />
-          <SmartInput
-            label={t.step2.grossDebt}
-            tooltip={t.step2.grossDebtTip}
-            value={financials.grossDebtK}
-            variant="currency"
-            ariaLabel={t.step2.grossDebt}
-            onChange={(v) => updateFinancials({ grossDebtK: v })}
+
+          <SmartSlider
+            label={
+              <SmartFieldLabel tooltip={t.step2.capexTip}>{t.step2.capex}</SmartFieldLabel>
+            }
+            value={safeK(financials.capexLevelPct)}
+            min={0}
+            max={30}
+            step={1}
+            unit="%"
+            minLabel="0%"
+            maxLabel="30%"
+            ariaLabel={t.step2.capex}
+            onChange={(v) => updateFinancials({ capexLevelPct: v })}
           />
-          <SmartInput
-            label={t.step2.cash}
-            tooltip={t.step2.cashTip}
-            value={financials.cashK}
-            variant="currency"
-            ariaLabel={t.step2.cash}
-            onChange={(v) => updateFinancials({ cashK: v })}
-          />
+
+          <div className="fin-field-grid">
+            <SmartInput
+              label={t.step2.grossDebt}
+              tooltip={t.step2.grossDebtTip}
+              value={safeK(financials.grossDebtK)}
+              variant="currency"
+              ariaLabel={t.step2.grossDebt}
+              onChange={(v) => updateFinancials({ grossDebtK: v })}
+            />
+            <SmartInput
+              label={t.step2.cash}
+              tooltip={t.step2.cashTip}
+              value={safeK(financials.cashK)}
+              variant="currency"
+              ariaLabel={t.step2.cash}
+              onChange={(v) => updateFinancials({ cashK: v })}
+            />
+          </div>
 
           <div className="net-debt-banner rv">
             <span>{t.step2.netDebt}</span>
             <b className="mono">{fmtK(netDebtK, locale)}</b>
           </div>
 
-          <div className="fgroup two" style={{ marginTop: 8 }}>
+          <div className="fin-field-grid fin-field-grid--meta">
             <div className="field">
               <label>{t.step2.currency}</label>
               <select
@@ -135,7 +270,7 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
                 type="number"
                 placeholder="2025"
                 dir="ltr"
-                value={profile.fiscalYear}
+                value={profile.fiscalYear ?? ''}
                 onChange={(e) => updateProfile({ fiscalYear: e.target.value })}
               />
             </div>
@@ -148,29 +283,36 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
           <div className="cl-sub mono">
             {t.step2.waccQuality(computed.wacc.toFixed(1), computed.qsGrade)}
           </div>
+          {computed.backlogInflectionActive ? (
+            <div className="cl-inflection-note mono">
+              {t.step2.inflectionActive(
+                Math.round((computed.backlogRatio ?? 0) * 100),
+              )}
+            </div>
+          ) : null}
           <div className="cl-ebitda-blend">
             <div className="cl-ebitda-blend-hd">{t.step2.blendedEbitdaTitle}</div>
             <div className="cl-ebitda-blend-row">
               {t.step2.blendedEbitdaPast(
                 Math.round(wEbitda.past * 100),
-                fmtK(ebitdaBlend.past, locale),
+                fmtK(ebitdaBlend?.past ?? 0, locale),
               )}
             </div>
             <div className="cl-ebitda-blend-row">
               {t.step2.blendedEbitdaCurrent(
                 Math.round(wEbitda.current * 100),
-                fmtK(ebitdaBlend.current, locale),
+                fmtK(ebitdaBlend?.current ?? 0, locale),
               )}
             </div>
             <div className="cl-ebitda-blend-row">
               {t.step2.blendedEbitdaProjected(
                 Math.round(wEbitda.projected * 100),
-                fmtK(ebitdaBlend.projected, locale),
-                ebitdaBlend.dcfGrowthPct.toFixed(1),
+                fmtK(ebitdaBlend?.projected ?? 0, locale),
+                (ebitdaBlend?.dcfGrowthPct ?? 0).toFixed(1),
               )}
             </div>
             <div className="cl-ebitda-blend-total mono">
-              {t.step2.blendedEbitdaTotal(fmtK(ebitdaBlend.blended, locale))}
+              {t.step2.blendedEbitdaTotal(fmtK(ebitdaBlend?.blended ?? 0, locale))}
             </div>
           </div>
           <div className="cl-models">

@@ -184,6 +184,13 @@ export interface ValuationData {
   industryEbitdaMedian?: number;
   industryRevenueMedian?: number;
   industryEbitdaMarginPct?: number;
+  /** Calibrated multiple before concentration penalty (Page 5). */
+  multipleBase?: number;
+  multipleConcentrationPenalty?: number;
+  historicalAvgMarginPct?: number;
+  forwardEbitda2027K?: number;
+  waccBacklogAdjustment?: number;
+  calibrationWarnings?: string[];
   /** Page 5 intro — sector-specific M&A calibration copy */
   multiplesIntro?: string;
 

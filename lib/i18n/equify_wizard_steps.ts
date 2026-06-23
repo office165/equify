@@ -18,6 +18,7 @@ export interface EquifyWizardStepStrings {
     errFullName: string;
     errCompanyName: string;
     errEmail: string;
+    errPhone: string;
     phoneHint: string;
     subSector: string;
     selectSector: string;
@@ -76,6 +77,23 @@ export interface EquifyWizardStepStrings {
     blendedEbitdaCurrent: (pct: number, amount: string) => string;
     blendedEbitdaProjected: (pct: number, amount: string, growth: string) => string;
     blendedEbitdaTotal: (amount: string) => string;
+    hist2024Revenue: string;
+    hist2024Ebitda: string;
+    hist2025Revenue: string;
+    hist2025Ebitda: string;
+    hist2026Revenue: string;
+    hist2026Ebitda: string;
+    histYearTip: string;
+    backlogSigned: string;
+    backlogSignedTip: string;
+    auditedHistoryAccordion: string;
+    inflectionActive: (pct: number) => string;
+    hasSignificantBacklog: string;
+    hasSignificantBacklogHint: string;
+    projected2027F: string;
+    projected2028F: string;
+    projected2029F: string;
+    projectedForwardTip: string;
   };
   step3: {
     titlePrefix: string;
@@ -97,6 +115,13 @@ export interface EquifyWizardStepStrings {
     ipHint: string;
     contracts: string;
     contractsHint: string;
+    hasSignificantBacklog: string;
+    hasSignificantBacklogHint: string;
+    projectedEbitdaSection: string;
+    projectedEbitdaYear1: string;
+    projectedEbitdaYear1Tip: string;
+    projectedEbitdaYear2: string;
+    projectedEbitdaYear2Tip: string;
     riskHint: (wacc: string, concBps: number, recurBps: number, founder: boolean) => string;
     moatLabel: string;
     moatPlaceholder: string;
@@ -133,6 +158,7 @@ const HE: EquifyWizardStepStrings = {
     errFullName: 'נא להזין שם מלא',
     errCompanyName: 'נא להזין שם חברה',
     errEmail: 'כתובת אימייל לא תקינה',
+    errPhone: 'נא להזין מספר טלפון תקין (ספרות בלבד)',
     phoneHint: 'הדוח יישלח לכאן ב-WhatsApp',
     subSector: 'תת-ענף',
     selectSector: 'בחר ענף',
@@ -193,6 +219,27 @@ const HE: EquifyWizardStepStrings = {
     blendedEbitdaProjected: (pct, amount, growth) =>
       `${pct}% תחזית (+${growth}%) · ${amount}`,
     blendedEbitdaTotal: (amount) => `ממוצע משוקלל · ${amount}`,
+    hist2024Revenue: 'הכנסות 2024',
+    hist2024Ebitda: 'EBITDA 2024',
+    hist2025Revenue: 'הכנסות 2025',
+    hist2025Ebitda: 'EBITDA 2025',
+    hist2026Revenue: 'הכנסות 2026 (שנה נוכחית)',
+    hist2026Ebitda: 'EBITDA 2026 (שנה נוכחית)',
+    histYearTip: 'הזינו סכומים בשקלים מלאים (למשל 1,200,000) — משמש לשקלול היסטורי ולבסיס המכפיל',
+    backlogSigned: '🎯 צבר הזמנות חתום לשנים הקרובות (NIS)',
+    backlogSignedTip:
+      'סכום חוזים חתומים / הזמנות מחייבות לשנים קדימה. כאשר הצבר ≥ 50% מהכנסות 2026, מופעל מנוע Inflection (70% DCF · 30% מכפיל עם בסיס EBITDA מעורב קדימה).',
+    auditedHistoryAccordion: '📊 עריכת נתוני עבר מבוקרים (2024-2025)',
+    inflectionActive: (pct) =>
+      `Inflection פעיל · צבר/הכנסות ${pct}% · DCF 70% · EBITDA 30%`,
+    hasSignificantBacklog:
+      'צבר הזמנות חתום / חוזים מהותיים קדימה (2026-2027)',
+    hasSignificantBacklogHint:
+      'מפעיל מתודולוגיית Inflection: 70% DCF · 30% מכפיל על EBITDA צפוי',
+    projected2027F: 'EBITDA צפוי 2027F',
+    projected2028F: 'EBITDA צפוי 2028F',
+    projected2029F: 'EBITDA צפוי 2029F',
+    projectedForwardTip: 'תחזית הנהלה — משמשת כבסיס מכפיל במצב Inflection (₪K)',
   },
   step3: {
     titlePrefix: 'מדדי סיכון',
@@ -216,6 +263,15 @@ const HE: EquifyWizardStepStrings = {
     ipHint: 'מעלה את המכפיל',
     contracts: 'חוזים עם לקוחות ארוכי-טווח',
     contractsHint: 'מייצב תחזית התזרים',
+    hasSignificantBacklog: 'צבר הזמנות חתום / חוזים מהותיים קדימה',
+    hasSignificantBacklogHint:
+      'מפעיל מתודולוגיית Inflection: 70% DCF · 30% מכפיל EBITDA על בסיס EBITDA צפוי (לא היסטורי)',
+    projectedEbitdaSection: 'EBITDA צפוי — לשנים קדימה (₪)',
+    projectedEbitdaYear1: 'EBITDA צפוי — שנה +1 (NTM)',
+    projectedEbitdaYear1Tip:
+      'הזן EBITDA צפוי מהזמנות חתומות / חוזים — משמש כבסיס למכפיל במצב Inflection',
+    projectedEbitdaYear2: 'EBITDA צפוי — שנה +2',
+    projectedEbitdaYear2Tip: 'חלופה אם שנה +1 לא זמינה — נ fallback לשנה +1 ואז ל-EBITDA נוכחי',
     riskHint: (wacc, concBps, recurBps, founder) =>
       `מודיפיירי סיכון פעילים: WACC ${wacc}% · ריכוז +${concBps}bps · חוזרות +${recurBps}bps${founder ? ' · תלות מייסד +60bps' : ''}`,
     moatLabel: 'הערות / יתרון תחרותי ייחודי',
@@ -259,6 +315,7 @@ const EN: EquifyWizardStepStrings = {
     errFullName: 'Please enter your full name',
     errCompanyName: 'Please enter a company name',
     errEmail: 'Invalid email address',
+    errPhone: 'Please enter a valid phone number (digits only)',
     phoneHint: 'Your report will be sent here via WhatsApp',
     subSector: 'Sub-sector',
     selectSector: 'Select sector',
@@ -319,6 +376,27 @@ const EN: EquifyWizardStepStrings = {
     blendedEbitdaProjected: (pct, amount, growth) =>
       `${pct}% projected (+${growth}%) · ${amount}`,
     blendedEbitdaTotal: (amount) => `Weighted average · ${amount}`,
+    hist2024Revenue: 'Revenue 2024',
+    hist2024Ebitda: 'EBITDA 2024',
+    hist2025Revenue: 'Revenue 2025',
+    hist2025Ebitda: 'EBITDA 2025',
+    hist2026Revenue: 'Revenue 2026 (current year)',
+    hist2026Ebitda: 'EBITDA 2026 (current year)',
+    histYearTip: 'Enter full shekel amounts (e.g. 1,200,000) — used for historical blend and multiple base',
+    backlogSigned: '🎯 Signed order backlog for upcoming years (NIS)',
+    backlogSignedTip:
+      'Total signed contracts / binding orders for forward years. When backlog ≥ 50% of 2026 revenue, the Inflection engine engages (70% DCF · 30% multiple with forward EBITDA blend).',
+    auditedHistoryAccordion: '📊 Edit audited historical data (2024-2025)',
+    inflectionActive: (pct) =>
+      `Inflection active · backlog/revenue ${pct}% · DCF 70% · EBITDA 30%`,
+    hasSignificantBacklog:
+      'Signed order backlog / material forward contracts (2026-2027)',
+    hasSignificantBacklogHint:
+      'Engages Inflection methodology: 70% DCF · 30% multiple on forward EBITDA',
+    projected2027F: 'Projected EBITDA 2027F',
+    projected2028F: 'Projected EBITDA 2028F',
+    projected2029F: 'Projected EBITDA 2029F',
+    projectedForwardTip: 'Management forecast — multiples base in Inflection mode (₪K)',
   },
   step3: {
     titlePrefix: 'Risk metrics',
@@ -341,6 +419,15 @@ const EN: EquifyWizardStepStrings = {
     ipHint: 'Raises the multiple',
     contracts: 'Long-term customer contracts',
     contractsHint: 'Stabilizes cash flow forecast',
+    hasSignificantBacklog: 'Signed order backlog / material forward contracts',
+    hasSignificantBacklogHint:
+      'Engages Inflection methodology: 70% DCF · 30% EBITDA multiple on forward EBITDA (not trailing)',
+    projectedEbitdaSection: 'Projected EBITDA — forward years (₪)',
+    projectedEbitdaYear1: 'Projected EBITDA — year +1 (NTM)',
+    projectedEbitdaYear1Tip:
+      'Enter forward EBITDA from signed orders/contracts — multiples base in Inflection mode',
+    projectedEbitdaYear2: 'Projected EBITDA — year +2',
+    projectedEbitdaYear2Tip: 'Fallback if year +1 is unavailable — tries +1 then current EBITDA',
     riskHint: (wacc, concBps, recurBps, founder) =>
       `Active risk modifiers: WACC ${wacc}% · concentration +${concBps}bps · recurring +${recurBps}bps${founder ? ' · founder dependency +60bps' : ''}`,
     moatLabel: 'Notes / unique competitive advantage',

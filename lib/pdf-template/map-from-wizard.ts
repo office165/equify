@@ -30,6 +30,12 @@ import {
   type EbitdaBlendBreakdown,
 } from '../valuation/blended_ebitda';
 import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
+import {
+  buildCalibratedFinancialTrajectory,
+  ebitdaMarginPctFromYear,
+  syncFinancialsDerived,
+} from '../wizard/financial_history';
+import { resolveSectorMethodologyConfig } from '../valuation/sector_methodology_resolver';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 
 function kToNis(k: number): number {
@@ -81,26 +87,6 @@ function blendedEbitdaNote(
     return `${pctPast}/${pctCur}/${pctProj} weighted · past ₪${(blend.past / 1000).toFixed(1)}M · current ₪${(blend.current / 1000).toFixed(1)}M · projected (+${growth}%) ₪${(blend.projected / 1000).toFixed(1)}M · base ₪${(blend.blended / 1000).toFixed(1)}M`;
   }
   return `שקלול ${pctPast}/${pctCur}/${pctProj} · עבר ₪${(blend.past / 1000).toFixed(1)}M · נוכחי ₪${(blend.current / 1000).toFixed(1)}M · תחזית (+${growth}%) ₪${(blend.projected / 1000).toFixed(1)}M · בסיס ₪${(blend.blended / 1000).toFixed(1)}M`;
-}
-
-function buildTrajectory(revK: number, marginPct: number, growthPct: number): TrajectoryPoint[] {
-  const years: TrajectoryPoint[] = [];
-  const baseYear = new Date().getFullYear();
-  const g = 1 + growthPct / 100;
-
-  for (let i = -2; i <= 3; i += 1) {
-    const revM = (revK * g ** i) / 1000;
-    const ebitdaM = revM * (marginPct / 100);
-    const forecast = i > 0;
-    years.push({
-      label: forecast ? `${baseYear + i}F` : String(baseYear + i),
-      revenueM: revM,
-      ebitdaM,
-      forecast,
-      fcffM: forecast ? ebitdaM * 0.82 : undefined,
-    });
-  }
-  return years;
 }
 
 function buildWaccSegments(waccPct: number, qs: number): WaccSegment[] {
@@ -258,9 +244,10 @@ function scenarioRowsFromComputed(
   inputs: ValuationInputs,
   sectorKey: EquifyWizardState['profile']['sector'],
   locale: ValuationLocale = 'he',
+  baseMarginOverride?: number,
 ): ScenarioRow[] {
   const labels: Record<string, string> = { bear: 'Bear', base: 'Base', bull: 'Bull' };
-  const baseMargin = inputs.margin;
+  const baseMargin = baseMarginOverride ?? inputs.margin;
 
   return scenarios.rows.map((row) => {
     const mult = parseFloat(row.multDisplay.replace('×', '')) || 0;
@@ -341,8 +328,12 @@ export function mapWizardToValuationData(
   reportId?: string,
   locale: ValuationLocale = 'he',
 ): ValuationData {
-  const netDebtK = computeNetDebtK(state.financials);
-  const inputs = buildValuationInputsFromEquifyState(state);
+  const syncedState: EquifyWizardState = {
+    ...state,
+    financials: syncFinancialsDerived(state.financials),
+  };
+  const netDebtK = computeNetDebtK(syncedState.financials);
+  const inputs = buildValuationInputsFromEquifyState(syncedState);
 
   const computed = computeValuation(inputs);
   const scenarios = computeScenarios(computed, inputs);
@@ -355,8 +346,15 @@ export function mapWizardToValuationData(
 
   const revMultDisplay =
     inputs.rev > 0 ? computed.revMult / inputs.rev : computed.effectiveMult * 0.25;
-  const industryMult = computed.effectiveMult / inputs.sectorMult;
+  const sectorConfig = resolveSectorMethodologyConfig(syncedState.profile.sector);
+  const industryMult =
+    (sectorConfig.minMultiple + sectorConfig.maxMultiple) / 2;
   const ebitdaK = computed.ebitda;
+  const { financials } = syncedState;
+  const currentYearMarginPct =
+    computed.calibratedYears?.y2026.marginPct ??
+    ebitdaMarginPctFromYear(financials.y2026);
+  const trajectory = buildCalibratedFinancialTrajectory(computed, financials);
 
   return {
     reportId: reportId ?? `EQ-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`,
@@ -364,40 +362,40 @@ export function mapWizardToValuationData(
     valuationDateShort: dateShort,
     locale,
 
-    fullName: state.profile.fullName,
-    email: state.profile.userEmail,
-    phone: state.profile.userMobilePhone,
-    companyName: resolveDisplayCompanyName(state.profile.companyName, locale),
-    corporateId: state.profile.userCorporateTaxId || state.profile.userNationalId,
-    foundedYear: state.profile.foundedYear ? Number(state.profile.foundedYear) : undefined,
-    sector: state.profile.sector,
+    fullName: syncedState.profile.fullName,
+    email: syncedState.profile.userEmail,
+    phone: syncedState.profile.userMobilePhone,
+    companyName: resolveDisplayCompanyName(syncedState.profile.companyName, locale),
+    corporateId: syncedState.profile.userCorporateTaxId || syncedState.profile.userNationalId,
+    foundedYear: syncedState.profile.foundedYear ? Number(syncedState.profile.foundedYear) : undefined,
+    sector: syncedState.profile.sector,
     sectorLabel: getSectorDisplayLabel(
-      state.profile.sector,
-      state.profile.subSector,
+      syncedState.profile.sector,
+      syncedState.profile.subSector,
       locale,
     ),
-    lifecycle: state.profile.lifecycle,
-    lifecycleLabel: LIFECYCLE_LABELS[state.profile.lifecycle] ?? state.profile.lifecycle,
-    goal: state.goal,
-    goalLabel: goalLabel(state.goal, locale),
-    customLogoDataUrl: isValidLogoDataUrl(state.profile.customLogoDataUrl)
-      ? state.profile.customLogoDataUrl
+    lifecycle: syncedState.profile.lifecycle,
+    lifecycleLabel: LIFECYCLE_LABELS[syncedState.profile.lifecycle] ?? syncedState.profile.lifecycle,
+    goal: syncedState.goal,
+    goalLabel: goalLabel(syncedState.goal, locale),
+    customLogoDataUrl: isValidLogoDataUrl(syncedState.profile.customLogoDataUrl)
+      ? syncedState.profile.customLogoDataUrl
       : undefined,
 
-    revenueK: state.financials.rev,
-    marginPct: state.financials.margin,
-    growthPct: state.financials.growth,
+    revenueK: financials.rev,
+    marginPct: currentYearMarginPct,
+    growthPct: financials.growth,
     debtK: netDebtK,
-    currency: state.profile.currency,
-    fiscalYear: state.profile.fiscalYear ? Number(state.profile.fiscalYear) : undefined,
+    currency: syncedState.profile.currency,
+    fiscalYear: syncedState.profile.fiscalYear ? Number(syncedState.profile.fiscalYear) : undefined,
 
-    recurringPct: state.risk.recurring,
-    topCustomerPct: state.risk.topCustomer,
-    founderDependency: state.risk.founderDep,
-    competition: state.risk.competition,
-    ip: state.risk.ip,
-    contracts: state.risk.contracts,
-    moatNotes: state.profile.qualitativeDescription?.trim() || undefined,
+    recurringPct: syncedState.risk.recurring,
+    topCustomerPct: syncedState.risk.topCustomer,
+    founderDependency: syncedState.risk.founderDep,
+    competition: syncedState.risk.competition,
+    ip: syncedState.risk.ip,
+    contracts: syncedState.risk.contracts,
+    moatNotes: syncedState.profile.qualitativeDescription?.trim() || undefined,
 
     equity: kToNis(computed.equity),
     enterpriseValue: kToNis(computed.ev),
@@ -417,14 +415,26 @@ export function mapWizardToValuationData(
     ebitdaBlendedNote: blendedEbitdaNote(computed.ebitdaBlend, locale),
     effectiveMult: computed.effectiveMult,
     revenueMultiple: revMultDisplay,
+    multipleBase: computed.multipleBase,
+    multipleConcentrationPenalty: computed.multipleConcentrationPenalty,
+    historicalAvgMarginPct: computed.historicalAvgMarginPct,
+    forwardEbitda2027K: computed.forwardEbitda2027K,
+    waccBacklogAdjustment: computed.waccBacklogAdjustment,
+    calibrationWarnings: computed.calibrationWarnings,
     terminalSharePct,
     terminalGrowthPct: 2.5,
 
-    trajectory: buildTrajectory(state.financials.rev, state.financials.margin, state.financials.growth),
+    trajectory,
     waccSegments: buildWaccSegments(computed.wacc, computed.qs),
     dcfRows,
     terminalPvM,
-    scenarios: scenarioRowsFromComputed(scenarios, inputs, state.profile.sector, locale),
+    scenarios: scenarioRowsFromComputed(
+      scenarios,
+      inputs,
+      syncedState.profile.sector,
+      locale,
+      currentYearMarginPct,
+    ),
     modelBlend,
     qualityFactors: buildQualityFactors(inputs),
     multiplesPositions: [
@@ -465,11 +475,11 @@ export function mapWizardToValuationData(
 
     industryEbitdaMedian: industryMult,
     industryRevenueMedian: revMultDisplay * 0.95,
-    industryEbitdaMarginPct: state.financials.margin - 2,
+    industryEbitdaMarginPct: currentYearMarginPct - 2,
 
     sensitivityGrowthWacc: buildSensitivityGrowthWacc(
       computed.equity,
-      state.financials.growth,
+      financials.growth,
       computed.wacc,
       netDebtK,
     ),
@@ -479,8 +489,8 @@ export function mapWizardToValuationData(
       netDebtK,
     ),
 
-    netDebtNote: `חוב נטו ליום ההערכה: ₪${(netDebtK / 1000).toFixed(1)}M (חוב ברוטו ₪${(state.financials.grossDebtK / 1000).toFixed(1)}M פחות מזומן ₪${(state.financials.cashK / 1000).toFixed(1)}M).`,
+    netDebtNote: `חוב נטו ליום ההערכה: ₪${(netDebtK / 1000).toFixed(1)}M (חוב ברוטו ₪${(financials.grossDebtK / 1000).toFixed(1)}M פחות מזומן ₪${(financials.cashK / 1000).toFixed(1)}M).`,
     keyFindings: `Quality ${computed.qsGrade} · WACC ${computed.wacc.toFixed(1)}% · EBITDA base (30/50/20) ₪${(computed.ebitda / 1000).toFixed(1)}M · מכפיל ×${computed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
-    multiplesIntro: getMultiplesIntroText(state.profile.sector, locale),
+    multiplesIntro: getMultiplesIntroText(syncedState.profile.sector, locale),
   };
 }

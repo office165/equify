@@ -1,4 +1,5 @@
 import type { EquifyWizardState } from './map_equify_wizard';
+import { syncFinancialsDerived } from './financial_history';
 
 export const EQUIFY_WIZARD_STATE_KEY = 'valubot.equifyWizardState';
 
@@ -16,7 +17,11 @@ export function loadEquifyWizardState(): EquifyWizardState | null {
   try {
     const raw = sessionStorage.getItem(EQUIFY_WIZARD_STATE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as EquifyWizardState;
+    const parsed = JSON.parse(raw) as EquifyWizardState;
+    return {
+      ...parsed,
+      financials: syncFinancialsDerived(parsed.financials),
+    };
   } catch {
     return null;
   }

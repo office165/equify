@@ -6,7 +6,7 @@ import { resolveEquifySectorFromIndustryCode } from '../wizard/build_valuation_i
 import type { EquifySectorKey } from '../valuation';
 import type { ValuationScenario } from '../valuation/canonical_valuation';
 import { getScenarioNarrative } from '../i18n/equify_report_copy';
-import { formatCurrencyShort } from '../utils/formatCurrency';
+import { formatCurrencyShort, splitCompactAmount } from '../utils/formatCurrency';
 import { buildWaccDonutSlices, type ReportViewModel } from './report-view-model';
 
 export const SCROLL_SECTIONS = [
@@ -46,6 +46,8 @@ export interface QualityFactorView {
 
 export interface ScrollScenarioView {
   equityM: number;
+  equityAmount: string;
+  equityUnit: string;
   cap: string;
   capFull?: string;
   dotPct: number;
@@ -233,6 +235,8 @@ export function buildScrollScenarioView(
 
   return {
     equityM: s.equityValue / 1_000_000,
+    equityAmount: splitCompactAmount(s.equityValue).amount,
+    equityUnit: splitCompactAmount(s.equityValue).unit || 'M',
     cap: narrative.description,
     capFull: narrative.fullDescription,
     dotPct,

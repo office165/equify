@@ -50,13 +50,13 @@ p{line-height:1.65;color:var(--ink);margin-bottom:2mm}
 .cv-range b{color:var(--ink)}
 .seal{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gold);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:7px;letter-spacing:.16em;padding:5px 14px;border-radius:30px;font-weight:600;margin-bottom:7mm}
 .seal i{width:5px;height:5px;border-radius:50%;background:var(--gold);display:inline-block}
-.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin:4mm 0}
-.kc{border:1px solid var(--line);border-radius:7px;padding:4mm;background:var(--tint);position:relative;overflow:hidden}
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm;margin:4mm 0}
+.kc{border:1px solid var(--line);border-radius:9px;padding:5mm 3.5mm;min-height:24mm;background:var(--tint);position:relative;overflow:visible;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2mm;text-align:center}
 .kc::before{content:"";position:absolute;bottom:0;inset-inline:0;height:2.5px;background:var(--turq)}
-.kc b{font-family:'IBM Plex Mono',monospace;font-size:16px;display:block;direction:ltr;text-align:right;color:var(--pine);font-weight:600}
+.kc b{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;line-height:1.15;display:block;direction:ltr;text-align:center;color:var(--pine);overflow:visible}
 .kc b.hl{color:var(--turqB)}.kc b.gd{color:var(--gold)}.kc b.rd{color:var(--red)}
-.kc span{font-size:8px;color:var(--dim)}
-.kc-label{font-size:9px;font-weight:600;color:var(--ink);margin-top:1mm}
+.kc span{font-size:10px;font-weight:500;color:var(--dim);line-height:1.3;margin-top:1mm}
+.kc-label{font-size:12px;font-weight:700;color:var(--ink);margin-top:1mm;line-height:1.35}
 table{width:100%;border-collapse:collapse;margin-bottom:3mm;font-size:9.5px}
 th{font-family:'IBM Plex Mono',monospace;font-size:7px;letter-spacing:.1em;color:var(--dim);text-align:right;font-weight:600;padding:5px 7px;background:var(--tint);border-bottom:2px solid var(--pine);border-top:1px solid var(--line)}
 td{padding:5.5px 7px;border-bottom:1px solid var(--line);vertical-align:middle}
