@@ -9,6 +9,9 @@ import {
   runValuationEngine,
   SECTOR_MULTIPLIERS,
   LIFECYCLE_ADJ,
+  OMWISE_BASELINE_VARIANCE_PCT,
+  OMWISE_CALIBRATION_QS,
+  buildVarianceRibbon,
   type ValuationInputs,
 } from '../lib/valuation';
 import { resolveSectorMethodologyConfig } from '../lib/valuation/sector_methodology_resolver';
@@ -21,13 +24,13 @@ const OMWISE = {
   company: 'Omwise / הומייז',
   revenue2024: 25_779_621,
   ebitda2024: 3_377_021,
-  revenue2025: 36_122_681,
+  revenue2025: 38_000_000,
   ebitda2025: 6_503_353,
-  revenue2026: 36_000_000,
-  ebitda2026: 1_580_000,
+  revenue2026: 45_000_000,
+  ebitda2026: 7_000_000,
   backlogSigned: 70_000_000,
-  /** User reference: backlog × 15.3% (not used by engine when inflection derives from avg margin). */
-  ebitda2027fReference: 70_000_000 * 0.153,
+  grossDebt: 4_400_000,
+  cash: 1_700_000,
   netDebt: 2_700_000,
   targetQualityScore: 67,
   sector: 'industry' as const,
@@ -47,12 +50,15 @@ function buildOmwiseInputs(): ValuationInputs {
     OMWISE.revenue2026 > 0
       ? (OMWISE.ebitda2026 / OMWISE.revenue2026) * 100
       : 0;
+  const projected2027K = OMWISE.ebitda2026 * (1 + 0.12);
 
   return {
     rev: rev2026K,
     margin: margin2026,
-    growth: 9,
+    growth: 12,
     debt: toK(OMWISE.netDebt),
+    grossDebt: toK(OMWISE.grossDebt),
+    cash: toK(OMWISE.cash),
     sector: OMWISE.sector,
     sectorMult: SECTOR_MULTIPLIERS.industry,
     subSectorMult: 1,
@@ -65,8 +71,6 @@ function buildOmwiseInputs(): ValuationInputs {
     contracts: true,
     normalizedOwnerSalary: 0,
     capexLevelPct: 6,
-    grossDebt: toK(OMWISE.netDebt),
-    cash: 0,
     revenue2024K: toK(OMWISE.revenue2024),
     revenue2025K: toK(OMWISE.revenue2025),
     revenue2026K: rev2026K,
@@ -74,8 +78,8 @@ function buildOmwiseInputs(): ValuationInputs {
     ebitda2025K: toK(OMWISE.ebitda2025),
     ebitda2026K: toK(OMWISE.ebitda2026),
     backlogSignedK: toK(OMWISE.backlogSigned),
-    projectedEbitdaK: [toK(OMWISE.ebitda2027fReference), 0, 0],
-    ebitda2027K: toK(OMWISE.ebitda2027fReference),
+    projectedEbitdaK: [toK(projected2027K), 0, 0],
+    ebitda2027K: toK(projected2027K),
   };
 }
 
@@ -134,7 +138,7 @@ function main(): void {
     OMWISE.backlogSigned / OMWISE.revenue2026;
   console.log(`  backlog_signed / revenue_2026 = ${(backlogRatio * 100).toFixed(1)}% (threshold 50%)`);
 
-  const { computed } = runValuationEngine(inputs);
+  const { computed, scenarios } = runValuationEngine(inputs);
 
   console.log(`  backlogInflectionActive: ${computed.backlogInflectionActive}`);
   console.log(`  inflectionIntensity: ${computed.inflectionIntensity}`);
@@ -161,12 +165,12 @@ function main(): void {
   console.log(`  WACC backlog adjustment: ${computed.waccBacklogAdjustment.toFixed(1)} pp`);
   console.log(`  WACC (adjusted): ${pct(computed.wacc)}`);
 
-  console.log(`\n  forwardEbitda2027K (engine): ${moneyK(computed.forwardEbitda2027K)}`);
+  console.log(`\n  forwardEbitda2027K (organic): ${moneyK(computed.forwardEbitda2027K)}`);
   console.log(
-    `  forwardEbitda2027K (user ref 15.3% × backlog): ${moneyK(toK(OMWISE.ebitda2027fReference))}`,
+    `  Formula: ebitda_2026 × (1 + growth) = ${moneyK(toK(OMWISE.ebitda2026 * 1.09))}`,
   );
   console.log(
-    `  Formula: historicalAvgMargin ${pct(calibration.historicalAvgMarginPct)} × backlog ${moneyK(toK(OMWISE.backlogSigned))} = ${moneyK(calibration.historicalAvgMarginPct / 100 * toK(OMWISE.backlogSigned))}`,
+    `  Backlog coverage (backlog ÷ organic 2027F rev): ${((OMWISE.backlogSigned / (OMWISE.revenue2026 * 1.09)) * 100).toFixed(1)}% → WACC −${Math.abs(computed.waccBacklogAdjustment).toFixed(1)}pp specific risk`,
   );
 
   divider('3 · DYNAMIC MULTIPLE (Linear Interpolation)');
@@ -201,6 +205,41 @@ function main(): void {
   console.log(`  Blended Enterprise Value (EV): ${moneyK(computed.ev)}`);
   console.log(`  Net debt: ${moneyK(inputs.debt)}`);
   console.log(`  Equity Value (שווי לבעלים): ${moneyK(computed.equity)}`);
+
+  divider('5 · SCENARIO RIBBON (QS-Driven Relative Variance)');
+  const e = scenarios.elasticity!;
+  const cog = scenarios.centerOfGravity!;
+  console.log(`  Raw equity (trailing): ${moneyK(computed.rawEquity ?? computed.equity)}`);
+  console.log(
+    `  Forward run-rate: ${moneyK(cog.forwardRunRateK)} vs trailing ${moneyK(cog.trailingRunRateK)} · uplift ×${cog.calibrationFactor.toFixed(3)}`,
+  );
+  console.log(`  Calibrated base (center of gravity): ${moneyK(computed.equity)}`);
+  console.log(
+    `  Ribbon: ±${(e.relativeVariancePct * 100).toFixed(1)}% · QS ${e.qualityScore} · tier ${e.valuationTier} · bear ×${e.bearMultiplier.toFixed(2)} · bull ×${e.bullMultiplier.toFixed(2)}`,
+  );
+  console.log(
+    `  Omwise target: Base ~₪19.5M · Bear ~₪18M · Bull ~₪22.5M at QS ${OMWISE_CALIBRATION_QS} (±${(OMWISE_BASELINE_VARIANCE_PCT * 100).toFixed(0)}%)`,
+  );
+  for (const row of scenarios.rows) {
+    console.log(
+      `  ${row.label.toUpperCase()}: ${row.ebitdaAdj} · WACC ${pct(row.waccPct)} · ${row.multDisplay} · Equity ${moneyK(row.equity)}`,
+    );
+  }
+  const spreadK = scenarios.bullEq - scenarios.bearEq;
+  console.log(`\n  Equity spread (Bull − Bear): ${moneyK(spreadK)}`);
+
+  divider('6 · ENTERPRISE SCALABILITY (same ±%, auto-scales in ₪)');
+  const enterpriseBaseEqK = 1_000_000;
+  const enterpriseRibbon = buildVarianceRibbon({
+    baseEquityK: enterpriseBaseEqK,
+    debtK: 50_000,
+    qualityScore: OMWISE.targetQualityScore,
+    sector: inputs.sector,
+    revenueK: enterpriseBaseEqK * 2,
+  });
+  console.log(
+    `  ₪1B base equity · ±${(enterpriseRibbon.elasticity.relativeVariancePct * 100).toFixed(1)}% → Bear ${moneyK(enterpriseRibbon.bearEquityK)} · Bull ${moneyK(enterpriseRibbon.bullEquityK)} · spread ${moneyK(enterpriseRibbon.bullEquityK - enterpriseRibbon.bearEquityK)}`,
+  );
 
   console.log('\n── Calibration warnings emitted ──');
   if (computed.calibrationWarnings.length) {

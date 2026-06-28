@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
+  FINANCIAL_INPUT_MAX_CHARS,
+  FINANCIAL_MAX_ABSOLUTE_NIS,
   formatDigitsWhileTyping,
   formatFinancialInputValue,
   formatWithCommas,
@@ -76,7 +78,7 @@ export function EbitdaSmartInput({
       }
 
       const cleaned = raw.replace(/,/g, '').trim();
-      const absolute = parseFloat(cleaned);
+      const absolute = Math.min(FINANCIAL_MAX_ABSOLUTE_NIS, Number(cleaned.replace(/[^\d.-]/g, '')));
       if (!Number.isFinite(absolute)) return;
       onChangeMargin(marginFromAbsolute(revenueK, absolute));
     },
@@ -156,7 +158,8 @@ export function EbitdaSmartInput({
           enterKeyHint="done"
           autoComplete="off"
           spellCheck={false}
-          className="si-input mono"
+          maxLength={mode === 'amount' ? FINANCIAL_INPUT_MAX_CHARS : undefined}
+          className="si-input mono text-base md:text-sm"
           value={displayText}
           dir="ltr"
           aria-label={ariaLabel ?? label}

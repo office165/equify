@@ -3,12 +3,16 @@
 import React, { useId } from 'react';
 import { BRAND_LOGO_TITLE } from '../../lib/brand/brand-identity';
 import {
+  EQUIFY_SITE_LOGO_ASPECT,
+  EQUIFY_SITE_LOGO_SRC,
+  equifyStackedLogoSize,
+} from '../../lib/brand/brand-logo';
+import {
   EQUIFY_ARROW_GRADIENT,
   EQUIFY_ARROW_PATH,
   EQUIFY_BAR_BOTTOM_PATH,
   EQUIFY_BAR_MIDDLE_PATH,
   EQUIFY_BAR_TOP_PATH,
-  EQUIFY_LOCKUP,
   EQUIFY_MARK_VIEWBOX,
   EQUIFY_SLICE_PATH,
   EQUIFY_STEM_PATH,
@@ -19,7 +23,6 @@ export type EquifyLogoVariant = 'dark-bg' | 'light-bg';
 export interface EquifyLogoProps {
   variant?: EquifyLogoVariant;
   premium?: boolean;
-  /** Scales lockup for narrow mobile headers — keeps full wordmark + BY SBC */
   compact?: boolean;
   className?: string;
   showSubBrand?: boolean;
@@ -114,25 +117,42 @@ export function EquifyMark({
 /** @deprecated Use `EquifyMark` */
 export const EquifyLogoMark = EquifyMark;
 
+/** Render height (px) — mobile baseline. */
+const LOGO_HEIGHT_DEFAULT = 58;
+
+const LOGO_IMG_CLASS =
+  'equify-logo-img w-auto object-contain mix-blend-[plus-lighter]';
+
+/** Mobile stays 58px; desktop +~35% (md) / +~38% (lg). */
+function responsiveLogoSizeClass(compact: boolean, premium: boolean): string {
+  if (compact) return '';
+  if (premium) return 'md:h-[76px] lg:h-[92px]';
+  return 'md:h-[72px] lg:h-[80px]';
+}
+
+function intrinsicLogoHeightPx(compact: boolean, premium: boolean): number {
+  if (compact) return LOGO_HEIGHT_DEFAULT;
+  if (premium) return 92;
+  return 80;
+}
+
 export function EquifyLogo({
-  variant = 'dark-bg',
   premium = false,
   compact = false,
   className = '',
-  showSubBrand = true,
   markOnly = false,
   titleId: titleIdProp,
   decorative = false,
+  variant: _variant = 'dark-bg',
 }: EquifyLogoProps) {
   const uid = useId().replace(/:/g, '');
   const titleId = decorative ? undefined : (titleIdProp ?? `equify-logo-title-${uid}`);
   const gradId = `equify-lockup-${uid}`;
-  const { ink, sub, slice } = variantColors(variant);
 
   if (markOnly) {
     return (
       <EquifyMark
-        variant={variant}
+        variant={_variant}
         className={className}
         gradientId={gradId}
         titleId={titleId}
@@ -140,57 +160,23 @@ export function EquifyLogo({
     );
   }
 
-  const L = EQUIFY_LOCKUP;
-  const heightClass = compact
-    ? 'h-7 w-auto max-w-full sm:h-8'
-    : premium
-      ? 'h-10 w-auto sm:h-11 md:h-12'
-      : 'h-9 w-auto sm:h-10';
+  const heightPx = intrinsicLogoHeightPx(compact, premium);
+  const { width, height } = equifyStackedLogoSize(heightPx);
+  const sizeClass = compact
+    ? 'h-[58px]'
+    : `h-[58px] ${responsiveLogoSizeClass(compact, premium)}`.trim();
 
   return (
-    <span dir="ltr" className={`equify-logo-lockup inline-block ${heightClass} ${className}`}>
-    <svg
-      className="block h-full w-full"
-      viewBox={L.viewBox}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      role={decorative ? undefined : 'img'}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={EQUIFY_SITE_LOGO_SRC}
+      alt={decorative ? '' : BRAND_LOGO_TITLE}
       aria-hidden={decorative ? true : undefined}
-      aria-labelledby={decorative ? undefined : titleId}
-      preserveAspectRatio="xMinYMid meet"
-    >
-      {titleId && !decorative ? (
-        <title id={titleId}>{BRAND_LOGO_TITLE}</title>
-      ) : null}
-      <g transform={`translate(0, ${L.markY}) scale(${L.markScale})`}>
-        <MarkPaths ink={ink} slice={slice} gradId={gradId} />
-      </g>
-      <text
-        x={L.wordmarkX}
-        y={L.wordmarkY}
-        fill={ink}
-        fontFamily="var(--font-equify, Assistant), ui-sans-serif, system-ui, sans-serif"
-        fontSize={L.wordmarkSize}
-        fontWeight="700"
-        letterSpacing="-0.01em"
-      >
-        equify
-      </text>
-      {showSubBrand ? (
-        <text
-          x={L.subBrandX}
-          y={L.subBrandY}
-          fill={sub}
-          fontFamily="var(--font-equify, Assistant), ui-sans-serif, system-ui, sans-serif"
-          fontSize="9"
-          fontWeight="500"
-          letterSpacing="0.18em"
-          textAnchor="end"
-        >
-          BY SBC
-        </text>
-      ) : null}
-    </svg>
-    </span>
+      width={width}
+      height={height}
+      decoding="async"
+      className={`${LOGO_IMG_CLASS} ${sizeClass} ${premium ? 'equify-logo-img--premium' : ''} ${compact ? 'equify-logo-img--compact' : ''} bg-transparent ${className}`}
+      style={{ backgroundColor: 'transparent', mixBlendMode: 'plus-lighter' }}
+    />
   );
 }

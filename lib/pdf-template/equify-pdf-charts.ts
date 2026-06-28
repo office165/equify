@@ -8,15 +8,35 @@ const DONUT_C = 2 * Math.PI * DONUT_R;
 const GAUGE_R = 80;
 const GAUGE_C = 2 * Math.PI * GAUGE_R;
 const GAUGE_ARC = GAUGE_C * 0.75;
-const TRACK_X = 120;
-const TRACK_W = 440;
 const BAR_GROUP_X = [103, 218, 333, 448, 563, 678];
+
+/** Multiples track layout — dedicated RTL label column prevents PDF clipping. */
+export const MULTIPLES_VIEW_W = 820;
+export const MULTIPLES_TRACK_X = 108;
+export const MULTIPLES_TRACK_W = 468;
+export const MULTIPLES_LABEL_X = 592;
+export const MULTIPLES_LABEL_W = 210;
+
+const MULTIPLES_LABEL_STYLE =
+  'direction:rtl;text-align:right;white-space:nowrap;font-family:Assistant,sans-serif;font-size:12px;font-weight:600;color:#1E3A36;line-height:1.25;min-width:120px;overflow:visible;flex-shrink:0;';
 
 const MULTIPLE_TITLES: Record<string, string> = {
   ebitda: 'מכפיל EBITDA',
   revenue: 'מכפיל הכנסות',
+  margin: 'שיעור EBITDA',
   dcf: 'DCF (להשוואה)',
 };
+
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
+
+/** RTL-safe label cell — nowrap + min-width for Hebrew PDF renderers. */
+export function multiplesTrackLabelSvg(title: string, y: number): string {
+  return `<foreignObject x="${MULTIPLES_LABEL_X}" y="${y - 12}" width="${MULTIPLES_LABEL_W}" height="30" overflow="visible">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="${MULTIPLES_LABEL_STYLE}">${escapeHtml(title)}</div>
+  </foreignObject>`;
+}
 
 function barGeom(valueM: number, maxM: number): { y: number; h: number } {
   const h = maxM > 0 ? (valueM / maxM) * BAR_MAX_H : 0;
@@ -34,7 +54,7 @@ function trajectoryMaxM(trajectory: TrajectoryPoint[]): number {
 
 function trackX(value: number, min: number, max: number): number {
   const span = max - min || 1;
-  return TRACK_X + ((value - min) / span) * TRACK_W;
+  return MULTIPLES_TRACK_X + ((value - min) / span) * MULTIPLES_TRACK_W;
 }
 
 export function buildEquifyFinancialBarChartSvg(trajectory: TrajectoryPoint[]): string {
@@ -80,7 +100,7 @@ export function buildEquifyWaccDonutSvg(segments: WaccSegment[], waccPct: number
     <text x="100" y="116" text-anchor="middle" class="axis" style="letter-spacing:.16em">WACC</text></svg>`;
 }
 
-function multiplesRowSvg(row: MultiplePositionRow, y: number, titleY: number): string {
+function multiplesRowSvg(row: MultiplePositionRow, y: number, titleY: number, currency = 'ILS'): string {
   const title = MULTIPLE_TITLES[row.id] ?? row.title;
   const cx = trackX(row.multiple, row.rangeMin, row.rangeMax);
   const bandX = trackX(row.marketMin, row.rangeMin, row.rangeMax);
@@ -88,50 +108,82 @@ function multiplesRowSvg(row: MultiplePositionRow, y: number, titleY: number): s
   const bandW = Math.max(bandEnd - bandX, 2);
   const marker =
     row.id === 'dcf'
-      ? fmtMoneyCompact(row.impliedEv)
-      : `×${row.multiple.toFixed(1)}`;
-  const evLabel = fmtMoneyCompact(row.impliedEv);
+      ? fmtMoneyCompact(row.impliedEv, currency)
+      : row.id === 'margin'
+        ? `${row.multiple.toFixed(1)}%`
+        : `×${row.multiple.toFixed(1)}`;
+  const evLabel = fmtMoneyCompact(row.impliedEv, currency);
   const color = row.color ?? '#00A89F';
+  const trackEnd = MULTIPLES_TRACK_X + MULTIPLES_TRACK_W;
+  const minAxis =
+    row.id === 'dcf'
+      ? fmtMoneyCompact(row.rangeMin * 1_000_000, currency)
+      : row.id === 'margin'
+        ? `${row.rangeMin.toFixed(1)}%`
+        : `×${row.rangeMin.toFixed(1)}`;
+  const maxAxis =
+    row.id === 'dcf'
+      ? fmtMoneyCompact(row.rangeMax * 1_000_000, currency)
+      : row.id === 'margin'
+        ? `${row.rangeMax.toFixed(1)}%`
+        : `×${row.rangeMax.toFixed(1)}`;
 
-  return `<text x="712" y="${titleY}" text-anchor="end" style="font-family:'Assistant';font-size:12px;font-weight:600;fill:#1E3A36">${title}</text>
-    <rect x="${TRACK_X}" y="${y}" width="${TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
+  return `${multiplesTrackLabelSvg(title, titleY)}
+    <rect x="${MULTIPLES_TRACK_X}" y="${y}" width="${MULTIPLES_TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
     ${row.id !== 'dcf' ? `<rect x="${bandX.toFixed(1)}" y="${y}" width="${bandW.toFixed(1)}" height="10" rx="5" fill="#C5EDE9"/>` : ''}
     <circle cx="${cx.toFixed(1)}" cy="${y + 5}" r="8" fill="${color}"/>
-    <text class="axis" x="${TRACK_X}" y="${y + 26}">${row.id === 'dcf' ? fmtMoneyCompact(row.rangeMin * 1_000_000) : `×${row.rangeMin.toFixed(1)}`}</text>
-    <text class="axis" x="${TRACK_X + TRACK_W}" y="${y + 26}" text-anchor="end">${row.id === 'dcf' ? fmtMoneyCompact(row.rangeMax * 1_000_000) : `×${row.rangeMax.toFixed(1)}`}</text>
+    <text class="axis" x="${MULTIPLES_TRACK_X}" y="${y + 26}">${minAxis}</text>
+    <text class="axis" x="${trackEnd}" y="${y + 26}" text-anchor="end">${maxAxis}</text>
     <text x="${cx.toFixed(1)}" y="${titleY - 2}" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:13px;font-weight:600;fill:${color}">${marker}</text>
     <text x="56" y="${y + 8}" style="font-family:'IBM Plex Mono';font-size:11px;fill:#527570">${evLabel}</text>`;
 }
 
-export function buildEquifyMultiplesTracksSvg(rows: MultiplePositionRow[]): string {
+export function buildEquifyMultiplesTracksSvg(
+  rows: MultiplePositionRow[],
+  currency = 'ILS',
+): string {
   const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
   const ebitda = byId.ebitda ?? rows[0]!;
   const revenue = byId.revenue ?? rows[1] ?? rows[0]!;
-  const dcf = byId.dcf ?? rows[2] ?? rows[0]!;
-  const dcfCx = trackX(dcf.impliedEv / 1_000_000, dcf.rangeMin, dcf.rangeMax);
-  const dcfSvg = `<text x="712" y="168" text-anchor="end" style="font-family:'Assistant';font-size:12px;font-weight:600;fill:#1E3A36">${MULTIPLE_TITLES.dcf}</text>
-    <rect x="${TRACK_X}" y="178" width="${TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
-    <circle cx="${dcfCx.toFixed(1)}" cy="183" r="8" fill="#A8842E"/>
-    <text class="axis" x="${TRACK_X}" y="199">${fmtMoneyCompact(dcf.rangeMin * 1_000_000)}</text>
-    <text class="axis" x="${TRACK_X + TRACK_W}" y="199" text-anchor="end">${fmtMoneyCompact(dcf.rangeMax * 1_000_000)}</text>
-    <text x="${dcfCx.toFixed(1)}" y="166" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:13px;font-weight:600;fill:#A8842E">${fmtMoneyCompact(dcf.impliedEv)}</text>`;
+  const third = byId.margin ?? byId.dcf ?? rows[2] ?? rows[0]!;
+  const thirdTitleY = third.id === 'margin' ? 168 : 168;
+  const thirdY = third.id === 'margin' ? 178 : 178;
+  const dcfCx = trackX(third.impliedEv / 1_000_000, third.rangeMin, third.rangeMax);
+  const thirdMarker =
+    third.id === 'dcf'
+      ? fmtMoneyCompact(third.impliedEv, currency)
+      : third.id === 'margin'
+        ? `${third.multiple.toFixed(1)}%`
+        : `×${third.multiple.toFixed(1)}`;
+  const thirdColor = third.color ?? '#A8842E';
+  const trackEnd = MULTIPLES_TRACK_X + MULTIPLES_TRACK_W;
+  const thirdSvg =
+    third.id === 'margin'
+      ? multiplesRowSvg(third, thirdY, thirdTitleY, currency)
+      : `${multiplesTrackLabelSvg(MULTIPLE_TITLES.dcf, thirdTitleY)}
+    <rect x="${MULTIPLES_TRACK_X}" y="${thirdY}" width="${MULTIPLES_TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
+    <circle cx="${dcfCx.toFixed(1)}" cy="${thirdY + 5}" r="8" fill="${thirdColor}"/>
+    <text class="axis" x="${MULTIPLES_TRACK_X}" y="${thirdY + 26}">${fmtMoneyCompact(third.rangeMin * 1_000_000, currency)}</text>
+    <text class="axis" x="${trackEnd}" y="${thirdY + 26}" text-anchor="end">${fmtMoneyCompact(third.rangeMax * 1_000_000, currency)}</text>
+    <text x="${dcfCx.toFixed(1)}" y="${thirdTitleY - 2}" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:13px;font-weight:600;fill:${thirdColor}">${thirdMarker}</text>`;
 
-  return `<svg viewBox="0 0 720 200" style="width:100%">${multiplesRowSvg(ebitda, 38, 28)}${multiplesRowSvg(revenue, 108, 98)}${dcfSvg}</svg>`;
+  return `<svg viewBox="0 0 ${MULTIPLES_VIEW_W} 200" style="width:100%;overflow:visible" aria-hidden="true">${multiplesRowSvg(ebitda, 38, 28, currency)}${multiplesRowSvg(revenue, 108, 98, currency)}${thirdSvg}</svg>`;
 }
 
 export function buildEquifyScenarioRangeSvg(
   bearEquity: number,
   baseEquity: number,
   bullEquity: number,
+  currency = 'ILS',
 ): string {
   return `<svg viewBox="0 0 720 90" style="width:100%">
     <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C24A4A"/><stop offset=".5" stop-color="#00A89F"/><stop offset="1" stop-color="#A8842E"/></linearGradient></defs>
     <rect x="50" y="34" width="620" height="12" rx="6" fill="#F0F8F6"/>
     <rect x="50" y="34" width="620" height="12" rx="6" fill="url(#rg)" opacity=".75"/>
     <circle cx="50" cy="40" r="7" fill="#C24A4A"/><circle cx="360" cy="40" r="9" fill="#00A89F" stroke="#fff" stroke-width="2.5"/><circle cx="670" cy="40" r="7" fill="#A8842E"/>
-    <text x="50" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#C24A4A">${fmtMoneyCompact(bearEquity)}</text>
-    <text x="360" y="22" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:14px;font-weight:600;fill:#163530">${fmtMoneyCompact(baseEquity)}</text>
-    <text x="670" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#A8842E">${fmtMoneyCompact(bullEquity)}</text></svg>`;
+    <text x="50" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#C24A4A">${fmtMoneyCompact(bearEquity, currency)}</text>
+    <text x="360" y="22" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:14px;font-weight:600;fill:#163530">${fmtMoneyCompact(baseEquity, currency)}</text>
+    <text x="670" y="70" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:11px;fill:#A8842E">${fmtMoneyCompact(bullEquity, currency)}</text></svg>`;
 }
 
 export function buildEquifyQualityGaugeSvg(score: number, grade: string): string {

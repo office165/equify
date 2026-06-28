@@ -26,8 +26,11 @@ const SECTOR_MARKET_HE: Record<EquifySectorKey, string> = {
   services: 'שוק השירותים המקצועיים',
   industry: 'שוק התעשייה והייצור',
   ecom: 'שוק המסחר והאיקומרס',
+  retail_trade: 'שוק המסחר והקמעונאות הפיזית',
+  food_service: 'שוק המסעדנות ושירותי המזון',
   energy: 'שוק האנרגיה והתשתיות',
   defense_aerospace: 'שוק הביטחון, התעופה והחלל',
+  real_estate: 'שוק הנדל"ן, הבינוי והתשתיות',
   other: 'השוק הרלוונטי',
 };
 
@@ -40,8 +43,11 @@ const SECTOR_MARKET_EN: Record<EquifySectorKey, string> = {
   services: 'professional services',
   industry: 'industry and manufacturing',
   ecom: 'commerce and e-commerce',
+  retail_trade: 'physical retail trade',
+  food_service: 'food service and restaurants',
   energy: 'energy and infrastructure',
   defense_aerospace: 'defense, aviation and aerospace',
+  real_estate: 'real estate, construction and infrastructure',
   other: 'the relevant market',
 };
 
@@ -175,8 +181,11 @@ export function resolveEquifySectorKey(sector?: string): EquifySectorKey {
     'services',
     'industry',
     'ecom',
+    'retail_trade',
+    'food_service',
     'energy',
     'defense_aerospace',
+    'real_estate',
     'other',
   ];
   if (sector && keys.includes(sector as EquifySectorKey)) {
@@ -206,6 +215,38 @@ export function multiplesMethodologyCopy(sector: string): string {
 
 export function multiplesMethodologyCopyEn(sector: string): string {
   return `Multiples are anchored to 12 Israeli M&A transactions in ${sector} (2023–2026). Each deal records consideration, date, EBITDA margin, and listed international peers where relevant. Your multiple is not arbitrary — it marks a position on a real market distribution.`;
+}
+
+export interface EbitdaMultipleInterpretationParams {
+  locale?: 'he' | 'en';
+  effectiveMult: number;
+  qualityScore: number;
+  qualityGrade: string;
+  multipleConcentrationPenalty?: number;
+}
+
+/** PDF multiples table — פרשנות row for EBITDA multiple (natural language). */
+export function ebitdaMultipleInterpretationCopy(
+  params: EbitdaMultipleInterpretationParams,
+): string {
+  const mult = params.effectiveMult.toFixed(1);
+  const score = Math.round(params.qualityScore);
+  const grade = params.qualityGrade;
+  const penalty = params.multipleConcentrationPenalty ?? 0;
+
+  if (params.locale === 'en') {
+    let text = `The multiple was calibrated to ${mult}× based on the company's quality score (${score}/${grade}), reflecting its normalized risk profile versus the market.`;
+    if (penalty > 0) {
+      text += ` Reduced by ${penalty.toFixed(1)}× due to customer concentration.`;
+    }
+    return text;
+  }
+
+  let text = `המכפיל הותאם לרמה של ${mult}× על בסיס ציון האיכות של החברה (${score}/${grade}), המשקף את פרופיל הסיכון המנורמל שלה מול השוק.`;
+  if (penalty > 0) {
+    text += ` הופחת ב-${penalty.toFixed(1)}× בשל ריכוז לקוחות.`;
+  }
+  return text;
 }
 
 export const QUALITY_METHODOLOGY_COPY =

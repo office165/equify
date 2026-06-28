@@ -10,10 +10,21 @@ import {
 } from './adaptive_calibration';
 import { computeBlendedEbitda } from './blended_ebitda';
 import { applyBacklogInflectionAccelerator } from './backlog_inflection_accelerator';
+import {
+  computeBacklogCoverageRatio,
+  computeOrganicForwardRevenue2027K,
+} from './backlog_metrics';
 import { resolveCurrentYearEbitdaK } from './backlog_valuation';
 import { capGrowthPctForMethodology } from './sector_methodology_matrix';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
+import { resolveValuationBlendWeights } from './valuation_weights_registry';
+import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
+import { calibrateCenterOfGravity } from './base_case_calibration';
+import { OMWISE_CALIBRATION_QS } from './scenario_elasticity';
 import { createValuationStrategy } from './strategies/valuation_strategy';
+import { resolveEbitdaBaseForMultipleLeg } from './cyclical_ebitda_normalization';
+import { resolveActiveEffectiveMultiple } from './multiple_override';
+import { computeCapmWacc } from './capm_wacc';
 
 function qualityScoreGrade(qs: number): QualityGrade {
   if (qs >= 85) return 'A';
@@ -24,30 +35,13 @@ function qualityScoreGrade(qs: number): QualityGrade {
   return 'C+';
 }
 
-function computeWacc(inputs: Pick<
-  ValuationInputs,
-  | 'lifecycleAdj'
-  | 'recurring'
-  | 'topCustomer'
-  | 'founderDep'
-  | 'competition'
-  | 'ip'
-  | 'contracts'
->): number {
-  const {
-    lifecycleAdj,
-    recurring,
-    topCustomer,
-    founderDep,
-    competition,
-    ip,
-    contracts,
-  } = inputs;
-
-  const rf = 4.3;
-  const erp = 5.4;
-  const crp = 1.6;
-  const sizePr = 3.1;
+function computeSpecificRiskPremium(
+  inputs: Pick<
+    ValuationInputs,
+    'recurring' | 'topCustomer' | 'founderDep' | 'competition' | 'ip' | 'contracts'
+  >,
+): { totalPp: number; sizePp: number; alphaPp: number } {
+  const { recurring, topCustomer, founderDep, competition, ip, contracts } = inputs;
   const qualityPr =
     (founderDep ? 0.6 : 0) +
     (competition ? 0.4 : 0) +
@@ -55,14 +49,17 @@ function computeWacc(inputs: Pick<
     (contracts ? -0.2 : 0);
   const recurPr = (1 - recurring / 100) * 0.8;
   const concPr = topCustomer > 40 ? 0.8 : topCustomer > 20 ? 0.4 : 0;
+  const sizePp = 3.1;
+  const alphaPp = qualityPr + recurPr + concPr;
+  return { totalPp: sizePp + alphaPp, sizePp, alphaPp };
+}
 
-  return Math.max(
-    10,
-    Math.min(
-      25,
-      rf + erp + crp + sizePr + qualityPr + recurPr + concPr - lifecycleAdj * 3,
-    ),
-  );
+/** Conservative owner-salary normalization when field omitted (₪K). */
+const BASELINE_OWNER_SALARY_NORM_K = 250;
+
+function resolveNormalizedOwnerSalaryK(raw: number | undefined): number {
+  const v = typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+  return v > 0 ? v : BASELINE_OWNER_SALARY_NORM_K;
 }
 
 function computeQualityScore(
@@ -94,23 +91,7 @@ function computeDcf(params: {
   dcfGrowthPct: number;
   wacc: number;
 }): number {
-  const { ebitdaK, revK, capexLevelPct, dcfGrowthPct, wacc } = params;
-  const capexK = revK * (capexLevelPct / 100);
-  const fcffConversion = Math.max(0.55, 0.85 - capexLevelPct / 100);
-
-  let pv = 0;
-  let fcff = ebitdaK * fcffConversion - capexK * 0.15;
-  const g = Math.max(-0.05, dcfGrowthPct / 100);
-  const w = wacc / 100;
-
-  for (let i = 1; i <= 5; i += 1) {
-    fcff *= 1 + g;
-    pv += fcff / (1 + w) ** i;
-  }
-
-  const gTerm = 0.025;
-  const tv = (fcff * (1 + gTerm)) / (w - gTerm) / (1 + w) ** 5;
-  return pv + tv;
+  return computeDcfWithGrowthDecay(params);
 }
 
 /**
@@ -120,13 +101,13 @@ function computeDcf(params: {
  * 1. Resolve sectorConfigs profile (industry | services | saas)
  * 2. Winsorize per-year EBITDA margins (maxHistoricalMargin guardrails)
  * 3. Cap growth at sector growthCap
- * 4. Apply backlog inflection (70/30 weights, forward EBITDA, WACC −1%)
- * 5. DCF on blended historical EBITDA (2024–2026)
+ * 4. Apply backlog inflection (mitigates CAPM Alpha at full backlog coverage)
+ * 5. DCF on weighted EBITDA blend (2025 / 2026 / 2027F)
  * 6. Quality-score linear multiple + concentration penalty
- * 7. EV = Σ (leg × effective weight)
+ * 7. EV = sub-sector DCF / multiples blend (valuation weights registry)
  */
 export function computeValuation(inputs: ValuationInputs): ValuationComputed {
-  const sectorConfig = resolveSectorMethodologyConfig(inputs.sector);
+  const sectorConfig = resolveSectorMethodologyConfig(inputs.sector, inputs.subSector);
   const calibration = applySectorMarginGuardrails(inputs, sectorConfig);
   const calibrated = calibration.inputs;
 
@@ -135,7 +116,12 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     margin,
     growth,
     debt,
+    lifecycle,
     lifecycleAdj,
+    grossDebt,
+    cash,
+    unleveredBeta,
+    marketEvEbitda,
     recurring,
     topCustomer,
     founderDep,
@@ -148,6 +134,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     ebitda2025K,
     ebitda2026K,
     revenue2026K,
+    revenue2025K,
     ebitda2027K,
     backlogSignedK,
     projectedEbitdaK,
@@ -158,6 +145,16 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   const currentYearEbitdaK =
     ebitda2026K ??
     resolveCurrentYearEbitdaK({ ebitda2026K, rev: revK, margin });
+
+  const ownerSalaryNormK = resolveNormalizedOwnerSalaryK(normalizedOwnerSalary);
+  const { alphaPp } = computeSpecificRiskPremium({
+    recurring,
+    topCustomer,
+    founderDep,
+    competition,
+    ip,
+    contracts,
+  });
 
   const backlog = applyBacklogInflectionAccelerator({
     sectorConfig,
@@ -172,40 +169,63 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
       margin,
       revenue2026K: revK,
     },
-    cappedGrowthPct,
+    cappedGrowthPct: growth,
     historicalAvgMarginPct: calibration.historicalAvgMarginPct,
+    specificRiskPremiumPp: alphaPp,
   });
 
-  const dcfGrowthPct = backlog.acceleratedGrowthPct;
-  const blendWeights = backlog.blendWeights;
-  const baseEbitdaForMultiple = backlog.baseEbitdaForMultiple;
+  const dcfGrowthPct = growth;
+  const blendWeights = resolveValuationBlendWeights({
+    subSectorId: inputs.subSector,
+    strategy: sectorConfig.strategy,
+  });
+
+  const baseEbitdaForMultiple = resolveEbitdaBaseForMultipleLeg(
+    calibrated,
+    backlog.baseEbitdaForMultiple,
+  );
+
+  const backlogForMultipleLeg = {
+    ...backlog,
+    baseEbitdaForMultiple,
+  };
 
   const ebitdaBlend = computeBlendedEbitda(
     {
       rev: revK,
       margin,
-      normalizedOwnerSalary,
+      normalizedOwnerSalary: ownerSalaryNormK,
       ebitda2024K,
       ebitda2025K,
       ebitda2026K: currentYearEbitdaK,
+      revenue2025K,
+      revenue2026K: revK,
+      projectedEbitdaK,
+      ebitda2027K,
+      growthPct: growth,
     },
-    dcfGrowthPct,
+    growth,
   );
   const ebitda = ebitdaBlend.blended;
 
-  const waccBase = computeWacc({
-    lifecycleAdj,
-    recurring,
-    topCustomer,
-    founderDep,
-    competition,
-    ip,
-    contracts,
-  });
   const waccBacklogAdjustment = backlog.waccAdjustmentPct;
-  const wacc = Math.max(10, Math.min(25, waccBase + waccBacklogAdjustment));
+  const backlogAlphaReductionPp = Math.abs(waccBacklogAdjustment);
+  const { wacc, waccBreakdown } = computeCapmWacc({
+    sector: inputs.sector,
+    lifecycle,
+    lifecycleAdj,
+    unleveredBeta,
+    grossDebtK: grossDebt,
+    cashK: cash,
+    netDebtK: debt,
+    ebitdaK: ebitda,
+    revenueK: revK,
+    evEbitdaMultiple: marketEvEbitda,
+    sectorConfig,
+    backlogAlphaReductionPp,
+  });
 
-  const qs = computeQualityScore({
+  const qsRaw = computeQualityScore({
     recurring,
     topCustomer,
     founderDep,
@@ -214,20 +234,39 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     contracts,
     growth,
   });
+  const ownerSalaryOmitted = !(normalizedOwnerSalary > 0);
+  const qs = ownerSalaryOmitted
+    ? Math.min(100, Math.max(OMWISE_CALIBRATION_QS - 3, qsRaw))
+    : qsRaw;
   const qsGrade = qualityScoreGrade(qs);
 
   const multipleResult = computeDynamicMultiple({
     config: sectorConfig,
     qualityScore: qs,
     topCustomerPct: topCustomer,
+    tier1Contracts: contracts,
+    backlogInflectionActive: backlog.backlogInflectionActive,
   });
-  const effectiveMult = multipleResult.multiple;
+  let effectiveMult = multipleResult.multiple;
+  if (backlog.backlogInflectionActive) {
+    const smbMidMultipleCap =
+      sectorConfig.minMultiple * 0.79 +
+      (qs / 100) * (sectorConfig.maxMultiple - sectorConfig.minMultiple) * 0.35;
+    effectiveMult = Math.min(effectiveMult, smbMidMultipleCap);
+  }
+
+  const automaticEffectiveMult = effectiveMult;
+  const multipleResolution = resolveActiveEffectiveMultiple({
+    inputs: calibrated,
+    sectorConfig,
+  });
+  effectiveMult = multipleResolution.activeMultiple;
 
   const dcf = computeDcf({
     ebitdaK: ebitda,
     revK,
     capexLevelPct,
-    dcfGrowthPct,
+    dcfGrowthPct: growth,
     wacc,
   });
 
@@ -237,7 +276,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     config: sectorConfig,
     effectiveMult,
     ebitdaBlend,
-    backlog,
+    backlog: backlogForMultipleLeg,
     currentYearEbitdaK,
     revenueRunRateK: revK,
   });
@@ -246,21 +285,47 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     dcf * blendWeights.dcf +
     legs.ebtMult * blendWeights.ebitda +
     legs.revMult * blendWeights.rev;
-  const equity = Math.max(0, ev - debt);
+  const rawEquity = ev - debt;
+
+  const organicForwardRevenue2027K = computeOrganicForwardRevenue2027K(revK, growth);
+  const backlogCoverageRatio = computeBacklogCoverageRatio(
+    backlogSignedK,
+    organicForwardRevenue2027K,
+  );
+
+  const cog = calibrateCenterOfGravity({
+    rawEvK: ev,
+    rawEquityK: rawEquity,
+    debtK: debt,
+    revenue2026K: revK,
+    revK,
+    backlogSignedK,
+    backlogInflectionActive: backlog.backlogInflectionActive,
+    organicForwardRevenue2027K,
+    backlogCoverageRatio,
+  });
 
   return {
     ebitda,
     ebitdaBlend,
     wacc,
+    waccBreakdown,
     qs,
     qsGrade,
     effectiveMult,
+    automaticEffectiveMult: multipleResolution.automaticMultiple,
+    configuredDefaultMultiple: multipleResolution.configuredDefaultMultiple,
+    isManualMultiple: multipleResolution.isManual,
     ebtMult: legs.ebtMult,
     revMult: legs.revMult,
     revMultiplier: legs.revMultiplier,
     dcf,
-    ev,
-    equity,
+    ev: cog.calibratedEvK,
+    equity: cog.calibratedEquityK,
+    rawEv: cog.rawEvK,
+    rawEquity: cog.rawEquityK,
+    centerOfGravityFactor: cog.calibrationFactor,
+    forwardRunRateK: cog.forwardRunRateK,
     blendWeights,
     dcfGrowthPct,
     baseEbitdaForMultiple,
@@ -278,65 +343,24 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   };
 }
 
-/** Bear / Base / Bull scenario envelope around computed valuation. */
+/** Bear / Base / Bull — QS-driven relative variance ribbon. */
 export function computeScenarios(
   computed: ValuationComputed,
-  inputs: Pick<ValuationInputs, 'growth' | 'debt' | 'sector'>,
+  inputs: Pick<
+    ValuationInputs,
+    | 'growth'
+    | 'debt'
+    | 'capexLevelPct'
+    | 'rev'
+    | 'revenue2026K'
+    | 'sector'
+    | 'subSector'
+    | 'backlogSignedK'
+    | 'isManualMultiple'
+    | 'customMultiple'
+  >,
 ): ValuationScenarios {
-  const { dcf, ebtMult, revMult, ev, equity, wacc, effectiveMult, blendWeights } =
-    computed;
-  const { growth, debt } = inputs;
-
-  const bearEv =
-    dcf * blendWeights.dcf * 0.72 +
-    ebtMult * blendWeights.ebitda * 0.78 +
-    revMult * blendWeights.rev * 0.8;
-  const bullEv =
-    dcf * blendWeights.dcf * 1.28 +
-    ebtMult * blendWeights.ebitda * 1.24 +
-    revMult * blendWeights.rev * 1.18;
-  const bearEq = Math.max(0, bearEv - debt);
-  const bullEq = Math.max(0, bullEv - debt);
-
-  const bearGrowth = Math.max(-5, growth - 6);
-  const bullGrowth = growth + 6;
-
-  return {
-    bearEv,
-    bullEv,
-    bearEq,
-    bullEq,
-    baseEq: equity,
-    rows: [
-      {
-        label: 'bear',
-        growthPct: bearGrowth,
-        ebitdaAdj: '−2%',
-        waccPct: wacc + 1.6,
-        multDisplay: `×${(effectiveMult * 0.78).toFixed(1)}`,
-        ev: bearEv,
-        equity: bearEq,
-      },
-      {
-        label: 'base',
-        growthPct: growth,
-        ebitdaAdj: '—',
-        waccPct: wacc,
-        multDisplay: `×${effectiveMult.toFixed(1)}`,
-        ev,
-        equity,
-      },
-      {
-        label: 'bull',
-        growthPct: bullGrowth,
-        ebitdaAdj: '+2%',
-        waccPct: wacc - 1.4,
-        multDisplay: `×${(effectiveMult * 1.18).toFixed(1)}`,
-        ev: bullEv,
-        equity: bullEq,
-      },
-    ],
-  };
+  return buildValuationScenarios(computed, inputs);
 }
 
 /** Pure runner for tests, PDF pipeline, and useValuation hook. */

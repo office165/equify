@@ -4,7 +4,9 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -17,7 +19,9 @@ import {
   type ValuationComputed,
   type ValuationScenarios,
 } from '../../../lib/valuation';
-import { getIndustryConfig } from '../../../lib/constants/industry_config';
+import { applyReportingFxLayer } from '../../../lib/valuation/apply_reporting_fx';
+import { getCachedFxRates, refreshFxRates, type FxRatesSnapshot } from '../../../lib/utils/fxService';
+import { coerceWizardSectorSelection, getIndustryConfig } from '../../../lib/constants/industry_config';
 import {
   buildValuationInputsFromEquifyState,
 } from '../../../lib/wizard/build_valuation_inputs';
@@ -30,20 +34,36 @@ import {
   type EquifyWizardState,
 } from '../../../lib/wizard/map_equify_wizard';
 import { syncFinancialsDerived } from '../../../lib/wizard/financial_history';
+import {
+  buildSectorMarketContext,
+  deriveFinancialDefaultsFromSectorMetrics,
+  fetchSectorMetricsClient,
+} from '../../../lib/wizard/sector_market_defaults';
+import { getCurrencySymbol } from '../../../lib/utils/formatCurrency';
+import type { ReportingCurrencyCode } from '../../../lib/wizard/reporting_currency';
 
 export interface WizardValuationContextValue {
   state: EquifyWizardState;
   step: number;
   computed: ValuationComputed;
   scenarios: ValuationScenarios;
+  sectorMarketDefaultsPending: boolean;
+  /** Active reporting currency from Step 2 profile. */
+  reportingCurrency: ReportingCurrencyCode;
+  /** Display symbol for {@link reportingCurrency}. */
+  currencySymbol: string;
+  /** Active FX snapshot used for reporting-currency conversion (live cache or fallback). */
+  fxRates: FxRatesSnapshot;
   setStep: (step: number) => void;
   updateProfile: (patch: Partial<EquifyWizardProfile>) => void;
   updateFinancials: (patch: Partial<EquifyWizardFinancials>) => void;
   updateRisk: (patch: Partial<EquifyWizardRisk>) => void;
+  setReportingCurrency: (currency: ReportingCurrencyCode) => void;
   setSector: (sector: EquifySectorKey) => void;
   setLifecycle: (lifecycle: EquifyLifecycleKey) => void;
   setGoal: (goal: EquifyGoalKey) => void;
   setAgreedToTerms: (agreed: boolean) => void;
+  applySectorMarketDefaults: (sector: EquifySectorKey) => Promise<void>;
   resetWizard: () => void;
 }
 
@@ -58,22 +78,76 @@ export function WizardValuationProvider({
   children: ReactNode;
   initialState?: EquifyWizardState;
 }) {
-  const [state, setState] = useState<EquifyWizardState>(
-    initialState ?? DEFAULT_EQUIFY_WIZARD_STATE,
-  );
+  const [state, setState] = useState<EquifyWizardState>(() => {
+    const base = initialState ?? DEFAULT_EQUIFY_WIZARD_STATE;
+    const coerced = coerceWizardSectorSelection(base.profile.sector, base.profile.subSector);
+    if (
+      coerced.sector === base.profile.sector &&
+      coerced.subSector === base.profile.subSector
+    ) {
+      return base;
+    }
+    return {
+      ...base,
+      profile: { ...base.profile, ...coerced },
+    };
+  });
   const [step, setStep] = useState(1);
+  const [sectorMarketDefaultsPending, setSectorMarketDefaultsPending] = useState(false);
+  const [fxRates, setFxRates] = useState<FxRatesSnapshot>(() => getCachedFxRates());
+  const sectorDefaultsInflight = useRef<EquifySectorKey | null>(null);
 
-  const computed = useMemo(
+  useEffect(() => {
+    let cancelled = false;
+    void refreshFxRates().then((rates) => {
+      if (!cancelled) setFxRates(rates);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const baseComputed = useMemo(
     () => computeValuation(buildValuationInputsFromEquifyState(state)),
     [state],
   );
-  const scenarios = useMemo(() => {
+  const baseScenarios = useMemo(() => {
     const inputs = buildValuationInputsFromEquifyState(state);
-    return computeScenarios(computed, inputs);
-  }, [computed, state]);
+    return computeScenarios(baseComputed, inputs);
+  }, [baseComputed, state]);
+
+  const reportingCurrency = state.profile.currency;
+  const currencySymbol = getCurrencySymbol(reportingCurrency);
+
+  const { computed, scenarios } = useMemo(
+    () =>
+      applyReportingFxLayer(
+        baseComputed,
+        baseScenarios,
+        reportingCurrency,
+        fxRates,
+      ),
+    [baseComputed, baseScenarios, fxRates, reportingCurrency],
+  );
 
   const updateProfile = useCallback((patch: Partial<EquifyWizardProfile>) => {
-    setState((prev) => ({ ...prev, profile: { ...prev.profile, ...patch } }));
+    setState((prev) => {
+      const nextProfile = { ...prev.profile, ...patch };
+      const subSectorChanged =
+        patch.subSector != null && patch.subSector !== prev.profile.subSector;
+
+      return {
+        ...prev,
+        profile: nextProfile,
+        financials: subSectorChanged
+          ? {
+              ...prev.financials,
+              customMultiple: null,
+              isManualMultiple: false,
+            }
+          : prev.financials,
+      };
+    });
   }, []);
 
   const updateFinancials = useCallback((patch: Partial<EquifyWizardFinancials>) => {
@@ -91,19 +165,71 @@ export function WizardValuationProvider({
     setState((prev) => ({ ...prev, risk: { ...prev.risk, ...patch } }));
   }, []);
 
-  const setSector = useCallback((sector: EquifySectorKey) => {
+  const applySectorMarketDefaults = useCallback(async (sector: EquifySectorKey) => {
+    if (sectorDefaultsInflight.current === sector) return;
+
+    let shouldFetch = false;
     setState((prev) => {
-      const subs = getIndustryConfig(sector).subSectors;
-      return {
-        ...prev,
-        profile: {
-          ...prev.profile,
-          sector,
-          subSector: subs[0]?.id ?? '',
-        },
-      };
+      if (prev.financials.sectorDefaultsFor === sector) return prev;
+      shouldFetch = true;
+      return prev;
     });
+    if (!shouldFetch) return;
+
+    sectorDefaultsInflight.current = sector;
+    setSectorMarketDefaultsPending(true);
+
+    try {
+      const metrics = await fetchSectorMetricsClient(sector);
+      const defaults = deriveFinancialDefaultsFromSectorMetrics(sector, metrics);
+      const marketContext = buildSectorMarketContext(sector, metrics);
+
+      setState((prev) => {
+        if (prev.profile.sector !== sector) return prev;
+        const merged = syncFinancialsDerived({
+          ...prev.financials,
+          growth: defaults.growthPct,
+          capexLevelPct: defaults.capexLevelPct,
+          sectorDefaultsFor: sector,
+          marketContext,
+        });
+        return { ...prev, financials: merged };
+      });
+    } finally {
+      if (sectorDefaultsInflight.current === sector) {
+        sectorDefaultsInflight.current = null;
+      }
+      setSectorMarketDefaultsPending(false);
+    }
   }, []);
+
+  const setSector = useCallback(
+    (sector: EquifySectorKey) => {
+      setState((prev) => {
+        const subs = getIndustryConfig(sector).subSectors;
+        const firstSub = subs[0]?.id ?? '';
+        return {
+          ...prev,
+          profile: {
+            ...prev.profile,
+            sector,
+            subSector: firstSub,
+          },
+          financials: {
+            ...prev.financials,
+            sectorDefaultsFor:
+              prev.financials.sectorDefaultsFor === sector
+                ? sector
+                : undefined,
+            customMultiple: null,
+            isManualMultiple: false,
+          },
+        };
+      });
+      void applySectorMarketDefaults(sector);
+    },
+    [applySectorMarketDefaults],
+  );
 
   const setLifecycle = useCallback((lifecycle: EquifyLifecycleKey) => {
     setState((prev) => ({ ...prev, profile: { ...prev.profile, lifecycle } }));
@@ -118,8 +244,18 @@ export function WizardValuationProvider({
   }, []);
 
   const resetWizard = useCallback(() => {
+    sectorDefaultsInflight.current = null;
+    setSectorMarketDefaultsPending(false);
     setState(DEFAULT_EQUIFY_WIZARD_STATE);
     setStep(1);
+  }, []);
+
+  const setReportingCurrency = useCallback((currency: ReportingCurrencyCode) => {
+    setState((prev) => ({
+      ...prev,
+      profile: { ...prev.profile, currency },
+    }));
+    void refreshFxRates().then(setFxRates);
   }, []);
 
   const value = useMemo<WizardValuationContextValue>(
@@ -128,23 +264,35 @@ export function WizardValuationProvider({
       step,
       computed,
       scenarios,
+      sectorMarketDefaultsPending,
+      reportingCurrency,
+      currencySymbol,
+      fxRates,
       setStep,
       updateProfile,
       updateFinancials,
       updateRisk,
+      setReportingCurrency,
       setSector,
       setLifecycle,
       setGoal,
       setAgreedToTerms,
+      applySectorMarketDefaults,
       resetWizard,
     }),
     [
+      applySectorMarketDefaults,
       computed,
+      currencySymbol,
+      fxRates,
+      reportingCurrency,
       resetWizard,
       scenarios,
+      sectorMarketDefaultsPending,
       setAgreedToTerms,
       setGoal,
       setLifecycle,
+      setReportingCurrency,
       setSector,
       state,
       step,
@@ -167,4 +315,9 @@ export function useWizardValuation(): WizardValuationContextValue {
     throw new Error('useWizardValuation must be used within WizardValuationProvider');
   }
   return ctx;
+}
+
+export function useReportingCurrency() {
+  const { reportingCurrency, currencySymbol, setReportingCurrency } = useWizardValuation();
+  return { reportingCurrency, currencySymbol, setReportingCurrency };
 }

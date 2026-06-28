@@ -1,16 +1,20 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
-import { BACKLOG_INFLECTION_RATIO_THRESHOLD } from '../../../../lib/valuation/backlog_inflection_accelerator';
-import { fmtEquitySidebarM, fmtK } from '../../../../lib/valuation';
-import { BLENDED_EBITDA_WEIGHTS } from '../../../../lib/valuation/blended_ebitda';
-import { patchFinancialHistoryYear } from '../../../../lib/wizard/financial_history';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { fmtK } from '../../../../lib/valuation';
+import { patchFinancialHistoryYear, computeProjectedEbitda2027K } from '../../../../lib/wizard/financial_history';
+import { getStep2RequiredFieldErrors, hasMeaningfulFinancialInputs } from '../../../../lib/wizard/financial_input_state';
 import { computeNetDebtK } from '../../../../lib/wizard/map_equify_wizard';
+import { formatFinancialInputValue } from '../../../../lib/utils/financial_input_parser';
+import { getCurrencySymbol } from '../../../../lib/utils/formatCurrency';
+import { injectCurrencyIntoCopy } from '../../../../lib/wizard/reporting_currency';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { SmartFieldLabel } from '../../ui/SmartFieldLabel';
 import { SmartInput } from '../../ui/SmartInput';
 import { SmartSlider } from '../../ui/SmartSlider';
-import { useWizardValuation } from '../WizardValuationContext';
+import { LiveValuationCard } from '../LiveValuationCard';
+import { useReportingCurrency, useWizardValuation } from '../WizardValuationContext';
 
 export interface Step2FinancialsProps {
   onBack: () => void;
@@ -23,34 +27,78 @@ function safeK(value: number | undefined | null): number {
 
 export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
   const { shell, steps: t, isHe, locale } = useEquifyStrings();
-  const { state, computed, scenarios, updateFinancials, updateProfile } =
-    useWizardValuation();
+  const { state, updateFinancials, updateProfile, applySectorMarketDefaults } = useWizardValuation();
+  const { reportingCurrency, setReportingCurrency } = useReportingCurrency();
   const { financials, profile } = state;
   const [auditOpen, setAuditOpen] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{
+    y2026Revenue?: boolean;
+    y2026Ebitda?: boolean;
+  }>({});
+
+  useEffect(() => {
+    void applySectorMarketDefaults(profile.sector);
+  }, [applySectorMarketDefaults, profile.sector]);
 
   const y2024 = financials.y2024 ?? { revenueK: 0, ebitdaK: 0 };
   const y2025 = financials.y2025 ?? { revenueK: 0, ebitdaK: 0 };
   const y2026 = financials.y2026 ?? { revenueK: 0, ebitdaK: 0 };
-  const projected = financials.projectedEbitdaK ?? [0, 0, 0];
+  const projected2027K = useMemo(
+    () => computeProjectedEbitda2027K(safeK(y2026.ebitdaK), safeK(financials.growth)),
+    [financials.growth, y2026.ebitdaK],
+  );
 
   const netDebtK = useMemo(() => computeNetDebtK(financials), [financials]);
+  const netBridge = useMemo(() => {
+    const isNetCash = netDebtK < 0;
+    const label = isNetCash ? t.step2.netCash : t.step2.netDebt;
 
-  const backlogRatio = useMemo(() => {
-    const rev = safeK(y2026.revenueK);
-    const backlog = safeK(financials.backlogSignedK);
-    if (rev <= 0 || backlog <= 0) return 0;
-    return backlog / rev;
-  }, [financials.backlogSignedK, y2026.revenueK]);
+    if (isNetCash && netDebtK !== 0) {
+      const amount = formatFinancialInputValue(Math.abs(netDebtK), '₪K');
+      const sym = getCurrencySymbol(reportingCurrency);
+      const display =
+        reportingCurrency === 'ILS' ? `${amount} ${sym}` : `${sym}${amount}`;
+      return { isNetCash: true, label, display };
+    }
 
-  const inflectionEligible = backlogRatio >= BACKLOG_INFLECTION_RATIO_THRESHOLD;
+    return {
+      isNetCash: false,
+      label,
+      display: fmtK(Math.max(0, netDebtK), locale, reportingCurrency),
+    };
+  }, [locale, netDebtK, reportingCurrency, t.step2.netCash, t.step2.netDebt]);
+  const hasLiveInputs = useMemo(
+    () => hasMeaningfulFinancialInputs(financials),
+    [financials],
+  );
+  const canProceed = hasLiveInputs;
 
-  const { blendWeights, ebitdaBlend } = computed;
-  const weightLabel = (base: string, w: number) =>
-    w > 0 ? `${base} · ${Math.round(w * 100)}%` : base;
-  const wEbitda = BLENDED_EBITDA_WEIGHTS;
-  const maxEv = Math.max(computed.dcf, computed.ebtMult, computed.revMult, 1);
-  const barPct = (v: number) => `${(v / maxEv) * 90}%`;
-  const qsArc = (computed.qs / 100) * 163.4;
+  const validateStep2 = useCallback(() => {
+    const next = getStep2RequiredFieldErrors(financials);
+    setFieldErrors({
+      y2026Revenue: next.y2026Revenue,
+      y2026Ebitda: next.y2026Ebitda,
+    });
+    return !next.y2026Revenue && !next.y2026Ebitda;
+  }, [financials]);
+
+  const handleNext = useCallback(() => {
+    if (!validateStep2()) return;
+    onNext();
+  }, [onNext, validateStep2]);
+
+  const step2Copy = useMemo(
+    () => ({
+      histYearTip: injectCurrencyIntoCopy(t.step2.histYearTip, reportingCurrency),
+      backlogSignedTip: injectCurrencyIntoCopy(t.step2.backlogSignedTip, reportingCurrency),
+      ownerSalaryTip: injectCurrencyIntoCopy(t.step2.ownerSalaryTip, reportingCurrency),
+      projectedForwardTip: injectCurrencyIntoCopy(t.step2.projectedForwardTip, reportingCurrency),
+      grossDebtTip: injectCurrencyIntoCopy(t.step2.grossDebtTip, reportingCurrency),
+      cashTip: injectCurrencyIntoCopy(t.step2.cashTip, reportingCurrency),
+    }),
+    [reportingCurrency, t.step2],
+  );
+
   const backLabel = isHe ? `→ ${t.common.back}` : `← ${t.common.back}`;
 
   return (
@@ -64,74 +112,93 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
 
       <div className="fin-layout fin-layout--live-first">
         <div className="fin-inputs stagger w-full min-w-0 max-w-full">
-          <div className="fin-field-grid">
+          <div className="fin-field-grid grid grid-cols-1 md:grid-cols-2">
             <SmartInput
               label={t.step2.hist2026Revenue}
-              tooltip={t.step2.histYearTip}
+              tooltip={step2Copy.histYearTip}
               value={safeK(y2026.revenueK)}
               variant="currency"
+              currencyCode={reportingCurrency}
+              density="compact"
               required
+              invalid={Boolean(fieldErrors.y2026Revenue)}
+              errorMessage={fieldErrors.y2026Revenue ? t.step2.err2026Revenue : undefined}
+              placeholder={t.step2.placeholderRevenueExample}
               ariaLabel={t.step2.hist2026Revenue}
-              onChange={(v) =>
+              onChange={(v) => {
+                if (fieldErrors.y2026Revenue && v > 0) {
+                  setFieldErrors((prev) => ({ ...prev, y2026Revenue: false }));
+                }
                 updateFinancials(
                   patchFinancialHistoryYear(financials, 'y2026', { revenueK: v }),
-                )
-              }
+                );
+              }}
             />
             <SmartInput
               label={t.step2.hist2026Ebitda}
-              tooltip={t.step2.histYearTip}
+              tooltip={step2Copy.histYearTip}
               value={safeK(y2026.ebitdaK)}
               variant="currency"
+              currencyCode={reportingCurrency}
+              density="compact"
               required
+              invalid={Boolean(fieldErrors.y2026Ebitda)}
+              errorMessage={fieldErrors.y2026Ebitda ? t.step2.err2026Ebitda : undefined}
+              placeholder={t.step2.placeholderEbitdaExample}
               ariaLabel={t.step2.hist2026Ebitda}
-              onChange={(v) =>
+              onChange={(v) => {
+                if (fieldErrors.y2026Ebitda && v > 0) {
+                  setFieldErrors((prev) => ({ ...prev, y2026Ebitda: false }));
+                }
                 updateFinancials(
                   patchFinancialHistoryYear(financials, 'y2026', { ebitdaK: v }),
-                )
-              }
+                );
+              }}
             />
           </div>
 
           <SmartInput
             label={t.step2.backlogSigned}
-            tooltip={t.step2.backlogSignedTip}
+            tooltip={step2Copy.backlogSignedTip}
             value={safeK(financials.backlogSignedK)}
             variant="currency"
+            currencyCode={reportingCurrency}
+            placeholder={t.step2.placeholderZero}
             ariaLabel={t.step2.backlogSigned}
             onChange={(v) => updateFinancials({ backlogSignedK: v })}
           />
 
-          {inflectionEligible ? (
-            <SmartInput
-              label={t.step2.projected2027F}
-              tooltip={t.step2.projectedForwardTip}
-              value={safeK(projected[0])}
-              variant="currency"
-              ariaLabel={t.step2.projected2027F}
-              onChange={(v) =>
-                updateFinancials({
-                  projectedEbitdaK: [v, projected[1] ?? 0, projected[2] ?? 0],
-                })
-              }
-            />
-          ) : null}
-
           <details
-            className="fin-audit-accordion rv"
+            className={`fin-audit-accordion rv${auditOpen ? ' is-open' : ''}`}
             open={auditOpen}
             onToggle={(e) => setAuditOpen(e.currentTarget.open)}
           >
             <summary className="fin-audit-accordion-summary">
-              {t.step2.auditedHistoryAccordion}
+              <span className="fin-audit-accordion-copy">
+                <span className="fin-audit-accordion-title">
+                  {t.step2.auditedHistoryAccordion}
+                </span>
+                <span className="fin-audit-accordion-hint">
+                  {t.step2.auditedHistoryAccordionHint}
+                </span>
+              </span>
+              <ChevronDown
+                className="fin-audit-accordion-chevron"
+                aria-hidden="true"
+                size={20}
+                strokeWidth={2.25}
+              />
             </summary>
             <div className="fin-audit-accordion-body">
-            <div className="fin-field-grid">
+            <div className="fin-field-grid grid grid-cols-1 md:grid-cols-2">
               <SmartInput
                 label={t.step2.hist2024Revenue}
-                  tooltip={t.step2.histYearTip}
+                  tooltip={step2Copy.histYearTip}
                   value={safeK(y2024.revenueK)}
                   variant="currency"
+              currencyCode={reportingCurrency}
+                  density="compact"
+                  placeholder={t.step2.placeholderRevenueExample}
                   ariaLabel={t.step2.hist2024Revenue}
                   onChange={(v) =>
                     updateFinancials(
@@ -141,9 +208,12 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
                 />
                 <SmartInput
                   label={t.step2.hist2024Ebitda}
-                  tooltip={t.step2.histYearTip}
+                  tooltip={step2Copy.histYearTip}
                   value={safeK(y2024.ebitdaK)}
                   variant="currency"
+              currencyCode={reportingCurrency}
+                  density="compact"
+                  placeholder={t.step2.placeholderEbitdaExample}
                   ariaLabel={t.step2.hist2024Ebitda}
                   onChange={(v) =>
                     updateFinancials(
@@ -152,12 +222,15 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
                   }
                 />
               </div>
-              <div className="fin-field-grid">
+              <div className="fin-field-grid grid grid-cols-1 md:grid-cols-2">
                 <SmartInput
                   label={t.step2.hist2025Revenue}
-                  tooltip={t.step2.histYearTip}
+                  tooltip={step2Copy.histYearTip}
                   value={safeK(y2025.revenueK)}
                   variant="currency"
+              currencyCode={reportingCurrency}
+                  density="compact"
+                  placeholder={t.step2.placeholderRevenueExample}
                   ariaLabel={t.step2.hist2025Revenue}
                   onChange={(v) =>
                     updateFinancials(
@@ -167,9 +240,12 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
                 />
                 <SmartInput
                   label={t.step2.hist2025Ebitda}
-                  tooltip={t.step2.histYearTip}
+                  tooltip={step2Copy.histYearTip}
                   value={safeK(y2025.ebitdaK)}
                   variant="currency"
+              currencyCode={reportingCurrency}
+                  density="compact"
+                  placeholder={t.step2.placeholderEbitdaExample}
                   ariaLabel={t.step2.hist2025Ebitda}
                   onChange={(v) =>
                     updateFinancials(
@@ -183,9 +259,11 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
 
           <SmartInput
             label={t.step2.ownerSalary}
-            tooltip={t.step2.ownerSalaryTip}
+            tooltip={step2Copy.ownerSalaryTip}
             value={safeK(financials.normalizedOwnerSalaryK)}
             variant="currency"
+            currencyCode={reportingCurrency}
+            placeholder={t.step2.placeholderZero}
             ariaLabel={t.step2.ownerSalary}
             onChange={(v) => updateFinancials({ normalizedOwnerSalaryK: v })}
           />
@@ -207,6 +285,17 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
             onChange={(v) => updateFinancials({ growth: v })}
           />
 
+          <SmartInput
+            label={t.step2.projected2027F}
+            tooltip={step2Copy.projectedForwardTip}
+            value={projected2027K}
+            variant="currency"
+            currencyCode={reportingCurrency}
+            readOnly
+            placeholder={t.step2.placeholderEbitdaExample}
+            ariaLabel={t.step2.projected2027F}
+          />
+
           <SmartSlider
             label={
               <SmartFieldLabel tooltip={t.step2.capexTip}>{t.step2.capex}</SmartFieldLabel>
@@ -222,40 +311,62 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
             onChange={(v) => updateFinancials({ capexLevelPct: v })}
           />
 
-          <div className="fin-field-grid">
+          <div className="fin-field-grid grid grid-cols-1 md:grid-cols-2">
             <SmartInput
               label={t.step2.grossDebt}
-              tooltip={t.step2.grossDebtTip}
+              tooltip={step2Copy.grossDebtTip}
               value={safeK(financials.grossDebtK)}
               variant="currency"
+              currencyCode={reportingCurrency}
+              density="compact"
+              placeholder={t.step2.placeholderZero}
               ariaLabel={t.step2.grossDebt}
               onChange={(v) => updateFinancials({ grossDebtK: v })}
             />
             <SmartInput
               label={t.step2.cash}
-              tooltip={t.step2.cashTip}
+              tooltip={step2Copy.cashTip}
               value={safeK(financials.cashK)}
               variant="currency"
+              currencyCode={reportingCurrency}
+              density="compact"
+              placeholder={t.step2.placeholderZero}
               ariaLabel={t.step2.cash}
               onChange={(v) => updateFinancials({ cashK: v })}
             />
           </div>
 
-          <div className="net-debt-banner rv">
-            <span>{t.step2.netDebt}</span>
-            <b className="mono">{fmtK(netDebtK, locale)}</b>
+          <div
+            className={[
+              'net-debt-banner rv eq-live-currency',
+              netBridge.isNetCash ? 'net-debt-banner--surplus' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            data-currency={reportingCurrency}
+          >
+            <span>{netBridge.label}</span>
+            <b
+              className={[
+                'mono eq-currency-value',
+                netBridge.isNetCash ? 'text-emerald-400 font-semibold' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {netBridge.display}
+            </b>
           </div>
 
-          <div className="fin-field-grid fin-field-grid--meta">
+          <div className="fin-field-grid fin-field-grid--meta grid grid-cols-1 md:grid-cols-2">
             <div className="field">
               <label>{t.step2.currency}</label>
               <select
                 className="sel"
+                data-currency={reportingCurrency}
                 value={profile.currency}
                 onChange={(e) =>
-                  updateProfile({
-                    currency: e.target.value as 'ILS' | 'USD' | 'EUR',
-                  })
+                  setReportingCurrency(e.target.value as typeof reportingCurrency)
                 }
               >
                 <option value="ILS">{t.step2.currencyIls}</option>
@@ -277,128 +388,24 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
           </div>
         </div>
 
-        <div className="calc-live rv-r">
-          <div className="cl-hd">{t.step2.livePanel}</div>
-          <div className="cl-val mono">{fmtEquitySidebarM(computed.equity, locale)}</div>
-          <div className="cl-sub mono">
-            {t.step2.waccQuality(computed.wacc.toFixed(1), computed.qsGrade)}
-          </div>
-          {computed.backlogInflectionActive ? (
-            <div className="cl-inflection-note mono">
-              {t.step2.inflectionActive(
-                Math.round((computed.backlogRatio ?? 0) * 100),
-              )}
-            </div>
-          ) : null}
-          <div className="cl-ebitda-blend">
-            <div className="cl-ebitda-blend-hd">{t.step2.blendedEbitdaTitle}</div>
-            <div className="cl-ebitda-blend-row">
-              {t.step2.blendedEbitdaPast(
-                Math.round(wEbitda.past * 100),
-                fmtK(ebitdaBlend?.past ?? 0, locale),
-              )}
-            </div>
-            <div className="cl-ebitda-blend-row">
-              {t.step2.blendedEbitdaCurrent(
-                Math.round(wEbitda.current * 100),
-                fmtK(ebitdaBlend?.current ?? 0, locale),
-              )}
-            </div>
-            <div className="cl-ebitda-blend-row">
-              {t.step2.blendedEbitdaProjected(
-                Math.round(wEbitda.projected * 100),
-                fmtK(ebitdaBlend?.projected ?? 0, locale),
-                (ebitdaBlend?.dcfGrowthPct ?? 0).toFixed(1),
-              )}
-            </div>
-            <div className="cl-ebitda-blend-total mono">
-              {t.step2.blendedEbitdaTotal(fmtK(ebitdaBlend?.blended ?? 0, locale))}
-            </div>
-          </div>
-          <div className="cl-models">
-            <div className="cl-row">
-              <span>{weightLabel(t.step2.modelDcf, blendWeights.dcf)}</span>
-              <div className="cl-bar-wrap">
-                <div className="cl-bar-fill" style={{ width: barPct(computed.dcf) }} />
-              </div>
-              <b className="mono">{fmtK(computed.dcf, locale)}</b>
-            </div>
-            <div className="cl-row">
-              <span>{weightLabel(t.step2.modelEbitda, blendWeights.ebitda)}</span>
-              <div className="cl-bar-wrap">
-                <div
-                  className="cl-bar-fill"
-                  style={{ width: barPct(computed.ebtMult) }}
-                />
-              </div>
-              <b className="mono">{fmtK(computed.ebtMult, locale)}</b>
-            </div>
-            {blendWeights.rev > 0 ? (
-              <div className="cl-row">
-                <span>{weightLabel(t.step2.modelRevenue, blendWeights.rev)}</span>
-                <div className="cl-bar-wrap">
-                  <div
-                    className="cl-bar-fill"
-                    style={{ width: barPct(computed.revMult) }}
-                  />
-                </div>
-                <b className="mono">{fmtK(computed.revMult, locale)}</b>
-              </div>
-            ) : null}
-          </div>
-          <div className="scen-row">
-            <div className="scen-badge bear">
-              <span style={{ color: 'var(--dim)', fontSize: 10 }}>{t.step2.scenarioBear}</span>
-              <span className="sv mono">{fmtK(scenarios.bearEq, locale)}</span>
-            </div>
-            <div className="scen-badge base">
-              <span style={{ color: 'var(--dim)', fontSize: 10 }}>{t.step2.scenarioBase}</span>
-              <span className="sv mono">{fmtK(scenarios.baseEq, locale)}</span>
-            </div>
-            <div className="scen-badge bull">
-              <span style={{ color: 'var(--dim)', fontSize: 10 }}>{t.step2.scenarioBull}</span>
-              <span className="sv mono">{fmtK(scenarios.bullEq, locale)}</span>
-            </div>
-          </div>
-          <div className="qs-wrap">
-            <div className="qs-ring" style={{ width: 64, height: 64 }}>
-              <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true">
-                <circle cx="32" cy="32" r="26" fill="none" stroke="#0F2E29" strokeWidth="6" />
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="26"
-                  fill="none"
-                  stroke="url(#qg)"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                  strokeDasharray={`${qsArc} 164`}
-                  transform="rotate(-90 32 32)"
-                />
-                <defs>
-                  <linearGradient id="qg" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0" stopColor="#00C2B8" />
-                    <stop offset="1" stopColor="#C49A3C" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="qv mono">{computed.qs}</div>
-            </div>
-            <div className="qs-detail">
-              <div className="qs-grade">{computed.qsGrade}</div>
-              <div className="qs-label">{t.step2.qualityScore}</div>
-            </div>
-          </div>
-        </div>
+        <LiveValuationCard variant="panel" />
       </div>
 
       <div className="nav-row rv">
         <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>
           {backLabel}
         </button>
-        <button type="button" className="btn btn-primary" onClick={onNext}>
-          {t.common.nextRisk} <span className="arr">{isHe ? '←' : '→'}</span>
-        </button>
+        <div className="nav-row-end">
+          <span style={{ fontSize: 13, color: 'var(--dim)' }}>{t.common.requiredFields}</span>
+          <button
+            type="button"
+            className={`btn btn-primary${canProceed ? '' : ' btn-primary--gated'}`}
+            onClick={handleNext}
+            aria-disabled={!canProceed}
+          >
+            {t.common.nextRisk} <span className="arr">{isHe ? '←' : '→'}</span>
+          </button>
+        </div>
       </div>
     </>
   );

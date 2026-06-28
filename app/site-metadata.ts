@@ -55,6 +55,14 @@ export const rootMetadata: Metadata = {
       'he-IL': '/',
     },
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   openGraph: {
     type: 'website',
     locale: 'he_IL',
@@ -63,11 +71,20 @@ export const rootMetadata: Metadata = {
     siteName: BRAND_NAME,
     title,
     description,
+    images: [
+      {
+        url: '/equify-icon.png',
+        width: 1024,
+        height: 1024,
+        alt: `${BRAND_NAME} logo`,
+      },
+    ],
   },
   twitter: {
     card: 'summary',
     title,
     description,
+    images: ['/equify-icon.png'],
   },
   other: {
     'og:locale:alternate': 'en_US',

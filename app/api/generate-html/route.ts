@@ -5,6 +5,7 @@ import {
   buildContentDisposition,
   defaultUtf8HtmlFilename,
   resolveValuationDataFromBody,
+  snapshotResponseHeaders,
   type GenerateReportBody,
 } from '../../../lib/pdf-template/resolve-pdf-request';
 
@@ -25,9 +26,10 @@ export async function POST(request: Request) {
       return jsonError('Invalid JSON body.', 400, 'INVALID_JSON');
     }
 
-    const resolved = resolveValuationDataFromBody(body);
+    const resolved = await resolveValuationDataFromBody(body);
     if ('error' in resolved) {
-      return jsonError(resolved.error, 400, 'VALIDATION_ERROR');
+      const status = resolved.code === 'STALE_SNAPSHOT' ? 409 : 400;
+      return jsonError(resolved.error, status, resolved.code ?? 'VALIDATION_ERROR');
     }
 
     const { valuationData } = resolved;
@@ -49,8 +51,8 @@ export async function POST(request: Request) {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Content-Disposition': buildContentDisposition(utf8Filename),
-        'Cache-Control': 'private, no-cache',
         'X-Report-Pages': String(pages),
+        ...snapshotResponseHeaders(resolved),
       },
     });
   } catch (err) {

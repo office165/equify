@@ -14,6 +14,17 @@ function safeK(value: number | undefined | null): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
+/** Organic 2027F EBITDA from current-year EBITDA and user growth slider (₪K). */
+export function computeProjectedEbitda2027K(
+  ebitda2026K: number,
+  growthPct: number,
+): number {
+  const ebitda = safeK(ebitda2026K);
+  if (ebitda <= 0) return 0;
+  const growth = safeK(growthPct) / 100;
+  return ebitda * (1 + growth);
+}
+
 function kToM(k: number): number {
   return k / 1000;
 }
@@ -78,7 +89,16 @@ export function syncFinancialsDerived(
     normalized.y2026,
     normalized.normalizedOwnerSalaryK,
   );
-  const next = { ...normalized, rev, margin };
+  const projected2027K = computeProjectedEbitda2027K(
+    normalized.y2026.ebitdaK,
+    normalized.growth,
+  );
+  const projectedEbitdaK: [number, number, number] = [
+    projected2027K,
+    normalized.projectedEbitdaK[1] ?? 0,
+    normalized.projectedEbitdaK[2] ?? 0,
+  ];
+  const next = { ...normalized, rev, margin, projectedEbitdaK };
   return { ...next, debt: computeNetDebtK(next) };
 }
 
@@ -166,13 +186,10 @@ export function buildCalibratedFinancialTrajectory(
 
   const forwardEbitdaK = safeK(computed.forwardEbitda2027K);
   if (forwardEbitdaK > 0) {
-    const backlogK = safeK(financials.backlogSignedK);
     const rev2027K =
-      backlogK > 0
-        ? backlogK
-        : years.y2026.revenueK > 0
-          ? years.y2026.revenueK * (1 + safeK(financials.growth) / 100)
-          : 0;
+      years.y2026.revenueK > 0
+        ? years.y2026.revenueK * (1 + safeK(financials.growth) / 100)
+        : 0;
     pushYear(
       '2027F',
       {

@@ -15,3 +15,5 @@ export const BRAND_OG_ALT = `${BRAND_NAME} — הערכת שווי חכמה לע
 export const BRAND_HOME_ARIA = `${BRAND_NAME} — דף הבית`;
 
 export const BRAND_LOGO_TITLE = `${BRAND_NAME} — פלטפורמת הערכות שווי`;
+
+export { EQUIFY_SITE_LOGO_SRC, EQUIFY_STACKED_LOGO_SRC } from './brand-logo';

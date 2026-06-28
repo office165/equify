@@ -11,14 +11,15 @@ import {
 import { BACKLOG_INFLECTION_RATIO_THRESHOLD } from '../valuation/backlog_inflection_accelerator';
 import type { EquifyWizardState } from './map_equify_wizard';
 import { computeNetDebtK } from './map_equify_wizard';
-import { normalizeEquifyFinancials } from './financial_history';
+import { syncFinancialsDerived } from './financial_history';
+import { resolveLiveSectorMult } from './sector_market_defaults';
 
 /** Single builder for wizard valuation inputs — live UI, PDF, matrix patch. */
 export function buildValuationInputsFromEquifyState(
   state: EquifyWizardState,
 ): ValuationInputs {
   const { risk, profile } = state;
-  const financials = normalizeEquifyFinancials(state.financials);
+  const financials = syncFinancialsDerived(state.financials);
   const netDebt = computeNetDebtK(financials);
   const { y2024, y2025, y2026 } = financials;
   const backlogSignedK = financials.backlogSignedK ?? 0;
@@ -36,9 +37,20 @@ export function buildValuationInputsFromEquifyState(
     normalizedOwnerSalary: financials.normalizedOwnerSalaryK,
     capexLevelPct: financials.capexLevelPct,
     sector: profile.sector,
-    sectorMult: SECTOR_MULTIPLIERS[profile.sector],
+    subSector: profile.subSector,
+    sectorMult: resolveLiveSectorMult(
+      profile.sector,
+      SECTOR_MULTIPLIERS[profile.sector],
+      financials.marketContext,
+    ),
     subSectorMult: getSubSectorMultAdj(profile.sector, profile.subSector),
+    customMultiple: financials.customMultiple ?? null,
+    isManualMultiple: financials.isManualMultiple ?? false,
+    marketEvEbitda: financials.marketContext?.evEbitda,
+    marketEvRevenue: financials.marketContext?.evRevenue,
+    lifecycle: profile.lifecycle,
     lifecycleAdj: LIFECYCLE_ADJ[profile.lifecycle],
+    unleveredBeta: financials.marketContext?.unleveredBeta,
     recurring: risk.recurring,
     topCustomer: risk.topCustomer,
     founderDep: risk.founderDep,

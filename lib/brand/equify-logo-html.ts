@@ -1,82 +1,32 @@
 /**
- * Server-safe inline Equify logo for Puppeteer PDF HTML (light-bg default).
+ * Server-safe inline Equify logo for Puppeteer PDF HTML.
+ * Uses embedded PNG only — no Tailwind classes or SVG (print-safe).
  */
 
-import {
-  EQUIFY_ARROW_GRADIENT,
-  EQUIFY_ARROW_PATH,
-  EQUIFY_BAR_BOTTOM_PATH,
-  EQUIFY_BAR_MIDDLE_PATH,
-  EQUIFY_BAR_TOP_PATH,
-  EQUIFY_LOCKUP,
-  EQUIFY_MARK_VIEWBOX,
-  EQUIFY_SLICE_PATH,
-  EQUIFY_STEM_PATH,
-} from '../../components/brand/equify-mark-paths';
+import { equifyPdfLogoSize } from './brand-logo';
+import { equifyPdfLogoDataUrl } from './brand-logo-data-url';
 
 export type EquifyLogoHtmlVariant = 'light-bg' | 'dark-bg';
 
-function colors(variant: EquifyLogoHtmlVariant) {
-  if (variant === 'dark-bg') {
-    return { ink: '#FFFFFF', sub: 'rgba(255,255,255,0.5)', slice: '#0A0F0D' };
-  }
-  return { ink: '#0D1B2A', sub: 'rgba(13,27,42,0.55)', slice: '#FFFFFF' };
-}
-
-function arrowGradientDef(gradId: string, ink: string): string {
-  const g = EQUIFY_ARROW_GRADIENT;
-  return `<linearGradient id="${gradId}" x1="${g.x1}" y1="${g.y1}" x2="${g.x2}" y2="${g.y2}" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="${ink}"/><stop offset="100%" stop-color="${g.endColor}"/></linearGradient>`;
-}
-
-function markPaths(ink: string, slice: string, gradId: string): string {
-  return `<path d="${EQUIFY_STEM_PATH}" fill="${ink}"/>
-  <path d="${EQUIFY_BAR_BOTTOM_PATH}" fill="${ink}"/>
-  <path d="${EQUIFY_BAR_MIDDLE_PATH}" fill="${ink}"/>
-  <path d="${EQUIFY_BAR_TOP_PATH}" fill="${ink}"/>
-  <path d="${EQUIFY_ARROW_PATH}" fill="url(#${gradId})"/>
-  <path d="${EQUIFY_SLICE_PATH}" fill="${slice}"/>`;
-}
-
-function markSvg(ink: string, slice: string, gradId: string, w: number, h: number): string {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${EQUIFY_MARK_VIEWBOX}" width="${w}" height="${h}" fill="none" role="img" aria-hidden="true" style="display:block;flex-shrink:0" dir="ltr">
-  <defs>${arrowGradientDef(gradId, ink)}</defs>
-  ${markPaths(ink, slice, gradId)}
-</svg>`;
-}
-
-/** Icon + wordmark lockup as inline HTML (no external assets). */
+/** Stacked wordmark as inline `<img>` with hardcoded print dimensions (no CSS classes). */
 export function equifyLogoHtml(
-  variant: EquifyLogoHtmlVariant = 'light-bg',
+  _variant: EquifyLogoHtmlVariant = 'light-bg',
   opts: { heightPt?: number; showSubBrand?: boolean } = {},
 ): string {
-  const { ink, sub, slice } = colors(variant);
-  const h = opts.heightPt ?? 28;
-  const gradId = `equify-mint-lockup-${variant}`;
-  const L = EQUIFY_LOCKUP;
-
-  const lockupSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${L.viewBox}" height="${h}" fill="none" role="img" aria-hidden="true" style="display:block" dir="ltr">
-  <defs>${arrowGradientDef(gradId, ink)}</defs>
-  <g transform="translate(0, ${L.markY}) scale(${L.markScale})">
-    ${markPaths(ink, slice, gradId)}
-  </g>
-  <text x="${L.wordmarkX}" y="${L.wordmarkY}" fill="${ink}" font-family="Assistant,var(--font-equify),ui-sans-serif,system-ui,sans-serif" font-size="${L.wordmarkSize}" font-weight="700" letter-spacing="-0.01em">equify</text>
-  ${
-    opts.showSubBrand !== false
-      ? `<text x="${L.subBrandX}" y="${L.subBrandY}" fill="${sub}" font-family="Assistant,var(--font-equify),ui-sans-serif,system-ui,sans-serif" font-size="9" font-weight="500" letter-spacing="0.18em" text-anchor="end">BY SBC</text>`
-      : ''
-  }
-</svg>`;
-
-  return lockupSvg;
+  void opts.showSubBrand;
+  void _variant;
+  const heightPt = opts.heightPt ?? 28;
+  const { widthPt, heightPt: hPt } = equifyPdfLogoSize(heightPt);
+  const src = equifyPdfLogoDataUrl();
+  return `<span style="display:inline-block;margin:0;padding:0;border:none;background:transparent;line-height:0;"><img src="${src}" alt="equify BY SBC" width="${widthPt}" height="${hPt}" style="display:block;width:${widthPt}pt;height:${hPt}pt;object-fit:contain;margin:0;padding:0;border:none;background:transparent;" dir="ltr" /></span>`;
 }
 
-/** Icon-only for compact PDF headers */
+/** @deprecated Icon-only mark — use equifyLogoHtml for PDF headers. */
 export function equifyMarkHtml(
-  variant: EquifyLogoHtmlVariant = 'light-bg',
-  heightPt = 24,
+  _variant: EquifyLogoHtmlVariant = 'light-bg',
+  heightPt = 28,
 ): string {
-  const { ink, slice } = colors(variant);
-  const gradId = `equify-mark-${variant}`;
-  const w = Math.round(heightPt);
-  return markSvg(ink, slice, gradId, w, heightPt);
+  return equifyLogoHtml(_variant, { heightPt });
 }
+
+export { EQUIFY_PDF_LOGO_ASPECT, EQUIFY_SITE_LOGO_ASPECT, EQUIFY_STACKED_LOGO_ASPECT } from './brand-logo';

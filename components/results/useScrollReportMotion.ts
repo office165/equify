@@ -7,8 +7,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 interface ScrollReportMotionOptions {
   enabled: boolean;
   reducedMotion: boolean;
-  coverEquityM: number;
-  finalEquityM: number;
+  /** Compact-scale numeric amount (e.g. 3.15 for ₪3.15B), not raw millions. */
+  coverEquityAmount: number;
+  finalEquityAmount: number;
 }
 
 /** GSAP scroll motion — registers plugins and binds listeners only in useEffect. */
@@ -43,22 +44,22 @@ export function useScrollReportMotion(options: ScrollReportMotionOptions): void 
 
       const coverVal = document.getElementById('coverVal');
       const finalVal = document.getElementById('finalVal');
-      const target = options.coverEquityM || options.finalEquityM;
+      const target = options.coverEquityAmount || options.finalEquityAmount;
       if (coverVal) {
         gsap.to(coverVal, {
           textContent: target,
           duration: 1.4,
           ease: 'power2.out',
-          snap: { textContent: 0.1 },
+          snap: { textContent: 0.01 },
           scrollTrigger: { trigger: '#p1', start: 'top 70%' },
         });
       }
       if (finalVal) {
         gsap.to(finalVal, {
-          textContent: options.finalEquityM,
+          textContent: options.finalEquityAmount,
           duration: 1.2,
           ease: 'power2.out',
-          snap: { textContent: 0.1 },
+          snap: { textContent: 0.01 },
           scrollTrigger: { trigger: '#p7', start: 'top 75%' },
         });
       }
@@ -93,23 +94,13 @@ export function useScrollReportMotion(options: ScrollReportMotionOptions): void 
         const w = Number(seg.dataset.w ?? 0);
         gsap.to(seg, { width: `${w}%`, duration: 0.6, scrollTrigger: { trigger: seg, start: 'top 88%' } });
       });
-
-      const bar = document.getElementById('bar');
-      const onScroll = () => {
-        if (!bar) return;
-        bar.classList.toggle('sc', window.scrollY > 40);
-      };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-
-      return () => window.removeEventListener('scroll', onScroll);
     });
 
     return () => ctx.revert();
   }, [
-    options.coverEquityM,
+    options.coverEquityAmount,
     options.enabled,
-    options.finalEquityM,
+    options.finalEquityAmount,
     options.reducedMotion,
   ]);
 }

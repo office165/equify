@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import type { RefObject } from 'react';
+import { EquifyLogo } from '../../../brand/EquifyLogo';
+import { useIsMobile } from '../../../landing/motion/useReducedMotion';
 
 interface LandingNavProps {
   navRef: RefObject<HTMLElement>;
@@ -20,13 +22,14 @@ const NAV_LINKS = [
 
 /** ניווט קבוע + תפריט מובייל */
 export function LandingNav({ navRef, menuOpen, onOpenMenu, onCloseMenu }: LandingNavProps) {
+  const mobile = useIsMobile();
+
   return (
     <>
       <header className="nav" id="nav" ref={navRef}>
         <div className="wrap nav-in">
-          <Link href="/" className="logo">
-            equify<em>.</em>
-            <small>BY SBC</small>
+          <Link href="/" className="logo" aria-label="equify BY SBC — דף הבית">
+            <EquifyLogo variant="dark-bg" compact={mobile} decorative />
           </Link>
           <nav className="nav-links" aria-label="ניווט ראשי">
             {NAV_LINKS.map(([href, label]) => (

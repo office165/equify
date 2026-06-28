@@ -245,7 +245,7 @@ export function buildPdfHtml(
   const align = isHe ? 'right' : 'left';
   const t = COPY[locale];
 
-  const equifyBrandHtml = equifyLogoHtml('light-bg', { heightPt: 26 });
+  const equifyBrandHtml = equifyLogoHtml('light-bg', { heightPt: 28 });
   const firmLogoHtml = data.firmLogoUrl
     ? `<img src="${esc(data.firmLogoUrl)}" alt="" style="max-height:36pt;max-width:120pt;margin-${isHe ? 'left' : 'right'}:8pt"/>`
     : '';

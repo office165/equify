@@ -17,6 +17,7 @@ import { syncMatrixFromEquifyState } from '../valuation/sync_matrix_from_equify'
 import { resolveEquifySectorFromIndustryCode } from '../wizard/build_valuation_inputs';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
 import { computeNetDebtK } from '../wizard/map_equify_wizard';
+import { scenarioWaccOffsetPp, resolveScenarioElasticity } from '../valuation/scenario_elasticity';
 import {
   buildCalibratedFinancialTrajectory,
   buildFinancialTrajectoryFromEquifyState,
@@ -36,10 +37,11 @@ export const WACC_COMPONENTS = {
   size: 3.1,
 } as const;
 
+/** @deprecated Prefer scenario rows or resolveScenarioElasticity() — Omwise baseline bear offset. */
 export const SCENARIO_WACC_OFFSET: Record<ValuationScenario, number> = {
-  bear: 1.6,
+  bear: 0.5,
   base: 0,
-  bull: -1.4,
+  bull: -0.5,
 };
 
 export interface TrajectoryPoint {
@@ -250,6 +252,8 @@ function buildScenarioMetrics(
   evEbitda: number,
   evRev: number,
   sector: EquifySectorKey,
+  qualityScore: number,
+  revenueK: number,
 ): ScenarioMetrics {
   const evDcf = canonical.ev_dcf_by_scenario[scenario];
   const weights = getBlendWeights(sector);
@@ -259,11 +263,25 @@ function buildScenarioMetrics(
     weights.rev * evRev;
   const equity = canonical.equity_by_scenario[scenario];
   const ev = canonical.ev_blended_by_scenario[scenario] || blendedEv;
+  const baseEquityK = canonical.equity_by_scenario.base / 1000;
+  const elasticity = resolveScenarioElasticity({
+    qualityScore,
+    sector,
+    revenueK,
+    calibratedBaseEquityK: baseEquityK,
+  });
+
+  const ribbonEquity =
+    scenario === 'bear'
+      ? baseEquityK * elasticity.bearMultiplier * 1000
+      : scenario === 'bull'
+        ? baseEquityK * elasticity.bullMultiplier * 1000
+        : equity;
 
   return {
     scenario,
-    waccPct: baseWaccPct + SCENARIO_WACC_OFFSET[scenario],
-    equityValue: equity,
+    waccPct: baseWaccPct + scenarioWaccOffsetPp(scenario, elasticity),
+    equityValue: ribbonEquity,
     enterpriseValue: ev,
     evDcf,
     evEbitda,
@@ -372,6 +390,10 @@ export function buildReportViewModel(
     resolveEquifySectorFromIndustryCode(
       syncedMatrix.wizard_context?.industry_code,
     );
+  const revenueK =
+    syncedEquifyState?.financials.y2026?.revenueK ??
+    syncedEquifyState?.financials.rev ??
+    reportData.revenue / 1000;
 
   const scenarios: Record<ValuationScenario, ScenarioMetrics> =
     equifyComputed && equifyScenarios
@@ -381,9 +403,36 @@ export function buildReportViewModel(
           computeNetDebtK(syncedEquifyState!.financials),
         )
       : {
-          bear: buildScenarioMetrics('bear', canonical, baseWaccPct, evEbitda, evRev, sector),
-          base: buildScenarioMetrics('base', canonical, baseWaccPct, evEbitda, evRev, sector),
-          bull: buildScenarioMetrics('bull', canonical, baseWaccPct, evEbitda, evRev, sector),
+          bear: buildScenarioMetrics(
+            'bear',
+            canonical,
+            baseWaccPct,
+            evEbitda,
+            evRev,
+            sector,
+            qualityScore,
+            revenueK,
+          ),
+          base: buildScenarioMetrics(
+            'base',
+            canonical,
+            baseWaccPct,
+            evEbitda,
+            evRev,
+            sector,
+            qualityScore,
+            revenueK,
+          ),
+          bull: buildScenarioMetrics(
+            'bull',
+            canonical,
+            baseWaccPct,
+            evEbitda,
+            evRev,
+            sector,
+            qualityScore,
+            revenueK,
+          ),
         };
 
   const revenue = syncedEquifyState

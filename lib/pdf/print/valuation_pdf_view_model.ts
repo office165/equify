@@ -1,9 +1,12 @@
 import type { ForecastMatrixWithDiagnostics } from '../../../valuation_forecast';
 import type { ValuationLocale } from '../../../api_client';
+import { resolveScenarioElasticity, buildVarianceRibbon } from '../../valuation/scenario_elasticity';
+import { resolveEquifySectorFromIndustryCode } from '../../wizard/build_valuation_inputs';
 import { deriveWaccBreakdown } from '../dcf_projection';
 import { getWizardContext } from '../wizard_context';
 import type { ValuationReportData } from '../types';
 import { parseReportDate, reportDateHe } from './print_formatters';
+import { formatCurrencyNarrativeHe } from '../../utils/formatCurrency';
 
 export type PdfScenarioKey = 'bear' | 'base' | 'bull';
 
@@ -317,17 +320,32 @@ export function buildValuationPdfViewModel(
 
   const baseGrowth = (matrix.assumptions.revenue_growth_rates[0] ?? 0.09) * 100;
   const baseMargin = data.ebitdaMargin;
+  const qualityScore = data.confidenceScore ?? matrix.meta.confidence_score ?? 78;
+  const revenueK = data.revenue / 1000;
+  const sector = resolveEquifySectorFromIndustryCode(
+    wizard?.industry_code ?? matrix.wizard_context?.industry_code,
+  );
+  const baseEquityK = (data.baseEquity ?? equity) / 1000;
+  const netDebtK = netDebt / 1000;
+  const ribbon = buildVarianceRibbon({
+    baseEquityK,
+    debtK: netDebtK,
+    qualityScore,
+    sector,
+    revenueK,
+  });
+  const { elasticity } = ribbon;
 
   const scenarios: ScenarioRow[] = [
     {
       key: 'bear',
       label: '🐻 Bear — האטה ענפית',
-      growthPct: Math.max(-5, baseGrowth - 6),
-      ebitdaMarginPct: baseMargin - 2.8,
-      waccPct: data.wacc + 1.2,
-      multiple: ebitdaMult * 0.82,
-      ev: data.bearEV,
-      equity: data.bearEquity ?? canonical.bearEquity,
+      growthPct: baseGrowth,
+      ebitdaMarginPct: baseMargin,
+      waccPct: data.wacc + elasticity.waccDeltaPp,
+      multiple: ebitdaMult - elasticity.multipleDelta,
+      ev: ribbon.bearEvK * 1000,
+      equity: ribbon.bearEquityK * 1000,
     },
     {
       key: 'base',
@@ -342,12 +360,12 @@ export function buildValuationPdfViewModel(
     {
       key: 'bull',
       label: '🚀 Bull — האצת צמיחה',
-      growthPct: baseGrowth + 6,
-      ebitdaMarginPct: baseMargin + 1.9,
-      waccPct: Math.max(8, data.wacc - 0.9),
-      multiple: ebitdaMult * 1.15,
-      ev: data.bullEV,
-      equity: data.bullEquity ?? canonical.bullEquity,
+      growthPct: baseGrowth,
+      ebitdaMarginPct: baseMargin,
+      waccPct: Math.max(8, data.wacc - elasticity.waccDeltaPp),
+      multiple: ebitdaMult + elasticity.multipleDelta,
+      ev: ribbon.bullEvK * 1000,
+      equity: ribbon.bullEquityK * 1000,
     },
   ];
 
@@ -385,6 +403,7 @@ export function buildValuationPdfViewModel(
     },
   ];
 
+  const currency = matrix.meta.currency ?? 'ILS';
   const totalDebt = matrix.capital_structure.total_debt;
   const cash = matrix.capital_structure.cash_and_equivalents;
   const corpId = id.corporateTaxId || id.nationalId;
@@ -431,7 +450,7 @@ export function buildValuationPdfViewModel(
     ebitdaMarginPct: baseMargin,
     industryEbitdaMarginPct: baseMargin * 0.9,
     qualityFactors: buildQualityFactors(matrix, data.confidenceScore ?? 78),
-    executiveSummary: `שקלול של מודל DCF (50%), מכפיל EBITDA (30%) ומכפיל הכנסות (20%) מניב שווי פעילות של ₪${(ev / 1_000_000).toFixed(1)}M. בניכוי חוב נטו של ₪${(netDebt / 1_000_000).toFixed(1)}M, השווי לבעלים בתרחיש הבסיס עומד על ₪${(equity / 1_000_000).toFixed(1)}M.`,
-    netDebtNote: `חוב נטו ליום ההערכה: ₪${(netDebt / 1_000_000).toFixed(1)}M (חוב פיננסי ₪${(totalDebt / 1_000_000).toFixed(1)}M בניכוי מזומן ₪${(cash / 1_000_000).toFixed(1)}M).`,
+    executiveSummary: `שקלול של מודל DCF (50%), מכפיל EBITDA (30%) ומכפיל הכנסות (20%) מניב שווי פעילות של ${formatCurrencyNarrativeHe(ev, currency)}. בניכוי חוב נטו של ${formatCurrencyNarrativeHe(netDebt, currency)}, השווי לבעלים בתרחיש הבסיס עומד על ${formatCurrencyNarrativeHe(equity, currency)}.`,
+    netDebtNote: `חוב נטו ליום ההערכה: ${formatCurrencyNarrativeHe(netDebt, currency)} (חוב פיננסי ${formatCurrencyNarrativeHe(totalDebt, currency)} בניכוי מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`,
   };
 }

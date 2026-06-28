@@ -136,7 +136,7 @@ export function verdictHeroHtml(opts: VerdictHeroHtmlOptions): string {
   return `
 <div class="pdf-card-break" style="margin-bottom:12pt;background:#fff;padding:10pt;border-radius:6pt">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10pt;border-bottom:1.5pt solid #0d1b2a;padding-bottom:8pt">
-    ${equifyLogoHtml('light-bg', { heightPt: 22 })}
+    ${equifyLogoHtml('light-bg', { heightPt: 26 })}
     <div style="text-align:left">${clientLines}</div>
   </div>
   <div style="font-size:9pt;color:#64748b;text-align:center;letter-spacing:0.12em;text-transform:uppercase;font-weight:300">${esc(valuationCopy('he', 'conclusionEyebrow'))}</div>

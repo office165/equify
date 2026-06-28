@@ -11,14 +11,21 @@ import {
 } from '../../../lib/wizard/equify_wizard_copy';
 import { mapEquifyToWizardFormValues, type EquifyWizardState } from '../../../lib/wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../../../lib/wizard/resolve_company_display';
-import { fmtEquitySidebarM, fmtK } from '../../../lib/valuation';
+import {
+  formatLiveAmountEmpty,
+  hasMeaningfulFinancialInputs,
+} from '../../../lib/wizard/financial_input_state';
+import { fmtEquitySidebarM } from '../../../lib/valuation';
+import { useReportingCurrency } from './WizardValuationContext';
 import { EquifyLanguageToggle } from '../../shared/EquifyLanguageToggle';
+import { EquifyLogo } from '../../brand/EquifyLogo';
 import { useReducedMotion } from '../../landing/motion/useReducedMotion';
 import { useValuationI18n } from '../../../valuation_i18n';
 import { Step1Profile } from './steps/Step1Profile';
 import { Step2Financials } from './steps/Step2Financials';
 import { Step3Risk } from './steps/Step3Risk';
 import { Step4Goal } from './steps/Step4Goal';
+import { LiveValuationCard } from './LiveValuationCard';
 import {
   useWizardValuation,
   WizardValuationProvider,
@@ -56,7 +63,9 @@ function EquifyWizardShell({
   const [revealed, setRevealed] = useState(false);
   const reducedMotion = useReducedMotion();
   const { step, setStep, computed, state } = useWizardValuation();
+  const { reportingCurrency } = useReportingCurrency();
   const displayCompanyName = resolveDisplayCompanyName(state.profile.companyName, locale);
+  const hasLiveFinancials = hasMeaningfulFinancialInputs(state.financials);
 
   useEffect(() => {
     setMounted(true);
@@ -76,11 +85,14 @@ function EquifyWizardShell({
   const goStep = useCallback(
     (n: number) => {
       if (n >= 1 && n <= 4) {
+        if (step === 2 && n === 3 && !hasMeaningfulFinancialInputs(state.financials)) {
+          return;
+        }
         setStep(n);
         window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
       }
     },
-    [reducedMotion, setStep],
+    [reducedMotion, setStep, state.financials, step],
   );
 
   const handleGenerate = useCallback(async () => {
@@ -117,10 +129,7 @@ function EquifyWizardShell({
       <div className="shell">
         <aside className="sidebar">
           <Link href="/" className="logo" aria-label={copy.homeAria}>
-            <span className="lg">
-              equify<em>.</em>
-            </span>
-            <small>BY SBC</small>
+            <EquifyLogo variant="dark-bg" compact decorative />
           </Link>
 
           <nav className="steps" aria-label={copy.stepNavLabel}>
@@ -152,37 +161,7 @@ function EquifyWizardShell({
           </nav>
 
           {step !== 2 ? (
-            <div className="lv-panel">
-              <div className="lv-top">
-                <span>{copy.ownerValue}</span>
-                <span className="lv-dot" />
-              </div>
-              <div className="lv-val mono">{fmtEquitySidebarM(computed.equity, locale)}</div>
-              <div className="lv-sub">{copy.liveUpdating}</div>
-              {displayCompanyName ? (
-                <div className="lv-sub" style={{ marginTop: 4, opacity: 0.85 }}>
-                  {displayCompanyName}
-                </div>
-              ) : null}
-              <div className="lv-rows">
-                <div className="lv-row">
-                  <span>{copy.dcfWeight}</span>
-                  <b className="mono">{fmtK(computed.dcf, locale)}</b>
-                </div>
-                <div className="lv-row">
-                  <span>{copy.ebitdaWeight}</span>
-                  <b className="mono">{fmtK(computed.ebtMult, locale)}</b>
-                </div>
-                <div className="lv-row">
-                  <span>{copy.revWeight}</span>
-                  <b className="mono">{fmtK(computed.revMult, locale)}</b>
-                </div>
-                <div className="lv-row hl">
-                  <span>{copy.enterpriseValue}</span>
-                  <b className="mono">{fmtK(computed.ev, locale)}</b>
-                </div>
-              </div>
-            </div>
+            <LiveValuationCard variant="sidebar" companyName={displayCompanyName || undefined} />
           ) : null}
         </aside>
 
@@ -263,7 +242,11 @@ function EquifyWizardShell({
       <div className="m-bar" aria-hidden={false}>
         <div className="m-bar-live">
           <span className="m-bar-label">{copy.ownerValue}</span>
-          <span className="m-bar-val mono">{fmtEquitySidebarM(computed.equity, locale)}</span>
+          <span className="m-bar-val mono eq-currency-value" data-currency={reportingCurrency}>
+            {hasLiveFinancials
+              ? fmtEquitySidebarM(computed.equity, locale, reportingCurrency)
+              : formatLiveAmountEmpty(locale, reportingCurrency)}
+          </span>
         </div>
         <span className="m-bar-step">
           {copy.stepBadge} <b>{step}</b>{copy.stepOf}

@@ -1,21 +1,18 @@
 import type { ValuationInputs } from '../valuation';
 import {
-  BACKLOG_INFLECTION_TARGETS,
+  INSTITUTIONAL_BLEND_WEIGHTS,
+  computeBacklogCoverageRatio,
   computeBacklogRatio,
+  computeBacklogWaccRiskReduction,
+  computeOrganicForwardRevenue2027K,
+  computeProjectedEbitda2027FromGrowth,
   resolveCurrentYearEbitdaK,
-  resolveForwardBlendedMultipleBaseEbitda,
   resolveHistoricalThreeYearEbitdaAverage,
-  resolveInflectionForwardEbitda2027K,
   type BacklogInflectionResult,
 } from './backlog_metrics';
-import {
-  computeInflectionForwardEbitda2027K,
-} from './adaptive_calibration';
-import {
-  normalizeMethodologyWeights,
-  type SectorMethodologyConfig,
-} from './sector_methodology_matrix';
+import type { SectorMethodologyConfig } from './sector_methodology_matrix';
 
+/** @deprecated Use computeBacklogWaccRiskReduction — dynamic up to −1.5pp. */
 export const BACKLOG_INFLECTION_WACC_PREMIUM = -1.0;
 
 export {
@@ -26,13 +23,8 @@ export {
 export type { BacklogInflectionResult } from './backlog_metrics';
 
 /**
- * Backlog Inflection Accelerator — ratio-driven overlay on sectorConfigs.
- *
- * industry / services (historical_blended_ebitda):
- *   backlog_signed / revenue_2026 >= 0.5 → 70/30 weights + forward EBITDA blend
- *   else → sector baseline weights + 3-year EBITDA average
- *
- * saas: sectorConfigs weights; backlog ignored; revenue multiple on 2026 run-rate.
+ * Backlog Inflection — contracted backlog stabilizes WACC (Alpha → 0%) only.
+ * EV blend weights are resolved separately via valuation_weights_registry.
  */
 export function applyBacklogInflectionAccelerator(params: {
   sectorConfig: SectorMethodologyConfig;
@@ -51,9 +43,11 @@ export function applyBacklogInflectionAccelerator(params: {
   cappedGrowthPct: number;
   /** Post-guardrail mean margin % across 2024–2026. */
   historicalAvgMarginPct?: number;
+  /** Full idiosyncratic Alpha premium (pp) — eligible for backlog mitigation. */
+  specificRiskPremiumPp?: number;
 }): BacklogInflectionResult {
   const { sectorConfig, inputs, cappedGrowthPct, historicalAvgMarginPct = 0 } = params;
-  const sectorBaseline = normalizeMethodologyWeights(sectorConfig);
+  const userGrowthPct = cappedGrowthPct;
   const revenue2026K = inputs.revenue2026K ?? inputs.rev ?? 0;
 
   const ebitdaContext = {
@@ -68,54 +62,53 @@ export function applyBacklogInflectionAccelerator(params: {
   const historicalThreeYearEbitdaAvg =
     resolveHistoricalThreeYearEbitdaAverage(ebitdaContext);
 
-  const backlogSignedK = inputs.backlogSignedK ?? 0;
-  const inflectionForwardEbitda2027K =
-    historicalAvgMarginPct > 0 && backlogSignedK > 0
-      ? computeInflectionForwardEbitda2027K(
-          historicalAvgMarginPct,
-          backlogSignedK,
-        )
-      : resolveInflectionForwardEbitda2027K(inputs.projectedEbitdaK, ebitdaContext);
+  const currentYearEbitdaK = resolveCurrentYearEbitdaK(ebitdaContext);
+  const projectedFromState =
+    inputs.projectedEbitdaK?.[0] ?? inputs.ebitda2027K ?? null;
+  const forwardEbitda2027K =
+    typeof projectedFromState === 'number' && projectedFromState > 0
+      ? projectedFromState
+      : computeProjectedEbitda2027FromGrowth(currentYearEbitdaK, userGrowthPct);
+
+  const organicForwardRevenue2027K = computeOrganicForwardRevenue2027K(
+    revenue2026K,
+    userGrowthPct,
+  );
 
   if (sectorConfig.strategy === 'current_run_rate_revenue') {
     return {
       inflectionIntensity: 0,
-      acceleratedGrowthPct: cappedGrowthPct,
-      blendWeights: sectorBaseline,
-      baseEbitdaForMultiple: resolveCurrentYearEbitdaK(ebitdaContext),
+      acceleratedGrowthPct: userGrowthPct,
+      blendWeights: { ...INSTITUTIONAL_BLEND_WEIGHTS },
+      baseEbitdaForMultiple: currentYearEbitdaK,
       backlogInflectionActive: false,
       backlogRatio: 0,
       historicalThreeYearEbitdaAvg,
-      forwardEbitda2027K: inflectionForwardEbitda2027K,
+      forwardEbitda2027K,
       waccAdjustmentPct: 0,
     };
   }
 
   const backlogCheck = computeBacklogRatio(inputs.backlogSignedK, revenue2026K);
   const backlogInflectionActive = backlogCheck.triggerInflection;
-
-  const blendWeights = backlogInflectionActive
-    ? { ...BACKLOG_INFLECTION_TARGETS }
-    : sectorBaseline;
-
-  const baseEbitdaForMultiple = backlogInflectionActive
-    ? resolveForwardBlendedMultipleBaseEbitda(
-        historicalThreeYearEbitdaAvg,
-        inflectionForwardEbitda2027K,
-      )
-    : historicalThreeYearEbitdaAvg;
+  const coverageRatio = computeBacklogCoverageRatio(
+    inputs.backlogSignedK,
+    organicForwardRevenue2027K,
+  );
 
   return {
     inflectionIntensity: backlogInflectionActive ? 1 : 0,
-    acceleratedGrowthPct: cappedGrowthPct,
-    blendWeights,
-    baseEbitdaForMultiple,
+    acceleratedGrowthPct: userGrowthPct,
+    blendWeights: { ...INSTITUTIONAL_BLEND_WEIGHTS },
+    baseEbitdaForMultiple: historicalThreeYearEbitdaAvg,
     backlogInflectionActive,
     backlogRatio: backlogCheck.backlogRatio,
     historicalThreeYearEbitdaAvg,
-    forwardEbitda2027K: inflectionForwardEbitda2027K,
-    waccAdjustmentPct: backlogInflectionActive
-      ? BACKLOG_INFLECTION_WACC_PREMIUM
-      : 0,
+    forwardEbitda2027K,
+    waccAdjustmentPct: computeBacklogWaccRiskReduction(
+      coverageRatio,
+      backlogInflectionActive,
+      params.specificRiskPremiumPp,
+    ),
   };
 }

@@ -2,12 +2,13 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { EquifyLifecycleKey } from '../../../../lib/valuation';
-import { SECTOR_SELECT_OPTIONS, getSubSectorsForSector } from '../../../../lib/constants/industry_config';
+import { SECTOR_SELECT_OPTIONS, coerceWizardSectorSelection, getSubSectorsForSector } from '../../../../lib/constants/industry_config';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { lockLeadPayload } from '../../../../lib/wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_wizard';
 import { scheduleWizardProgressSave } from '../../../../lib/wizard/wizard_progress_queue';
 import { useWizardValuation } from '../WizardValuationContext';
+import { IndustryInsightCard } from './IndustryInsightCard';
 import { isAcceptedLogoFile, MAX_LOGO_BYTES } from '../../../../lib/utils/logo_data_url';
 import {
   sanitizePhoneInput,
@@ -56,6 +57,31 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
   const { state, updateProfile, setSector, setLifecycle } = useWizardValuation();
   const { profile } = state;
   const subSectors = getSubSectorsForSector(profile.sector);
+  const showIndustryInsight = Boolean(profile.sector && profile.subSector);
+
+  const handleSectorSelect = useCallback(
+    (sector: typeof profile.sector) => {
+      setSector(sector);
+    },
+    [setSector],
+  );
+
+  const handleSubSectorSelect = useCallback(
+    (subSectorId: string) => {
+      updateProfile({ subSector: subSectorId });
+    },
+    [updateProfile],
+  );
+
+  React.useEffect(() => {
+    const coerced = coerceWizardSectorSelection(profile.sector, profile.subSector);
+    if (
+      coerced.sector !== profile.sector ||
+      coerced.subSector !== profile.subSector
+    ) {
+      updateProfile(coerced);
+    }
+  }, [profile.sector, profile.subSector, updateProfile]);
   const fileRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [logoError, setLogoError] = useState<string | null>(null);
@@ -242,7 +268,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
                 key={s.key}
                 type="button"
                 className={`chip${profile.sector === s.key ? ' on' : ''}`}
-                onClick={() => setSector(s.key)}
+                onClick={() => handleSectorSelect(s.key)}
               >
                 {s.label}
               </button>
@@ -261,13 +287,22 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
                   key={s.id}
                   type="button"
                   className={`chip${profile.subSector === s.id ? ' on' : ''}`}
-                  onClick={() => updateProfile({ subSector: s.id })}
+                  onClick={() => handleSubSectorSelect(s.id)}
                 >
                   {isHe ? s.labelHe : s.labelEn}
                 </button>
               ))}
             </div>
           </div>
+        ) : null}
+
+        {showIndustryInsight ? (
+          <IndustryInsightCard
+            sector={profile.sector}
+            subSector={profile.subSector}
+            locale={locale}
+            copy={t.step1.industryInsight}
+          />
         ) : null}
 
         <div className="field">

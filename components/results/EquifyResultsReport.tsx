@@ -10,9 +10,11 @@ import {
   getBlendWeights,
 } from '../../lib/results/report-view-model';
 import { fmtMillionParts } from '../../lib/valuation';
+import { compactAmountNumber } from '../../lib/utils/formatCurrency';
 import { formatCurrencyShort } from '../../lib/utils/formatCurrency';
 import { downloadEquifyPdf } from '../../lib/results/download-equify-pdf';
 import { downloadEquifyHtml } from '../../lib/results/download-equify-html';
+import { buildExportValuationDataFromLiveSession } from '../../lib/results/build-export-valuation-data';
 import { getMultiplesIntroText } from '../../lib/constants/industry_config';
 import { scenariosIntroFromRows } from '../../lib/i18n/equify_report_copy';
 import { useEquifyStrings } from '../../lib/i18n/use_equify_strings';
@@ -25,6 +27,7 @@ import { mapEquifyToWizardFormValues } from '../../lib/wizard/map_equify_wizard'
 import { resolveDisplayCompanyName } from '../../lib/wizard/resolve_company_display';
 import { isValidLogoDataUrl } from '../../lib/utils/logo_data_url';
 import { EquifyLanguageToggle } from '../shared/EquifyLanguageToggle';
+import { EquifyLogo } from '../brand/EquifyLogo';
 import { useReducedMotion } from '../landing/motion/useReducedMotion';
 import {
   buildDcfBreakdown,
@@ -49,10 +52,16 @@ import './equify-scroll-report.css';
 
 const SCENARIO_KEYS: ValuationScenario[] = ['bear', 'base', 'bull'];
 
-/** Responsive PDF/HTML download row — full-width stack on mobile, inline row on desktop. */
+/** Footer / final-CTA download row — stacked on mobile, inline on desktop. */
 const DOWNLOAD_ACTIONS_ROW_CLASS =
   'flex w-full min-w-0 max-w-full flex-col gap-4 sm:flex-row sm:w-auto items-stretch sm:items-center justify-center';
 const DOWNLOAD_BTN_CLASS = 'w-full max-w-full sm:w-auto justify-center box-border';
+
+/** Sticky top bar — compact horizontal controls on mobile. */
+const BAR_ACTIONS_ROW_CLASS =
+  'flex min-w-0 flex-1 flex-row items-center justify-end gap-2';
+const BAR_BTN_CLASS =
+  'bar-action-btn shrink-0 whitespace-nowrap text-sm leading-none px-3 py-2 sm:text-[15px] sm:px-5 sm:py-[11px]';
 
 interface ReportDownloadButtonsProps {
   shell: {
@@ -65,6 +74,8 @@ interface ReportDownloadButtonsProps {
   isDownloadingHtml: boolean;
   onDownloadPdf: () => void;
   onDownloadHtml: () => void;
+  /** Compact layout for the sticky top action bar. */
+  variant?: 'default' | 'bar';
 }
 
 function ReportDownloadButtons({
@@ -73,13 +84,18 @@ function ReportDownloadButtons({
   isDownloadingHtml,
   onDownloadPdf,
   onDownloadHtml,
+  variant = 'default',
 }: ReportDownloadButtonsProps) {
   const disabled = isDownloadingPdf || isDownloadingHtml;
+  const isBar = variant === 'bar';
+  const rowClass = isBar ? BAR_ACTIONS_ROW_CLASS : DOWNLOAD_ACTIONS_ROW_CLASS;
+  const btnClass = isBar ? BAR_BTN_CLASS : DOWNLOAD_BTN_CLASS;
+
   return (
-    <div className={DOWNLOAD_ACTIONS_ROW_CLASS}>
+    <div className={rowClass}>
       <button
         type="button"
-        className={`btn btn-ghost ${DOWNLOAD_BTN_CLASS}`}
+        className={`btn btn-ghost ${btnClass}`}
         onClick={onDownloadHtml}
         disabled={disabled}
         aria-busy={isDownloadingHtml}
@@ -88,7 +104,7 @@ function ReportDownloadButtons({
       </button>
       <button
         type="button"
-        className={`btn ${DOWNLOAD_BTN_CLASS}`}
+        className={`btn ${btnClass}`}
         onClick={onDownloadPdf}
         disabled={disabled}
         aria-busy={isDownloadingPdf}
@@ -156,6 +172,16 @@ export function EquifyResultsReport({
     [matrix, locale, equifyState],
   );
 
+  const exportValuationData = useMemo(() => {
+    if (!matrix || !equifyState || !vm) return null;
+    return buildExportValuationDataFromLiveSession(
+      matrix,
+      equifyState,
+      locale,
+      vm.reportId,
+    );
+  }, [matrix, equifyState, locale, vm]);
+
   const displayCompanyName = useMemo(
     () =>
       resolveDisplayCompanyName(
@@ -169,14 +195,14 @@ export function EquifyResultsReport({
   const bear = vm?.scenarios.bear;
   const bull = vm?.scenarios.bull;
 
-  const coverEquityM = base ? base.equityValue / 1_000_000 : 0;
+  const coverEquityAnim = base ? compactAmountNumber(base.equityValue) : 0;
 
   useScrollReportOrb(orbRef, { enabled: mounted && !!vm, reducedMotion });
   useScrollReportMotion({
     enabled: mounted && !!vm,
     reducedMotion,
-    coverEquityM,
-    finalEquityM: coverEquityM,
+    coverEquityAmount: coverEquityAnim,
+    finalEquityAmount: coverEquityAnim,
   });
 
   const sectorKey = useMemo((): EquifySectorKey => {
@@ -221,8 +247,8 @@ export function EquifyResultsReport({
 
   const blendedEbitdaFootnote = useMemo(() => {
     if (!vm?.ebitdaBlend) return null;
-    return rs.blendedEbitdaNote(summarizeBlendedEbitda(vm.ebitdaBlend));
-  }, [rs, vm?.ebitdaBlend]);
+    return rs.blendedEbitdaNote(summarizeBlendedEbitda(vm.ebitdaBlend, vm.currency));
+  }, [rs, vm?.currency, vm?.ebitdaBlend]);
 
   const multiplesIntro = useMemo(() => {
     const stored = loadEquifyWizardState();
@@ -268,21 +294,19 @@ export function EquifyResultsReport({
   }, [idLabel, vm]);
 
   const handleDownloadPdf = useCallback(async () => {
-    if (!vm || !base) return;
+    if (!vm || !base || !equifyState || !exportValuationData) return;
     setIsDownloadingPdf(true);
     setExportError(null);
     try {
-      const stored = loadEquifyWizardState();
-      const industryCode = stored
-        ? mapEquifyToWizardFormValues(stored).industry
-        : undefined;
+      const industryCode = mapEquifyToWizardFormValues(equifyState).industry;
       await downloadEquifyPdf({
         equityValue: base.equityValue,
         reportId: vm.reportId,
         companyName: displayCompanyName,
         industryCode,
         locale,
-        state: equifyState ?? stored ?? undefined,
+        state: equifyState,
+        valuationData: exportValuationData,
       });
     } catch (err) {
       const message =
@@ -291,24 +315,22 @@ export function EquifyResultsReport({
     } finally {
       setIsDownloadingPdf(false);
     }
-  }, [base, displayCompanyName, equifyState, locale, shell.exportFailed, vm]);
+  }, [base, displayCompanyName, equifyState, exportValuationData, locale, shell.exportFailed, vm]);
 
   const handleDownloadHtml = useCallback(async () => {
-    if (!vm || !base) return;
+    if (!vm || !base || !equifyState || !exportValuationData) return;
     setIsDownloadingHtml(true);
     setExportError(null);
     try {
-      const stored = loadEquifyWizardState();
-      const industryCode = stored
-        ? mapEquifyToWizardFormValues(stored).industry
-        : undefined;
+      const industryCode = mapEquifyToWizardFormValues(equifyState).industry;
       await downloadEquifyHtml({
         equityValue: base.equityValue,
         reportId: vm.reportId,
         companyName: displayCompanyName,
         industryCode,
         locale,
-        state: equifyState ?? stored ?? undefined,
+        state: equifyState,
+        valuationData: exportValuationData,
       });
     } catch (err) {
       const message =
@@ -317,7 +339,7 @@ export function EquifyResultsReport({
     } finally {
       setIsDownloadingHtml(false);
     }
-  }, [base, displayCompanyName, equifyState, locale, shell.exportFailed, vm]);
+  }, [base, displayCompanyName, equifyState, exportValuationData, locale, shell.exportFailed, vm]);
 
   const handleScenario = useCallback(
     (key: ValuationScenario) => {
@@ -354,11 +376,12 @@ export function EquifyResultsReport({
   const equityDisplay = scVal ?? scrollScenario.equityAmount;
   const scColor =
     scenario === 'bear' ? '#D97575' : scenario === 'bull' ? '#C49A3C' : '#9EEEE6';
-  const equityParts = fmtMillionParts(locale, base.equityValue);
-  const evParts = fmtMillionParts(locale, base.enterpriseValue);
+  const equityParts = fmtMillionParts(locale, base.equityValue, vm.currency as 'ILS' | 'USD' | 'EUR');
+  const evParts = fmtMillionParts(locale, base.enterpriseValue, vm.currency as 'ILS' | 'USD' | 'EUR');
   const scenarioEquityParts = fmtMillionParts(
     locale,
     vm.scenarios[scenario].equityValue,
+    vm.currency as 'ILS' | 'USD' | 'EUR',
   );
   const scenarioLabel = (key: ValuationScenario) => {
     if (key === 'bear') return rs.scenarioBear;
@@ -377,18 +400,22 @@ export function EquifyResultsReport({
         <i />
       </div>
 
-      <header className="bar" id="bar">
-        <div className="wrap bar-in">
-          <Link href="/" className="logo" aria-label={shell.homeAria}>
-            equify<em>.</em>
-            <small>BY SBC</small>
+      <header
+        className="bar sticky top-0 z-50 w-full border-b border-teal-500/10 bg-slate-950/85 backdrop-blur-md supports-[backdrop-filter]:bg-slate-950/85"
+        id="bar"
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      >
+        <div className="bar-in wrap flex min-h-0 w-full flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-4">
+          <Link href="/" className="logo shrink-0" aria-label={shell.homeAria}>
+            <EquifyLogo variant="dark-bg" compact decorative />
           </Link>
-          <span className="doc-id">
+          <span className="doc-id hidden min-w-0 flex-1 text-end sm:inline">
             REPORT #{vm.reportId} · {displayCompanyName}
           </span>
-          <div className="bar-actions flex w-full min-w-0 max-w-full flex-col items-stretch justify-center gap-4 px-5 pb-1 sm:flex-row sm:items-center sm:justify-center sm:px-0 sm:pb-0 sm:w-auto">
-            <EquifyLanguageToggle />
+          <div className="bar-actions flex min-w-0 flex-1 basis-full flex-row items-center justify-between gap-2 sm:basis-auto sm:justify-end">
+            <EquifyLanguageToggle className="shrink-0" />
             <ReportDownloadButtons
+              variant="bar"
               shell={shell}
               isDownloadingPdf={isDownloadingPdf}
               isDownloadingHtml={isDownloadingHtml}
@@ -399,6 +426,7 @@ export function EquifyResultsReport({
         </div>
       </header>
 
+      <main className="report-body pt-24 md:pt-28 print:pt-0">
       {exportError ? (
         <div className="wrap" style={{ padding: '8px 0', color: '#D97575', fontSize: 13 }}>
           {exportError}
@@ -566,6 +594,7 @@ export function EquifyResultsReport({
             growthNote={rs.growthNote(vm.terminalGrowthPct)}
             marginNote={rs.marginNote(vm.ebitdaMarginPct.toFixed(1))}
             blendedNote={blendedEbitdaFootnote ?? undefined}
+            currency={vm.currency}
           />
         </div>
       </section>
@@ -860,6 +889,7 @@ export function EquifyResultsReport({
           minute: '2-digit',
         })}
       </footer>
+      </main>
     </div>
   );
 }

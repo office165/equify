@@ -3,6 +3,11 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { FinancialMonetaryFieldKey } from '../../../lib/validation/financial_field_validation';
 import { validateFinancialMonetaryField } from '../../../lib/validation/financial_field_validation';
+import {
+  FINANCIAL_INPUT_MAX_CHARS,
+  FINANCIAL_INPUT_MAX_DIGITS,
+  FINANCIAL_MAX_ABSOLUTE_NIS,
+} from '../../../lib/utils/financial_input_parser';
 import { currencyFluidInputClasses, DEFAULT_CURRENCY_PLACEHOLDER } from './fluidInputTypography';
 import { SmartFieldLabel } from './SmartFieldLabel';
 
@@ -41,13 +46,12 @@ function parseSignedDigits(raw: string, allowNegative: boolean): number {
   if (!trimmed || trimmed === '-') return 0;
 
   const normalized = trimmed.replace(/,/g, '').replace(/\s/g, '');
-  if (allowNegative && /^-?\d+$/.test(normalized)) {
-    return Number(normalized);
-  }
-  const digits = normalized.replace(/[^\d]/g, '');
+  const negative = allowNegative && normalized.startsWith('-');
+  const digits = normalized.replace(/[^\d]/g, '').slice(0, FINANCIAL_INPUT_MAX_DIGITS);
   if (!digits) return 0;
-  const parsed = Number.parseInt(digits, 10);
-  return Number.isFinite(parsed) ? parsed : 0;
+  const parsed = Number(negative ? `-${digits}` : digits);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(-FINANCIAL_MAX_ABSOLUTE_NIS, Math.min(FINANCIAL_MAX_ABSOLUTE_NIS, parsed));
 }
 
 function formatWhileTyping(raw: string, allowNegative: boolean): string {
@@ -55,7 +59,7 @@ function formatWhileTyping(raw: string, allowNegative: boolean): string {
   if (!trimmed) return '';
 
   const negative = allowNegative && trimmed.startsWith('-');
-  const digits = trimmed.replace(/[^\d]/g, '');
+  const digits = trimmed.replace(/[^\d]/g, '').slice(0, FINANCIAL_INPUT_MAX_DIGITS);
   if (!digits) return negative ? '-' : '';
 
   const grouped = NIS_FORMATTER.format(Number(digits));
@@ -158,10 +162,15 @@ export function CurrencyInputCore({
 
   const displayText = focused ? draft : formatStored(value);
   const hasError = Boolean(error);
+  const resolvedPlaceholder = placeholder ?? DEFAULT_CURRENCY_PLACEHOLDER;
+  const isPlaceholderVisible = !displayText;
+  const hePlaceholder =
+    isPlaceholderVisible && /[\u0590-\u05FF]/.test(resolvedPlaceholder);
+  const inputDir = hePlaceholder ? 'rtl' : 'ltr';
 
   return (
     <div
-      className={`si-control si-control--currency w-full min-w-0${focused ? ' is-editing' : ''}${autoFilledGlow ? ' si-control--autofill-glow' : ''}${hasError ? ' si-control--invalid' : ''}`}
+      className={`si-control si-control--currency w-full min-w-0${focused ? ' is-editing' : ''}${autoFilledGlow ? ' si-control--autofill-glow' : ''}${hasError ? ' si-control--invalid' : ''}${isPlaceholderVisible ? ' si-control--placeholder' : ''}${hePlaceholder ? ' si-control--he-placeholder' : ''}`}
     >
       <span
         className="si-prefix si-prefix--currency mono shrink-0 text-sm font-semibold leading-none"
@@ -178,10 +187,11 @@ export function CurrencyInputCore({
         enterKeyHint="done"
         autoComplete="off"
         spellCheck={false}
-        placeholder={placeholder ?? DEFAULT_CURRENCY_PLACEHOLDER}
-        dir="rtl"
-        lang="he"
-        className={`si-input si-input--currency mono min-w-0 flex-1 overflow-visible whitespace-nowrap outline-none ${currencyFluidInputClasses(displayText)}`}
+        maxLength={FINANCIAL_INPUT_MAX_CHARS}
+        placeholder={resolvedPlaceholder}
+        dir={inputDir}
+        lang={hePlaceholder ? 'he' : undefined}
+        className={`si-input si-input--currency ${hePlaceholder ? 'si-input--he-placeholder' : 'mono'} min-w-0 flex-1 overflow-visible whitespace-nowrap outline-none ${currencyFluidInputClasses(displayText, isPlaceholderVisible)}`}
         value={displayText}
         aria-label={ariaLabel}
         aria-invalid={hasError || undefined}

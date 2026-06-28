@@ -11,6 +11,7 @@ import type {
   ValuationData,
   WaccSegment,
 } from './types';
+import { synthesizeFinancialCoreFromValuationData } from './report-financial-core';
 import {
   getScenarioNarrative,
   multiplesMethodologyCopy,
@@ -521,8 +522,11 @@ export function mapApiPayloadToValuationData(payload: EquifyReportApiPayload): V
   const revenueEvM = v.revenue_ev ?? latest.revenue * v.revenue_multiple;
   const industry = resolveIndustryBenchmarks(data, v, latest);
   const sectorCopyLabel = sectorLabelForCopy(payload, locale);
+  const multipleLegEbitdaBase = mToNis(
+    v.ebitda_multiple > 0 ? ebitdaEvM / v.ebitda_multiple : latest.ebitda,
+  );
 
-  return {
+  const valuationData: ValuationData = {
     reportId,
     valuationDate,
     valuationDateShort: reportDateShortHe(valuationDate),
@@ -564,6 +568,8 @@ export function mapApiPayloadToValuationData(payload: EquifyReportApiPayload): V
     qualityScore: v.quality_score,
     qualityGrade: v.quality_grade,
     ebitda: mToNis(latest.ebitda),
+    blendedEbitdaBase: mToNis(latest.ebitda),
+    multipleLegEbitdaBase,
     effectiveMult: v.ebitda_multiple,
     revenueMultiple: v.revenue_multiple,
     terminalSharePct,
@@ -606,4 +612,7 @@ export function mapApiPayloadToValuationData(payload: EquifyReportApiPayload): V
         ? multiplesMethodologyCopyEn(`in ${sectorCopyLabel}`)
         : multiplesMethodologyCopy(`בענף ${sectorCopyLabel}`),
   };
+
+  valuationData.financialCore = synthesizeFinancialCoreFromValuationData(valuationData);
+  return valuationData;
 }

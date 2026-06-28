@@ -30,7 +30,30 @@ export interface EquifyWizardStepStrings {
     logoRemove: string;
     placeholderName: string;
   };
-  step1: { titlePrefix: string };
+  step1: {
+    titlePrefix: string;
+    industryInsight: {
+      titlePrefix: string;
+      ebitdaMultiple: string;
+      revenueMultiple: string;
+      pbvMultiple: string;
+      navMultiple: string;
+      industryRange: string;
+      disclaimer: string;
+      reDevelopment?: {
+        title: string;
+        subtitle: string;
+        description: string;
+      };
+      /** Sub-sector premium insight blocks (Hebrew RTL microcopy). */
+      subSectorPremium?: Partial<
+        Record<
+          'restaurants-fb' | 'retail-supermarkets' | 'retail-fashion',
+          { title: string; subtitle: string; description: string }
+        >
+      >;
+    };
+  };
   step2: {
     sub: string;
     revenue: string;
@@ -50,6 +73,7 @@ export interface EquifyWizardStepStrings {
     cash: string;
     cashTip: string;
     netDebt: string;
+    netCash: string;
     currency: string;
     currencyIls: string;
     currencyUsd: string;
@@ -62,6 +86,15 @@ export interface EquifyWizardStepStrings {
     minGrowth: string;
     maxGrowth: string;
     waccQuality: (wacc: string, grade: string) => string;
+    waccQualityGrade: (grade: string) => string;
+    waccBreakdownAria: string;
+    waccBreakdownTitle: string;
+    waccBreakdownRf: string;
+    waccBreakdownBeta: string;
+    waccBreakdownErp: string;
+    waccBreakdownAlpha: string;
+    waccBreakdownKe: string;
+    waccBreakdownFormula: string;
     modelDcf: string;
     modelEbitda: string;
     modelRevenue: string;
@@ -87,13 +120,30 @@ export interface EquifyWizardStepStrings {
     backlogSigned: string;
     backlogSignedTip: string;
     auditedHistoryAccordion: string;
-    inflectionActive: (pct: number) => string;
+    auditedHistoryAccordionHint: string;
+    inflectionActive: (
+      pct: number,
+      dcfPct: number,
+      multipleLabel: string,
+      multiplePct: number,
+    ) => string;
     hasSignificantBacklog: string;
     hasSignificantBacklogHint: string;
     projected2027F: string;
     projected2028F: string;
     projected2029F: string;
     projectedForwardTip: string;
+    placeholderRevenueExample: string;
+    placeholderEbitdaExample: string;
+    placeholderZero: string;
+    liveEmptyHint: string;
+    err2026Revenue: string;
+    err2026Ebitda: string;
+    effectiveMultiple: string;
+    effectiveMultipleTip: string;
+    multipleAutoBadge: string;
+    multipleManualBadge: string;
+    multipleReset: string;
   };
   step3: {
     titlePrefix: string;
@@ -170,7 +220,46 @@ const HE: EquifyWizardStepStrings = {
     logoRemove: 'הסר לוגו',
     placeholderName: 'ישראל ישראלי',
   },
-  step1: { titlePrefix: 'פרטי חברה' },
+  step1: {
+    titlePrefix: 'פרטי חברה',
+    industryInsight: {
+      titlePrefix: 'תובנת שוק',
+      ebitdaMultiple: 'מדד הערכה מוביל: מכפיל EBITDA ענפי',
+      revenueMultiple: 'מדד הערכה מוביל: מכפיל הכנסות ענפי',
+      pbvMultiple: 'מדד הערכה מוביל: מכפיל הון (P/B — Price to Book)',
+      navMultiple: 'מדד הערכה מוביל: שווי נכסים (NAV)',
+      industryRange: 'טווח ענפי מקובל',
+      disclaimer:
+        '* נתון זה מהווה בסיס בלבד. הערכת השווי הסופית תשוקלל עם נתוני הצמיחה, הרווחיות ופרופיל הסיכון הספציפי של החברה שלך.',
+      reDevelopment: {
+        title: 'תובנת שוק: יזמות נדל"ן (מגורים ומסחרי)',
+        subtitle:
+          'מתודולוגיית ליבה: מודל תזרימי מזומנים מהוונים (DCF) במשקל גבוה (75%)',
+        description:
+          'בשל האופי הפרויקטלי והתנודתיות בהכרה בהכנסות של חברות יזמיות, המערכת מעניקה משקל מסיבי למודל ה-DCF קדימה בשילוב פרמיית סיכון מותאמת למינוף הענפי.',
+      },
+      subSectorPremium: {
+        'restaurants-fb': {
+          title: 'תובנת שוק: מסעדנות ושירותי מזון',
+          subtitle: 'מדד הערכה מוביל: מכפיל EBITDA ענפי שמרני: 2.5x',
+          description:
+            'בשל רמת התנודתיות התפעולית בענף המזון, המערכת מעניקה משקל מוביל למכפיל הרווח הנוכחי (70%) ומאזנת את השווי באמצעות שיעור הון עצמי מותאם סיכון.',
+        },
+        'retail-supermarkets': {
+          title: 'תובנת שוק: סופרמרקטים ומכולות',
+          subtitle: 'מתודולוגיית ליבה: יציבות תזרימית ומכפיל מגזרי מוגן (4.5x)',
+          description:
+            'ענף קמעונאות המזון מתאפיין בשולי רווח נמוכים אך בהכנסות קשיחות ויציבות לאורך מחזורי כלכלה משתנים, המעניקות לעסק תמחור יציב משמעותית ביחס לשאר שוק המסחר העצמאי.',
+        },
+        'retail-fashion': {
+          title: 'תובנת שוק: חנויות אופנה ופופ-אפ',
+          subtitle: 'מתודולוגיית ליבה: שקלול סיכוני מלאי מת ועונתיות (מכפיל 3.5x)',
+          description:
+            'הערכת השווי לוקחת בחשבון את מדד הסיכון של מלאי עונתי והאטה פוטנציאלית בצריכה פרטית, ומאזנת את השווי בשילוב מודל מכפיל EBITDA מותאם למגזר הקמעונאי.',
+        },
+      },
+    },
+  },
   step2: {
     sub: 'הכנסות ו-EBITDA לשנתיים האחרונות; תחזית לשלוש שנים קדימה לפי הקלט ותחזית הנהלה.',
     revenue: 'הכנסות שנתיות',
@@ -191,6 +280,7 @@ const HE: EquifyWizardStepStrings = {
     cash: 'מזומן ושווי מזומנים',
     cashTip: 'מזומן, פיקדונות לטווח קצר וניירות ערך נזילים — מקטינים את החוב נטו.',
     netDebt: 'חוב נטו (אוטומטי)',
+    netCash: 'מזומן נטו (אוטומטי)',
     currency: 'מטבע דיווח',
     currencyIls: '₪ שקל (ILS)',
     currencyUsd: '$ דולר (USD)',
@@ -203,6 +293,15 @@ const HE: EquifyWizardStepStrings = {
     minGrowth: '−10%',
     maxGrowth: '+50%',
     waccQuality: (wacc, grade) => `WACC ${wacc}% · Quality ${grade}`,
+    waccQualityGrade: (grade) => ` · איכות ${grade}`,
+    waccBreakdownAria: 'פירוט WACC · CAPM',
+    waccBreakdownTitle: 'פירוק WACC · CAPM',
+    waccBreakdownRf: 'תשואה חסרת סיכון (Rf)',
+    waccBreakdownBeta: 'מדד סיכון ענפי (Beta ממונפת)',
+    waccBreakdownErp: 'פרמיית סיכון שוק (ERP)',
+    waccBreakdownAlpha: 'פרמיית גודל חברה (Alpha)',
+    waccBreakdownKe: 'עלות הון עצמי (Ke)',
+    waccBreakdownFormula: 'נוסחת מודל: CAPM (Capital Asset Pricing Model)',
     modelDcf: 'DCF',
     modelEbitda: 'EBITDA ×',
     modelRevenue: 'Revenue ×',
@@ -230,8 +329,10 @@ const HE: EquifyWizardStepStrings = {
     backlogSignedTip:
       'סכום חוזים חתומים / הזמנות מחייבות לשנים קדימה. כאשר הצבר ≥ 50% מהכנסות 2026, מופעל מנוע Inflection (70% DCF · 30% מכפיל עם בסיס EBITDA מעורב קדימה).',
     auditedHistoryAccordion: '📊 עריכת נתוני עבר מבוקרים (2024-2025)',
-    inflectionActive: (pct) =>
-      `Inflection פעיל · צבר/הכנסות ${pct}% · DCF 70% · EBITDA 30%`,
+    auditedHistoryAccordionHint:
+      'לחץ לפתיחה • כל נתון נוסף משפר משמעותית את דיוק הערכת השווי',
+    inflectionActive: (pct, dcfPct, multipleLabel, multiplePct) =>
+      `DCF ${dcfPct}% · Inflection פעיל · צבר/הכנסות ${pct}% · ${multipleLabel} ${multiplePct}%`,
     hasSignificantBacklog:
       'צבר הזמנות חתום / חוזים מהותיים קדימה (2026-2027)',
     hasSignificantBacklogHint:
@@ -239,7 +340,20 @@ const HE: EquifyWizardStepStrings = {
     projected2027F: 'EBITDA צפוי 2027F',
     projected2028F: 'EBITDA צפוי 2028F',
     projected2029F: 'EBITDA צפוי 2029F',
-    projectedForwardTip: 'תחזית הנהלה — משמשת כבסיס מכפיל במצב Inflection (₪K)',
+    projectedForwardTip:
+      'מחושב אוטומטית: EBITDA 2026 × (1 + צמיחה שנתית). משמש כבסיס תחזית במודל ההערכה (₪K)',
+    placeholderRevenueExample: 'לדוגמה: 12,000,000',
+    placeholderEbitdaExample: 'לדוגמה: 3,000,000',
+    placeholderZero: '0',
+    liveEmptyHint: 'הזינו הכנסות ו-EBITDA לחישוב שווי חי',
+    err2026Revenue: 'נא להזין הכנסות 2026',
+    err2026Ebitda: 'נא להזין EBITDA 2026',
+    effectiveMultiple: 'מכפיל אפקטיבי',
+    effectiveMultipleTip:
+      'מכפיל שוק מכויל לפי הענף. ניתן לדרוס ידנית במצב מומחה — המנוע יחשב מחדש את רגל המכפיל.',
+    multipleAutoBadge: '✨ אוטומטי (לפי ענף)',
+    multipleManualBadge: '✍️ ידני (מצב מומחה)',
+    multipleReset: '🔄 אפס לממוצע הענף',
   },
   step3: {
     titlePrefix: 'מדדי סיכון',
@@ -327,7 +441,19 @@ const EN: EquifyWizardStepStrings = {
     logoRemove: 'Remove logo',
     placeholderName: 'Jane Doe',
   },
-  step1: { titlePrefix: 'Company details' },
+  step1: {
+    titlePrefix: 'Company details',
+    industryInsight: {
+      titlePrefix: 'Market insight',
+      ebitdaMultiple: 'Primary benchmark: sector EV/EBITDA',
+      revenueMultiple: 'Primary benchmark: sector EV/Revenue',
+      pbvMultiple: 'Primary benchmark: Price/Book (P/B)',
+      navMultiple: 'Primary benchmark: Net Asset Value (NAV)',
+      industryRange: 'Accepted sector range',
+      disclaimer:
+        '* This figure is a baseline only. Your final valuation will reflect company-specific growth, profitability, and risk profile.',
+    },
+  },
   step2: {
     sub: 'Revenue and EBITDA for the past two years; three-year forward forecast from your inputs and management projections.',
     revenue: 'Annual revenue',
@@ -348,6 +474,7 @@ const EN: EquifyWizardStepStrings = {
     cash: 'Cash & equivalents',
     cashTip: 'Cash, short-term deposits, and liquid securities — reduces net debt.',
     netDebt: 'Net debt (auto)',
+    netCash: 'Net cash (auto)',
     currency: 'Reporting currency',
     currencyIls: '₪ Shekel (ILS)',
     currencyUsd: '$ US Dollar (USD)',
@@ -360,6 +487,15 @@ const EN: EquifyWizardStepStrings = {
     minGrowth: '−10%',
     maxGrowth: '+50%',
     waccQuality: (wacc, grade) => `WACC ${wacc}% · Quality ${grade}`,
+    waccQualityGrade: (grade) => ` · Quality ${grade}`,
+    waccBreakdownAria: 'Actuarial WACC breakdown',
+    waccBreakdownTitle: 'WACC decomposition · CAPM',
+    waccBreakdownRf: 'Risk-free rate (Rf)',
+    waccBreakdownBeta: 'Industry beta (levered β)',
+    waccBreakdownErp: 'Equity risk premium (ERP)',
+    waccBreakdownAlpha: 'Size premium (Alpha)',
+    waccBreakdownKe: 'Cost of equity (Ke)',
+    waccBreakdownFormula: 'Model: CAPM (Capital Asset Pricing Model)',
     modelDcf: 'DCF',
     modelEbitda: 'EBITDA ×',
     modelRevenue: 'Revenue ×',
@@ -387,8 +523,10 @@ const EN: EquifyWizardStepStrings = {
     backlogSignedTip:
       'Total signed contracts / binding orders for forward years. When backlog ≥ 50% of 2026 revenue, the Inflection engine engages (70% DCF · 30% multiple with forward EBITDA blend).',
     auditedHistoryAccordion: '📊 Edit audited historical data (2024-2025)',
-    inflectionActive: (pct) =>
-      `Inflection active · backlog/revenue ${pct}% · DCF 70% · EBITDA 30%`,
+    auditedHistoryAccordionHint:
+      'Click to open • Every additional data point significantly improves valuation accuracy',
+    inflectionActive: (pct, dcfPct, multipleLabel, multiplePct) =>
+      `DCF ${dcfPct}% · Inflection active · backlog/revenue ${pct}% · ${multipleLabel} ${multiplePct}%`,
     hasSignificantBacklog:
       'Signed order backlog / material forward contracts (2026-2027)',
     hasSignificantBacklogHint:
@@ -396,7 +534,20 @@ const EN: EquifyWizardStepStrings = {
     projected2027F: 'Projected EBITDA 2027F',
     projected2028F: 'Projected EBITDA 2028F',
     projected2029F: 'Projected EBITDA 2029F',
-    projectedForwardTip: 'Management forecast — multiples base in Inflection mode (₪K)',
+    projectedForwardTip:
+      'Auto-calculated: 2026 EBITDA × (1 + annual growth). Feeds the valuation forecast (₪K)',
+    placeholderRevenueExample: 'e.g. 12,000,000',
+    placeholderEbitdaExample: 'e.g. 3,000,000',
+    placeholderZero: '0',
+    liveEmptyHint: 'Enter revenue and EBITDA for a live valuation',
+    err2026Revenue: 'Please enter 2026 revenue',
+    err2026Ebitda: 'Please enter 2026 EBITDA',
+    effectiveMultiple: 'Effective multiple',
+    effectiveMultipleTip:
+      'Sector-calibrated market multiple. Override manually in expert mode — the engine recalculates the multiples leg.',
+    multipleAutoBadge: '✨ Auto (sector)',
+    multipleManualBadge: '✍️ Manual (expert)',
+    multipleReset: '🔄 Reset to sector default',
   },
   step3: {
     titlePrefix: 'Risk metrics',

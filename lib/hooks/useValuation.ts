@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type {
   EquifySectorKey,
   ValuationComputed,
@@ -8,6 +8,13 @@ import type {
   ValuationScenarios,
 } from '../valuation';
 import { runValuationEngine } from '../valuation/valuation_engine';
+import { applyReportingFxLayer } from '../valuation/apply_reporting_fx';
+import type { ReportingCurrencyCode } from '../utils/formatCurrency';
+import {
+  getCachedFxRates,
+  refreshFxRates,
+  type FxRatesSnapshot,
+} from '../utils/fxService';
 import {
   resolveSectorMethodologyConfig,
   resolveSectorMethodologyKey,
@@ -30,13 +37,36 @@ export interface UseValuationResult {
 
 /**
  * React hook — runs the config-driven valuation engine whenever inputs change.
+ * Manual multiple overrides (`customMultiple` + `isManualMultiple`) trigger instant recomputation.
+ * Applies reporting-currency FX at the presentation layer (engine stays in ILS ₪K).
  */
-export function useValuation(inputs: ValuationInputs): UseValuationResult {
+export function useValuation(
+  inputs: ValuationInputs,
+  reportingCurrency: ReportingCurrencyCode = 'ILS',
+): UseValuationResult {
+  const [fxRates, setFxRates] = useState<FxRatesSnapshot>(() => getCachedFxRates());
+
+  useEffect(() => {
+    let cancelled = false;
+    void refreshFxRates().then((rates) => {
+      if (!cancelled) setFxRates(rates);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [reportingCurrency]);
+
   return useMemo(() => {
-    const { computed, scenarios } = runValuationEngine(inputs);
+    const { computed: baseComputed, scenarios: baseScenarios } = runValuationEngine(inputs);
+    const { computed, scenarios } = applyReportingFxLayer(
+      baseComputed,
+      baseScenarios,
+      reportingCurrency,
+      fxRates,
+    );
     const sector = inputs.sector ?? ('other' as EquifySectorKey);
-    const methodologyKey = resolveSectorMethodologyKey(sector);
-    const sectorConfig = resolveSectorMethodologyConfig(sector);
+    const methodologyKey = resolveSectorMethodologyKey(sector, inputs.subSector);
+    const sectorConfig = resolveSectorMethodologyConfig(sector, inputs.subSector);
 
     return {
       computed,
@@ -46,7 +76,7 @@ export function useValuation(inputs: ValuationInputs): UseValuationResult {
       strategy: sectorConfig.strategy,
       calibrationWarnings: computed.calibrationWarnings,
     };
-  }, [inputs]);
+  }, [fxRates, inputs, reportingCurrency]);
 }
 
 export { sectorConfigs };

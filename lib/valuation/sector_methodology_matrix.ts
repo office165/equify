@@ -17,6 +17,14 @@ export interface SectorMethodologyConfig {
   growthCap: number;
   /** Institutional max historical EBITDA / revenue — anti-anomaly winsorization. */
   maxHistoricalMargin: number;
+  /** Max EBITDA multiple spread at QS=0 before quality tightening (×). */
+  maxMultipleSpread: number;
+  /** Max WACC spread at QS=0 before quality tightening (percentage points). */
+  maxWaccSpreadPp: number;
+  /** Sub-sector injected WACC baseline (%). When set, replaces rf+erp+crp core in WACC assembly. */
+  waccBasePct?: number;
+  /** When true, EV blend uses weightDcf/weightEbitda/weightRev instead of institutional 70/30. */
+  useConfiguredBlendWeights?: boolean;
 }
 
 export const sectorConfigs = {
@@ -29,6 +37,8 @@ export const sectorConfigs = {
     maxMultiple: 7.5,
     growthCap: 0.25,
     maxHistoricalMargin: 0.22,
+    maxMultipleSpread: 1.25,
+    maxWaccSpreadPp: 1.5625,
   },
   services: {
     strategy: 'historical_blended_ebitda',
@@ -39,6 +49,8 @@ export const sectorConfigs = {
     maxMultiple: 6.0,
     growthCap: 0.15,
     maxHistoricalMargin: 0.28,
+    maxMultipleSpread: 1.0,
+    maxWaccSpreadPp: 1.25,
   },
   saas: {
     strategy: 'current_run_rate_revenue',
@@ -49,6 +61,20 @@ export const sectorConfigs = {
     maxMultiple: 8.0,
     growthCap: 0.6,
     maxHistoricalMargin: 0.35,
+    maxMultipleSpread: 1.5,
+    maxWaccSpreadPp: 2.0,
+  },
+  real_estate: {
+    strategy: 'historical_blended_ebitda',
+    weightEbitda: 0.25,
+    weightDcf: 0.35,
+    weightRev: 0.0,
+    minMultiple: 0.8,
+    maxMultiple: 2.0,
+    growthCap: 0.1,
+    maxHistoricalMargin: 0.4,
+    maxMultipleSpread: 0.6,
+    maxWaccSpreadPp: 1.0,
   },
 } as const satisfies Record<string, SectorMethodologyConfig>;
 

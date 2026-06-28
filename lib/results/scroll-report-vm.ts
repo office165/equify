@@ -6,7 +6,7 @@ import { resolveEquifySectorFromIndustryCode } from '../wizard/build_valuation_i
 import type { EquifySectorKey } from '../valuation';
 import type { ValuationScenario } from '../valuation/canonical_valuation';
 import { getScenarioNarrative } from '../i18n/equify_report_copy';
-import { formatCurrencyShort, splitCompactAmount } from '../utils/formatCurrency';
+import { formatCurrencyNarrativeHe, formatCurrencyShort, splitCompactAmount } from '../utils/formatCurrency';
 import { buildWaccDonutSlices, type ReportViewModel } from './report-view-model';
 
 export const SCROLL_SECTIONS = [
@@ -107,7 +107,7 @@ export function buildExecSummary(
     if (weights.rev > 0) {
       parts.push(`מכפיל הכנסות (${(weights.rev * 100).toFixed(0)}%)`);
     }
-    return `שקלול ${parts.join(', ')} מניב שווי פעילות של ${formatCurrencyShort(base.enterpriseValue, currency)}. בניכוי חוב נטו, שווי לבעלים בתרחיש בסיס: ${formatCurrencyShort(base.equityValue, currency)}.`;
+    return `שקלול ${parts.join(', ')} מניב שווי פעילות של ${formatCurrencyNarrativeHe(base.enterpriseValue, currency)}. בניכוי חוב נטו, שווי לבעלים בתרחיש בסיס: ${formatCurrencyNarrativeHe(base.equityValue, currency)}.`;
   }
 
   const enParts = [
@@ -199,12 +199,6 @@ export function buildQualityFactors(
   ];
 }
 
-const SCENARIO_GROWTH_OFFSET: Record<ValuationScenario, number> = {
-  bear: -6,
-  base: 0,
-  bull: 6,
-};
-
 export function buildScrollScenarioView(
   vm: ReportViewModel,
   scenario: ValuationScenario,
@@ -219,13 +213,8 @@ export function buildScrollScenarioView(
 
   const baseGrowth = (vm.matrix.assumptions.revenue_growth_rates[0] ?? 0.09) * 100;
   const baseMargin = vm.ebitdaMarginPct;
-  const marginAdj = scenario === 'bear' ? -2 : scenario === 'bull' ? 2 : 0;
-  const growthPct =
-    scenario === 'bear'
-      ? Math.max(-5, baseGrowth + SCENARIO_GROWTH_OFFSET.bear)
-      : scenario === 'bull'
-        ? baseGrowth + SCENARIO_GROWTH_OFFSET.bull
-        : baseGrowth;
+  const growthPct = baseGrowth;
+  const marginAdj = 0;
   const narrative = getScenarioNarrative(scenario, sectorKey, {
     growthPct,
     baseGrowthPct: baseGrowth,

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { LegalDocument } from '../../lib/legal/types';
+import { LegalCloseButton } from './LegalCloseButton';
 
 export interface LegalDocumentPageProps {
   document: LegalDocument;
@@ -9,6 +10,7 @@ export interface LegalDocumentPageProps {
 export function LegalDocumentPage({ document: doc }: LegalDocumentPageProps) {
   return (
     <div className="min-h-[100dvh] bg-[#020504] text-slate-100">
+      <LegalCloseButton />
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#050F0D]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <Link

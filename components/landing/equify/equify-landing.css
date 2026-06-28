@@ -176,28 +176,55 @@ html {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 74px;
+  min-height: 74px;
+  height: auto;
+  padding-block: 8px;
+}
+
+@media (min-width: 768px) {
+  .nav-in {
+    min-height: 88px;
+    padding-block: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .nav-in {
+    min-height: 96px;
+    padding-block: 14px;
+  }
 }
 
 .logo {
-  font-weight: 900;
-  font-size: 24px;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  background: transparent;
 }
 
-.logo em {
-  font-style: normal;
-  color: var(--turq);
+.logo .equify-logo-img,
+.logo img {
+  height: 58px;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  background: transparent !important;
+  mix-blend-mode: plus-lighter;
 }
 
-.logo small {
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 0.22em;
-  color: var(--gold);
-  font-weight: 500;
+@media (min-width: 768px) {
+  .logo .equify-logo-img:not(.equify-logo-img--compact),
+  .logo img:not(.equify-logo-img--compact) {
+    height: 72px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .logo .equify-logo-img:not(.equify-logo-img--compact),
+  .logo img:not(.equify-logo-img--compact) {
+    height: 80px;
+  }
 }
 
 .nav-links {

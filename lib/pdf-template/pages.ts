@@ -1,4 +1,5 @@
 import { escHtml, equityCoverValHtml, fmtMoneyCompact } from '../pdf/print/print_formatters';
+import { formatReportMillionsUnit } from '../utils/formatCurrency';
 import {
   buildCoverRingsSvg,
   buildDcfTimelineSvg,
@@ -16,8 +17,17 @@ import {
 } from './charts';
 import { buildMoatNotesCalloutHtml } from './exec-summary-html';
 import type { ScenarioRow, ValuationData } from './types';
+import { ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
 
 const TOTAL_PAGES = 8;
+
+function reportUnitM(data: ValuationData): string {
+  return formatReportMillionsUnit(data.currency ?? 'ILS');
+}
+
+function reportMoney(data: ValuationData, value: number): string {
+  return fmtMoneyCompact(value, data.currency ?? 'ILS');
+}
 
 function equityM(data: ValuationData): string {
   return (data.equity / 1_000_000).toFixed(1);
@@ -53,6 +63,7 @@ function metaLine(data: ValuationData): string {
 }
 
 function defaultExecutiveSummary(data: ValuationData): string {
+  const currency = data.currency ?? 'ILS';
   const dcf = data.modelBlend.find((r) => /dcf/i.test(r.name));
   const ebitda = data.modelBlend.find((r) => /ebitda/i.test(r.name));
   const rev = data.modelBlend.find((r) => /הכנסות|revenue|rev/i.test(r.name));
@@ -61,7 +72,7 @@ function defaultExecutiveSummary(data: ValuationData): string {
     ebitda ? `מכפיל EBITDA (${ebitda.weightPct.toFixed(0)}%)` : null,
     rev ? `מכפיל הכנסות (${rev.weightPct.toFixed(0)}%)` : null,
   ].filter(Boolean);
-  return `שקלול ${parts.join(', ')} מניב שווי פעילות של ${fmtMoneyCompact(data.enterpriseValue)}. בניכוי חוב נטו ${fmtMoneyCompact(data.netDebt)} — שווי לבעלים ${fmtMoneyCompact(data.equity)}.`;
+  return `שקלול ${parts.join(', ')} מניב שווי פעילות של ${reportMoney(data, data.enterpriseValue)}. בניכוי חוב נטו ${reportMoney(data, data.netDebt)} — שווי לבעלים ${reportMoney(data, data.equity)}.`;
 }
 
 function blendPills(data: ValuationData): string {
@@ -84,12 +95,12 @@ export function buildPage1Cover(data: ValuationData): string {
         <div class="cv-company" style="margin-top:3mm">${escHtml(data.companyName)}</div>
         <div class="cv-meta">${metaLine(data)}</div>
         <div class="cv-big">${equityCoverValHtml(data.equity)}</div>
-        <div class="cv-range">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח <b>${escHtml(fmtMoneyCompact(data.bearEquity))} – ${escHtml(fmtMoneyCompact(data.bullEquity))}</b></div>
+        <div class="cv-range">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח <b>${escHtml(reportMoney(data, data.bearEquity))} – ${escHtml(reportMoney(data, data.bullEquity))}</b></div>
         <div class="seal"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY · IFRS COMPLIANT</div>
       </div>
     </div>
     <div class="krow">
-      <div class="kc"><b class="hl">${escHtml(fmtMoneyCompact(data.enterpriseValue))}</b><div class="kc-label">שווי פעילות (EV)</div><span>Weighted blend · ${data.modelBlend.length} models</span></div>
+      <div class="kc"><b class="hl">${escHtml(reportMoney(data, data.enterpriseValue))}</b><div class="kc-label">שווי פעילות (EV)</div><span>Weighted blend · ${data.modelBlend.length} models</span></div>
       <div class="kc"><b>${data.waccPct.toFixed(1)}%</b><div class="kc-label">WACC אפקטיבי</div><span>Damodaran CRP · CAPM</span></div>
       <div class="kc"><b>×${data.effectiveMult.toFixed(1)}</b><div class="kc-label">מכפיל EBITDA</div><span>Market-calibrated</span></div>
       <div class="kc"><b class="gd">${escHtml(data.qualityGrade)} · ${data.qualityScore}</b><div class="kc-label">Quality Score</div><span>Risk-adjusted · ${data.qualityFactors.length} factors</span></div>
@@ -113,9 +124,9 @@ export function buildPage2Executive(data: ValuationData): string {
     .map(
       (row) => `<tr>
         <td>${escHtml(row.name)}</td>
-        <td class="n">${escHtml(fmtMoneyCompact(row.ev))}</td>
+        <td class="n">${escHtml(reportMoney(data, row.ev))}</td>
         <td class="n">${row.weightPct.toFixed(0)}%</td>
-        <td class="n">${escHtml(fmtMoneyCompact(row.contribution))}</td>
+        <td class="n">${escHtml(reportMoney(data, row.contribution))}</td>
       </tr>`,
     )
     .join('');
@@ -132,17 +143,17 @@ export function buildPage2Executive(data: ValuationData): string {
         <table>
           <tr><th>מודל</th><th>EV</th><th>משקל</th><th>תרומה</th></tr>
           ${blendRows}
-          <tr class="sum"><td>שווי פעילות משולב (EV)</td><td class="n"></td><td class="n">100%</td><td class="n">${escHtml(fmtMoneyCompact(data.enterpriseValue))}</td></tr>
+          <tr class="sum"><td>שווי פעילות משולב (EV)</td><td class="n"></td><td class="n">100%</td><td class="n">${escHtml(reportMoney(data, data.enterpriseValue))}</td></tr>
         </table>
         <div class="chart-title" style="margin-top:3mm">משקלות מודלים</div>
         ${buildModelBlendBarSvg(data.modelBlend)}
       </div>
       <div>
-        <div class="chart-title">waterfall — מ-EV לשווי לבעלים (₪M)</div>
+        <div class="chart-title">waterfall — מ-EV לשווי לבעלים (${reportUnitM(data)})</div>
         ${buildWaterfallSvg(data.enterpriseValue, data.netDebt, data.equity)}
       </div>
     </div>
-    <div class="chart-title" style="margin-top:3mm">טווח שווי לבעלים — שלושה תרחישים (₪M)</div>
+    <div class="chart-title" style="margin-top:3mm">טווח שווי לבעלים — שלושה תרחישים (${reportUnitM(data)})</div>
     ${buildScenarioRibbonSvg(data.bearEquity, data.equity, data.bullEquity)}
     ${data.keyFindings ? `<div class="callout gold"><b>עיקרי הממצאים:</b> ${escHtml(data.keyFindings)}</div>` : ''}
   </div>`;
@@ -169,17 +180,17 @@ export function buildPage3Financials(data: ValuationData): string {
     <div class="section-divider"><span class="section-num">03</span><h2>נתונים פיננסיים</h2><div class="sd-line"></div></div>
     <p class="sub">הכנסות ו-EBITDA בפועל ותחזית. צמיחה שנתית ${data.growthPct.toFixed(0)}% · שיעור EBITDA ${data.marginPct.toFixed(1)}%.</p>
     <div class="chart-wrap">
-      <div class="chart-title">הכנסות מול EBITDA · ₪M</div>
+      <div class="chart-title">הכנסות מול EBITDA · ${reportUnitM(data)}</div>
       ${buildFinancialBarChartSvg(data.trajectory)}
     </div>
     <table>
-      <tr><th>₪M</th>${yearHeaders}</tr>
+      <tr><th>${reportUnitM(data)}</th>${yearHeaders}</tr>
       <tr><td>הכנסות</td>${revRow}</tr>
       <tr><td>EBITDA</td>${ebtRow}</tr>
       <tr class="hl-row"><td>שיעור EBITDA</td>${marginRow}</tr>
       <tr><td>FCFF</td>${fcffRow}</tr>
     </table>
-    ${data.netDebtNote ? `<div class="callout">${escHtml(data.netDebtNote)}</div>` : `<div class="callout">חוב נטו ליום ההערכה: <b>${escHtml(fmtMoneyCompact(data.netDebt))}</b></div>`}
+    ${data.netDebtNote ? `<div class="callout">${escHtml(data.netDebtNote)}</div>` : `<div class="callout">חוב נטו ליום ההערכה: <b>${escHtml(reportMoney(data, data.netDebt))}</b></div>`}
   </div>`;
   return wrapPage(3, inner);
 }
@@ -219,11 +230,11 @@ export function buildPage4Dcf(data: ValuationData): string {
         </table>
         <div class="chart-title" style="margin-top:3mm">תזרימי מזומנים מהוונים — DCF</div>
         <table>
-          <tr><th>₪M</th>${yearCols}<th>TV</th></tr>
+          <tr><th>${reportUnitM(data)}</th>${yearCols}<th>TV</th></tr>
           <tr><td>FCFF</td>${fcffCells}<td class="n">—</td></tr>
           <tr><td>פקטור היוון</td>${dfCells}<td class="n">—</td></tr>
           <tr><td>PV</td>${pvCells}<td class="n">${data.terminalPvM.toFixed(1)}*</td></tr>
-          <tr class="sum"><td>שווי פעילות DCF</td><td class="n" colspan="${data.dcfRows.length}">${escHtml(fmtMoneyCompact(data.dcfEv))} &nbsp;→&nbsp; TV מהווה <b>${data.terminalSharePct.toFixed(0)}%</b></td><td></td></tr>
+          <tr class="sum"><td>שווי פעילות DCF</td><td class="n" colspan="${data.dcfRows.length}">${escHtml(reportMoney(data, data.dcfEv))} &nbsp;→&nbsp; TV מהווה <b>${data.terminalSharePct.toFixed(0)}%</b></td><td></td></tr>
         </table>
         <div style="font-size:8px;color:var(--dim)">* TV · g=${g.toFixed(1)}%</div>
       </div>
@@ -267,14 +278,14 @@ export function buildPage5Multiples(data: ValuationData): string {
     ${comps.length ? `
     <div class="chart-title" style="margin-top:2mm">עסקאות השוואה</div>
     <table>
-      <tr><th>#</th><th>ענף</th><th>שנה</th><th>EV (₪M)</th><th>EV/EBITDA</th><th>EV/Rev</th><th>EBITDA%</th><th>הערה</th></tr>
+      <tr><th>#</th><th>ענף</th><th>שנה</th><th>EV (${reportUnitM(data)})</th><th>EV/EBITDA</th><th>EV/Rev</th><th>EBITDA%</th><th>הערה</th></tr>
       ${compRows}
     </table>` : ''}
-    <table>
+    <table class="multiples-compare-table">
       <tr><th>פרמטר</th><th>החברה</th><th>חציון השוק</th><th>פרשנות</th></tr>
-      <tr><td>מכפיל EBITDA</td><td class="n">×${data.effectiveMult.toFixed(1)}</td><td class="n">×${(data.industryEbitdaMedian ?? data.effectiveMult).toFixed(1)}</td><td>מיקום יחסי מול חציון ענף</td></tr>
-      <tr><td>מכפיל הכנסות</td><td class="n">×${data.revenueMultiple.toFixed(1)}</td><td class="n">×${(data.industryRevenueMedian ?? data.revenueMultiple).toFixed(1)}</td><td>בתוך טווח השוק</td></tr>
-      <tr><td>שיעור EBITDA</td><td class="n">${data.marginPct.toFixed(1)}%</td><td class="n">${(data.industryEbitdaMarginPct ?? data.marginPct).toFixed(1)}%</td><td>רווחיות ביחס לענף</td></tr>
+      <tr><td>מכפיל EBITDA</td><td class="n">×${data.effectiveMult.toFixed(1)}</td><td class="n">×${(data.industryEbitdaMedian ?? data.effectiveMult).toFixed(1)}</td><td class="interp-cell">${escHtml(ebitdaMultipleInterpretationCopy({ locale: data.locale, effectiveMult: data.effectiveMult, qualityScore: data.qualityScore, qualityGrade: data.qualityGrade, multipleConcentrationPenalty: data.multipleConcentrationPenalty }))}</td></tr>
+      <tr><td>מכפיל הכנסות</td><td class="n">×${data.revenueMultiple.toFixed(1)}</td><td class="n">×${(data.industryRevenueMedian ?? data.revenueMultiple).toFixed(1)}</td><td class="interp-cell">בתוך טווח השוק</td></tr>
+      <tr><td>שיעור EBITDA</td><td class="n">${data.marginPct.toFixed(1)}%</td><td class="n">${(data.industryEbitdaMarginPct ?? data.marginPct).toFixed(1)}%</td><td class="interp-cell">רווחיות ביחס לענף</td></tr>
     </table>
   </div>`;
   return wrapPage(5, inner);
@@ -314,7 +325,7 @@ export function buildPage6Quality(data: ValuationData): string {
   return wrapPage(6, inner);
 }
 
-function scenarioCard(s: ScenarioRow): string {
+function scenarioCard(s: ScenarioRow, currency: string): string {
   const styles: Record<string, { border: string; bg: string; color: string; pill: string; icon: string }> = {
     bear: { border: '#C24A4A44', bg: 'rgba(194,74,74,.03)', color: '#C24A4A', pill: 'pill-red', icon: '🐻' },
     base: { border: '#00A89F55', bg: 'rgba(0,168,159,.04)', color: '#163530', pill: 'pill-green', icon: '◆' },
@@ -326,21 +337,21 @@ function scenarioCard(s: ScenarioRow): string {
       <span style="font-size:14px">${st.icon}</span>
       <span class="pill ${st.pill}">${escHtml(s.label)}</span>
     </div>
-    <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:${st.color};direction:ltr;text-align:right">${escHtml(fmtMoneyCompact(s.equity))}</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;color:${st.color};direction:ltr;text-align:right">${escHtml(fmtMoneyCompact(s.equity, currency))}</div>
     <div style="font-size:8px;color:var(--dim);margin-top:1mm">שווי לבעלים</div>
     <hr style="border:none;border-top:1px solid #D6E8E4;margin:3mm 0">
     <div style="font-size:8.5px;display:grid;gap:2mm">
       <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">צמיחה</span><b class="mono">+${s.growthPct.toFixed(0)}%</b></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">WACC</span><b class="mono">${s.waccPct.toFixed(1)}%</b></div>
       <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">מכפיל</span><b class="mono">×${s.multiple.toFixed(1)}</b></div>
-      <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">EV</span><b class="mono">${escHtml(fmtMoneyCompact(s.ev))}</b></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--dim)">EV</span><b class="mono">${escHtml(fmtMoneyCompact(s.ev, currency))}</b></div>
     </div>
     ${s.narrative ? `<div style="font-size:7.5px;color:var(--dim);margin-top:3mm;border-top:1px dashed #D6E8E4;padding-top:2mm">${escHtml(s.narrative)}</div>` : ''}
   </div>`;
 }
 
 export function buildPage7Scenarios(data: ValuationData): string {
-  const cards = data.scenarios.map(scenarioCard).join('');
+  const cards = data.scenarios.map((s) => scenarioCard(s, data.currency ?? 'ILS')).join('');
   const sensGrowth = data.sensitivityGrowthWacc
     ? buildSensitivityMatrixTable(data.sensitivityGrowthWacc)
     : '';
@@ -354,12 +365,12 @@ export function buildPage7Scenarios(data: ValuationData): string {
     <div class="section-divider"><span class="section-num">07</span><h2>תרחישים וניתוח רגישות</h2><div class="sd-line"></div></div>
     <div class="cols3" style="margin-bottom:4mm">${cards}</div>
     ${sensGrowth ? `
-    <div class="section-divider" style="margin-top:3mm"><h3>ניתוח רגישות — שווי לבעלים (₪M)</h3><div class="sd-line"></div></div>
+    <div class="section-divider" style="margin-top:3mm"><h3>ניתוח רגישות — שווי לבעלים (${reportUnitM(data)})</h3><div class="sd-line"></div></div>
     <p class="sub" style="margin-bottom:2mm">ציר X: WACC · ציר Y: צמיחה שנתית. תא מרכזי = תרחיש בסיס.</p>
     ${sensGrowth}` : ''}
     ${sensEbitda ? `
     <div style="margin-top:3mm">
-      <div class="chart-title">רגישות מכפיל — EV/EBITDA × שינוי EBITDA (EV ₪M)</div>
+      <div class="chart-title">רגישות מכפיל — EV/EBITDA × שינוי EBITDA (EV ${reportUnitM(data)})</div>
       ${sensEbitda}
     </div>` : ''}
   </div>`;
@@ -388,16 +399,16 @@ export function buildPage8Conclusion(data: ValuationData): string {
       <div style="display:flex;height:14mm;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:4mm 0">${blendBar}</div>
       <div style="text-align:center;margin:4mm 0">
         <div class="c-val" style="margin:10mm 0 2mm">${equityCoverValHtml(data.equity)}</div>
-        <div style="font-size:10px;color:var(--dim);margin-top:1.5mm">שווי לבעלים · תרחיש בסיס · טווח ${escHtml(fmtMoneyCompact(data.bearEquity))} – ${escHtml(fmtMoneyCompact(data.bullEquity))} · נכון ל-${escHtml(data.valuationDateShort ?? data.valuationDate)}</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:1.5mm">שווי לבעלים · תרחיש בסיס · טווח ${escHtml(reportMoney(data, data.bearEquity))} – ${escHtml(reportMoney(data, data.bullEquity))} · נכון ל-${escHtml(data.valuationDateShort ?? data.valuationDate)}</div>
         <div class="seal" style="margin:4mm auto 0;display:inline-flex"><i></i>CERTIFIED ALGORITHMIC VALUATION · equify BY SBC</div>
       </div>
       <table style="margin-top:4mm">
         <tr><th>מדד</th><th>ערך</th><th>מדד</th><th>ערך</th></tr>
-        <tr><td>שווי פעילות (EV)</td><td class="n">${escHtml(fmtMoneyCompact(data.enterpriseValue))}</td><td>WACC אפקטיבי</td><td class="n">${data.waccPct.toFixed(1)}%</td></tr>
-        <tr><td>חוב נטו</td><td class="n">${escHtml(fmtMoneyCompact(data.netDebt))}</td><td>מכפיל EBITDA</td><td class="n">×${data.effectiveMult.toFixed(1)}</td></tr>
-        <tr><td>EBITDA שנתי (Base)</td><td class="n">${escHtml(fmtMoneyCompact(data.ebitda))}</td><td>Quality Score</td><td class="n">${escHtml(data.qualityGrade)} · ${data.qualityScore}</td></tr>
+        <tr><td>שווי פעילות (EV)</td><td class="n">${escHtml(reportMoney(data, data.enterpriseValue))}</td><td>WACC אפקטיבי</td><td class="n">${data.waccPct.toFixed(1)}%</td></tr>
+        <tr><td>חוב נטו</td><td class="n">${escHtml(reportMoney(data, data.netDebt))}</td><td>מכפיל EBITDA</td><td class="n">×${data.effectiveMult.toFixed(1)}</td></tr>
+        <tr><td>EBITDA שנתי (Base)</td><td class="n">${escHtml(reportMoney(data, data.ebitda))}</td><td>Quality Score</td><td class="n">${escHtml(data.qualityGrade)} · ${data.qualityScore}</td></tr>
         <tr><td>TV כ-% מ-DCF</td><td class="n">${data.terminalSharePct.toFixed(0)}%</td><td>שנות תחזית</td><td class="n">5Y + Terminal</td></tr>
-        <tr class="sum"><td>שווי לבעלים · Base</td><td class="n">${escHtml(fmtMoneyCompact(data.equity))}</td><td>טווח כולל</td><td class="n">${escHtml(fmtMoneyCompact(data.bearEquity))} – ${escHtml(fmtMoneyCompact(data.bullEquity))}</td></tr>
+        <tr class="sum"><td>שווי לבעלים · Base</td><td class="n">${escHtml(reportMoney(data, data.equity))}</td><td>טווח כולל</td><td class="n">${escHtml(reportMoney(data, data.bearEquity))} – ${escHtml(reportMoney(data, data.bullEquity))}</td></tr>
       </table>
     </div>
     <div class="disclaimer"><b>גילוי נאות מלא:</b> ${escHtml(disclaimer)}</div>

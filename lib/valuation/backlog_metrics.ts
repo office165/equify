@@ -3,7 +3,20 @@ import type { ValuationInputs } from '../valuation';
 /** Backlog / revenue ratio at or above this threshold triggers inflection (OMWise-style). */
 export const BACKLOG_INFLECTION_RATIO_THRESHOLD = 0.5;
 
+/** Max WACC specific-risk reduction when backlog covers forward revenue (percentage points). */
+export const BACKLOG_WACC_RISK_REDUCTION_MAX_PP = 1.5;
+
+/** Tier-1 contracted backlog — full idiosyncratic (Alpha) risk elimination at ≥100% coverage. */
+export const BACKLOG_FULL_ALPHA_MITIGATION_COVERAGE = 1.0;
+
 export const BACKLOG_INFLECTION_TARGETS = {
+  dcf: 0.7,
+  ebitda: 0.3,
+  rev: 0.0,
+} as const;
+
+/** Locked institutional EV blend — never overridden by variance or backlog. */
+export const INSTITUTIONAL_BLEND_WEIGHTS = {
   dcf: 0.7,
   ebitda: 0.3,
   rev: 0.0,
@@ -89,7 +102,79 @@ export function resolveInflectionForwardEbitda2027K(
   return resolveCurrentYearEbitdaK(inputs);
 }
 
-/** Forward EBITDA blend base: 50% historical avg + 50% user 2027F. */
+/** 2027F EBITDA — organic growth on current-year EBITDA (no backlog top-line). */
+export function computeProjectedEbitda2027FromGrowth(
+  ebitda2026K: number,
+  growthPct: number,
+): number {
+  if (!isPositiveFinite(ebitda2026K)) return 0;
+  const g = Math.max(-0.05, growthPct / 100);
+  return ebitda2026K * (1 + g);
+}
+
+/** 2027F revenue — organic only: 2026 run-rate × (1 + user growth). */
+export function computeOrganicForwardRevenue2027K(
+  revenue2026K: number,
+  growthPct: number,
+): number {
+  if (!isPositiveFinite(revenue2026K)) return 0;
+  const g = Math.max(-0.05, growthPct / 100);
+  return revenue2026K * (1 + g);
+}
+
+/** 2027F EBITDA — margin applied to organic forward revenue (no backlog top-line). */
+export function computeOrganicForwardEbitda2027K(
+  revenue2026K: number,
+  growthPct: number,
+  marginPct: number,
+): number {
+  const rev = computeOrganicForwardRevenue2027K(revenue2026K, growthPct);
+  if (!isPositiveFinite(rev) || !Number.isFinite(marginPct)) return 0;
+  return rev * (marginPct / 100);
+}
+
+/** Backlog ÷ organic 2027F revenue — drives WACC risk mitigation only. */
+export function computeBacklogCoverageRatio(
+  backlogSignedK: number | undefined,
+  forwardRevenue2027K: number,
+): number {
+  const backlog = backlogSignedK ?? 0;
+  if (!isPositiveFinite(backlog) || !isPositiveFinite(forwardRevenue2027K)) return 0;
+  return backlog / forwardRevenue2027K;
+}
+
+/**
+ * Maps backlog coverage into a WACC idiosyncratic-Alpha reduction (negative pp).
+ * Size premium is retained; Alpha (quality/recurrence/concentration) → 0% at ≥100% coverage.
+ */
+export function computeBacklogWaccRiskReduction(
+  coverageRatio: number,
+  inflectionActive: boolean,
+  idiosyncraticAlphaPp = BACKLOG_WACC_RISK_REDUCTION_MAX_PP,
+): number {
+  if (!inflectionActive || coverageRatio <= 0) return 0;
+  if (coverageRatio >= BACKLOG_FULL_ALPHA_MITIGATION_COVERAGE) {
+    return -Math.max(0, idiosyncraticAlphaPp);
+  }
+  const span = 1 - BACKLOG_INFLECTION_RATIO_THRESHOLD;
+  const t = Math.min(
+    1,
+    Math.max(0, (coverageRatio - BACKLOG_INFLECTION_RATIO_THRESHOLD) / span),
+  );
+  return -BACKLOG_WACC_RISK_REDUCTION_MAX_PP * t;
+}
+
+/**
+ * @deprecated Backlog no longer inflates equity — always returns 1.
+ */
+export function computeBacklogValuationHealthFactor(
+  _coverageRatio: number,
+  _inflectionActive: boolean,
+): number {
+  return 1;
+}
+
+/** Forward EBITDA blend base: 50% historical avg + 50% organic 2027F. */
 export function resolveForwardBlendedMultipleBaseEbitda(
   historicalAvg: number,
   forward2027K: number,

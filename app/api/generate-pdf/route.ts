@@ -5,6 +5,7 @@ import {
   buildContentDisposition,
   defaultUtf8PdfFilename,
   resolveValuationDataFromBody,
+  snapshotResponseHeaders,
   type GenerateReportBody,
 } from '../../../lib/pdf-template/resolve-pdf-request';
 import { renderHtmlToPdfBuffer } from '../../../lib/pdf/render_html_pdf';
@@ -16,15 +17,20 @@ function countReportPages(html: string): number {
   return (html.match(/class="page(?:\s|")/g) ?? []).length;
 }
 
-function pdfResponse(buffer: Buffer, filename: string, pages: number): NextResponse {
+function pdfResponse(
+  buffer: Buffer,
+  filename: string,
+  pages: number,
+  extraHeaders: Record<string, string>,
+): NextResponse {
   return new NextResponse(new Uint8Array(buffer), {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': buildContentDisposition(filename),
-      'Cache-Control': 'private, no-cache',
       'X-Pdf-Engine': 'puppeteer',
       'X-Report-Pages': String(pages),
+      ...extraHeaders,
     },
   });
 }
@@ -38,9 +44,10 @@ export async function POST(request: Request) {
     return jsonError('Invalid JSON body.', 400, 'INVALID_JSON');
   }
 
-  const resolved = resolveValuationDataFromBody(body);
+  const resolved = await resolveValuationDataFromBody(body);
   if ('error' in resolved) {
-    return jsonError(resolved.error, 400, 'VALIDATION_ERROR');
+    const status = resolved.code === 'STALE_SNAPSHOT' ? 409 : 400;
+    return jsonError(resolved.error, status, resolved.code ?? 'VALIDATION_ERROR');
   }
 
   const { valuationData } = resolved;
@@ -65,7 +72,7 @@ export async function POST(request: Request) {
 
   try {
     const buffer = await renderHtmlToPdfBuffer(html);
-    return pdfResponse(buffer, utf8Filename, pages);
+    return pdfResponse(buffer, utf8Filename, pages, snapshotResponseHeaders(resolved));
   } catch (err) {
     console.error('[generate-pdf] Puppeteer render failed', err);
     const message = err instanceof Error ? err.message : 'PDF render failed.';

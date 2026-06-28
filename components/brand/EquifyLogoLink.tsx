@@ -24,24 +24,13 @@ export function EquifyLogoLink({
   return (
     <Link
       href="/"
-      className={`brand-logo-link group inline-flex shrink-0 flex-row items-center gap-2 rounded-lg bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-mint-1)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020504] ${
+      className={`brand-logo-link group inline-flex shrink-0 items-center justify-center bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-mint-1)]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020504] ${
         premium ? 'brand-logo-link--premium' : ''
       } ${className}`}
+      style={{ backgroundColor: 'transparent' }}
       aria-label={ariaLabel}
     >
-      <span
-        className={`equify-logo-box ${
-          premium ? 'equify-logo-box--premium' : ''
-        } ${mobile ? 'equify-logo-box--compact' : ''}`}
-      >
-        <EquifyLogo
-          variant={variant}
-          premium={premium}
-          compact={mobile}
-          decorative
-          className="h-full w-full max-w-full"
-        />
-      </span>
+      <EquifyLogo variant={variant} premium={premium} compact={mobile} decorative />
     </Link>
   );
 }

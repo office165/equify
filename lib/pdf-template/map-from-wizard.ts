@@ -4,6 +4,10 @@ import {
   type ValuationComputed,
   type ValuationInputs,
 } from '../valuation';
+import {
+  STUB_PERIOD_DISCOUNT_EXPONENT,
+  projectDcfHorizon,
+} from '../valuation/scenario_matrix';
 import type { ValuationLocale } from '../../api_client';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
 import type {
@@ -30,13 +34,25 @@ import {
   type EbitdaBlendBreakdown,
 } from '../valuation/blended_ebitda';
 import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
+import { applyReportingFxLayer, convertEngineKToReportingK } from '../valuation/apply_reporting_fx';
+import { getCachedFxRates } from '../utils/fxService';
+import {
+  formatCurrencyNarrativeHe,
+  formatCurrencyShort,
+} from '../utils/formatCurrency';
 import {
   buildCalibratedFinancialTrajectory,
+  buildFinancialTrajectoryFromEquifyState,
   ebitdaMarginPctFromYear,
   syncFinancialsDerived,
 } from '../wizard/financial_history';
 import { resolveSectorMethodologyConfig } from '../valuation/sector_methodology_resolver';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
+import {
+  buildReportFinancialCore,
+  scaleTrajectoryForReportingCurrency,
+} from './report-financial-core';
+import type { ReportFinancialCore } from './types';
 
 function kToNis(k: number): number {
   return k * 1000;
@@ -77,16 +93,31 @@ function goalLabel(goal: string, locale: ValuationLocale): string {
 function blendedEbitdaNote(
   blend: EbitdaBlendBreakdown,
   locale: ValuationLocale,
+  currency: string,
 ): string {
   const w = BLENDED_EBITDA_WEIGHTS;
   const pctPast = Math.round(w.past * 100);
   const pctCur = Math.round(w.current * 100);
   const pctProj = Math.round(w.projected * 100);
   const growth = blend.dcfGrowthPct.toFixed(1);
+  const fmt = (k: number) => formatCurrencyShort(k * 1000, currency);
   if (locale === 'en') {
-    return `${pctPast}/${pctCur}/${pctProj} weighted · past ₪${(blend.past / 1000).toFixed(1)}M · current ₪${(blend.current / 1000).toFixed(1)}M · projected (+${growth}%) ₪${(blend.projected / 1000).toFixed(1)}M · base ₪${(blend.blended / 1000).toFixed(1)}M`;
+    return `${pctPast}/${pctCur}/${pctProj} weighted · past ${fmt(blend.past)} · current ${fmt(blend.current)} · projected (+${growth}%) ${fmt(blend.projected)} · base ${fmt(blend.blended)}`;
   }
-  return `שקלול ${pctPast}/${pctCur}/${pctProj} · עבר ₪${(blend.past / 1000).toFixed(1)}M · נוכחי ₪${(blend.current / 1000).toFixed(1)}M · תחזית (+${growth}%) ₪${(blend.projected / 1000).toFixed(1)}M · בסיס ₪${(blend.blended / 1000).toFixed(1)}M`;
+  return `שקלול ${pctPast}/${pctCur}/${pctProj} · עבר ${fmt(blend.past)} · נוכחי ${fmt(blend.current)} · תחזית (+${growth}%) ${fmt(blend.projected)} · בסיס ${fmt(blend.blended)}`;
+}
+
+function formatNetDebtNoteHe(
+  netDebtK: number,
+  grossDebtK: number,
+  cashK: number,
+  currency: string,
+): string {
+  const rates = getCachedFxRates();
+  const net = convertEngineKToReportingK(netDebtK, currency, rates) * 1000;
+  const gross = convertEngineKToReportingK(grossDebtK, currency, rates) * 1000;
+  const cash = convertEngineKToReportingK(cashK, currency, rates) * 1000;
+  return `חוב נטו ליום ההערכה: ${formatCurrencyNarrativeHe(net, currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
 }
 
 function buildWaccSegments(waccPct: number, qs: number): WaccSegment[] {
@@ -114,31 +145,35 @@ function buildDcfRows(
   inputs: ValuationInputs,
   computed: ValuationComputed,
 ): { rows: DcfYearRow[]; terminalPvM: number; terminalSharePct: number } {
-  const g = Math.max(-0.05, inputs.growth / 100);
+  const revK = inputs.revenue2026K ?? inputs.rev ?? 0;
+  const capexLevelPct = inputs.capexLevelPct ?? 0;
   const w = computed.wacc / 100;
-  let fcffK = computed.ebitda * 0.85;
+  const projection = projectDcfHorizon({
+    ebitdaK: computed.ebitda,
+    revK,
+    capexLevelPct,
+    dcfGrowthPct: computed.dcfGrowthPct,
+    wacc: computed.wacc,
+  });
   const rows: DcfYearRow[] = [];
-  let pvSum = 0;
   const baseYear = new Date().getFullYear() + 1;
 
-  for (let i = 1; i <= 5; i += 1) {
-    fcffK *= 1 + g;
-    const df = 1 / (1 + w) ** i;
-    const pvK = fcffK * df;
-    pvSum += pvK;
+  for (let i = 0; i < projection.fcffByYearK.length; i += 1) {
+    const yearIndex = i + 1;
+    const fcffK = projection.fcffByYearK[i];
+    const discountExponent =
+      yearIndex === 1 ? STUB_PERIOD_DISCOUNT_EXPONENT : yearIndex - STUB_PERIOD_DISCOUNT_EXPONENT;
+    const df = 1 / (1 + w) ** discountExponent;
     rows.push({
-      label: String(baseYear + i - 1),
+      label: String(baseYear + i),
       fcffM: fcffK / 1000,
       discountFactor: df,
-      pvM: pvK / 1000,
+      pvM: (fcffK * df) / 1000,
     });
   }
 
-  const gTerm = 0.025;
-  const tvK = (fcffK * (1 + gTerm)) / (w - gTerm) / (1 + w) ** 5;
-  const terminalPvM = tvK / 1000;
-  const totalDcfK = pvSum + tvK;
-  const terminalSharePct = totalDcfK > 0 ? (tvK / totalDcfK) * 100 : 57;
+  const terminalPvM = projection.terminalPvK / 1000;
+  const terminalSharePct = projection.terminalShare * 100;
 
   return { rows, terminalPvM, terminalSharePct };
 }
@@ -192,11 +227,11 @@ function buildQualityFactors(inputs: ValuationInputs): QualityFactorRow[] {
 }
 
 function buildSensitivityGrowthWacc(
-  baseEquityK: number,
+  core: ReportFinancialCore,
   baseGrowth: number,
   baseWacc: number,
-  debtK: number,
 ): SensitivityMatrix {
+  const baseEquityK = core.equityBaseAbs / 1000;
   const growthDeltas = [15, 12, baseGrowth, 6, 3];
   const waccDeltas = [-1.7, -1.0, 0, 1.0, 1.8].map((d) => baseWacc + d);
   const baseRow = 2;
@@ -220,22 +255,29 @@ function buildSensitivityGrowthWacc(
   };
 }
 
-function buildSensitivityEbitdaMult(ebitdaK: number, mult: number, debtK: number): EbitdaSensitivityMatrix {
+function buildSensitivityEbitdaMult(
+  core: ReportFinancialCore,
+  currency: string,
+): EbitdaSensitivityMatrix {
+  const ebitdaK = core.multipleLegEbitdaBaseAbs / 1000;
+  const mult = core.effectiveMultiple;
   const ebitdaKs = [ebitdaK * 0.72, ebitdaK * 0.86, ebitdaK, ebitdaK * 1.14];
   const mults = [mult * 0.73, mult * 0.87, mult, mult * 1.13, mult * 1.27];
   const baseRow = 2;
   const baseCol = 2;
 
   const cells = ebitdaKs.map((e) =>
-    mults.map((m) => Math.max(0, (e * m - debtK) / 1000)),
+    mults.map((m) => Math.max(0, (e * m) / 1000)),
   );
 
   return {
-    ebitdaLabels: ebitdaKs.map((e) => `₪${(e / 1000).toFixed(1)}M`),
+    ebitdaLabels: ebitdaKs.map((e) => formatCurrencyShort(e * 1000, currency)),
     multipleLabels: mults.map((m) => `×${m.toFixed(1)}`),
     cells,
     baseRow,
     baseCol,
+    baseEbitdaAbs: core.multipleLegEbitdaBaseAbs,
+    baseMultiple: mult,
   };
 }
 
@@ -322,39 +364,49 @@ function buildModelBlendRows(
   return rows;
 }
 
-/** ממפה מצב אשף + חישוב ל-ValuationData מלא לדוח PDF */
-export function mapWizardToValuationData(
-  state: EquifyWizardState,
-  reportId?: string,
+/** Maps pre-computed engine output to PDF layout fields — no valuation math. */
+export function mapEngineResultToValuationData(
+  syncedState: EquifyWizardState,
+  inputs: ValuationInputs,
+  fxComputed: ValuationComputed,
+  fxScenarios: ReturnType<typeof computeScenarios>,
+  fxRates: ReturnType<typeof getCachedFxRates>,
   locale: ValuationLocale = 'he',
+  reportId?: string,
 ): ValuationData {
-  const syncedState: EquifyWizardState = {
-    ...state,
-    financials: syncFinancialsDerived(state.financials),
-  };
   const netDebtK = computeNetDebtK(syncedState.financials);
-  const inputs = buildValuationInputsFromEquifyState(syncedState);
-
-  const computed = computeValuation(inputs);
-  const scenarios = computeScenarios(computed, inputs);
-  const { rows: dcfRows, terminalPvM, terminalSharePct } = buildDcfRows(inputs, computed);
+  const { rows: dcfRows, terminalPvM, terminalSharePct } = buildDcfRows(inputs, fxComputed);
   const now = new Date();
   const dateIso = now.toISOString().slice(0, 10);
   const dateShort = now.toLocaleDateString('he-IL');
 
-  const modelBlend: ModelBlendRow[] = buildModelBlendRows(computed, inputs, locale);
+  const modelBlend: ModelBlendRow[] = buildModelBlendRows(fxComputed, inputs, locale);
 
   const revMultDisplay =
-    inputs.rev > 0 ? computed.revMult / inputs.rev : computed.effectiveMult * 0.25;
-  const sectorConfig = resolveSectorMethodologyConfig(syncedState.profile.sector);
+    inputs.rev > 0 ? fxComputed.revMult / inputs.rev : fxComputed.effectiveMult * 0.25;
+  const sectorConfig = resolveSectorMethodologyConfig(
+    syncedState.profile.sector,
+    syncedState.profile.subSector,
+  );
   const industryMult =
     (sectorConfig.minMultiple + sectorConfig.maxMultiple) / 2;
-  const ebitdaK = computed.ebitda;
+  const reportingCurrency = syncedState.profile.currency ?? 'ILS';
   const { financials } = syncedState;
+  const financialCore = buildReportFinancialCore(
+    syncedState,
+    fxComputed,
+    fxComputed,
+    netDebtK,
+    fxRates,
+  );
   const currentYearMarginPct =
-    computed.calibratedYears?.y2026.marginPct ??
+    fxComputed.calibratedYears?.y2026.marginPct ??
     ebitdaMarginPctFromYear(financials.y2026);
-  const trajectory = buildCalibratedFinancialTrajectory(computed, financials);
+  const trajectory = scaleTrajectoryForReportingCurrency(
+    buildFinancialTrajectoryFromEquifyState(financials),
+    reportingCurrency,
+    fxRates,
+  );
 
   return {
     reportId: reportId ?? `EQ-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`,
@@ -397,39 +449,42 @@ export function mapWizardToValuationData(
     contracts: syncedState.risk.contracts,
     moatNotes: syncedState.profile.qualitativeDescription?.trim() || undefined,
 
-    equity: kToNis(computed.equity),
-    enterpriseValue: kToNis(computed.ev),
-    bearEquity: kToNis(scenarios.bearEq),
-    bullEquity: kToNis(scenarios.bullEq),
+    equity: kToNis(fxComputed.equity),
+    enterpriseValue: kToNis(fxComputed.ev),
+    bearEquity: kToNis(fxScenarios.bearEq),
+    bullEquity: kToNis(fxScenarios.bullEq),
     netDebt: kToNis(netDebtK),
-    dcfEv: kToNis(computed.dcf),
-    ebitdaEv: kToNis(computed.ebtMult),
-    revenueEv: kToNis(computed.revMult),
-    waccPct: computed.wacc,
-    qualityScore: computed.qs,
-    qualityGrade: computed.qsGrade,
-    ebitda: kToNis(computed.ebitda),
-    ebitdaPast: kToNis(computed.ebitdaBlend.past),
-    ebitdaCurrent: kToNis(computed.ebitdaBlend.current),
-    ebitdaProjected: kToNis(computed.ebitdaBlend.projected),
-    ebitdaBlendedNote: blendedEbitdaNote(computed.ebitdaBlend, locale),
-    effectiveMult: computed.effectiveMult,
+    dcfEv: kToNis(fxComputed.dcf),
+    ebitdaEv: kToNis(fxComputed.ebtMult),
+    revenueEv: kToNis(fxComputed.revMult),
+    waccPct: fxComputed.wacc,
+    qualityScore: fxComputed.qs,
+    qualityGrade: fxComputed.qsGrade,
+    ebitda: financialCore.auditedEbitda2026Abs,
+    blendedEbitdaBase: financialCore.blendedEbitdaBaseAbs,
+    multipleLegEbitdaBase: financialCore.multipleLegEbitdaBaseAbs,
+    financialCore,
+    ebitdaPast: kToNis(fxComputed.ebitdaBlend.past),
+    ebitdaCurrent: kToNis(fxComputed.ebitdaBlend.current),
+    ebitdaProjected: kToNis(fxComputed.ebitdaBlend.projected),
+    ebitdaBlendedNote: blendedEbitdaNote(fxComputed.ebitdaBlend, locale, reportingCurrency),
+    effectiveMult: fxComputed.effectiveMult,
     revenueMultiple: revMultDisplay,
-    multipleBase: computed.multipleBase,
-    multipleConcentrationPenalty: computed.multipleConcentrationPenalty,
-    historicalAvgMarginPct: computed.historicalAvgMarginPct,
-    forwardEbitda2027K: computed.forwardEbitda2027K,
-    waccBacklogAdjustment: computed.waccBacklogAdjustment,
-    calibrationWarnings: computed.calibrationWarnings,
+    multipleBase: fxComputed.multipleBase,
+    multipleConcentrationPenalty: fxComputed.multipleConcentrationPenalty,
+    historicalAvgMarginPct: fxComputed.historicalAvgMarginPct,
+    forwardEbitda2027K: fxComputed.forwardEbitda2027K,
+    waccBacklogAdjustment: fxComputed.waccBacklogAdjustment,
+    calibrationWarnings: fxComputed.calibrationWarnings,
     terminalSharePct,
     terminalGrowthPct: 2.5,
 
     trajectory,
-    waccSegments: buildWaccSegments(computed.wacc, computed.qs),
+    waccSegments: buildWaccSegments(fxComputed.wacc, fxComputed.qs),
     dcfRows,
     terminalPvM,
     scenarios: scenarioRowsFromComputed(
-      scenarios,
+      fxScenarios,
       inputs,
       syncedState.profile.sector,
       locale,
@@ -441,8 +496,8 @@ export function mapWizardToValuationData(
       {
         id: 'ebitda',
         title: 'EV / EBITDA',
-        impliedEv: kToNis(computed.ebtMult),
-        multiple: computed.effectiveMult,
+        impliedEv: kToNis(fxComputed.ebtMult),
+        multiple: fxComputed.effectiveMult,
         rangeMin: industryMult * 0.75,
         rangeMax: industryMult * 1.45,
         marketMin: industryMult * 0.8,
@@ -452,7 +507,7 @@ export function mapWizardToValuationData(
       {
         id: 'revenue',
         title: 'EV / Revenue',
-        impliedEv: kToNis(computed.revMult),
+        impliedEv: kToNis(fxComputed.revMult),
         multiple: revMultDisplay,
         rangeMin: revMultDisplay * 0.55,
         rangeMax: revMultDisplay * 1.65,
@@ -461,14 +516,14 @@ export function mapWizardToValuationData(
         color: '#00A89F',
       },
       {
-        id: 'dcf',
-        title: 'DCF (₪M)',
-        impliedEv: kToNis(computed.dcf),
-        multiple: computed.dcf / 1000,
-        rangeMin: computed.dcf * 0.72 / 1000,
-        rangeMax: computed.dcf * 1.28 / 1000,
-        marketMin: computed.dcf * 0.75 / 1000,
-        marketMax: computed.dcf * 1.22 / 1000,
+        id: 'margin',
+        title: 'שיעור EBITDA',
+        impliedEv: kToNis(fxComputed.ebitda),
+        multiple: currentYearMarginPct,
+        rangeMin: Math.max(0, currentYearMarginPct - 12),
+        rangeMax: currentYearMarginPct + 12,
+        marketMin: Math.max(0, (currentYearMarginPct - 2)),
+        marketMax: currentYearMarginPct + 2,
         color: '#A8842E',
       },
     ],
@@ -478,19 +533,51 @@ export function mapWizardToValuationData(
     industryEbitdaMarginPct: currentYearMarginPct - 2,
 
     sensitivityGrowthWacc: buildSensitivityGrowthWacc(
-      computed.equity,
+      financialCore,
       financials.growth,
-      computed.wacc,
-      netDebtK,
+      fxComputed.wacc,
     ),
-    sensitivityEbitdaMult: buildSensitivityEbitdaMult(
-      ebitdaK,
-      computed.effectiveMult,
-      netDebtK,
-    ),
+    sensitivityEbitdaMult: buildSensitivityEbitdaMult(financialCore, reportingCurrency),
 
-    netDebtNote: `חוב נטו ליום ההערכה: ₪${(netDebtK / 1000).toFixed(1)}M (חוב ברוטו ₪${(financials.grossDebtK / 1000).toFixed(1)}M פחות מזומן ₪${(financials.cashK / 1000).toFixed(1)}M).`,
-    keyFindings: `Quality ${computed.qsGrade} · WACC ${computed.wacc.toFixed(1)}% · EBITDA base (30/50/20) ₪${(computed.ebitda / 1000).toFixed(1)}M · מכפיל ×${computed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
+    netDebtNote: formatNetDebtNoteHe(
+      netDebtK,
+      financials.grossDebtK,
+      financials.cashK,
+      reportingCurrency,
+    ),
+    keyFindings: `Quality ${fxComputed.qsGrade} · WACC ${fxComputed.wacc.toFixed(1)}% · EBITDA מדווח 2026 ${formatCurrencyShort(financialCore.auditedEbitda2026Abs, reportingCurrency)} · בסיס מכפיל ${formatCurrencyShort(financialCore.multipleLegEbitdaBaseAbs, reportingCurrency)} ×${fxComputed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
     multiplesIntro: getMultiplesIntroText(syncedState.profile.sector, locale),
   };
+}
+
+/** Full wizard → PDF mapping (re-runs engine). Prefer buildExportValuationDataFromLiveSession for exports. */
+export function mapWizardToValuationData(
+  state: EquifyWizardState,
+  reportId?: string,
+  locale: ValuationLocale = 'he',
+  fxRates = getCachedFxRates(),
+): ValuationData {
+  const syncedState: EquifyWizardState = {
+    ...state,
+    financials: syncFinancialsDerived(state.financials),
+  };
+  const inputs = buildValuationInputsFromEquifyState(syncedState);
+  const computed = computeValuation(inputs);
+  const scenarios = computeScenarios(computed, inputs);
+  const { computed: fxComputed, scenarios: fxScenarios } = applyReportingFxLayer(
+    computed,
+    scenarios,
+    syncedState.profile.currency,
+    fxRates,
+  );
+
+  return mapEngineResultToValuationData(
+    syncedState,
+    inputs,
+    fxComputed,
+    fxScenarios,
+    fxRates,
+    locale,
+    reportId,
+  );
 }

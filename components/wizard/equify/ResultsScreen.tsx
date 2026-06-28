@@ -22,6 +22,8 @@ export function ResultsScreen({
 }: ResultsScreenProps) {
   const { computed, scenarios, state } = useWizardValuation();
   const { financials } = state;
+  const reportingCurrency = state.profile.currency;
+  const fmtAmount = (k: number) => fmtK(k, 'he', reportingCurrency);
 
   const netDebtK = computeNetDebtK(financials);
 
@@ -40,29 +42,29 @@ export function ResultsScreen({
     <section className="eqw-results" aria-label="תוצאות הערכת השווי">
       <div className="res-hero">
         <div className="res-eyebrow">שווי לבעלים · תרחיש בסיס</div>
-        <div className="res-val mono">{fmtEquitySidebarM(computed.equity)}</div>
+        <div className="res-val mono">{fmtEquitySidebarM(computed.equity, 'he', reportingCurrency)}</div>
         <div className="res-cap">
-          שווי פעילות <span className="mono">{fmtK(computed.ev)}</span> בניכוי חוב
-          נטו <span className="mono">{fmtK(netDebtK)}</span>
+          שווי פעילות <span className="mono">{fmtAmount(computed.ev)}</span> בניכוי חוב
+          נטו <span className="mono">{fmtAmount(netDebtK)}</span>
         </div>
         <div className="res-range">
           <span className="rr-bear">
-            Bear <span className="mono">{fmtK(scenarios.bearEq)}</span>
+            Bear <span className="mono">{fmtAmount(scenarios.bearEq)}</span>
           </span>
           <span className="sep">|</span>
           <span>
-            Base <span className="mono">{fmtK(scenarios.baseEq)}</span>
+            Base <span className="mono">{fmtAmount(scenarios.baseEq)}</span>
           </span>
           <span className="sep">|</span>
           <span className="rr-bull">
-            Bull <span className="mono">{fmtK(scenarios.bullEq)}</span>
+            Bull <span className="mono">{fmtAmount(scenarios.bullEq)}</span>
           </span>
         </div>
       </div>
 
       <div className="res-grid stagger">
         <div className="res-card">
-          <div className="rc-val mono">{fmtK(computed.ev)}</div>
+          <div className="rc-val mono">{fmtAmount(computed.ev)}</div>
           <div className="rc-lbl">שווי פעילות (EV)</div>
           <div className="rc-sub">Weighted Average</div>
         </div>
@@ -77,7 +79,7 @@ export function ResultsScreen({
           <div className="rc-sub">Market-calibrated</div>
         </div>
         <div className="res-card">
-          <div className="rc-val mono">{fmtK(computed.ebitda)}</div>
+          <div className="rc-val mono">{fmtAmount(computed.ebitda)}</div>
           <div className="rc-lbl">EBITDA שנתי</div>
           <div className="rc-sub">Trailing twelve months</div>
         </div>
@@ -103,7 +105,7 @@ export function ResultsScreen({
           <div className="wf-track">
             <div className="wf-bar ev" style={{ width: `${wfWidths.ev}%` }} />
           </div>
-          <b className="mono">{fmtK(computed.ev)}</b>
+          <b className="mono">{fmtAmount(computed.ev)}</b>
         </div>
         <div className="wf-row">
           <span className="wl">חוב נטו</span>
@@ -111,7 +113,7 @@ export function ResultsScreen({
             <div className="wf-bar dt" style={{ width: `${wfWidths.debt}%` }} />
           </div>
           <b className="mono" style={{ color: 'var(--red)' }}>
-            −{fmtK(netDebtK)}
+            −{fmtAmount(netDebtK)}
           </b>
         </div>
         <div className="wf-row total">
@@ -121,7 +123,7 @@ export function ResultsScreen({
           <div className="wf-track">
             <div className="wf-bar eq" style={{ width: `${wfWidths.eq}%` }} />
           </div>
-          <b className="mono">{fmtK(computed.equity)}</b>
+          <b className="mono">{fmtAmount(computed.equity)}</b>
         </div>
       </div>
 
@@ -133,7 +135,7 @@ export function ResultsScreen({
               <div className="mr-desc">
                 DCF {Math.round(computed.blendWeights.dcf * 100)}% · מכפיל EBITDA{' '}
                 {Math.round(computed.blendWeights.ebitda * 100)}% · בסיס{' '}
-                {fmtK(computed.baseEbitdaForMultiple)}
+                {fmtAmount(computed.baseEbitdaForMultiple)}
               </div>
             </div>
           </div>
@@ -144,7 +146,7 @@ export function ResultsScreen({
             <div className="mr-desc">היוון תזרים · ערך טרמינלי · Damodaran CRP</div>
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div className="mr-val mono">{fmtK(computed.dcf)}</div>
+            <div className="mr-val mono">{fmtAmount(computed.dcf)}</div>
             <div className="mr-weight">
               {Math.round(computed.blendWeights.dcf * 100)}% · EV
             </div>
@@ -156,7 +158,7 @@ export function ResultsScreen({
             <div className="mr-desc">מכויל מ-12 עסקאות M&A ישראליות 2023–2026</div>
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div className="mr-val mono">{fmtK(computed.ebtMult)}</div>
+            <div className="mr-val mono">{fmtAmount(computed.ebtMult)}</div>
             <div className="mr-weight">
               {Math.round(computed.blendWeights.ebitda * 100)}% · EV
             </div>
@@ -169,7 +171,7 @@ export function ResultsScreen({
               <div className="mr-desc">Revenue Multiple — עם התאמת ענף ושלב</div>
             </div>
             <div style={{ textAlign: 'left' }}>
-              <div className="mr-val mono">{fmtK(computed.revMult)}</div>
+              <div className="mr-val mono">{fmtAmount(computed.revMult)}</div>
               <div className="mr-weight">
                 {Math.round(computed.blendWeights.rev * 100)}% · EV
               </div>
@@ -206,7 +208,7 @@ export function ResultsScreen({
                 <td className="num">{row.ebitdaAdj}</td>
                 <td className="num">{row.waccPct.toFixed(1)}%</td>
                 <td className="num">{row.multDisplay}</td>
-                <td className="num">{fmtK(row.ev)}</td>
+                <td className="num">{fmtAmount(row.ev)}</td>
                 <td
                   className={`num ${
                     row.label === 'bear'
@@ -216,7 +218,7 @@ export function ResultsScreen({
                         : 'base-val'
                   }`}
                 >
-                  {fmtK(row.equity)}
+                  {fmtAmount(row.equity)}
                 </td>
               </tr>
             ))}

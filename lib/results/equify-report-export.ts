@@ -2,7 +2,7 @@
 
 import type { ValuationLocale } from '../../api_client';
 import { getIndustryLabel } from '../constants/industries';
-import { getSectorDisplayLabel } from '../constants/industry_config';
+import { coerceWizardSectorSelection, getSectorDisplayLabel } from '../constants/industry_config';
 import {
   captureLeadAfterReportExport,
   type LeadPersistenceInput,
@@ -16,6 +16,12 @@ import { captureWizardLeadIdentifiers } from '../wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import { syncFinancialsDerived } from '../wizard/financial_history';
+import { getCachedFxRates } from '../utils/fxService';
+import type { ValuationData } from '../pdf-template/types';
+import {
+  buildValuationReportSnapshot,
+  type ValuationReportSnapshot,
+} from './valuation-report-snapshot';
 
 const MATRIX_STORAGE_KEY = 'valubot.lastValuationMatrix';
 
@@ -25,12 +31,15 @@ export interface EquifyReportExportOptions {
   companyName?: string;
   industryCode?: string;
   locale?: ValuationLocale;
-  /** Live wizard state — preferred over sessionStorage when exporting PDF/HTML. */
+  /** Live wizard state — required for atomic snapshot export. */
   state?: EquifyWizardState | null;
+  /** Pre-computed PDF layout from the live dashboard — single source of truth for export numbers. */
+  valuationData?: ValuationData;
 }
 
 export interface EquifyReportExportPayload {
   state: EquifyWizardState;
+  snapshot: ValuationReportSnapshot;
   reportId?: string;
   filename: string;
   locale: ValuationLocale;
@@ -79,6 +88,7 @@ function resolvePdfWizardState(
 ): EquifyWizardState {
   const stored = stateOverride ?? loadEquifyWizardState();
   const base = stored ?? DEFAULT_EQUIFY_WIZARD_STATE;
+  const coerced = coerceWizardSectorSelection(base.profile.sector, base.profile.subSector);
   const rawName =
     stored?.profile?.companyName?.trim() ||
     companyNameHint?.trim() ||
@@ -90,17 +100,19 @@ function resolvePdfWizardState(
     ...base,
     profile: {
       ...base.profile,
+      sector: coerced.sector,
+      subSector: coerced.subSector,
       companyName: displayName,
     },
     financials: syncFinancialsDerived(base.financials),
   };
 }
 
-/** Builds POST body for /api/generate-pdf and /api/generate-html. */
-export function buildEquifyReportExportPayload(
+/** Builds atomic POST body for /api/generate-pdf and /api/generate-html. */
+export async function buildEquifyReportExportPayload(
   options: EquifyReportExportOptions,
   format: 'pdf' | 'html',
-): EquifyReportExportPayload {
+): Promise<EquifyReportExportPayload> {
   const locale = options.locale ?? 'he';
   const state = resolvePdfWizardState(locale, options.companyName, options.state);
   const displayCompany = resolveDisplayCompanyName(
@@ -108,9 +120,29 @@ export function buildEquifyReportExportPayload(
     locale,
   );
 
+  const fxRates = getCachedFxRates();
+  const snapshot = buildValuationReportSnapshot({
+    state,
+    locale,
+    reportId: options.reportId,
+    fxRates,
+    valuationData: options.valuationData,
+  });
+
+  const equityDelta = Math.abs(snapshot.valuationData.equity - options.equityValue);
+  const equityTolerance = Math.max(25_000, options.equityValue * 0.02);
+  if (equityDelta > equityTolerance) {
+    const message =
+      locale === 'he'
+        ? 'נתוני הדוח לא תואמים למסך התוצאות. רענן את העמוד והורד שוב.'
+        : 'Report numbers do not match the live results screen. Refresh and download again.';
+    throw new Error(message);
+  }
+
   return {
     state,
-    reportId: options.reportId,
+    snapshot,
+    reportId: options.reportId ?? snapshot.reportId,
     filename:
       format === 'html'
         ? defaultHtmlFilename(displayCompany)
@@ -145,7 +177,7 @@ function buildLeadPersistenceInput(
     corporateTaxId: ids.corporateTaxId,
     userPhone: ids.userPhone,
     userEmail: ids.userEmail,
-    valuationMidpoint: options.equityValue,
+    valuationMidpoint: payload.snapshot.valuationData.equity,
     industry: industryCode,
     sectorLabel,
     locale: payload.locale,
@@ -171,8 +203,17 @@ async function downloadFromReportApi(
 ): Promise<void> {
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Snapshot-Hash': payload.snapshot.snapshotHash,
+    },
+    body: JSON.stringify({
+      state: payload.state,
+      snapshot: payload.snapshot,
+      reportId: payload.reportId,
+      filename: payload.filename,
+      locale: payload.locale,
+    }),
   });
 
   if (!response.ok) {
@@ -185,7 +226,13 @@ async function downloadFromReportApi(
           ? 'PDF generation failed. Please try again shortly.'
           : 'HTML generation failed. Please try again shortly.';
     try {
-      const err = (await response.json()) as { error?: string; message?: string };
+      const err = (await response.json()) as { error?: string; message?: string; code?: string };
+      if (err.code === 'STALE_SNAPSHOT') {
+        message =
+          locale === 'he'
+            ? 'נתוני הדוח השתנו מאז טעינת העמוד. רענן את התוצאות והורד שוב.'
+            : 'Report data changed since the page loaded. Refresh results and download again.';
+      }
       message = err.error ?? err.message ?? message;
     } catch {
       // ignore parse errors
@@ -219,7 +266,7 @@ async function downloadFromReportApi(
 export async function downloadEquifyPdf(options: EquifyReportExportOptions): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  const payload = buildEquifyReportExportPayload(options, 'pdf');
+  const payload = await buildEquifyReportExportPayload(options, 'pdf');
   await downloadFromReportApi('/api/generate-pdf', payload, payload.filename, payload.locale);
   await captureLeadAfterSuccessfulExport(options, payload);
 }
@@ -228,7 +275,7 @@ export async function downloadEquifyPdf(options: EquifyReportExportOptions): Pro
 export async function downloadEquifyHtml(options: EquifyReportExportOptions): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  const payload = buildEquifyReportExportPayload(options, 'html');
+  const payload = await buildEquifyReportExportPayload(options, 'html');
   await downloadFromReportApi('/api/generate-html', payload, payload.filename, payload.locale);
   await captureLeadAfterSuccessfulExport(options, payload);
 }

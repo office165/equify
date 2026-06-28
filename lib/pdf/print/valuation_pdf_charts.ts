@@ -3,6 +3,12 @@ import type {
   TrajectoryYear,
   WaccSegment,
 } from './valuation_pdf_view_model';
+import {
+  MULTIPLES_TRACK_W,
+  MULTIPLES_TRACK_X,
+  MULTIPLES_VIEW_W,
+  multiplesTrackLabelSvg,
+} from '../../pdf-template/equify-pdf-charts';
 import { fmtMoneyCompact } from './print_formatters';
 
 const TRAJECTORY = {
@@ -77,7 +83,7 @@ export function buildWaccDonutSvg(waccPct: number, segments: WaccSegment[]): str
 
 function positionX(value: number, min: number, max: number): number {
   const span = max - min || 1;
-  return 120 + ((value - min) / span) * 440;
+  return MULTIPLES_TRACK_X + ((value - min) / span) * MULTIPLES_TRACK_W;
 }
 
 export function buildMultiplesPositionSvg(rows: MultiplePositionRow[]): string {
@@ -85,34 +91,45 @@ export function buildMultiplesPositionSvg(rows: MultiplePositionRow[]): string {
   const labelY = [28, 98, 168];
   const axisY = [64, 134, 199];
   const valueY = [26, 96, 166];
+  const trackEnd = MULTIPLES_TRACK_X + MULTIPLES_TRACK_W;
 
   const content = rows
     .slice(0, 3)
     .map((row, i) => {
       const y = yPositions[i];
-      const cx = positionX(row.multiple, row.marketMin, row.marketMax);
-      const rangeX = positionX(row.marketMin, row.marketMin, row.marketMax);
-      const rangeW = positionX(row.marketMax, row.marketMin, row.marketMax) - rangeX;
+      const cx = positionX(row.multiple, row.rangeMin, row.rangeMax);
+      const rangeX = positionX(row.marketMin, row.rangeMin, row.rangeMax);
+      const rangeW = positionX(row.marketMax, row.rangeMin, row.rangeMax) - rangeX;
       const fillX = rangeX + rangeW * 0.12;
       const fillW = rangeW * 0.78;
       const color = row.color ?? '#00A89F';
       const multLabel =
         row.id === 'dcf'
           ? fmtMoneyCompact(row.impliedEv)
-          : `×${row.multiple.toFixed(1)}`;
+          : row.id === 'margin'
+            ? `${row.multiple.toFixed(1)}%`
+            : `×${row.multiple.toFixed(1)}`;
+      const title =
+        row.id === 'ebitda'
+          ? 'מכפיל EBITDA'
+          : row.id === 'revenue'
+            ? 'מכפיל הכנסות'
+            : row.id === 'margin'
+              ? 'שיעור EBITDA'
+              : row.title;
 
-      return `<text x="712" y="${labelY[i]}" text-anchor="end" style="font-family:Assistant,sans-serif;font-size:12px;font-weight:600;fill:#1E3A36">${row.title}</text>
-        <rect x="120" y="${y - 5}" width="440" height="10" rx="5" fill="#F0F8F6"/>
+      return `${multiplesTrackLabelSvg(title, labelY[i])}
+        <rect x="${MULTIPLES_TRACK_X}" y="${y - 5}" width="${MULTIPLES_TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
         <rect x="${fillX.toFixed(1)}" y="${y - 5}" width="${fillW.toFixed(1)}" height="10" rx="5" fill="#C5EDE9"/>
         <circle cx="${cx.toFixed(1)}" cy="${y}" r="8" fill="${color}"/>
-        <text class="axis" x="120" y="${axisY[i]}">${row.id === 'dcf' ? fmtMoneyCompact(row.marketMin) : `×${row.marketMin.toFixed(1)}`}</text>
-        <text class="axis" x="560" y="${axisY[i]}" text-anchor="end">${row.id === 'dcf' ? fmtMoneyCompact(row.marketMax) : `×${row.marketMax.toFixed(1)}`}</text>
+        <text class="axis" x="${MULTIPLES_TRACK_X}" y="${axisY[i]}">${row.id === 'dcf' ? fmtMoneyCompact(row.marketMin) : row.id === 'margin' ? `${row.rangeMin.toFixed(1)}%` : `×${row.marketMin.toFixed(1)}`}</text>
+        <text class="axis" x="${trackEnd}" y="${axisY[i]}" text-anchor="end">${row.id === 'dcf' ? fmtMoneyCompact(row.marketMax) : row.id === 'margin' ? `${row.rangeMax.toFixed(1)}%` : `×${row.marketMax.toFixed(1)}`}</text>
         <text x="${cx.toFixed(1)}" y="${valueY[i]}" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;fill:${color}">${multLabel}</text>
         <text x="56" y="${y + 3}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#527570">${fmtMoneyCompact(row.impliedEv)}</text>`;
     })
     .join('');
 
-  return `<svg viewBox="0 0 720 200" style="width:100%" aria-hidden="true">${content}</svg>`;
+  return `<svg viewBox="0 0 ${MULTIPLES_VIEW_W} 200" style="width:100%;overflow:visible" aria-hidden="true">${content}</svg>`;
 }
 
 export function buildScenarioRangeSvg(

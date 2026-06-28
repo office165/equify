@@ -170,8 +170,11 @@ export function computeDynamicMultiple(params: {
   qualityScore: number;
   /** Top customer share 0–100 (%). */
   topCustomerPct: number;
+  /** Tier-1 defense / anchor contracts — softens concentration penalty. */
+  tier1Contracts?: boolean;
+  backlogInflectionActive?: boolean;
 }): DynamicMultipleResult {
-  const { config, qualityScore, topCustomerPct } = params;
+  const { config, qualityScore, topCustomerPct, tier1Contracts = false } = params;
   const qs = Math.max(0, Math.min(100, qualityScore));
   const customerConcentrationRatio = Math.max(0, topCustomerPct) / 100;
 
@@ -181,11 +184,13 @@ export function computeDynamicMultiple(params: {
 
   const concentrationPenalty =
     customerConcentrationRatio >= 0.5
-      ? customerConcentrationRatio * 1.5
-      : 0;
+      ? customerConcentrationRatio * (tier1Contracts ? 0.35 : 1.5)
+      : customerConcentrationRatio >= 0.35
+        ? customerConcentrationRatio * (tier1Contracts ? 0.2 : 0.6)
+        : 0;
 
   const multiple = Math.max(
-    config.minMultiple,
+    config.minMultiple * 0.78,
     baseMultiple - concentrationPenalty,
   );
 
@@ -197,7 +202,10 @@ export function computeDynamicMultiple(params: {
   };
 }
 
-/** Forward EBITDA 2027F = 3-year avg margin × contracted backlog revenue. */
+/**
+ * @deprecated Backlog no longer drives 2027F EBITDA — use computeOrganicForwardEbitda2027K.
+ * Kept for legacy callers; returns organic forward EBITDA from margin only.
+ */
 export function computeInflectionForwardEbitda2027K(
   historicalAvgMarginPct: number,
   backlogSignedK: number,

@@ -1,6 +1,12 @@
-/** Print-safe formatting — thousands separators, consistent ₪, no raw zeros */
+/** Print-safe formatting — currency-aware compact amounts for PDF/HTML reports */
 
-import { splitCompactAmount } from '../../utils/formatCurrency';
+import {
+  formatCurrency,
+  formatCurrencyNarrativeHe,
+  getCurrencySymbol,
+  normalizeCurrencyCode,
+  splitCompactAmount,
+} from '../../utils/formatCurrency';
 
 export type PdfLocale = 'he' | 'en';
 
@@ -48,12 +54,22 @@ export function fmtMoneyILS(value: number | null | undefined): string {
   return formatted.replace(/\u00a0/g, ' ');
 }
 
-/** Compact ₪ for blend breakdown lines (e.g. ₪328.1M, ₪22.0B). */
-export function fmtMoneyCompact(value: number | null | undefined): string {
+/** Compact amount for blend breakdown lines (e.g. ₪328.1M, $22.0B). */
+export function fmtMoneyCompact(
+  value: number | null | undefined,
+  currency: string = 'ILS',
+): string {
   if (!isMeaningfulNumber(value, { allowZero: true })) return '—';
-  const parts = compactMoneyParts(value!);
-  if (!parts) return fmtMoneyILS(value);
-  return `₪${parts.amount}${parts.suffix}`;
+  return formatCurrency(value, normalizeCurrencyCode(currency), { short: true });
+}
+
+/** Hebrew narrative for executive copy — e.g. 75.5M דולר ארה״ב */
+export function fmtMoneyNarrativeHe(
+  value: number | null | undefined,
+  currency: string = 'ILS',
+): string {
+  if (!isMeaningfulNumber(value, { allowZero: true })) return '—';
+  return formatCurrencyNarrativeHe(value, currency);
 }
 
 /** LTR-isolated numeric span for mixed RTL/LTR PDF copy */
@@ -76,45 +92,73 @@ function compactMoneyParts(value: number): { amount: string; suffix: string } | 
   return { amount, suffix: unit };
 }
 
-/** Currency in PDF: RTL → amount then ₪; LTR → ₪ then amount */
+/** Currency in PDF: RTL ILS → amount then ₪; USD/EUR → prefix symbol */
 export function fmtMoneyCompactHtml(
   value: number | null | undefined,
   locale?: string,
+  currency: string = 'ILS',
 ): string {
   if (!isMeaningfulNumber(value, { allowZero: true })) return numHtml('—');
+  const code = normalizeCurrencyCode(currency);
   const parts = compactMoneyParts(value!);
   const rtl = pdfDocumentDir(locale) === 'rtl';
+  const sym = getCurrencySymbol(code);
+
   if (!parts) {
-    const stripped = fmtMoneyILS(value).replace(/[₪\s\u00a0]/g, '').trim();
-    return rtl ? `${numHtml(stripped)} ₪` : numHtml(`₪${stripped}`);
+    const formatted = formatCurrency(value!, code, { short: false });
+    const stripped = formatted.replace(/[₪$€\s\u00a0]/g, '').trim();
+    if (code === 'ILS') {
+      return rtl ? `${numHtml(stripped)} ₪` : numHtml(`₪${stripped}`);
+    }
+    return numHtml(formatCurrency(value!, code, { short: true }));
   }
+
   const amount = `${parts.amount}${parts.suffix}`;
-  return rtl ? `${numHtml(amount)} ₪` : numHtml(`₪${amount}`);
+  if (code === 'ILS') {
+    return rtl ? `${numHtml(amount)} ₪` : numHtml(`₪${amount}`);
+  }
+  return numHtml(`${sym}${amount}`);
 }
 
 export function fmtMoneyCompactSignedHtml(
   value: number,
   locale?: string,
+  currency: string = 'ILS',
 ): string {
-  if (value < 0) return `−${fmtMoneyCompactHtml(Math.abs(value), locale)}`;
-  return fmtMoneyCompactHtml(value, locale);
+  if (value < 0) return `−${fmtMoneyCompactHtml(Math.abs(value), locale, currency)}`;
+  return fmtMoneyCompactHtml(value, locale, currency);
 }
 
-/** Cover hero equity — RTL: 22.0B ₪ · LTR: ₪22.0B (auto B/M/K scale) */
-export function equityCoverValHtml(equity: number, locale?: string): string {
+/** Cover hero equity — RTL ILS: 22.0B ₪ · USD/EUR: $22.0B */
+export function equityCoverValHtml(
+  equity: number,
+  locale?: string,
+  currency: string = 'ILS',
+): string {
   const parts = compactMoneyParts(equity);
   const rtl = pdfDocumentDir(locale) === 'rtl';
+  const code = normalizeCurrencyCode(currency);
+  const sym = getCurrencySymbol(code);
+
   if (!parts) {
-    const stripped = fmtMoneyILS(equity).replace(/[₪\s\u00a0]/g, '').trim();
+    const formatted = formatCurrency(equity, code, { short: false });
+    const stripped = formatted.replace(/[₪$€\s\u00a0]/g, '').trim();
     const core = escHtml(stripped);
+    if (code === 'ILS') {
+      return rtl
+        ? `<span dir="ltr" class="num c-val">${core}</span> ₪`
+        : `<span dir="ltr" class="num c-val">₪${core}</span>`;
+    }
+    return `<span dir="ltr" class="num c-val">${sym}${core}</span>`;
+  }
+
+  const core = `${escHtml(parts.amount)}<em>${escHtml(parts.suffix)}</em>`;
+  if (code === 'ILS') {
     return rtl
       ? `<span dir="ltr" class="num c-val">${core}</span> ₪`
       : `<span dir="ltr" class="num c-val">₪${core}</span>`;
   }
-  const core = `${escHtml(parts.amount)}<em>${escHtml(parts.suffix)}</em>`;
-  return rtl
-    ? `<span dir="ltr" class="num c-val">${core}</span> ₪`
-    : `<span dir="ltr" class="num c-val">₪${core}</span>`;
+  return `<span dir="ltr" class="num c-val">${sym}${core}</span>`;
 }
 
 export function fmtMultipleHtml(value: number | null | undefined): string {

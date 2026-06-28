@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   clampAndSnap,
+  clampFinancialK,
+  FINANCIAL_INPUT_MAX_CHARS,
   formatDigitsWhileTyping,
   formatFinancialInputValue,
   parseFinancialInput,
@@ -25,15 +27,15 @@ export interface SmartSliderProps {
   maxLabel?: string;
   fillClassName?: string;
   required?: boolean;
+  /** Prefix symbol when unit is currency (₪K). */
+  currencySymbol?: string;
 }
-
-const ON_CHANGE_DEBOUNCE_MS = 80;
 
 function safeNumber(value: number, fallback: number): number {
   return Number.isFinite(value) ? value : fallback;
 }
 
-/** Hybrid slider + direct numeric input — RTL track, pointer-capture drag, iOS-friendly keypad */
+/** Hybrid slider + direct numeric input — local drag state, commit on release. */
 export function SmartSlider({
   label,
   value,
@@ -47,29 +49,23 @@ export function SmartSlider({
   maxLabel,
   fillClassName,
   required,
+  currencySymbol = '₪',
 }: SmartSliderProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const onChangeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingValueRef = useRef<number | null>(null);
+  const localValueRef = useRef(safeNumber(value, min));
 
   const [dragging, setDragging] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
-  const [displayValue, setDisplayValue] = useState(() => safeNumber(value, min));
+  const [localValue, setLocalValue] = useState(() => safeNumber(value, min));
 
   useEffect(() => {
-    if (!dragging) {
-      setDisplayValue(safeNumber(value, min));
-    }
+    if (dragging) return;
+    const next = safeNumber(value, min);
+    setLocalValue(next);
+    localValueRef.current = next;
   }, [value, min, dragging]);
-
-  useEffect(
-    () => () => {
-      if (onChangeTimerRef.current) clearTimeout(onChangeTimerRef.current);
-    },
-    [],
-  );
 
   useEffect(() => {
     if (!dragging) return undefined;
@@ -98,38 +94,14 @@ export function SmartSlider({
     [min, max],
   );
 
-  const flushOnChange = useCallback(() => {
-    if (onChangeTimerRef.current) {
-      clearTimeout(onChangeTimerRef.current);
-      onChangeTimerRef.current = null;
-    }
-    if (pendingValueRef.current !== null) {
-      onChange(pendingValueRef.current);
-      pendingValueRef.current = null;
-    }
-  }, [onChange]);
-
-  const scheduleOnChange = useCallback(
-    (v: number) => {
-      pendingValueRef.current = v;
-      if (onChangeTimerRef.current) clearTimeout(onChangeTimerRef.current);
-      onChangeTimerRef.current = setTimeout(() => {
-        onChangeTimerRef.current = null;
-        if (pendingValueRef.current !== null) {
-          onChange(pendingValueRef.current);
-          pendingValueRef.current = null;
-        }
-      }, ON_CHANGE_DEBOUNCE_MS);
-    },
-    [onChange],
-  );
-
   const applyParsed = useCallback(
     (raw: string) => {
       const parsed = parseFinancialInput(raw, unit);
       if (parsed !== null && Number.isFinite(parsed)) {
-        const next = clampAndSnap(parsed, min, max, step);
-        setDisplayValue(next);
+        const normalized = unit === '₪K' ? clampFinancialK(parsed) : parsed;
+        const next = clampAndSnap(normalized, min, max, step);
+        localValueRef.current = next;
+        setLocalValue(next);
         onChange(next);
       }
     },
@@ -150,24 +122,29 @@ export function SmartSlider({
   const getValFromPointer = useCallback(
     (clientX: number) => {
       const track = trackRef.current;
-      if (!track) return displayValue;
+      if (!track) return localValueRef.current;
       const rect = track.getBoundingClientRect();
-      if (rect.width <= 0) return displayValue;
-      const raw = (rect.right - clientX) / rect.width;
+      if (rect.width <= 0) return localValueRef.current;
+      // Physical LTR: left edge = min, right edge = max (dir="ltr" on track).
+      const raw = (clientX - rect.left) / rect.width;
       const clamped = Math.max(0, Math.min(1, raw));
       return clampAndSnap(min + clamped * (max - min), min, max, step);
     },
-    [displayValue, min, max, step],
+    [min, max, step],
   );
 
-  const setValueFromPointer = useCallback(
+  const setLocalFromPointer = useCallback(
     (clientX: number) => {
       const next = getValFromPointer(clientX);
-      setDisplayValue(next);
-      scheduleOnChange(next);
+      localValueRef.current = next;
+      setLocalValue(next);
     },
-    [getValFromPointer, scheduleOnChange],
+    [getValFromPointer],
   );
+
+  const commitDragValue = useCallback(() => {
+    onChange(localValueRef.current);
+  }, [onChange]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -178,18 +155,18 @@ export function SmartSlider({
       setEditing(false);
       setDraft('');
       document.body.style.userSelect = 'none';
-      setValueFromPointer(e.clientX);
+      setLocalFromPointer(e.clientX);
     },
-    [setValueFromPointer],
+    [setLocalFromPointer],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
       e.preventDefault();
-      setValueFromPointer(e.clientX);
+      setLocalFromPointer(e.clientX);
     },
-    [setValueFromPointer],
+    [setLocalFromPointer],
   );
 
   const endPointerDrag = useCallback(
@@ -198,36 +175,37 @@ export function SmartSlider({
       e.currentTarget.releasePointerCapture(e.pointerId);
       setDragging(false);
       document.body.style.userSelect = '';
-      flushOnChange();
+      commitDragValue();
     },
-    [flushOnChange],
+    [commitDragValue],
   );
 
   const handleWheel = useCallback(
     (e: React.WheelEvent<HTMLDivElement>) => {
       e.preventDefault();
       const delta = e.deltaY < 0 ? step : -step;
-      const next = clampAndSnap(displayValue + delta, min, max, step);
-      if (next === displayValue) return;
-      setDisplayValue(next);
+      const next = clampAndSnap(localValueRef.current + delta, min, max, step);
+      if (next === localValueRef.current) return;
+      localValueRef.current = next;
+      setLocalValue(next);
       onChange(next);
     },
-    [displayValue, max, min, onChange, step],
+    [max, min, onChange, step],
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      let next = displayValue;
+      let next = localValueRef.current;
       const bigStep = step * 10;
 
       if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-        next = clampAndSnap(displayValue + step, min, max, step);
+        next = clampAndSnap(localValueRef.current + step, min, max, step);
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-        next = clampAndSnap(displayValue - step, min, max, step);
+        next = clampAndSnap(localValueRef.current - step, min, max, step);
       } else if (e.key === 'PageUp') {
-        next = clampAndSnap(displayValue + bigStep, min, max, step);
+        next = clampAndSnap(localValueRef.current + bigStep, min, max, step);
       } else if (e.key === 'PageDown') {
-        next = clampAndSnap(displayValue - bigStep, min, max, step);
+        next = clampAndSnap(localValueRef.current - bigStep, min, max, step);
       } else if (e.key === 'Home') {
         next = min;
       } else if (e.key === 'End') {
@@ -237,17 +215,18 @@ export function SmartSlider({
       }
 
       e.preventDefault();
-      setDisplayValue(next);
+      localValueRef.current = next;
+      setLocalValue(next);
       onChange(next);
     },
-    [displayValue, max, min, onChange, step],
+    [max, min, onChange, step],
   );
 
   const handleInputFocus = useCallback(() => {
     setEditing(true);
-    setDraft(formatFinancialInputValue(displayValue, unit));
+    setDraft(formatFinancialInputValue(localValueRef.current, unit));
     requestAnimationFrame(() => inputRef.current?.select());
-  }, [displayValue, unit]);
+  }, [unit]);
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -275,9 +254,9 @@ export function SmartSlider({
     [commitDraft],
   );
 
-  const p = pct(displayValue);
-  const trackStyle = { '--p': `${p}%` } as React.CSSProperties;
-  const idleValue = formatFinancialInputValue(displayValue, unit);
+  const p = pct(localValue);
+  const trackStyle = { '--p': `${p}%`, '--thumb-p': `${p}%` } as React.CSSProperties;
+  const idleValue = formatFinancialInputValue(localValue, unit);
   const displayText = editing ? draft : idleValue;
   const fluidClasses = fluidNumericInputClasses(displayText, '!text-right');
 
@@ -290,8 +269,8 @@ export function SmartSlider({
         </label>
         <div className="sn-value-wrap w-full min-w-0">
           {unit === '₪K' && !editing ? (
-            <span className="sn-currency" aria-hidden="true">
-              ₪
+            <span key={currencySymbol} className="sn-currency eq-currency-symbol" aria-hidden="true">
+              {currencySymbol}
             </span>
           ) : null}
           <input
@@ -301,8 +280,9 @@ export function SmartSlider({
             enterKeyHint="done"
             autoComplete="off"
             spellCheck={false}
+            maxLength={unit === '₪K' ? FINANCIAL_INPUT_MAX_CHARS : undefined}
             dir="ltr"
-            className={`sn-input mono w-full min-w-0 text-right ${fluidClasses}${editing ? ' is-editing' : ''}`}
+            className={`sn-input mono w-full min-w-0 text-right text-base md:text-sm ${fluidClasses}${editing ? ' is-editing' : ''}`}
             value={displayText}
             onFocus={handleInputFocus}
             onChange={handleInputChange}
@@ -319,35 +299,37 @@ export function SmartSlider({
           ) : null}
         </div>
       </div>
-      <div
-        className={`sn-track${dragging ? ' is-dragging' : ''}`}
-        ref={trackRef}
-        style={trackStyle}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={endPointerDrag}
-        onPointerCancel={endPointerDrag}
-        onWheel={handleWheel}
-      >
-        <div className={fillClassName ? `sn-fill ${fillClassName}` : 'sn-fill'} />
+      <div className="sn-slider-ltr" dir="ltr">
         <div
-          className={`sn-thumb${dragging ? ' dragging' : ''}`}
-          style={{ insetInlineEnd: `${100 - p}%` }}
-          tabIndex={0}
-          role="slider"
-          aria-label={ariaLabel}
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuenow={displayValue}
-          onKeyDown={handleKeyDown}
-        />
-      </div>
-      {(minLabel || maxLabel) && (
-        <div className="sn-range">
-          <span>{minLabel}</span>
-          <span>{maxLabel}</span>
+          className={`sn-track${dragging ? ' is-dragging' : ''}`}
+          ref={trackRef}
+          style={trackStyle}
+          dir="ltr"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endPointerDrag}
+          onPointerCancel={endPointerDrag}
+          onWheel={handleWheel}
+        >
+          <div className={fillClassName ? `sn-fill ${fillClassName}` : 'sn-fill'} />
+          <div
+            className={`sn-thumb${dragging ? ' dragging' : ''}`}
+            tabIndex={0}
+            role="slider"
+            aria-label={ariaLabel}
+            aria-valuemin={min}
+            aria-valuemax={max}
+            aria-valuenow={localValue}
+            onKeyDown={handleKeyDown}
+          />
         </div>
-      )}
+        {(minLabel || maxLabel) && (
+          <div className="sn-range">
+            <span>{minLabel}</span>
+            <span>{maxLabel}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

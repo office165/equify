@@ -23,14 +23,16 @@ export function SiteHeader({
 }: SiteHeaderProps) {
   return (
     <header
-      className={`site-header flex min-w-0 flex-row items-center gap-2 px-4 sm:gap-3 sm:px-8 lg:px-10 ${
-        premium ? 'min-h-[72px] py-3 sm:min-h-[88px] sm:py-5' : 'h-[64px] sm:h-[72px]'
+      className={`site-header flex min-w-0 flex-row items-center gap-2 bg-transparent px-4 sm:gap-3 sm:px-8 lg:px-10 ${
+        premium
+          ? 'min-h-[72px] py-3 sm:min-h-[88px] sm:py-4 lg:min-h-[100px] lg:py-5'
+          : 'min-h-[64px] py-2 sm:min-h-[72px] sm:py-3 lg:min-h-[96px] lg:py-4'
       } ${className}`}
     >
       <EquifyLogoLink
         variant={variant}
         premium={premium}
-        className="max-w-[min(100%,11.5rem)] shrink-0 sm:max-w-none"
+        className="shrink-0"
       />
       {children ? (
         <div className="flex min-w-0 flex-1 flex-wrap items-center justify-start gap-3 sm:gap-4">

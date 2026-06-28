@@ -2,6 +2,20 @@
 
 export type ScenarioKey = 'bear' | 'base' | 'bull';
 
+export interface ReportFinancialCore {
+  auditedEbitda2026Abs: number;
+  blendedEbitdaBaseAbs: number;
+  multipleLegEbitdaBaseAbs: number;
+  effectiveMultiple: number;
+  blendedEnterpriseValueAbs: number;
+  netDebtAbs: number;
+  equityBaseAbs: number;
+  dcfEvAbs: number;
+  ebitdaMultipleEvAbs: number;
+  revenueMultipleEvAbs: number;
+  blendWeights: { dcf: number; ebitda: number; rev: number };
+}
+
 export interface TrajectoryPoint {
   label: string;
   revenueM: number;
@@ -98,6 +112,9 @@ export interface EbitdaSensitivityMatrix {
   cells: number[][];
   baseRow: number;
   baseCol: number;
+  /** Canonical base EBITDA (absolute) used for the center row — must match financialCore.multipleLegEbitdaBaseAbs. */
+  baseEbitdaAbs?: number;
+  baseMultiple?: number;
 }
 
 /**
@@ -156,6 +173,11 @@ export interface ValuationData {
   qualityScore: number;
   qualityGrade: string;
   ebitda: number;
+  /** M&A blended EBITDA base (30/50/20) — DCF/WACC anchor */
+  blendedEbitdaBase?: number;
+  /** EBITDA base used by the multiples valuation leg */
+  multipleLegEbitdaBase?: number;
+  financialCore?: ReportFinancialCore;
   effectiveMult: number;
   revenueMultiple: number;
   /** Blended EBITDA components (₪ absolute) for report disclosure */

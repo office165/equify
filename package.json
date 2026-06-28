@@ -13,6 +13,7 @@
     "start": "node dist/main.js",
     "test:pdf": "tsx scripts/test-maximal-pdf.ts",
     "test:canonical": "tsx scripts/test-canonical-reconciliation.ts",
+    "test:report-coherence": "tsx scripts/test-report-financial-coherence.ts",
     "test:omwise-calibration": "tsx scripts/test-omwise-calibration.ts",
     "test:monday-leads": "tsx scripts/test-monday-leads-e2e.ts",
     "test:monday-lead": "tsx scripts/test-monday-lead.ts",

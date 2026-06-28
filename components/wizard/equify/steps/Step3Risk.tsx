@@ -4,7 +4,7 @@ import React from 'react';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { SmartFieldLabel } from '../../ui/SmartFieldLabel';
 import { SmartSlider } from '../../ui/SmartSlider';
-import { useWizardValuation } from '../WizardValuationContext';
+import { useReportingCurrency, useWizardValuation } from '../WizardValuationContext';
 
 export interface Step3RiskProps {
   onBack: () => void;
@@ -43,6 +43,7 @@ function ToggleRow({
 export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
   const { shell, steps: t, isHe } = useEquifyStrings();
   const { state, computed, updateRisk, updateProfile } = useWizardValuation();
+  const { reportingCurrency, currencySymbol } = useReportingCurrency();
   const { risk, profile } = state;
 
   const concWaccBps = risk.topCustomer > 40 ? 80 : risk.topCustomer > 20 ? 40 : 0;
@@ -56,6 +57,18 @@ export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
         {t.step3.titlePrefix} <span className="hl">{t.step3.titleHl}</span>
       </h2>
       <p className="pane-sub rv">{t.step3.sub}</p>
+
+      <div
+        className="eq-reporting-currency-pill rv mono"
+        data-currency={reportingCurrency}
+        aria-live="polite"
+      >
+        <span className="eq-reporting-currency-pill-label">{t.step2.currency}</span>
+        <span className="eq-currency-symbol eq-reporting-currency-pill-value">
+          {currencySymbol}
+        </span>
+        <span className="eq-reporting-currency-pill-code">{reportingCurrency}</span>
+      </div>
 
       <div className="fgroup stagger">
         <div className="risk-section">

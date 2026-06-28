@@ -45,6 +45,13 @@
   font-family: inherit;
 }
 
+/* iOS Safari / mobile Chrome: inputs < 16px trigger focus zoom — lock at 16px on mobile */
+.equify-wizard input:not([type='file']):not([type='checkbox']):not([type='radio']):not([type='hidden']),
+.equify-wizard select,
+.equify-wizard textarea {
+  font-size: 16px;
+}
+
 .equify-wizard button {
   cursor: pointer;
   border: none;
@@ -110,28 +117,23 @@
 
 .equify-wizard .logo {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  align-items: center;
+  justify-content: flex-start;
+  align-self: flex-start;
   margin-bottom: 44px;
   color: inherit;
   text-decoration: none;
+  background: transparent;
 }
 
-.equify-wizard .logo .lg {
-  font-weight: 900;
-  font-size: 22px;
-}
-
-.equify-wizard .logo em {
-  font-style: normal;
-  color: var(--turq);
-}
-
-.equify-wizard .logo small {
-  font-family: var(--mono);
-  font-size: 8.5px;
-  letter-spacing: 0.22em;
-  color: var(--gold);
+.equify-wizard .logo .equify-logo-img,
+.equify-wizard .logo img {
+  height: 58px;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  background: transparent !important;
+  mix-blend-mode: plus-lighter;
 }
 
 .equify-wizard .steps {
@@ -484,6 +486,10 @@
   max-width: 100%;
 }
 
+.equify-wizard .fin-field-grid .si-control {
+  overflow: visible;
+}
+
 .equify-wizard .fin-field-grid--meta {
   margin-top: 0.5rem;
   margin-bottom: 0;
@@ -526,9 +532,24 @@
   color: var(--paper);
   border-radius: 12px;
   padding: 14px 16px;
-  font-size: 15px;
+  font-size: 16px;
   outline: none;
   width: 100%;
+}
+
+@media (min-width: 768px) {
+  .equify-wizard .inp,
+  .equify-wizard .sel,
+  .equify-wizard .textarea {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 767px) {
+  .equify-wizard .inp,
+  .equify-wizard .sel {
+    padding-inline: 8px;
+  }
 }
 
 .equify-wizard .inp:focus,
@@ -648,10 +669,17 @@ body.equify-slider-dragging {
   overflow: visible;
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
+  font-size: 16px;
   transition:
     border-color 0.2s var(--ease),
     background 0.2s var(--ease),
     box-shadow 0.2s var(--ease);
+}
+
+@media (min-width: 768px) {
+  .equify-wizard .sn-input {
+    font-size: inherit;
+  }
 }
 
 .equify-wizard .sn-input.is-editing,
@@ -661,25 +689,33 @@ body.equify-slider-dragging {
   box-shadow: 0 0 0 3px rgba(0, 194, 184, 0.12);
 }
 
+.equify-wizard .sn-slider-ltr {
+  direction: ltr;
+  width: 100%;
+}
+
 .equify-wizard .sn-thumb {
   position: absolute;
   top: 50%;
+  left: var(--thumb-p, 0%);
   width: 28px;
   height: 28px;
   border-radius: 50%;
   background: var(--ink);
   border: 3px solid var(--turq);
-  transform: translate(50%, -50%);
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform;
   cursor: grab;
   touch-action: none;
   z-index: 1;
+  transition: transform 0.15s var(--ease);
 }
 
 .equify-wizard .sn-thumb::before {
   content: '';
   position: absolute;
   top: 50%;
-  inset-inline-start: 50%;
+  left: 50%;
   width: 44px;
   height: 44px;
   transform: translate(-50%, -50%);
@@ -692,13 +728,16 @@ body.equify-slider-dragging {
   background: var(--pine);
   cursor: pointer;
   touch-action: none;
+  direction: ltr;
   --p: 0%;
+  --thumb-p: 0%;
 }
 
 .equify-wizard .sn-fill {
   position: absolute;
   inset-block: 0;
-  inset-inline-start: 0;
+  left: 0;
+  right: auto;
   width: var(--p);
   border-radius: 6px;
   background: linear-gradient(90deg, var(--turq), var(--mint));
@@ -716,6 +755,11 @@ body.equify-slider-dragging {
 
 .equify-wizard .sn-thumb.dragging {
   cursor: grabbing;
+  transform: translate3d(-50%, -50%, 0) scale(1.1);
+}
+
+.equify-wizard .sn-track.is-dragging .sn-thumb {
+  transition: none;
 }
 
 .equify-wizard .sn-range {
@@ -861,16 +905,72 @@ body.equify-slider-dragging {
   border: 1px solid var(--line);
   background: rgba(9, 28, 24, 0.35);
   overflow: hidden;
+  transition:
+    border-color 0.2s var(--ease),
+    background 0.2s var(--ease);
+}
+
+.equify-wizard .fin-audit-accordion:has(.fin-audit-accordion-summary:hover),
+.equify-wizard .fin-audit-accordion.is-open {
+  border-color: rgba(13, 148, 136, 0.55);
 }
 
 .equify-wizard .fin-audit-accordion-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   cursor: pointer;
   list-style: none;
   padding: 14px 16px;
+  user-select: none;
+  transition:
+    background 0.2s var(--ease),
+    border-color 0.2s var(--ease);
+}
+
+.equify-wizard .fin-audit-accordion-summary:hover {
+  background: rgba(19, 78, 74, 0.3);
+}
+
+.equify-wizard .fin-audit-accordion-copy {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  text-align: start;
+}
+
+.equify-wizard .fin-audit-accordion-title {
   font-size: 14px;
   font-weight: 700;
   color: var(--dim);
-  user-select: none;
+  line-height: 1.35;
+}
+
+.equify-wizard .fin-audit-accordion-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: rgba(45, 212, 191, 0.7);
+}
+
+@media (min-width: 768px) {
+  .equify-wizard .fin-audit-accordion-hint {
+    font-size: 13px;
+  }
+}
+
+.equify-wizard .fin-audit-accordion-chevron {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: rgba(45, 212, 191, 0.85);
+  transition: transform 0.2s var(--ease);
+}
+
+.equify-wizard .fin-audit-accordion.is-open .fin-audit-accordion-chevron {
+  transform: rotate(180deg);
 }
 
 .equify-wizard .fin-audit-accordion-summary::-webkit-details-marker {
@@ -1017,13 +1117,14 @@ body.equify-slider-dragging {
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
   flex: none;
+  user-select: none;
 }
 
 @media (min-width: 640px) {
   .equify-wizard .si-control--currency .si-prefix {
-    left: 1rem;
+    left: 0.875rem;
   }
 }
 
@@ -1034,6 +1135,17 @@ body.equify-slider-dragging {
   box-shadow:
     0 0 0 3px rgba(0, 194, 184, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.equify-wizard .si-control--invalid {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(194, 74, 74, 0.14);
+}
+
+.equify-wizard .si-control--invalid.is-editing,
+.equify-wizard .si-control--invalid:focus-within {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px rgba(194, 74, 74, 0.18);
 }
 
 .equify-wizard .si-prefix,
@@ -1061,11 +1173,100 @@ body.equify-slider-dragging {
   -webkit-tap-highlight-color: transparent;
   transition: color 0.2s var(--ease-out);
   font-variant-numeric: tabular-nums;
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  .equify-wizard .si-input {
+    font-size: inherit;
+  }
 }
 
 .equify-wizard .si-control.is-editing .si-input,
 .equify-wizard .si-control:focus-within .si-input {
   color: var(--paper);
+}
+
+.equify-wizard .si-control--readonly {
+  cursor: default;
+  opacity: 0.92;
+  background: rgba(0, 194, 184, 0.03);
+}
+
+.equify-wizard .si-control--readonly .si-input {
+  color: var(--dim);
+  cursor: default;
+}
+
+.equify-wizard .si-control--readonly .si-prefix {
+  opacity: 0.55;
+}
+
+/* Expert multiple override — keep editable value visible beside badges */
+.equify-wizard .vm-mult-control {
+  overflow: visible;
+  min-height: 46px;
+}
+
+.equify-wizard .vm-mult-input-field {
+  flex: 1 1 0%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.equify-wizard .vm-mult-input-field .vm-mult-input,
+.equify-wizard .vm-mult-input-field .si-input.vm-mult-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding-inline: 0.5rem;
+}
+
+.equify-wizard .vm-mult-meta {
+  flex: 0 0 auto;
+}
+
+/* Reporting currency — smooth symbol morph across wizard surfaces */
+.equify-wizard .eq-currency-symbol,
+.equify-wizard .eq-currency-value {
+  transition:
+    color 0.28s var(--ease-out),
+    opacity 0.28s var(--ease-out),
+    transform 0.28s var(--ease-out);
+}
+
+.equify-wizard .eq-live-currency[data-currency='USD'] .eq-currency-value,
+.equify-wizard .eq-live-currency[data-currency='EUR'] .eq-currency-value {
+  letter-spacing: 0.01em;
+}
+
+.equify-wizard .eq-reporting-currency-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  margin-bottom: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 194, 184, 0.18);
+  background: rgba(0, 194, 184, 0.06);
+  font-size: 12px;
+  color: var(--turq-soft);
+}
+
+.equify-wizard .eq-reporting-currency-pill-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mint);
+}
+
+.equify-wizard .eq-reporting-currency-pill-code {
+  font-size: 11px;
+  opacity: 0.72;
+}
+
+.equify-wizard .fin-field-grid .sel[data-currency] {
+  transition: border-color 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out);
 }
 
 .equify-wizard .si-mults {
@@ -1207,6 +1408,107 @@ body.equify-slider-dragging {
   line-height: 1.2;
   max-width: 100%;
   overflow-wrap: anywhere;
+}
+
+.equify-wizard .cl-val.cl-val--empty {
+  color: rgba(45, 212, 191, 0.45);
+  letter-spacing: 0.04em;
+}
+
+.equify-wizard .si-input::placeholder {
+  color: rgba(15, 118, 110, 0.5);
+  opacity: 1;
+  text-align: right;
+  direction: rtl;
+  unicode-bidi: plaintext;
+  text-overflow: clip;
+  overflow: visible;
+}
+
+/* Hebrew placeholder — override .mono { direction: ltr } bidi isolation */
+.equify-wizard .si-input--he-placeholder,
+.equify-wizard .si-control--he-placeholder .si-input,
+.equify-wizard .si-control--placeholder.si-control--currency .si-input {
+  direction: rtl !important;
+  unicode-bidi: plaintext;
+  text-align: right !important;
+  font-family: var(--body) !important;
+  font-variant-numeric: normal;
+  letter-spacing: 0;
+}
+
+.equify-wizard .si-control--placeholder .si-input {
+  letter-spacing: 0;
+}
+
+.equify-wizard .si-control--placeholder.si-control--currency .si-input {
+  padding-left: 3rem;
+  padding-right: 0.625rem;
+}
+
+@media (min-width: 640px) {
+  .equify-wizard .si-control--placeholder.si-control--currency .si-input {
+    padding-left: 3rem;
+    padding-right: 0.75rem;
+  }
+}
+
+.equify-wizard .si-control--currency:not(.si-control--placeholder) .si-input {
+  padding-left: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .equify-wizard .si-control--currency:not(.si-control--placeholder) .si-input {
+    padding-left: 3.5rem;
+  }
+}
+
+/* Half-width fin-field-grid — 16px mobile (iOS zoom-safe), compact desktop + minimal mobile pads */
+.equify-wizard .fin-field-grid .si-control--currency .si-input {
+  padding-left: 2.25rem !important;
+  padding-right: 0.5rem !important;
+  font-size: 1rem !important;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 768px) {
+  .equify-wizard .fin-field-grid .si-control--currency .si-input {
+    padding-left: 2.75rem !important;
+    padding-right: 0.625rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+.equify-wizard .fin-field-grid .si-control--currency .si-prefix {
+  left: 0.625rem;
+  font-size: 14px;
+}
+
+@media (min-width: 640px) {
+  .equify-wizard .fin-field-grid .si-control--currency .si-prefix {
+    left: 0.75rem;
+    font-size: 15px;
+  }
+}
+
+.equify-wizard .fin-field-grid .si-control--currency.si-control--placeholder .si-input {
+  direction: rtl !important;
+  unicode-bidi: plaintext;
+  text-align: right !important;
+  font-family: var(--body) !important;
+}
+
+.equify-wizard .fin-field-grid .si-control--currency .si-input::placeholder,
+.equify-wizard .fin-field-grid .si-control--compact .si-input::placeholder {
+  font-size: 11px !important;
+  line-height: 1.35;
+  letter-spacing: 0;
+  font-family: var(--body) !important;
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: plaintext;
+  white-space: nowrap;
 }
 
 .equify-wizard .cl-models {
@@ -1813,6 +2115,18 @@ body.equify-slider-dragging {
   border-top: 1px solid var(--line);
 }
 
+.equify-wizard .nav-row-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.equify-wizard .btn-primary--gated {
+  opacity: 0.72;
+}
+
 .equify-wizard .upload-zone {
   border: 2px dashed var(--pine);
   border-radius: 14px;
@@ -1993,6 +2307,27 @@ body.equify-slider-dragging {
   }
 }
 
+@keyframes eqw-insight-in {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.equify-wizard .animate-in.fade-in.slide-in-from-top-4 {
+  animation: eqw-insight-in 0.45s var(--ease) both;
+}
+
+.equify-wizard .eqw-industry-insight {
+  pointer-events: none;
+  user-select: none;
+}
+
 .equify-wizard.eqw-step-financials .sidebar {
   justify-content: flex-start;
 }
@@ -2072,6 +2407,7 @@ body.equify-slider-dragging {
     overflow-y: visible;
     scrollbar-width: auto;
     -ms-overflow-style: auto;
+    align-items: flex-start;
   }
 
   .equify-wizard .sidebar::-webkit-scrollbar {
@@ -2082,6 +2418,9 @@ body.equify-slider-dragging {
 
   .equify-wizard .logo {
     margin-bottom: 12px;
+    justify-content: flex-start;
+    align-self: flex-start;
+    width: auto;
   }
 
   .equify-wizard .steps {
@@ -2253,11 +2592,13 @@ body.equify-slider-dragging {
   color: var(--mint);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .equify-wizard .fgroup.two {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 640px) {
   .equify-wizard .lifecycle {
     grid-template-columns: 1fr 1fr;
   }
@@ -2271,7 +2612,8 @@ body.equify-slider-dragging {
   }
 
   .equify-wizard .sn-value-wrap {
-    max-width: min(58%, 200px);
+    max-width: 100%;
+    width: 100%;
   }
 
   .equify-wizard .nav-row {
@@ -2493,6 +2835,15 @@ body.equify-slider-dragging {
 .equify-wizard .net-debt-banner b {
   color: var(--mint);
   font-size: 18px;
+}
+
+.equify-wizard .net-debt-banner--surplus {
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.equify-wizard .net-debt-banner--surplus b {
+  color: #34d399;
 }
 
 .equify-wizard .cl-sub {

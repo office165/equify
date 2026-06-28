@@ -10,7 +10,7 @@ export function ModelsSection() {
         <div className="sec-head">
           <span className="eyebrow rv">מתודולוגיה</span>
           <h2 className="sec-title rv">
-            שלוש יסודות.
+            שלושה יסודות.
             <span className="hl"> שווי משוקלל.</span>
           </h2>
           <p className="sec-sub rv">{VALUATION_METHODOLOGY_COPY}</p>

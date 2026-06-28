@@ -10,6 +10,14 @@ import {
   buildWaccDonutSvg,
 } from './valuation_pdf_charts';
 import { escHtml, equityCoverValHtml, fmtMoneyCompact } from './print_formatters';
+import { ebitdaMultipleInterpretationCopy } from '../../i18n/equify_report_copy';
+import {
+  BLEND_TABLE_WIDTHS,
+  MULTIPLES_TABLE_WIDTHS,
+  reportColgroup,
+} from '../../pdf-template/report-table-layout';
+import { equifyLogoHtml } from '../../brand/equify-logo-html';
+import { buildCoverCircleStageHtml } from '../../pdf-template/cover-circle-graphic';
 import { buildValuationPdfSheetCss } from './valuation_pdf_styles';
 import {
   buildValuationPdfViewModel,
@@ -24,7 +32,7 @@ export interface BuildValuationPdfTemplateOptions {
 }
 
 function logoHtml(): string {
-  return '<span class="logo">equify<em>.</em><small>BY SBC</small></span>';
+  return equifyLogoHtml('light-bg', { heightPt: 28 });
 }
 
 function sheetHead(vm: ValuationPdfViewModel, ridSuffix?: string): string {
@@ -55,23 +63,22 @@ function buildPage1Cover(vm: ValuationPdfViewModel): string {
 
   const body = `
   ${sheetHead(vm)}
-  <div class="body">
-    <svg class="cv-rings" viewBox="0 0 600 600" aria-hidden="true">
-      <circle cx="300" cy="300" r="225" fill="none" stroke="#00A89F" stroke-opacity=".14" stroke-width="1"/>
-      <circle cx="300" cy="300" r="262" fill="none" stroke="#A8842E" stroke-opacity=".18" stroke-width="1" stroke-dasharray="2 6"/>
-      <circle cx="300" cy="300" r="188" fill="none" stroke="#00A89F" stroke-opacity=".08" stroke-width="22"/>
-    </svg>
-    <div class="cwrap">
-      <span class="eyebrow" style="justify-content:center">דוח הערכת שווי · ${escHtml(vm.valuationDate)}</span>
-      <div class="c-comp">${escHtml(vm.companyName)}</div>
-      <div class="c-meta">${metaParts.join(' · ')}</div>
-      <div class="c-val">${equityCoverValHtml(vm.finalEquity)}</div>
+  <div class="body cover-layout">
+    <div class="cover-hero-zone">
+      <div class="cover-header">
+        <span class="eyebrow cover-eyebrow">דוח הערכת שווי · ${escHtml(vm.valuationDate)}</span>
+        <div class="c-comp">${escHtml(vm.companyName)}</div>
+        <div class="c-meta">${metaParts.join(' · ')}</div>
+      </div>
+      ${buildCoverCircleStageHtml(equityCoverValHtml(vm.finalEquity), vm.finalEquity)}
+    </div>
+    <div class="cover-lower-stack">
       <div class="c-cap">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח <b class="num">${escHtml(fmtMoneyCompact(vm.bearEquity))} – ${escHtml(fmtMoneyCompact(vm.bullEquity))}</b></div>
       <div class="seal"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY</div>
-      <div class="c-grid c-grid--cover">
-        <div><b>${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</b><span>שווי פעילות (EV)</span></div>
+      <div class="cover-metrics c-grid c-grid--cover">
+        <div><b class="hl">${escHtml(fmtMoneyCompact(vm.finalEquity))}</b><span>שווי לבעלים · בסיס</span></div>
         <div><b>${vm.waccPct.toFixed(1)}%</b><span>WACC אפקטיבי</span></div>
-        <div><b>${vm.qualityScore} / ${escHtml(vm.qualityGrade)}</b><span>Quality Score</span></div>
+        <div><b class="gd">${vm.qualityScore} / ${escHtml(vm.qualityGrade)}</b><span>Quality Score</span></div>
       </div>
     </div>
   </div>`;
@@ -93,28 +100,38 @@ function buildPage2Exec(vm: ValuationPdfViewModel): string {
 
   const body = `
   ${sheetHead(vm, vm.reportId)}
-  <div class="body">
-    <span class="eyebrow">02 · תקציר מנהלים</span>
-    <h2>השורה התחתונה — קודם.</h2>
-    <p class="sub">${escHtml(vm.executiveSummary)}</p>
-    <div class="kgrid">
-      <div class="kcard"><div class="kv hl">${escHtml(fmtMoneyCompact(vm.finalEquity))}</div><div class="kl">שווי לבעלים · בסיס</div></div>
-      <div class="kcard"><div class="kv">${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</div><div class="kl">שווי פעילות (EV)</div></div>
-      <div class="kcard"><div class="kv">${vm.waccPct.toFixed(1)}%</div><div class="kl">WACC אפקטיבי</div></div>
-      <div class="kcard"><div class="kv gd">${escHtml(vm.qualityGrade)} · ${vm.qualityScore}</div><div class="kl">Quality Score</div></div>
+  <div class="body page-body--exec page-body--distributed">
+    <div class="page-intro">
+      <span class="eyebrow">02 · תקציר מנהלים</span>
+      <h2>השורה התחתונה — קודם.</h2>
+      <p class="sub">${escHtml(vm.executiveSummary)}</p>
     </div>
-    <div class="box">
-      <h3>מ-EV לשווי לבעלים</h3>
-      <div class="wf-row"><span class="lbl">שווי פעילות</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</b></div>
-      <div class="wf-row"><span class="lbl">חוב נטו</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${vm.debtWidthPct}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div><b style="color:#C24A4A">−${escHtml(fmtMoneyCompact(vm.netDebt))}</b></div>
-      <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:Assistant,sans-serif">שווי לבעלים</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${vm.equityWidthPct}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${escHtml(fmtMoneyCompact(vm.finalEquity))}</b></div>
+    <div class="page-stack">
+      <section class="page-section page-section--kpi">
+        <div class="kgrid">
+          <div class="kcard"><div class="kv hl">${escHtml(fmtMoneyCompact(vm.finalEquity))}</div><div class="kl">שווי לבעלים · בסיס</div></div>
+          <div class="kcard"><div class="kv">${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</div><div class="kl">שווי פעילות (EV)</div></div>
+          <div class="kcard"><div class="kv">${vm.waccPct.toFixed(1)}%</div><div class="kl">WACC אפקטיבי</div></div>
+          <div class="kcard"><div class="kv gd">${escHtml(vm.qualityGrade)} · ${vm.qualityScore}</div><div class="kl">Quality Score</div></div>
+        </div>
+      </section>
+      <section class="page-section page-section--waterfall">
+        <div class="box">
+          <h3>מ-EV לשווי לבעלים</h3>
+          <div class="wf-row"><span class="lbl">שווי פעילות</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</b></div>
+          <div class="wf-row"><span class="lbl">חוב נטו</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${vm.debtWidthPct}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div><b style="color:#C24A4A">−${escHtml(fmtMoneyCompact(vm.netDebt))}</b></div>
+          <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:Assistant,sans-serif">שווי לבעלים</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${vm.equityWidthPct}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${escHtml(fmtMoneyCompact(vm.finalEquity))}</b></div>
+        </div>
+      </section>
+      <section class="page-section page-section--blend">
+        <table class="report-table report-table--blend">
+          <tr><th>מודל</th><th>שווי פעילות</th><th>משקל</th><th>תרומה</th></tr>
+          ${blendRows}
+          <tr class="sum"><td>שווי פעילות משולב</td><td class="n"></td><td class="n">100%</td><td class="n">${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</td></tr>
+        </table>
+        <p class="note">הערכה זו בוצעה ב-${escHtml(vm.valuationDateShort)} על בסיס נתונים שהוזנו על ידי המשתמש ונתוני שוק מכוילים.</p>
+      </section>
     </div>
-    <table>
-      <tr><th>מודל</th><th>שווי פעילות</th><th>משקל</th><th>תרומה</th></tr>
-      ${blendRows}
-      <tr class="sum"><td>שווי פעילות משולב</td><td class="n"></td><td class="n">100%</td><td class="n">${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</td></tr>
-    </table>
-    <p class="note">הערכה זו בוצעה ב-${escHtml(vm.valuationDateShort)} על בסיס נתונים שהוזנו על ידי המשתמש ונתוני שוק מכוילים.</p>
   </div>`;
 
   return wrapSheet(2, body);
@@ -173,31 +190,39 @@ function buildPage4Dcf(vm: ValuationPdfViewModel): string {
 
   const body = `
   ${sheetHead(vm, vm.reportId)}
-  <div class="body">
-    <span class="eyebrow">04 · היוון תזרימי מזומנים</span>
-    <h2>מבט קדימה: DCF.</h2>
-    <p class="sub">תזרימי המזומנים החופשיים (FCFF) מהוונים בעלות הון משוקללת של ${vm.waccPct.toFixed(1)}%. הערך הטרמינלי חושב בצמיחה פרמננטית של 2.5%.</p>
-    <div style="display:grid;grid-template-columns:64mm 1fr;gap:8mm;margin-top:6mm;align-items:start">
-      <div class="box" style="margin-top:0;text-align:center">
-        <h3 style="text-align:right">הרכב WACC</h3>
-        ${donut}
-      </div>
-      <div>
-        <table style="margin-top:0">
-          <tr><th>רכיב</th><th>שיעור</th></tr>
-          ${waccRows}
-          <tr class="sum"><td>WACC אפקטיבי</td><td class="n">${vm.waccPct.toFixed(1)}%</td></tr>
-        </table>
-      </div>
+  <div class="body page-body--dcf page-body--distributed">
+    <div class="page-intro">
+      <span class="eyebrow">04 · היוון תזרימי מזומנים</span>
+      <h2>מבט קדימה: DCF.</h2>
+      <p class="sub">תזרימי המזומנים החופשיים (FCFF) מהוונים בעלות הון משוקללת של ${vm.waccPct.toFixed(1)}%. הערך הטרמינלי חושב בצמיחה פרמננטית של 2.5%.</p>
     </div>
-    <table>
-      <tr><th>₪M</th>${yearCols}<th>טרמינלי</th></tr>
-      <tr><td>FCFF חזוי</td>${fcffCells}<td class="n">${vm.terminalPvM.toFixed(2)}</td></tr>
-      <tr><td>פקטור היוון</td>${dfCells}<td class="n">—</td></tr>
-      <tr><td>שווי נוכחי</td>${pvCells}<td class="n">${vm.terminalPvM.toFixed(1)}*</td></tr>
-      <tr class="sum"><td>שווי פעילות לפי DCF</td><td class="n" colspan="${vm.dcfFcffRows.length}"></td><td class="n">${escHtml(fmtMoneyCompact(vm.evDcf))}</td></tr>
-    </table>
-    <p class="note">* ערך טרמינלי מהווה ${vm.terminalSharePct}% מסך השווי לפי DCF — רגישות גבוהה להנחת הצמיחה הפרמננטית.</p>
+    <div class="page-stack">
+      <section class="page-section page-section--wacc">
+        <div class="dcf-wacc-layout">
+          <div class="box box-chart-visible">
+            <h3>הרכב WACC</h3>
+            ${donut}
+          </div>
+          <div class="dcf-wacc-table-wrap">
+            <table class="report-table report-table--wacc">
+              <tr><th>רכיב</th><th>שיעור</th></tr>
+              ${waccRows}
+              <tr class="sum"><td>WACC אפקטיבי</td><td class="n">${vm.waccPct.toFixed(1)}%</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="page-section page-section--horizon">
+        <table class="report-table report-table--dcf">
+          <tr><th>₪M</th>${yearCols}<th>טרמינלי</th></tr>
+          <tr><td>FCFF חזוי</td>${fcffCells}<td class="n">${vm.terminalPvM.toFixed(2)}</td></tr>
+          <tr><td>פקטור היוון</td>${dfCells}<td class="n">—</td></tr>
+          <tr><td>שווי נוכחי</td>${pvCells}<td class="n">${vm.terminalPvM.toFixed(1)}*</td></tr>
+          <tr class="sum"><td>שווי פעילות לפי DCF</td><td class="n" colspan="${vm.dcfFcffRows.length}"></td><td class="n">${escHtml(fmtMoneyCompact(vm.evDcf))}</td></tr>
+        </table>
+        <p class="note">* ערך טרמינלי מהווה ${vm.terminalSharePct}% מסך השווי לפי DCF — רגישות גבוהה להנחת הצמיחה הפרמננטית.</p>
+      </section>
+    </div>
   </div>`;
 
   return wrapSheet(4, body);
@@ -208,21 +233,30 @@ function buildPage5Multiples(vm: ValuationPdfViewModel): string {
 
   const body = `
   ${sheetHead(vm, vm.reportId)}
-  <div class="body">
-    <span class="eyebrow">05 · מכפילי שוק</span>
-    <h2>מבט הצידה: השוק.</h2>
-    <p class="sub">המכפילים מכוילים מול עסקאות M&A ישראליות בענף ${escHtml(vm.industrySector)}. הפס האפור מציג את טווח השוק; הסימון — את מיקום החברה בתוכו.</p>
-    <div class="box">
-      <h3>מיקום מול טווח השוק</h3>
-      ${chart}
+  <div class="body page-body--multiples page-body--distributed">
+    <div class="page-intro">
+      <span class="eyebrow">05 · מכפילי שוק</span>
+      <h2>מבט הצידה: השוק.</h2>
+      <p class="sub">המכפילים מכוילים מול עסקאות M&A ישראליות בענף ${escHtml(vm.industrySector)}. הפס האפור מציג את טווח השוק; הסימון — את מיקום החברה בתוכו.</p>
     </div>
-    <table>
-      <tr><th>פרמטר</th><th>החברה</th><th>חציון השוק</th><th>פרשנות</th></tr>
-      <tr><td>מכפיל EBITDA</td><td class="n">×${vm.ebitdaMultiple.toFixed(1)}</td><td class="n">×${vm.industryEbitdaMedian.toFixed(1)}</td><td>מיקום יחסי מול חציון ענף</td></tr>
-      <tr><td>מכפיל הכנסות</td><td class="n">×${vm.revenueMultiple.toFixed(1)}</td><td class="n">×${vm.industryRevenueMedian.toFixed(1)}</td><td>בתוך טווח השוק</td></tr>
-      <tr><td>שיעור EBITDA</td><td class="n">${vm.ebitdaMarginPct.toFixed(1)}%</td><td class="n">${vm.industryEbitdaMarginPct.toFixed(1)}%</td><td>רווחיות ביחס לענף</td></tr>
-    </table>
-    <p class="note">מכפילים מותאמים לגודל, צמיחה ושיעור הכנסות חוזרות (Quality-adjusted).</p>
+    <div class="page-stack">
+      <section class="page-section page-section--tracks">
+        <div class="box box-chart-visible">
+          <h3>מיקום מול טווח השוק</h3>
+          ${chart}
+        </div>
+      </section>
+      <section class="page-section page-section--compare">
+        <table class="report-table report-table--multiples multiples-compare-table">
+          ${reportColgroup([...MULTIPLES_TABLE_WIDTHS])}
+          <tr><th>פרמטר</th><th>החברה</th><th>חציון השוק</th><th>פרשנות</th></tr>
+          <tr><td>מכפיל EBITDA</td><td class="n">×${vm.ebitdaMultiple.toFixed(1)}</td><td class="n">×${vm.industryEbitdaMedian.toFixed(1)}</td><td class="interp-cell">${escHtml(ebitdaMultipleInterpretationCopy({ effectiveMult: vm.ebitdaMultiple, qualityScore: vm.qualityScore, qualityGrade: vm.qualityGrade }))}</td></tr>
+          <tr><td>מכפיל הכנסות</td><td class="n">×${vm.revenueMultiple.toFixed(1)}</td><td class="n">×${vm.industryRevenueMedian.toFixed(1)}</td><td class="interp-cell">בתוך טווח השוק</td></tr>
+          <tr><td>שיעור EBITDA</td><td class="n">${vm.ebitdaMarginPct.toFixed(1)}%</td><td class="n">${vm.industryEbitdaMarginPct.toFixed(1)}%</td><td class="interp-cell">רווחיות ביחס לענף</td></tr>
+        </table>
+        <p class="note">מכפילים מותאמים לגודל, צמיחה ושיעור הכנסות חוזרות (Quality-adjusted).</p>
+      </section>
+    </div>
   </div>`;
 
   return wrapSheet(5, body);

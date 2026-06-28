@@ -1,5 +1,5 @@
 /* Scoped port of equify-wizard.html scroll report */
-.equify-scroll-report{--ink:#050F0D;--ink-2:#091C18;--pine:#0F2E29;--brand:#163530;--turq:#00C2B8;--turq-soft:#4DD6CE;--mint:#9EEEE6;--gold:#C49A3C;--paper:#E8F2F0;--dim:#7FA8A2;--line:rgba(0,194,184,.13);--red:#D97575;--body:var(--font-sans,var(--font-equify),'Assistant',system-ui,sans-serif);--display:var(--body);--mono:var(--font-mono,'IBM Plex Mono'),monospace;--ease:cubic-bezier(.16,1,.3,1);position:relative;min-height:100vh;background:var(--ink);color:var(--paper);font-family:var(--body);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden;padding-bottom:env(safe-area-inset-bottom,0px)}
+.equify-scroll-report{--ink:#050F0D;--ink-2:#091C18;--pine:#0F2E29;--brand:#163530;--turq:#00C2B8;--turq-soft:#4DD6CE;--mint:#9EEEE6;--gold:#C49A3C;--paper:#E8F2F0;--dim:#7FA8A2;--line:rgba(0,194,184,.13);--red:#D97575;--body:var(--font-sans,var(--font-equify),'Assistant',system-ui,sans-serif);--display:var(--body);--mono:var(--font-mono,'IBM Plex Mono'),monospace;--ease:cubic-bezier(.16,1,.3,1);position:relative;min-height:100vh;background:var(--ink);color:var(--paper);font-family:var(--body);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom,0px)}
 .equify-scroll-report a{color:inherit;text-decoration:none}
 .equify-scroll-report button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 .equify-scroll-report svg,.equify-scroll-report canvas{display:block;max-width:100%}
@@ -25,43 +25,34 @@
   .equify-scroll-report .rail{
     display:none !important;
   }
-  .equify-scroll-report .bar .doc-id{display:none}
   .equify-scroll-report .bar-in{
-    flex-wrap:wrap;
-    height:auto;
-    min-height:calc(58px + env(safe-area-inset-top,0px));
-    padding-top:env(safe-area-inset-top,0px);
-    padding-bottom:20px;
-    gap:12px;
     align-items:center;
   }
-  .equify-scroll-report .bar-actions{
-    flex-basis:100%;
-    width:100%;
-    max-width:100%;
-    box-sizing:border-box;
-    padding-bottom:4px;
-    margin-bottom:12px;
-  }
-  .equify-scroll-report .bar-actions .btn{
-    max-width:100%;
-    box-sizing:border-box;
-  }
-  .equify-scroll-report .pg{
-    padding-top:calc(212px + env(safe-area-inset-top,0px));
-  }
-  .equify-scroll-report .pg-num{
-    top:calc(200px + env(safe-area-inset-top,0px));
+  .equify-scroll-report .logo .equify-logo-img,
+  .equify-scroll-report .logo img{
+    height:44px;
   }
 }
 
-/* ===== top bar ===== */
-.equify-scroll-report .bar{position:fixed;top:0;inset-inline:0;z-index:950;border-bottom:1px solid transparent;transition:.4s;padding-top:env(safe-area-inset-top,0px)}
-.equify-scroll-report .bar.sc{background:rgba(5,15,13,.85);backdrop-filter:blur(20px) saturate(1.2);-webkit-backdrop-filter:blur(20px) saturate(1.2);border-color:var(--line)}
-.equify-scroll-report .bar-in{display:flex;align-items:center;justify-content:space-between;height:66px}
-.equify-scroll-report .logo{font-weight:900;font-size:21px;display:flex;align-items:baseline;gap:7px}
-.equify-scroll-report .logo em{font-style:normal;color:var(--turq)}
-.equify-scroll-report .logo small{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--gold)}
+/* ===== top bar — frosted sticky action bar (Tailwind augments in TSX) ===== */
+.equify-scroll-report .bar{
+  position:sticky;
+  top:0;
+  z-index:50;
+  width:100%;
+  isolation:isolate;
+}
+.equify-scroll-report .bar-in{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:0;
+  height:auto;
+  padding-inline:0;
+}
+.equify-scroll-report .logo{display:flex;align-items:center;justify-content:center;text-decoration:none;background:transparent}
+.equify-scroll-report .logo .equify-logo-img,.equify-scroll-report .logo img{height:58px;width:auto;max-width:none;object-fit:contain;background:transparent!important;mix-blend-mode:plus-lighter}
 .equify-scroll-report .bar .doc-id{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.06em;line-height:1.4;white-space:normal;overflow-wrap:anywhere;max-width:min(52vw,320px);text-align:end}
 .equify-scroll-report .btn{position:relative;display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:15px;padding:11px 24px;border-radius:100px;color:var(--ink);background:var(--turq);overflow:hidden;isolation:isolate;transition:transform .3s var(--ease),box-shadow .3s;will-change:transform;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .equify-scroll-report .btn:active:not(:disabled){transform:scale(.97)}
@@ -70,10 +61,32 @@
 .equify-scroll-report .btn:hover{box-shadow:0 8px 36px rgba(0,194,184,.35)}
 .equify-scroll-report .btn-ghost{background:transparent;color:var(--paper);border:1px solid var(--line)}
 .equify-scroll-report .btn-ghost::before{background:rgba(0,194,184,.1)}
+.equify-scroll-report .bar-action-btn{
+  min-height:36px;
+  max-width:none;
+  font-size:13px;
+  padding:8px 12px;
+  border-radius:999px;
+  gap:6px;
+}
+@media(min-width:640px){
+  .equify-scroll-report .bar-action-btn{
+    min-height:42px;
+    font-size:15px;
+    padding:11px 20px;
+    gap:9px;
+  }
+}
 
 /* ===== sections as report pages ===== */
-.equify-scroll-report .pg{min-height:100svh;display:flex;align-items:center;position:relative;padding:110px 0 70px}
-.equify-scroll-report .pg-num{position:absolute;top:96px;inset-inline-start:clamp(20px,4vw,48px);font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.2em}
+.equify-scroll-report .pg{min-height:100svh;display:flex;align-items:center;position:relative;padding:32px 0 70px;overflow-x:clip}
+@media(min-width:768px){
+  .equify-scroll-report .pg{padding:48px 0 70px}
+}
+.equify-scroll-report .pg-num{position:absolute;top:24px;inset-inline-start:clamp(20px,4vw,48px);font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.2em}
+@media(min-width:768px){
+  .equify-scroll-report .pg-num{top:32px}
+}
 .equify-scroll-report .pg-num b{color:var(--turq);font-weight:500}
 .equify-scroll-report h2.t{font-weight:900;font-size:clamp(30px,4.4vw,52px);line-height:1.4;margin:18px 0 10px}
 .equify-scroll-report h2.t .hl{color:var(--turq)}
@@ -243,6 +256,10 @@
 /* ===== CLEAN PRINT / PDF MODE ===== */
 @media print{
   @page{size:A4;margin:14mm 13mm}
+  .equify-scroll-report .bar{display:none}
+  .equify-scroll-report #prog{display:none}
+  .equify-scroll-report .rail{display:none !important}
+  .equify-scroll-report .report-body{padding-top:0 !important}
   .equify-scroll-report .pg{min-height:0;padding:0;page-break-after:always;display:block}
   .equify-scroll-report .pg:last-of-type{page-break-after:auto}
   .equify-scroll-report .cover{text-align:center;padding-top:60mm}
@@ -257,7 +274,24 @@
 }
 
 .equify-scroll-report .bar-actions {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.equify-scroll-report .bar-actions .eq-lang-toggle {
   flex-shrink: 0;
+}
+
+.equify-scroll-report .bar-actions .eq-lang-btn {
+  padding: 6px 10px;
+  font-size: 10px;
+}
+
+@media (min-width: 640px) {
+  .equify-scroll-report .bar-actions .eq-lang-btn {
+    padding: 7px 12px;
+    font-size: 11px;
+  }
 }
 
 .equify-scroll-report .esr-empty-actions {

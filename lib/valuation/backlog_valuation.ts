@@ -7,7 +7,7 @@ import {
   resolveInflectionForwardEbitda2027K,
 } from './backlog_metrics';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
-import { normalizeMethodologyWeights } from './sector_methodology_matrix';
+import { resolveValuationBlendWeights } from './valuation_weights_registry';
 
 export {
   resolveCurrentYearEbitdaK,
@@ -62,13 +62,19 @@ function isPositiveFinite(n: unknown): n is number {
 }
 
 /** Sector baseline blend weights (before backlog inflection). */
-export function resolveSectorBaselineWeights(sector: ValuationInputs['sector']): {
+export function resolveSectorBaselineWeights(
+  sector: ValuationInputs['sector'],
+  subSector?: string,
+): {
   dcf: number;
   ebitda: number;
   rev: number;
 } {
-  const config = resolveSectorMethodologyConfig(sector);
-  return normalizeMethodologyWeights(config);
+  const config = resolveSectorMethodologyConfig(sector, subSector);
+  return resolveValuationBlendWeights({
+    subSectorId: subSector,
+    strategy: config.strategy,
+  });
 }
 
 /**

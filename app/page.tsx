@@ -5,7 +5,7 @@ import { LandingPage } from '../components/landing/LandingPage';
 export const metadata: Metadata = {
   title: 'equify BY SBC — שווי העסק שלך. בנתונים.',
   description:
-    'דוח הערכת שווי על שלוש יסודות: DCF, מכפילי שוק מכוילים ל-12 עסקאות M&A בישראל, וציון איכות. שווי משוקלל מעשי.',
+    'דוח הערכת שווי על שלושה יסודות: DCF, מכפילי שוק מכוילים ל-12 עסקאות M&A בישראל, וציון איכות. שווי משוקלל מעשי.',
 };
 
 const landingMono = IBM_Plex_Mono({

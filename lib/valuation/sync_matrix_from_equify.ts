@@ -16,6 +16,8 @@ import {
   mapEquifyToWizardFormValues,
 } from '../wizard/map_equify_wizard';
 import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
+import { applyReportingFxLayer } from './apply_reporting_fx';
+import { getCachedFxRates } from '../utils/fxService';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import { buildWizardContextFromWizard } from '../../valuation_forecast';
 
@@ -33,10 +35,16 @@ export function syncMatrixFromEquifyState(
   state: EquifyWizardState,
   locale: ValuationLocale = 'he',
 ): EquifyMatrixSyncResult {
-  const inputs = buildValuationInputsFromEquifyState(state);
-  const computed = computeValuation(inputs);
-  const scenarios = computeScenarios(computed, inputs);
   const { financials, profile, risk } = state;
+  const inputs = buildValuationInputsFromEquifyState(state);
+  const baseComputed = computeValuation(inputs);
+  const baseScenarios = computeScenarios(baseComputed, inputs);
+  const { computed, scenarios } = applyReportingFxLayer(
+    baseComputed,
+    baseScenarios,
+    profile.currency,
+    getCachedFxRates(),
+  );
   const netDebtK = computeNetDebtK(financials);
   const netDebtAbs = K_TO_ABS(netDebtK);
   const revAbs = K_TO_ABS(financials.rev);

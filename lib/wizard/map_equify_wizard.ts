@@ -7,6 +7,7 @@ import type {
   EquifyLifecycleKey,
   EquifySectorKey,
 } from '../valuation';
+import type { SectorMarketContext } from './sector_market_defaults';
 
 export interface EquifyWizardProfile {
   fullName: string;
@@ -56,6 +57,13 @@ export interface EquifyWizardFinancials {
   backlogSignedK: number;
   /** @deprecated use grossDebtK − cashK */
   debt: number;
+  /** Sector for which smart market defaults were last applied */
+  sectorDefaultsFor?: EquifySectorKey;
+  /** Live / fallback sector beta & multiples used for smart defaults */
+  marketContext?: SectorMarketContext;
+  /** Expert manual override for effective EBITDA/Revenue multiple; null = sector automatic. */
+  customMultiple: number | null;
+  isManualMultiple: boolean;
 }
 
 export interface EquifyWizardRisk {
@@ -77,9 +85,9 @@ export interface EquifyWizardState {
 
 import { getIndustryConfig, getSubSectorLabel } from '../constants/industry_config';
 
-/** חוב נטו מ-₪K */
+/** Net debt (₪K) — gross debt minus cash; negative when cash exceeds debt (net cash surplus). */
 export function computeNetDebtK(financials: EquifyWizardFinancials): number {
-  return Math.max(0, financials.grossDebtK - financials.cashK);
+  return financials.grossDebtK - financials.cashK;
 }
 
 const GOAL_TO_PURPOSE: Record<
@@ -176,19 +184,21 @@ export const DEFAULT_EQUIFY_WIZARD_STATE: EquifyWizardState = {
     fiscalYear: String(new Date().getFullYear()),
   },
   financials: {
-    y2024: { revenueK: 10000, ebitdaK: 2340 },
-    y2025: { revenueK: 11000, ebitdaK: 2620 },
-    y2026: { revenueK: 12000, ebitdaK: 3132 },
-    rev: 12000,
-    margin: 22.6,
-    growth: 9,
-    grossDebtK: 5200,
-    cashK: 800,
-    normalizedOwnerSalaryK: 420,
-    capexLevelPct: 6,
+    y2024: { revenueK: 0, ebitdaK: 0 },
+    y2025: { revenueK: 0, ebitdaK: 0 },
+    y2026: { revenueK: 0, ebitdaK: 0 },
+    rev: 0,
+    margin: 0,
+    growth: 0,
+    grossDebtK: 0,
+    cashK: 0,
+    normalizedOwnerSalaryK: 0,
+    capexLevelPct: 0,
     projectedEbitdaK: [0, 0, 0],
     backlogSignedK: 0,
-    debt: 4400,
+    debt: 0,
+    customMultiple: null,
+    isManualMultiple: false,
   },
   risk: {
     recurring: 60,

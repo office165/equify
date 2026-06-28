@@ -9,10 +9,21 @@ import type {
   WaccSegment,
 } from './types';
 import {
+  MULTIPLES_TRACK_W,
+  MULTIPLES_TRACK_X,
+  MULTIPLES_VIEW_W,
+  multiplesTrackLabelSvg,
+} from './equify-pdf-charts';
+import {
   fmtMoneyCompact,
   numHtml,
   pdfDocumentDir,
 } from '../pdf/print/print_formatters';
+import {
+  ebitdaSensitivityWidths,
+  reportColgroup,
+  sensitivityMatrixWidths,
+} from './report-table-layout';
 
 function toM(nis: number): number {
   return nis / 1_000_000;
@@ -42,7 +53,7 @@ export function buildModelBlendBarSvg(rows: ModelBlendRow[], width = 380): strin
     const textColor = i === 0 ? 'white' : '#163530';
     const label = row.name.length > 12 ? row.name.split(' ')[0] : row.name;
     const seg = `<rect x="${x}" y="0" width="${w.toFixed(1)}" height="38" fill="${color}"/>
-      <text x="${(x + w / 2).toFixed(1)}" y="22" text-anchor="middle" fill="${textColor}" font-family="IBM Plex Mono" font-size="${row.weightPct >= 25 ? 10 : 9}" font-weight="600">${label} · ${row.weightPct.toFixed(0)}%</text>`;
+      <text x="${(x + w / 2).toFixed(1)}" y="22" text-anchor="middle" fill="${textColor}" font-family="IBM Plex Mono" font-size="${row.weightPct >= 25 ? 12 : 11}" font-weight="700">${label} · ${row.weightPct.toFixed(0)}%</text>`;
     x += w;
     return seg;
   });
@@ -67,28 +78,28 @@ export function buildWaterfallSvg(ev: number, netDebt: number, equity: number): 
     <line x1="60" x2="300" y1="70" y2="70" stroke="#D6E8E4" stroke-dasharray="3 4"/>
     <line x1="60" x2="300" y1="110" y2="110" stroke="#D6E8E4" stroke-dasharray="3 4"/>
     <line x1="60" x2="300" y1="150" y2="150" stroke="#D6E8E4" stroke-dasharray="3 4"/>
-    <text x="52" y="33" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">30</text>
-    <text x="52" y="73" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">20</text>
-    <text x="52" y="113" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">10</text>
-    <text x="52" y="153" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">0</text>
+    <text x="52" y="33" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#527570">30</text>
+    <text x="52" y="73" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#527570">20</text>
+    <text x="52" y="113" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#527570">10</text>
+    <text x="52" y="153" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#527570">0</text>
     <rect x="80" y="${evTop.toFixed(1)}" width="52" height="${evH.toFixed(1)}" fill="#00A89F" rx="3"/>
-    <text x="106" y="${(evTop - 6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#163530" font-weight="600">${fmtM(ev)}</text>
-    <text x="106" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">EV</text>
+    <text x="106" y="${(evTop - 6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#163530" font-weight="600">${fmtM(ev)}</text>
+    <text x="106" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">EV</text>
     <line x1="132" x2="158" y1="${evTop.toFixed(1)}" y2="${evTop.toFixed(1)}" stroke="#D6E8E4" stroke-dasharray="2 3"/>
     <rect x="158" y="${debtTop.toFixed(1)}" width="52" height="${debtH.toFixed(1)}" fill="#C24A4A" rx="3" opacity=".85"/>
-    <text x="184" y="${(debtTop - 5).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#C24A4A" font-weight="600">−${fmtM(Math.abs(netDebt))}</text>
-    <text x="184" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">חוב נטו</text>
+    <text x="184" y="${(debtTop - 5).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#C24A4A" font-weight="600">−${fmtM(Math.abs(netDebt))}</text>
+    <text x="184" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">חוב נטו</text>
     <line x1="210" x2="234" y1="${eqTop.toFixed(1)}" y2="${eqTop.toFixed(1)}" stroke="#D6E8E4" stroke-dasharray="2 3"/>
     <rect x="234" y="${eqTop.toFixed(1)}" width="52" height="${eqH.toFixed(1)}" fill="#163530" rx="3"/>
     <rect x="234" y="${eqTop.toFixed(1)}" width="52" height="10" fill="#00C2B8" rx="3"/>
-    <text x="260" y="${(eqTop - 6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#163530" font-weight="700">${fmtM(equity)}</text>
-    <text x="260" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">שווי לבעלים</text>
+    <text x="260" y="${(eqTop - 6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="#163530" font-weight="700">${fmtM(equity)}</text>
+    <text x="260" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">שווי לבעלים</text>
     <rect x="64" y="178" width="8" height="8" fill="#00A89F" rx="1"/>
-    <text x="76" y="186" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Enterprise Value</text>
+    <text x="76" y="186" font-family="IBM Plex Mono" font-size="10" fill="#527570">Enterprise Value</text>
     <rect x="136" y="178" width="8" height="8" fill="#C24A4A" rx="1"/>
-    <text x="148" y="186" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Net Debt</text>
+    <text x="148" y="186" font-family="IBM Plex Mono" font-size="10" fill="#527570">Net Debt</text>
     <rect x="198" y="178" width="8" height="8" fill="#163530" rx="1"/>
-    <text x="210" y="186" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Equity Value</text>
+    <text x="210" y="186" font-family="IBM Plex Mono" font-size="10" fill="#527570">Equity Value</text>
   </svg>`;
 }
 
@@ -114,12 +125,12 @@ export function buildScenarioRibbonSvg(
     <circle cx="40" cy="30" r="7" fill="#C24A4A" stroke="white" stroke-width="1.5"/>
     <circle cx="${baseX.toFixed(1)}" cy="30" r="9" fill="#163530" stroke="#00C2B8" stroke-width="2"/>
     <circle cx="${bullX}" cy="30" r="7" fill="#A8842E" stroke="white" stroke-width="1.5"/>
-    <text x="40" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#C24A4A" font-weight="600">${fmtMoneyCompact(bearEquity)}</text>
-    <text x="40" y="61" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Bear</text>
-    <text x="${baseX.toFixed(1)}" y="10" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#163530" font-weight="700">${fmtMoneyCompact(baseEquity)}</text>
-    <text x="${baseX.toFixed(1)}" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Base</text>
-    <text x="${bullX}" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#A8842E" font-weight="600">${fmtMoneyCompact(bullEquity)}</text>
-    <text x="${bullX}" y="61" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">Bull</text>
+    <text x="40" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#C24A4A" font-weight="600">${fmtMoneyCompact(bearEquity)}</text>
+    <text x="40" y="61" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">Bear</text>
+    <text x="${baseX.toFixed(1)}" y="10" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#163530" font-weight="700">${fmtMoneyCompact(baseEquity)}</text>
+    <text x="${baseX.toFixed(1)}" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">Base</text>
+    <text x="${bullX}" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#A8842E" font-weight="600">${fmtMoneyCompact(bullEquity)}</text>
+    <text x="${bullX}" y="61" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">Bull</text>
   </svg>`;
 }
 
@@ -137,7 +148,7 @@ export function buildFinancialBarChartSvg(years: TrajectoryPoint[]): string {
       const y = baseY - t * plotH;
       const val = (ceilingM * t).toFixed(1);
       return `<line x1="60" x2="710" y1="${y}" y2="${y}" stroke="#D6E8E4" stroke-dasharray="3 5"/>
-        <text x="55" y="${y + 3}" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">${val}</text>`;
+        <text x="55" y="${y + 3}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#527570">${val}</text>`;
     })
     .join('');
 
@@ -147,7 +158,7 @@ export function buildFinancialBarChartSvg(years: TrajectoryPoint[]): string {
     const xStart = x0 + firstForecast * groupW - 10;
     const w = (years.length - firstForecast) * groupW + 20;
     forecastShade = `<rect x="${xStart}" y="15" width="${w}" height="${plotH + 5}" fill="#F0F8F6" opacity=".6" rx="2"/>
-      <text x="${xStart + w / 2}" y="13" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">תחזית</text>`;
+      <text x="${xStart + w / 2}" y="13" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">תחזית</text>`;
   }
 
   const bars = years
@@ -163,9 +174,9 @@ export function buildFinancialBarChartSvg(years: TrajectoryPoint[]): string {
       const centerX = xRev + barW + 3;
       return `<rect x="${xRev}" y="${revY.toFixed(1)}" width="${barW}" height="${revH.toFixed(1)}" fill="${revFill}" rx="3"/>
         <rect x="${xEbt}" y="${ebtY.toFixed(1)}" width="${barW}" height="${ebtH.toFixed(1)}" fill="${ebtFill}" rx="3"/>
-        <text x="${centerX}" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">${year.label}</text>
-        <text x="${xRev + barW / 2}" y="${(revY - 4).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#00A89F">${year.revenueM.toFixed(1)}</text>
-        <text x="${xEbt + barW / 2}" y="${(ebtY - 4).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#A8842E">${year.ebitdaM.toFixed(1)}</text>`;
+        <text x="${centerX}" y="200" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">${year.label}</text>
+        <text x="${xRev + barW / 2}" y="${(revY - 4).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#00A89F">${year.revenueM.toFixed(1)}</text>
+        <text x="${xEbt + barW / 2}" y="${(ebtY - 4).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#A8842E">${year.ebitdaM.toFixed(1)}</text>`;
     })
     .join('');
 
@@ -192,11 +203,11 @@ export function buildFinancialBarChartSvg(years: TrajectoryPoint[]): string {
     ${forecastShade}
     ${bars}
     <polyline points="${marginPts}" fill="none" stroke="#C24A4A" stroke-width="1.5" stroke-dasharray="3 3" stroke-linecap="round"/>
-    <text x="700" y="152" font-family="IBM Plex Mono" font-size="7" fill="#C24A4A">EBITDA%</text>
+    <text x="700" y="152" font-family="IBM Plex Mono" font-size="10" fill="#C24A4A">EBITDA%</text>
     <rect x="65" y="210" width="8" height="7" fill="#00A89F" rx="1"/>
-    <text x="77" y="217" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">הכנסות</text>
+    <text x="77" y="217" font-family="IBM Plex Mono" font-size="10" fill="#527570">הכנסות</text>
     <rect x="130" y="210" width="8" height="7" fill="#C9A84C" rx="1"/>
-    <text x="142" y="217" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">EBITDA</text>
+    <text x="142" y="217" font-family="IBM Plex Mono" font-size="10" fill="#527570">EBITDA</text>
   </svg>`;
 }
 
@@ -209,7 +220,7 @@ export function buildWaccStackedBarSvg(segments: WaccSegment[], totalPct: number
     const w = (seg.pct / total) * width;
     const label = seg.symbol ? `${seg.symbol} ${seg.pct.toFixed(1)}%` : `${seg.pct.toFixed(1)}%`;
     const segHtml = `<rect x="${x.toFixed(1)}" y="8" width="${w.toFixed(1)}" height="28" fill="${colors[i % colors.length]}"/>
-      <text x="${(x + w / 2).toFixed(1)}" y="27" text-anchor="middle" font-family="IBM Plex Mono" font-size="${w > 50 ? 8.5 : 7.5}" fill="white" font-weight="600">${label}</text>`;
+      <text x="${(x + w / 2).toFixed(1)}" y="27" text-anchor="middle" font-family="IBM Plex Mono" font-size="${w > 50 ? 10 : 9}" fill="white" font-weight="600">${label}</text>`;
     x += w;
     return segHtml;
   });
@@ -219,7 +230,7 @@ export function buildWaccStackedBarSvg(segments: WaccSegment[], totalPct: number
     .map((seg, i) => {
       const lx = i * 70;
       return `<rect x="${lx}" y="42" width="6" height="6" fill="${seg.color}" rx="1"/>
-        <text x="${lx + 10}" y="48" font-family="IBM Plex Mono" font-size="6.5" fill="#527570">${seg.label.split(' ')[0]}</text>`;
+        <text x="${lx + 10}" y="48" font-family="IBM Plex Mono" font-size="9" fill="#527570">${seg.label.split(' ')[0]}</text>`;
     })
     .join('');
 
@@ -274,9 +285,9 @@ export function buildDcfTimelineSvg(
   const yearBars = rows
     .map((row) => {
       const w = row.pvM * scale;
-      const html = `<text x="30" y="${y + 10}" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#527570">${row.label}</text>
+      const html = `<text x="30" y="${y + 10}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#527570">${row.label}</text>
         <rect x="34" y="${y}" width="${w.toFixed(1)}" height="${barH}" fill="#00A89F" rx="3"/>
-        <text x="${(38 + w).toFixed(1)}" y="${y + 10}" font-family="IBM Plex Mono" font-size="8" fill="#163530">₪${row.pvM.toFixed(2)}M</text>`;
+        <text x="${(38 + w).toFixed(1)}" y="${y + 10}" font-family="IBM Plex Mono" font-size="10" fill="#163530">₪${row.pvM.toFixed(2)}M</text>`;
       y += 24;
       return html;
     })
@@ -286,48 +297,70 @@ export function buildDcfTimelineSvg(
   return `<svg viewBox="0 0 200 220" style="width:100%;display:block" aria-hidden="true">
     ${yearBars}
     <line x1="34" x2="195" y1="${y + 2}" y2="${y + 2}" stroke="#D6E8E4" stroke-dasharray="2 3"/>
-    <text x="30" y="${y + 22}" text-anchor="end" font-family="IBM Plex Mono" font-size="8" fill="#A8842E" font-weight="600">Terminal</text>
+    <text x="30" y="${y + 22}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#A8842E" font-weight="600">Terminal</text>
     <rect x="34" y="${y + 10}" width="${tvW.toFixed(1)}" height="20" fill="#A8842E" rx="3" opacity=".7"/>
-    <text x="110" y="${y + 24}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="white" font-weight="700">₪${terminalPvM.toFixed(1)}M (${terminalSharePct.toFixed(0)}%)</text>
+    <text x="110" y="${y + 24}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="white" font-weight="700">₪${terminalPvM.toFixed(1)}M (${terminalSharePct.toFixed(0)}%)</text>
     <line x1="34" x2="195" y1="${y + 40}" y2="${y + 40}" stroke="#163530" stroke-width="1.5"/>
     <rect x="34" y="${y + 44}" width="185" height="18" fill="#163530" rx="3"/>
-    <text x="126" y="${y + 57}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="white" font-weight="700">TOTAL ₪${totalDcfM.toFixed(1)}M</text>
+    <text x="126" y="${y + 57}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11.5" fill="white" font-weight="700">TOTAL ₪${totalDcfM.toFixed(1)}M</text>
   </svg>`;
 }
 
 export function buildMultiplesTracksSvg(rows: MultiplePositionRow[]): string {
   function posX(value: number, min: number, max: number): number {
     const span = max - min || 1;
-    return 20 + ((value - min) / span) * 640;
+    return MULTIPLES_TRACK_X + ((value - min) / span) * MULTIPLES_TRACK_W;
   }
 
   const yBands = [46, 106, 146];
-  const labelY = [38, 98, 148];
+  const labelY = [38, 98, 138];
   const axisY = [62, 122, 162];
+  const trackEnd = MULTIPLES_TRACK_X + MULTIPLES_TRACK_W;
 
   const content = rows.slice(0, 3).map((row, i) => {
     const y = yBands[i];
-    const cx = posX(row.multiple, row.marketMin, row.marketMax);
-    const bandX = posX(row.marketMin, row.marketMin, row.marketMax);
-    const bandW = posX(row.marketMax, row.marketMin, row.marketMax) - bandX;
+    const cx = posX(row.multiple, row.rangeMin, row.rangeMax);
+    const bandX = posX(row.marketMin, row.rangeMin, row.rangeMax);
+    const bandW = posX(row.marketMax, row.rangeMin, row.rangeMax) - bandX;
     const color = row.color ?? '#00A89F';
     const multLabel =
-      row.id === 'dcf' ? fmtMoneyCompact(row.impliedEv) : `×${row.multiple.toFixed(1)}`;
+      row.id === 'dcf'
+        ? fmtMoneyCompact(row.impliedEv)
+        : row.id === 'margin'
+          ? `${row.multiple.toFixed(1)}%`
+          : `×${row.multiple.toFixed(1)}`;
     const minLabel =
-      row.id === 'dcf' ? fmtMoneyCompact(row.marketMin) : `×${row.marketMin.toFixed(1)}`;
+      row.id === 'dcf'
+        ? fmtMoneyCompact(row.marketMin)
+        : row.id === 'margin'
+          ? `${row.rangeMin.toFixed(1)}%`
+          : `×${row.marketMin.toFixed(1)}`;
     const maxLabel =
-      row.id === 'dcf' ? fmtMoneyCompact(row.marketMax) : `×${row.marketMax.toFixed(1)}`;
+      row.id === 'dcf'
+        ? fmtMoneyCompact(row.marketMax)
+        : row.id === 'margin'
+          ? `${row.rangeMax.toFixed(1)}%`
+          : `×${row.marketMax.toFixed(1)}`;
 
-    return `<text x="695" y="${labelY[i]}" text-anchor="end" font-family="Assistant" font-size="10" font-weight="700" fill="#163530">${row.title}</text>
-      <rect x="20" y="${y - 6}" width="640" height="12" rx="6" fill="#F0F8F6" stroke="#D6E8E4"/>
+    const title =
+      row.id === 'ebitda'
+        ? 'מכפיל EBITDA'
+        : row.id === 'revenue'
+          ? 'מכפיל הכנסות'
+          : row.id === 'margin'
+            ? 'שיעור EBITDA'
+            : row.title;
+
+    return `${multiplesTrackLabelSvg(title, labelY[i])}
+      <rect x="${MULTIPLES_TRACK_X}" y="${y - 6}" width="${MULTIPLES_TRACK_W}" height="12" rx="6" fill="#F0F8F6" stroke="#D6E8E4"/>
       <rect x="${bandX.toFixed(1)}" y="${y - 6}" width="${bandW.toFixed(1)}" height="12" rx="5" fill="rgba(0,168,159,.18)"/>
       <circle cx="${cx.toFixed(1)}" cy="${y}" r="7" fill="${color}" stroke="white" stroke-width="2"/>
-      <text x="${cx.toFixed(1)}" y="${y - 10}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#163530" font-weight="700">${multLabel}</text>
-      <text x="20" y="${axisY[i]}" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">${minLabel}</text>
-      <text x="660" y="${axisY[i]}" text-anchor="end" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">${maxLabel}</text>`;
+      <text x="${cx.toFixed(1)}" y="${y - 10}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#163530" font-weight="700">${multLabel}</text>
+      <text x="${MULTIPLES_TRACK_X}" y="${axisY[i]}" font-family="IBM Plex Mono" font-size="10" fill="#527570">${minLabel}</text>
+      <text x="${trackEnd}" y="${axisY[i]}" text-anchor="end" font-family="IBM Plex Mono" font-size="10" fill="#527570">${maxLabel}</text>`;
   });
 
-  return `<svg viewBox="0 0 700 170" style="width:100%;display:block" aria-hidden="true">${content.join('')}</svg>`;
+  return `<svg viewBox="0 0 ${MULTIPLES_VIEW_W} 170" style="width:100%;display:block;overflow:visible" aria-hidden="true">${content.join('')}</svg>`;
 }
 
 export function buildQualityArcGaugeSvg(score: number, grade: string): string {
@@ -345,11 +378,11 @@ export function buildQualityArcGaugeSvg(score: number, grade: string): string {
     <line x1="110" y1="130" x2="${needleX.toFixed(1)}" y2="${needleY.toFixed(1)}" stroke="#163530" stroke-width="2.5" stroke-linecap="round"/>
     <circle cx="110" cy="130" r="5" fill="#163530"/>
     <text x="110" y="118" text-anchor="middle" font-family="IBM Plex Mono" font-size="26" font-weight="600" fill="#163530">${score}</text>
-    <text x="110" y="135" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#527570">/ 100</text>
+    <text x="110" y="135" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">/ 100</text>
     <text x="110" y="152" text-anchor="middle" font-family="Frank Ruhl Libre" font-size="18" font-weight="900" fill="#A8842E">${grade}</text>
-    <text x="18" y="148" font-family="IBM Plex Mono" font-size="7.5" fill="#C24A4A">0</text>
-    <text x="88" y="30" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#527570">50</text>
-    <text x="200" y="148" font-family="IBM Plex Mono" font-size="7.5" fill="#163530">100</text>
+    <text x="18" y="148" font-family="IBM Plex Mono" font-size="10" fill="#C24A4A">0</text>
+    <text x="88" y="30" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">50</text>
+    <text x="200" y="148" font-family="IBM Plex Mono" font-size="10" fill="#163530">100</text>
   </svg>`;
 }
 
@@ -365,10 +398,10 @@ export function buildQualityFactorBarsSvg(
   const rows = factors.map((f) => {
     const max = f.maxScore ?? 100;
     const w = max > 0 ? (f.score / max) * barMaxW : 0;
-    const html = `<text x="140" y="${y + 12}" text-anchor="end" font-family="Assistant" font-size="9" fill="#163530">${f.label}</text>
+    const html = `<text x="140" y="${y + 12}" text-anchor="end" font-family="Assistant" font-size="11" fill="#163530">${f.label}</text>
       <rect x="144" y="${y}" width="${barMaxW}" height="10" rx="3" fill="#F0F8F6" stroke="#D6E8E4"/>
       <rect x="144" y="${y}" width="${w.toFixed(1)}" height="10" rx="3" fill="#00A89F"/>
-      <text x="348" y="${y + 9}" font-family="IBM Plex Mono" font-size="8" fill="#527570">${f.score}/${max}</text>`;
+      <text x="348" y="${y + 9}" font-family="IBM Plex Mono" font-size="10" fill="#527570">${f.score}/${max}</text>`;
     y += rowH;
     return html;
   });
@@ -378,16 +411,25 @@ export function buildQualityFactorBarsSvg(
     ${rows.join('')}
     <line x1="144" x2="344" y1="${totalY}" y2="${totalY}" stroke="#163530" stroke-width="1"/>
     <rect x="144" y="${totalY + 3}" width="${((totalScore / 100) * barMaxW).toFixed(1)}" height="13" fill="#163530" rx="3"/>
-    <text x="222" y="${totalY + 13}" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="white" font-weight="700">TOTAL: ${totalScore} / 100</text>
-    <text x="348" y="${totalY + 13}" font-family="IBM Plex Mono" font-size="9" fill="#A8842E" font-weight="600">${grade}</text>
+    <text x="222" y="${totalY + 13}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="white" font-weight="700">TOTAL: ${totalScore} / 100</text>
+    <text x="348" y="${totalY + 13}" font-family="IBM Plex Mono" font-size="11" fill="#A8842E" font-weight="600">${grade}</text>
   </svg>`;
 }
 
 function matrixAxisLabelHtml(label: string, locale?: string): string {
   const rtl = pdfDocumentDir(locale) === 'rtl';
-  const shekel = label.match(/^₪([\d.]+)([KMB])$/);
-  if (shekel) {
-    const amount = `${shekel[1]}${shekel[2]}`;
+  const shekelPrefix = label.match(/^₪([\d.]+)([KMB])$/);
+  if (shekelPrefix) {
+    const amount = `${shekelPrefix[1]}${shekelPrefix[2]}`;
+    return rtl ? `${numHtml(amount)} ₪` : numHtml(`₪${amount}`);
+  }
+  const fxPrefix = label.match(/^([$€])([\d.]+)([KMB])$/);
+  if (fxPrefix) {
+    return numHtml(`${fxPrefix[1]}${fxPrefix[2]}${fxPrefix[3]}`);
+  }
+  const shekelSuffix = label.match(/^([\d.]+)([KMB])\s*₪$/);
+  if (shekelSuffix) {
+    const amount = `${shekelSuffix[1]}${shekelSuffix[2]}`;
     return rtl ? `${numHtml(amount)} ₪` : numHtml(`₪${amount}`);
   }
   return numHtml(label);
@@ -409,8 +451,8 @@ export function buildSensitivityMatrixTable(
       const rowStyle = isBaseRow ? ' style="background:rgba(0,168,159,.06)"' : '';
       const growHtml = matrixAxisLabelHtml(growLabel, locale);
       const growCell = isBaseRow
-        ? `<td style="font-weight:700;color:#00A89F">${growHtml}${baseSuffix}</td>`
-        : `<td style="font-weight:700">${growHtml}</td>`;
+        ? `<td>${growHtml}${baseSuffix}</td>`
+        : `<td>${growHtml}</td>`;
       const cells = matrix.cells[ri]
         ?.map((val, ci) => {
           const isCenter = ri === matrix.baseRow && ci === matrix.baseCol;
@@ -425,8 +467,9 @@ export function buildSensitivityMatrixTable(
     })
     .join('');
 
-  return `<div class="sens-grid"><table>
-    <tr><th style="background:#F0F8F6">${cornerHeader}</th>${header}</tr>
+  return `<div class="sens-grid"><table class="report-table report-table--sens">
+    ${reportColgroup(sensitivityMatrixWidths(matrix.waccLabels.length))}
+    <tr><th>${cornerHeader}</th>${header}</tr>
     ${body}
   </table></div>`;
 }
@@ -462,7 +505,8 @@ export function buildEbitdaSensitivityTable(
     })
     .join('');
 
-  return `<table>
+  return `<table class="report-table report-table--sens-ebitda">
+    ${reportColgroup(ebitdaSensitivityWidths(matrix.multipleLabels.length))}
     <tr><th>${ebitdaCorner}</th>${header}</tr>
     ${body}
   </table>`;

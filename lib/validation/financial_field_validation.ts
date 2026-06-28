@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FINANCIAL_MAX_ABSOLUTE_NIS } from '../utils/financial_input_parser';
 
 /** Monetary wizard field keys validated on blur in CurrencyInput. */
 export type FinancialMonetaryFieldKey =
@@ -17,9 +18,13 @@ const finiteNumber = z.number({ message: 'יש להזין מספר תקין' }).
   message: 'יש להזין מספר תקין',
 });
 
-const nonNegativeFinite = finiteNumber.min(0, {
-  message: 'יש להזין ערך חיובי או אפס',
-});
+const nonNegativeFinite = finiteNumber
+  .min(0, {
+    message: 'יש להזין ערך חיובי או אפס',
+  })
+  .max(FINANCIAL_MAX_ABSOLUTE_NIS, {
+    message: 'הערך גבוה מדי',
+  });
 
 const EBITDA_FIELDS = new Set<FinancialMonetaryFieldKey>([
   'ebitda_2024',
@@ -29,7 +34,9 @@ const EBITDA_FIELDS = new Set<FinancialMonetaryFieldKey>([
 
 function schemaForField(field: FinancialMonetaryFieldKey) {
   if (EBITDA_FIELDS.has(field)) {
-    return finiteNumber;
+    return finiteNumber.max(FINANCIAL_MAX_ABSOLUTE_NIS, {
+      message: 'הערך גבוה מדי',
+    });
   }
   return nonNegativeFinite;
 }

@@ -6,8 +6,13 @@ import {
 import { buildEquifyPdfPages, EQUIFY_PDF_PAGE_COUNT } from './pdf-template/equify-pdf-pages';
 import { buildEquifyPdfCss } from './pdf-template/equify-pdf-styles';
 import type { ValuationData } from './pdf-template/types';
+import { assertValuationDataCoherence } from './pdf-template/validate-valuation-data';
 
-export type { ValuationData } from './pdf-template/types';
+export {
+  assertValuationDataCoherence,
+  collectValuationDataViolations,
+  ValuationReportCoherenceError,
+} from './pdf-template/validate-valuation-data';
 export type {
   CompTransactionRow,
   DcfYearRow,
@@ -15,10 +20,12 @@ export type {
   ModelBlendRow,
   MultiplePositionRow,
   QualityFactorRow,
+  ReportFinancialCore,
   ScenarioKey,
   ScenarioRow,
   SensitivityMatrix,
   TrajectoryPoint,
+  ValuationData,
   WaccSegment,
 } from './pdf-template/types';
 
@@ -29,6 +36,7 @@ export const PDF_PAGE_COUNT = EQUIFY_PDF_PAGE_COUNT;
  * מיועד לשימוש עם Puppeteer ב-`app/api/generate-pdf/route.ts`.
  */
 export function buildPdfHtml(data: ValuationData): string {
+  assertValuationDataCoherence(data);
   const locale = resolvePdfLocale(data.locale);
   const dir = pdfDocumentDir(locale);
   const title = locale === 'en'

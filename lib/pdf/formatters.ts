@@ -1,10 +1,10 @@
 import type { ValuationLocale } from '../../api_client';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
-import { formatCurrencyShort, formatILS } from '../utils/formatCurrency';
+import { formatCurrency, formatCurrencyShort } from '../utils/formatCurrency';
 
-/** ILS / currency shorthand for PDF tables (₪ 12.5M, ₪ 450K, etc.). */
+/** ILS / currency shorthand for PDF tables (3.15M ₪, $3.15B, etc.). */
 export function fmtILS(val: number): string {
-  return formatILS(val, { short: true });
+  return formatCurrency(val, 'ILS', { short: true });
 }
 
 export function formatMoney(
@@ -13,10 +13,7 @@ export function formatMoney(
   _locale: ValuationLocale,
 ): string {
   const code = currency.length === 3 ? currency : 'ILS';
-  if (code.toUpperCase() === 'ILS') {
-    return fmtILS(value);
-  }
-  return formatCurrencyShort(value, code);
+  return formatCurrency(value, code, { short: true });
 }
 
 export function formatPct(value: number, decimals = 1): string {
