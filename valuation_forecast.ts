@@ -93,6 +93,14 @@ function parseNumber(value: string, fallback = 0): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+function defaultRevenueMultiple(revenue: number, ebitda: number): number {
+  if (ebitda > revenue * 0.15) return 5.5;   // healthy EBITDA margin
+  if (ebitda > 0)              return 4.0;   // positive but thin EBITDA
+  if (revenue > 50_000_000)    return 2.5;   // large revenue, no profit
+  if (revenue > 10_000_000)    return 1.8;   // mid-size
+  return 1.2;                                 // small/early — conservative floor
+}
+
 export function buildForecastMatrixFromWizard(
   values: ValuationWizardFormValues,
   valuationId: string,
@@ -116,13 +124,14 @@ export function buildForecastMatrixFromWizard(
     baseRevenue,
     ebitda,
   );
-  const baseEv =
-    sectorEv > 0
-      ? sectorEv
-      : Math.round(baseRevenue * 4.5 * 100) / 100;
+  const baseEv = sectorEv > 0
+    ? sectorEv
+    : Math.round(baseRevenue * defaultRevenueMultiple(revenue, ebitda) * 100) / 100;
   const bearEv = Math.round(baseEv * 0.82 * 100) / 100;
   const bullEv = Math.round(baseEv * 1.18 * 100) / 100;
   const netDebt = resolveNetDebtFromWizard(values);
+  const netDebtIsNegative = netDebt < 0;
+  const cashSurplusNote = netDebtIsNegative ? 'cash_surplus' : undefined;
   const equityBase = Math.round((baseEv - netDebt) * 100) / 100;
 
   return {
@@ -150,15 +159,18 @@ export function buildForecastMatrixFromWizard(
     scenarios: {
       bear: {
         enterprise_value: bearEv,
-        final_equity_value: Math.round(equityBase * 0.82 * 100) / 100,
+        final_equity_value: Math.round((bearEv - netDebt) * 100) / 100,
+        ...(cashSurplusNote && { net_debt_note: cashSurplusNote }),
       },
       base: {
         enterprise_value: baseEv,
         final_equity_value: equityBase,
+        ...(cashSurplusNote && { net_debt_note: cashSurplusNote }),
       },
       bull: {
         enterprise_value: bullEv,
-        final_equity_value: Math.round(equityBase * 1.18 * 100) / 100,
+        final_equity_value: Math.round((bullEv - netDebt) * 100) / 100,
+        ...(cashSurplusNote && { net_debt_note: cashSurplusNote }),
       },
     },
     diagnostics_inputs,

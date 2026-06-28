@@ -37,27 +37,37 @@ function parseWizardNumber(value: string, fallback = 0): number {
  * Risk-adjusted WACC overlay from wizard modifiers (in-memory only).
  */
 export function deriveWaccFromWizard(wizard: ValuationWizardFormValues): number {
-  const base = 0.12;
-  const competitionAdj = (wizard.competitionLevel - 3) * 0.012;
+  // Israeli market WACC build-up (Damodaran 2026 conventions)
+  const riskFree = 0.045;        // Israel 10Y government bond yield
+  const erp = 0.055;             // Global ERP (Damodaran)
+  const crp = 0.028;             // Israel Country Risk Premium 2026 (war premium)
+  const baseCostOfEquity = riskFree + erp + crp; // 12.8%
+
+  // Size premium (Ibbotson): micro-cap Israeli private companies
+  const revenue = parseWizardNumber(wizard.annualRevenue, 0);
+  const sizePremium = revenue < 1_500_000 ? 0.0407 : revenue < 10_000_000 ? 0.0250 : 0.0181;
+
+  // Risk overlays
+  const competitionAdj = (wizard.competitionLevel - 3) * 0.010;
   const concentrationPct = wizard.customerConcentrationOver20
     ? Math.max(wizard.customerConcentrationPct, 20)
     : wizard.customerConcentrationPct;
-  const concentrationAdj = (concentrationPct / 100) * 0.04;
-  const recurringDiscount = (wizard.recurringRevenuePct / 100) * -0.025;
-  const founderAdj = wizard.founderDependency ? 0.02 : 0;
-  const ipDiscount = wizard.ipProtection ? -0.015 : 0.01;
+  const concentrationAdj = (concentrationPct / 100) * 0.035;
+  const recurringDiscount = (wizard.recurringRevenuePct / 100) * -0.020;
+  const founderAdj = wizard.founderDependency ? 0.018 : 0;
+  const ipAdj = wizard.ipProtection ? -0.012 : 0.008;
   const lifecycleAdj =
-    wizard.lifecycleStage === 'seed'
-      ? 0.04
-      : wizard.lifecycleStage === 'early'
-        ? 0.025
-        : wizard.lifecycleStage === 'mature'
-          ? -0.01
-          : 0;
+    wizard.lifecycleStage === 'seed'       ? 0.045
+    : wizard.lifecycleStage === 'early'    ? 0.025
+    : wizard.lifecycleStage === 'mature'   ? -0.008
+    : (wizard.lifecycleStage as string) === 'distressed' ? 0.06
+    : 0;
+
   return clamp(
-    base + competitionAdj + concentrationAdj + recurringDiscount + founderAdj + ipDiscount + lifecycleAdj,
-    0.085,
-    0.32,
+    baseCostOfEquity + sizePremium + competitionAdj + concentrationAdj
+      + recurringDiscount + founderAdj + ipAdj + lifecycleAdj,
+    0.13,  // realistic Israeli private-company floor
+    0.35,
   );
 }
 

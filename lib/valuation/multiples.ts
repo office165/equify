@@ -188,10 +188,16 @@ export function calculateValuationRange(
   multipleRange: [number, number],
   isPrivate: boolean,
 ): ValuationRangeResult {
-  const discount = isPrivate ? 0.8 : 1.0;
+  // DLOM (Discount for Lack of Marketability): 20% for private companies
+  const dlom = isPrivate ? 0.80 : 1.0;
+  const median = getMedianMultiple(multipleRange);
+
+  // Bear: low multiple × DLOM × additional 10% stress
+  // Base: median multiple × DLOM
+  // Bull: high multiple × DLOM × slight optimism premium
   return {
-    low: metric * multipleRange[0] * discount,
-    base: metric * getMedianMultiple(multipleRange) * discount,
-    high: metric * multipleRange[1] * discount,
+    low:  Math.round(metric * multipleRange[0] * dlom * 0.92 * 100) / 100,
+    base: Math.round(metric * median            * dlom         * 100) / 100,
+    high: Math.round(metric * multipleRange[1]  * dlom * 1.05  * 100) / 100,
   };
 }
