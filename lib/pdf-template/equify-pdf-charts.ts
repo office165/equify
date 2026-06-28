@@ -84,7 +84,8 @@ export function buildEquifyFinancialBarChartSvg(trajectory: TrajectoryPoint[]): 
 }
 
 export function buildEquifyWaccDonutSvg(segments: WaccSegment[], waccPct: number): string {
-  const total = segments.reduce((s, seg) => s + seg.pct, 0) || waccPct || 1;
+  const effectiveWacc = segments.reduce((sum, seg) => sum + seg.pct, 0) || waccPct || 0;
+  const total = effectiveWacc || 1;
   let offset = 0;
   const arcs = segments
     .map((seg) => {
@@ -96,7 +97,7 @@ export function buildEquifyWaccDonutSvg(segments: WaccSegment[], waccPct: number
     .join('');
 
   return `<svg viewBox="0 0 200 200" style="width:46mm;margin:2mm auto">${arcs}
-    <text x="100" y="96" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:26px;font-weight:600;fill:#163530">${waccPct.toFixed(1)}%</text>
+    <text x="100" y="96" text-anchor="middle" style="font-family:'IBM Plex Mono';font-size:26px;font-weight:600;fill:#163530">${effectiveWacc.toFixed(1)}%</text>
     <text x="100" y="116" text-anchor="middle" class="axis" style="letter-spacing:.16em">WACC</text></svg>`;
 }
 

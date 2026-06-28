@@ -1,5 +1,5 @@
-import { escHtml, equityCoverValHtml, fmtMoneyCompact } from '../pdf/print/print_formatters';
-import { formatReportMillionsUnit } from '../utils/formatCurrency';
+import { fmtMoneyCompact, resolvePdfActiveCurrency, escHtml, equityCoverValHtml } from '../pdf/print/print_formatters';
+import { formatReportMillionsUnitFromProfile } from '../utils/formatCurrency';
 import {
   buildCoverRingsSvg,
   buildDcfTimelineSvg,
@@ -22,11 +22,21 @@ import { ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
 const TOTAL_PAGES = 8;
 
 function reportUnitM(data: ValuationData): string {
-  return formatReportMillionsUnit(data.currency ?? 'ILS');
+  const profile = resolvePdfActiveCurrency(
+    data.currency ?? 'ILS',
+    data.locale,
+    data.activeCurrency,
+  );
+  return formatReportMillionsUnitFromProfile(profile, data.locale === 'en' ? 'en' : 'he');
 }
 
 function reportMoney(data: ValuationData, value: number): string {
-  return fmtMoneyCompact(value, data.currency ?? 'ILS');
+  const profile = resolvePdfActiveCurrency(
+    data.currency ?? 'ILS',
+    data.locale,
+    data.activeCurrency,
+  );
+  return fmtMoneyCompact(value, profile);
 }
 
 function equityM(data: ValuationData): string {

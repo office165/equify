@@ -356,6 +356,11 @@ p{line-height:var(--pdf-lh-body);color:var(--ink);margin-bottom:1.5mm;font-size:
 .cv-big,.c-val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:64px;color:var(--pine);direction:ltr;line-height:1;margin:0}
 .cover .c-val:not(.cover-bullseye .c-val){margin:16mm 0 6mm}
 .cv-big span,.c-val em{font-style:normal;color:var(--turqB)}
+.cv-tri-currency{display:flex;flex-direction:column;align-items:center;gap:2mm}
+.cv-fx-secondary{display:flex;flex-direction:column;align-items:center;gap:1mm;margin-top:2mm}
+.cv-fx-line{font-family:'IBM Plex Mono',monospace;font-size:var(--pdf-fs-body);color:var(--dim);font-weight:500;line-height:var(--pdf-lh-body)}
+.cv-fx-rate{font-size:var(--pdf-fs-meta);color:var(--dim);font-weight:400}
+.cv-fx-footnote{font-size:var(--pdf-fs-meta);color:var(--dim);margin-top:2mm;line-height:var(--pdf-lh-body);font-weight:400;max-width:72mm;text-align:center}
 .cv-range,.c-cap{font-size:var(--pdf-fs-body);color:var(--dim);margin-bottom:4mm;line-height:var(--pdf-lh-body);font-weight:500}
 .cv-range b,.c-cap b{color:var(--ink);font-weight:700}
 .seal{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gold);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:var(--pdf-fs-meta);letter-spacing:.12em;padding:5px 14px;border-radius:30px;font-weight:700;margin-top:7mm;margin-bottom:0;line-height:var(--pdf-lh-body)}

@@ -49,6 +49,8 @@ export interface CapmWaccParams {
   sectorConfig: Pick<SectorMethodologyConfig, 'minMultiple' | 'maxMultiple'>;
   /** Backlog-specific-risk mitigation (pp) — reduces Alpha only. */
   backlogAlphaReductionPp?: number;
+  /** Scale-tier WACC size premium overlay (pp) — SMB +3..+5, enterprise ≤ 0. */
+  scalePremiumOverlayPp?: number;
 }
 
 function clamp(n: number, min: number, max: number): number {
@@ -138,11 +140,12 @@ export function computeLeveredBeta(
 export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
   const rf = CAPM_RISK_FREE_RATE_PCT;
   const erp = CAPM_EQUITY_RISK_PREMIUM_PCT;
-  const alpha = resolveLifecycleAlphaPct(
-    params.lifecycle,
-    params.lifecycleAdj,
-    params.backlogAlphaReductionPp,
-  );
+  const backlogReduction = Math.max(0, params.backlogAlphaReductionPp ?? 0);
+  const baseAlpha =
+    params.scalePremiumOverlayPp != null
+      ? params.scalePremiumOverlayPp
+      : resolveLifecycleAlphaPct(params.lifecycle, params.lifecycleAdj, 0);
+  const alpha = Math.max(0, baseAlpha - backlogReduction);
 
   const grossDebtK = resolveGrossDebtK(params);
   const netDebtK =

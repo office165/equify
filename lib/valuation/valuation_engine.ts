@@ -18,6 +18,11 @@ import { resolveCurrentYearEbitdaK } from './backlog_valuation';
 import { capGrowthPctForMethodology } from './sector_methodology_matrix';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
 import { resolveValuationBlendWeights } from './valuation_weights_registry';
+import {
+  applyScaleAdjustedBlendWeights,
+  applyScaleMultipleDampener,
+  resolveScaleModifierProfile,
+} from './scale_modifier_pipeline';
 import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
 import { calibrateCenterOfGravity } from './base_case_calibration';
 import { OMWISE_CALIBRATION_QS } from './scenario_elasticity';
@@ -104,7 +109,8 @@ function computeDcf(params: {
  * 4. Apply backlog inflection (mitigates CAPM Alpha at full backlog coverage)
  * 5. DCF on weighted EBITDA blend (2025 / 2026 / 2027F)
  * 6. Quality-score linear multiple + concentration penalty
- * 7. EV = sub-sector DCF / multiples blend (valuation weights registry)
+ * 7. Scale Modifier Pipeline (lifecycle × revenue → WACC overlay, multiple dampener, blend shift)
+ * 8. EV = sub-sector DCF / multiples blend (valuation weights registry)
  */
 export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   const sectorConfig = resolveSectorMethodologyConfig(inputs.sector, inputs.subSector);
@@ -175,10 +181,21 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   });
 
   const dcfGrowthPct = growth;
-  const blendWeights = resolveValuationBlendWeights({
+  const scaleProfile = resolveScaleModifierProfile({
+    lifecycle,
+    lifecycleAdj,
+    rev: revK,
+    revenue2026K: revK,
+  });
+  const baseBlendWeights = resolveValuationBlendWeights({
     subSectorId: inputs.subSector,
     strategy: sectorConfig.strategy,
   });
+  const blendWeights = applyScaleAdjustedBlendWeights(
+    baseBlendWeights,
+    scaleProfile,
+    sectorConfig.strategy,
+  );
 
   const baseEbitdaForMultiple = resolveEbitdaBaseForMultipleLeg(
     calibrated,
@@ -223,6 +240,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     evEbitdaMultiple: marketEvEbitda,
     sectorConfig,
     backlogAlphaReductionPp,
+    scalePremiumOverlayPp: scaleProfile.waccSizePremiumOverlayPp,
   });
 
   const qsRaw = computeQualityScore({
@@ -247,20 +265,34 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     tier1Contracts: contracts,
     backlogInflectionActive: backlog.backlogInflectionActive,
   });
-  let effectiveMult = multipleResult.multiple;
+  let qsAdjustedMult = multipleResult.multiple;
   if (backlog.backlogInflectionActive) {
     const smbMidMultipleCap =
       sectorConfig.minMultiple * 0.79 +
       (qs / 100) * (sectorConfig.maxMultiple - sectorConfig.minMultiple) * 0.35;
-    effectiveMult = Math.min(effectiveMult, smbMidMultipleCap);
+    qsAdjustedMult = Math.min(qsAdjustedMult, smbMidMultipleCap);
   }
 
-  const automaticEffectiveMult = effectiveMult;
   const multipleResolution = resolveActiveEffectiveMultiple({
     inputs: calibrated,
     sectorConfig,
   });
-  effectiveMult = multipleResolution.activeMultiple;
+  const multipleFloor = sectorConfig.minMultiple * 0.78;
+  let effectiveMult = multipleResolution.activeMultiple;
+  if (!multipleResolution.isManual) {
+    effectiveMult = applyScaleMultipleDampener(
+      effectiveMult,
+      scaleProfile,
+      multipleFloor,
+    );
+  }
+  const automaticEffectiveMult = multipleResolution.isManual
+    ? qsAdjustedMult
+    : applyScaleMultipleDampener(
+        multipleResolution.automaticMultiple,
+        scaleProfile,
+        multipleFloor,
+      );
 
   const dcf = computeDcf({
     ebitdaK: ebitda,

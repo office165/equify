@@ -39,7 +39,11 @@ import {
   deriveFinancialDefaultsFromSectorMetrics,
   fetchSectorMetricsClient,
 } from '../../../lib/wizard/sector_market_defaults';
-import { getCurrencySymbol } from '../../../lib/utils/formatCurrency';
+import {
+  getCurrencySymbol,
+  resolveActiveCurrency,
+  type ActiveCurrencyProfile,
+} from '../../../lib/utils/formatCurrency';
 import type { ReportingCurrencyCode } from '../../../lib/wizard/reporting_currency';
 
 export interface WizardValuationContextValue {
@@ -52,6 +56,8 @@ export interface WizardValuationContextValue {
   reportingCurrency: ReportingCurrencyCode;
   /** Display symbol for {@link reportingCurrency}. */
   currencySymbol: string;
+  /** Token profile for formatting — symbol, code, position, locale. */
+  activeCurrency: ActiveCurrencyProfile;
   /** Active FX snapshot used for reporting-currency conversion (live cache or fallback). */
   fxRates: FxRatesSnapshot;
   setStep: (step: number) => void;
@@ -118,6 +124,10 @@ export function WizardValuationProvider({
 
   const reportingCurrency = state.profile.currency;
   const currencySymbol = getCurrencySymbol(reportingCurrency);
+  const activeCurrency = useMemo(
+    () => resolveActiveCurrency(reportingCurrency, 'he'),
+    [reportingCurrency],
+  );
 
   const { computed, scenarios } = useMemo(
     () =>
@@ -267,6 +277,7 @@ export function WizardValuationProvider({
       sectorMarketDefaultsPending,
       reportingCurrency,
       currencySymbol,
+      activeCurrency,
       fxRates,
       setStep,
       updateProfile,
@@ -284,6 +295,7 @@ export function WizardValuationProvider({
       applySectorMarketDefaults,
       computed,
       currencySymbol,
+      activeCurrency,
       fxRates,
       reportingCurrency,
       resetWizard,
@@ -318,6 +330,7 @@ export function useWizardValuation(): WizardValuationContextValue {
 }
 
 export function useReportingCurrency() {
-  const { reportingCurrency, currencySymbol, setReportingCurrency } = useWizardValuation();
-  return { reportingCurrency, currencySymbol, setReportingCurrency };
+  const { reportingCurrency, currencySymbol, activeCurrency, setReportingCurrency } =
+    useWizardValuation();
+  return { reportingCurrency, currencySymbol, activeCurrency, setReportingCurrency };
 }

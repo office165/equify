@@ -33,16 +33,17 @@ import {
   BLENDED_EBITDA_WEIGHTS,
   type EbitdaBlendBreakdown,
 } from '../valuation/blended_ebitda';
+import { formatValuationOutputSync } from '../currency-normalize';
 import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
-import { applyReportingFxLayer, convertEngineKToReportingK } from '../valuation/apply_reporting_fx';
+import { applyReportingFxLayer } from '../valuation/apply_reporting_fx';
 import { getCachedFxRates } from '../utils/fxService';
 import {
   formatCurrencyNarrativeHe,
   formatCurrencyShort,
+  resolveActiveCurrency,
 } from '../utils/formatCurrency';
 import {
-  buildCalibratedFinancialTrajectory,
-  buildFinancialTrajectoryFromEquifyState,
+  coercePercentNumber,
   ebitdaMarginPctFromYear,
   syncFinancialsDerived,
 } from '../wizard/financial_history';
@@ -50,7 +51,8 @@ import { resolveSectorMethodologyConfig } from '../valuation/sector_methodology_
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import {
   buildReportFinancialCore,
-  scaleTrajectoryForReportingCurrency,
+  buildWizardReportTrajectory,
+  wizardFinancialAbsFromK,
 } from './report-financial-core';
 import type { ReportFinancialCore } from './types';
 
@@ -113,22 +115,45 @@ function formatNetDebtNoteHe(
   cashK: number,
   currency: string,
 ): string {
-  const rates = getCachedFxRates();
-  const net = convertEngineKToReportingK(netDebtK, currency, rates) * 1000;
-  const gross = convertEngineKToReportingK(grossDebtK, currency, rates) * 1000;
-  const cash = convertEngineKToReportingK(cashK, currency, rates) * 1000;
+  const net = wizardFinancialAbsFromK(netDebtK);
+  const gross = wizardFinancialAbsFromK(grossDebtK);
+  const cash = wizardFinancialAbsFromK(cashK);
   return `חוב נטו ליום ההערכה: ${formatCurrencyNarrativeHe(net, currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
 }
 
-function buildWaccSegments(waccPct: number, qs: number): WaccSegment[] {
-  const rf = 4.3;
-  const erp = 5.4;
-  const crp = 1.6;
-  const size = 3.1;
-  const spec = Math.max(0.5, waccPct - rf - erp - crp - size);
+function buildWaccSegments(
+  waccPct: number,
+  breakdown: ValuationComputed['waccBreakdown'],
+  qs: number,
+): WaccSegment[] {
+  const rf = breakdown.rf;
+  let marketRisk = breakdown.leveredBeta * breakdown.erp;
+  let crp = 1.6;
+  let size = breakdown.alpha;
+  let spec = waccPct - rf - marketRisk - crp - size;
+
+  if (spec < 0) {
+    const overflow = -spec;
+    const adjustable = crp + size;
+    if (adjustable > 0) {
+      const scale = Math.max(0, adjustable - overflow) / adjustable;
+      crp *= scale;
+      size *= scale;
+    }
+    spec = waccPct - rf - marketRisk - crp - size;
+  }
+  spec = Math.max(0, spec);
+  spec += waccPct - (rf + marketRisk + crp + size + spec);
+
   return [
     { label: 'ריבית חסרת סיכון', symbol: 'Rf', pct: rf, color: '#4DD6CE', source: 'Bank of Israel' },
-    { label: 'פרמיית סיכון שוק', symbol: 'ERP', pct: erp, color: '#00A89F', source: 'Damodaran 2026' },
+    {
+      label: 'פרמיית סיכון שוק',
+      symbol: 'ERP',
+      pct: marketRisk,
+      color: '#00A89F',
+      source: 'Damodaran 2026',
+    },
     { label: 'פרמיית סיכון מדינה', symbol: 'CRP', pct: crp, color: '#C9A84C', source: 'Damodaran Israel' },
     { label: 'פרמיית גודל', symbol: 'Size', pct: size, color: '#163530', source: 'Ibbotson' },
     {
@@ -141,18 +166,24 @@ function buildWaccSegments(waccPct: number, qs: number): WaccSegment[] {
   ];
 }
 
+function sumWaccSegmentPcts(segments: WaccSegment[]): number {
+  return segments.reduce((sum, segment) => sum + segment.pct, 0);
+}
+
 function buildDcfRows(
   inputs: ValuationInputs,
   computed: ValuationComputed,
 ): { rows: DcfYearRow[]; terminalPvM: number; terminalSharePct: number } {
   const revK = inputs.revenue2026K ?? inputs.rev ?? 0;
   const capexLevelPct = inputs.capexLevelPct ?? 0;
+  const headlineGrowthPct =
+    coercePercentNumber(computed.dcfGrowthPct) || coercePercentNumber(inputs.growth);
   const w = computed.wacc / 100;
   const projection = projectDcfHorizon({
     ebitdaK: computed.ebitda,
     revK,
     capexLevelPct,
-    dcfGrowthPct: computed.dcfGrowthPct,
+    dcfGrowthPct: headlineGrowthPct,
     wacc: computed.wacc,
   });
   const rows: DcfYearRow[] = [];
@@ -373,6 +404,7 @@ export function mapEngineResultToValuationData(
   fxRates: ReturnType<typeof getCachedFxRates>,
   locale: ValuationLocale = 'he',
   reportId?: string,
+  ilsComputed?: ValuationComputed,
 ): ValuationData {
   const netDebtK = computeNetDebtK(syncedState.financials);
   const { rows: dcfRows, terminalPvM, terminalSharePct } = buildDcfRows(inputs, fxComputed);
@@ -402,11 +434,16 @@ export function mapEngineResultToValuationData(
   const currentYearMarginPct =
     fxComputed.calibratedYears?.y2026.marginPct ??
     ebitdaMarginPctFromYear(financials.y2026);
-  const trajectory = scaleTrajectoryForReportingCurrency(
-    buildFinancialTrajectoryFromEquifyState(financials),
-    reportingCurrency,
-    fxRates,
+  const trajectory = buildWizardReportTrajectory(financials);
+  const waccSegments = buildWaccSegments(
+    fxComputed.wacc,
+    fxComputed.waccBreakdown,
+    fxComputed.qs,
   );
+  const waccDisplayPct = sumWaccSegmentPcts(waccSegments);
+  const activeCurrency = resolveActiveCurrency(reportingCurrency, locale);
+  const equityIlsAbs = kToNis((ilsComputed ?? fxComputed).equity);
+  const valuationOutput = formatValuationOutputSync(equityIlsAbs, fxRates);
 
   return {
     reportId: reportId ?? `EQ-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`,
@@ -439,6 +476,7 @@ export function mapEngineResultToValuationData(
     growthPct: financials.growth,
     debtK: netDebtK,
     currency: syncedState.profile.currency,
+    activeCurrency,
     fiscalYear: syncedState.profile.fiscalYear ? Number(syncedState.profile.fiscalYear) : undefined,
 
     recurringPct: syncedState.risk.recurring,
@@ -450,14 +488,20 @@ export function mapEngineResultToValuationData(
     moatNotes: syncedState.profile.qualitativeDescription?.trim() || undefined,
 
     equity: kToNis(fxComputed.equity),
+    equityIls: equityIlsAbs,
+    equityUsd: valuationOutput.equity_usd,
+    equityEur: valuationOutput.equity_eur,
+    fxUsdRate: valuationOutput.usd_rate_used,
+    fxEurRate: valuationOutput.eur_rate_used,
+    fxAsOf: fxRates.asOf,
     enterpriseValue: kToNis(fxComputed.ev),
     bearEquity: kToNis(fxScenarios.bearEq),
     bullEquity: kToNis(fxScenarios.bullEq),
-    netDebt: kToNis(netDebtK),
+    netDebt: wizardFinancialAbsFromK(netDebtK),
     dcfEv: kToNis(fxComputed.dcf),
     ebitdaEv: kToNis(fxComputed.ebtMult),
     revenueEv: kToNis(fxComputed.revMult),
-    waccPct: fxComputed.wacc,
+    waccPct: waccDisplayPct,
     qualityScore: fxComputed.qs,
     qualityGrade: fxComputed.qsGrade,
     ebitda: financialCore.auditedEbitda2026Abs,
@@ -480,7 +524,7 @@ export function mapEngineResultToValuationData(
     terminalGrowthPct: 2.5,
 
     trajectory,
-    waccSegments: buildWaccSegments(fxComputed.wacc, fxComputed.qs),
+    waccSegments,
     dcfRows,
     terminalPvM,
     scenarios: scenarioRowsFromComputed(
@@ -561,7 +605,7 @@ export function mapWizardToValuationData(
     ...state,
     financials: syncFinancialsDerived(state.financials),
   };
-  const inputs = buildValuationInputsFromEquifyState(syncedState);
+  const inputs = buildValuationInputsFromEquifyState(syncedState, fxRates);
   const computed = computeValuation(inputs);
   const scenarios = computeScenarios(computed, inputs);
   const { computed: fxComputed, scenarios: fxScenarios } = applyReportingFxLayer(
@@ -579,5 +623,6 @@ export function mapWizardToValuationData(
     fxRates,
     locale,
     reportId,
+    computed,
   );
 }

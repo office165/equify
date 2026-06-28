@@ -9,6 +9,8 @@ import {
   type ValuationInputs,
 } from '../valuation';
 import { BACKLOG_INFLECTION_RATIO_THRESHOLD } from '../valuation/backlog_inflection_accelerator';
+import { normalizeValuationInputsToIls } from '../currency-normalize';
+import { getCachedFxRates } from '../utils/fxService';
 import type { EquifyWizardState } from './map_equify_wizard';
 import { computeNetDebtK } from './map_equify_wizard';
 import { syncFinancialsDerived } from './financial_history';
@@ -17,6 +19,7 @@ import { resolveLiveSectorMult } from './sector_market_defaults';
 /** Single builder for wizard valuation inputs — live UI, PDF, matrix patch. */
 export function buildValuationInputsFromEquifyState(
   state: EquifyWizardState,
+  fxRates = getCachedFxRates(),
 ): ValuationInputs {
   const { risk, profile } = state;
   const financials = syncFinancialsDerived(state.financials);
@@ -27,7 +30,7 @@ export function buildValuationInputsFromEquifyState(
   const backlogRatio =
     revenue2026K > 0 && backlogSignedK > 0 ? backlogSignedK / revenue2026K : 0;
 
-  return {
+  const rawInputs: ValuationInputs = {
     rev: y2026.revenueK,
     margin: financials.margin,
     growth: financials.growth,
@@ -69,6 +72,8 @@ export function buildValuationInputsFromEquifyState(
     ebitda2027K:
       financials.projectedEbitdaK[0] > 0 ? financials.projectedEbitdaK[0] : undefined,
   };
+
+  return normalizeValuationInputsToIls(rawInputs, profile.currency, fxRates);
 }
 
 /** Resolve equify sector key from persisted industry code (CRM / matrix). */

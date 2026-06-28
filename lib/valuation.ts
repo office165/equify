@@ -1,11 +1,19 @@
 import type { ValuationLocale } from '../api_client';
-import type { CompactAmountUnit } from './utils/formatCurrency';
 import {
   formatCurrency,
+  formatCurrencyHeroParts,
+  formatCurrencyNarrativeHe,
   formatCurrencyShort,
+  formatCurrencyValue,
+  formatReportEvHeader,
+  formatReportMillionsUnit,
+  getCurrencyNameHebrew,
   getCurrencySymbol,
   normalizeCurrencyCode,
+  resolveActiveCurrency,
   splitCompactAmount,
+  type ActiveCurrencyProfile,
+  type CompactAmountUnit,
   type ReportingCurrencyCode,
 } from './utils/formatCurrency';
 import type { CalibratedYearSlice } from './valuation/adaptive_calibration';
@@ -46,6 +54,17 @@ export {
   type EngineBlendWeights,
   type SubSectorBlendWeightEntry,
 } from './valuation/valuation_weights_registry';
+export {
+  SCALE_MODIFIER_MATRIX,
+  SCALE_REVENUE_THRESHOLDS_K,
+  applyScaleAdjustedBlendWeights,
+  applyScaleMultipleDampener,
+  resolveScaleModifierProfile,
+  type ScaleBlendTargets,
+  type ScaleModifierMatrixRow,
+  type ScaleModifierProfile,
+  type ScaleTier,
+} from './valuation/scale_modifier_pipeline';
 export { createValuationStrategy } from './valuation/strategies/valuation_strategy';
 export {
   CAPM_CORPORATE_TAX_RATE,
@@ -81,6 +100,19 @@ export {
   STATIC_FX_FROM_ILS,
   VALUATION_BASE_CURRENCY,
 } from './utils/fxService';
+export {
+  convertReportingKToIlsK,
+  formatValuationOutput,
+  formatValuationOutputSync,
+  getIlsPerForeignUnit,
+  getReportingToIlsMultiplier,
+  normalizeToILS,
+  normalizeToILSSync,
+  normalizeValuationInputsToIls,
+  scaleEquifyFinancialsToIlsK,
+  type NormalizedInputs,
+  type ValuationOutputFormatted,
+} from './currency-normalize';
 export {
   computeValuation as calculateValuation,
   runValuationEngine as runValuation,
@@ -319,11 +351,14 @@ export function qualityScoreGrade(qs: number): QualityGrade {
 export function fmtK(
   k: number,
   locale: ValuationLocale = 'he',
-  currency: ReportingCurrencyCode = 'ILS',
+  currency: ReportingCurrencyCode | ActiveCurrencyProfile = 'ILS',
 ): string {
   if (!Number.isFinite(k)) return '—';
-  void locale;
-  return formatCurrencyShort(k * 1000, currency);
+  const profile =
+    typeof currency === 'string'
+      ? resolveActiveCurrency(currency, locale)
+      : currency;
+  return formatCurrencyValue(k * 1000, profile, { short: true });
 }
 
 /** Numeric portion for split hero displays (amount without B/M/K suffix). */
@@ -348,22 +383,16 @@ export function fmtEquitySidebarM(
 export function fmtMillionParts(
   locale: ValuationLocale,
   valueNis?: number,
-  currency: ReportingCurrencyCode = 'ILS',
+  currency: ReportingCurrencyCode | ActiveCurrencyProfile = 'ILS',
 ): { prefix: string; suffix: string; amount: string } {
-  const { amount, unit } =
-    valueNis != null && Number.isFinite(valueNis)
-      ? splitCompactAmount(valueNis)
-      : { amount: '', unit: 'M' as CompactAmountUnit };
-  const scale = unit || 'M';
-  const code = normalizeCurrencyCode(currency);
-  const sym = getCurrencySymbol(code);
-
-  if (code === 'ILS') {
-    void locale;
-    return { prefix: '', suffix: `${scale} ${sym}`, amount };
+  const profile =
+    typeof currency === 'string'
+      ? resolveActiveCurrency(currency, locale)
+      : currency;
+  if (valueNis == null || !Number.isFinite(valueNis)) {
+    return { prefix: '', suffix: 'M', amount: '' };
   }
-
-  return { prefix: sym, suffix: scale, amount };
+  return formatCurrencyHeroParts(valueNis, profile);
 }
 
 export function terminalValuePct(dcf: number): number {
@@ -371,16 +400,24 @@ export function terminalValuePct(dcf: number): number {
   return Math.round(((dcf * 0.57) / dcf) * 100);
 }
 
-export type { ReportingCurrencyCode } from './utils/formatCurrency';
+export type {
+  ActiveCurrencyProfile,
+  ReportingCurrencyCode,
+} from './utils/formatCurrency';
 export {
+  attachCurrencySymbol,
   formatCurrency,
+  formatCurrencyHeroParts,
   formatCurrencyShort,
+  formatCurrencyValue,
   formatCurrencyNarrativeHe,
   formatReportEvHeader,
   formatReportMillionsUnit,
+  formatReportMillionsUnitFromProfile,
   getCurrencyNameHebrew,
   getCurrencySymbol,
   normalizeCurrencyCode,
+  resolveActiveCurrency,
 } from './utils/formatCurrency';
 
 export {

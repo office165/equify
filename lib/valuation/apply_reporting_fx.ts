@@ -12,7 +12,7 @@ function scaleK(value: number, multiplier: number): number {
   return value * multiplier;
 }
 
-/** Apply reporting-currency FX to engine outputs (₪K base → target ₪K equivalent). */
+/** Apply reporting-currency FX to ILS engine outputs (₪K base → target ₪K equivalent for display). */
 export function applyReportingFxToComputed(
   computed: ValuationComputed,
   multiplier: number,
@@ -86,6 +86,10 @@ export function applyReportingFxToScenarios(
   };
 }
 
+/**
+ * Display-only FX layer — engine always runs in ILS ₪K.
+ * Converts computed/scenario ₪K amounts to the user's reporting currency for UI/PDF.
+ */
 export function applyReportingFxLayer(
   computed: ValuationComputed,
   scenarios: ValuationScenarios,

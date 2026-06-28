@@ -25,6 +25,10 @@ const K_TO_ABS = (k: number) => Math.round(k * 1000 * 100) / 100;
 
 export interface EquifyMatrixSyncResult {
   matrix: ForecastMatrixWithDiagnostics;
+  /** Engine output in ILS ₪K — canonical calculation path. */
+  ilsComputed: ValuationComputed;
+  ilsScenarios: ValuationScenarios;
+  /** Presentation layer — reporting-currency equivalents for UI/PDF. */
   computed: ValuationComputed;
   scenarios: ValuationScenarios;
 }
@@ -37,11 +41,11 @@ export function syncMatrixFromEquifyState(
 ): EquifyMatrixSyncResult {
   const { financials, profile, risk } = state;
   const inputs = buildValuationInputsFromEquifyState(state);
-  const baseComputed = computeValuation(inputs);
-  const baseScenarios = computeScenarios(baseComputed, inputs);
+  const ilsComputed = computeValuation(inputs);
+  const ilsScenarios = computeScenarios(ilsComputed, inputs);
   const { computed, scenarios } = applyReportingFxLayer(
-    baseComputed,
-    baseScenarios,
+    ilsComputed,
+    ilsScenarios,
     profile.currency,
     getCachedFxRates(),
   );
@@ -140,7 +144,7 @@ export function syncMatrixFromEquifyState(
     },
   };
 
-  return { matrix: syncedMatrix, computed, scenarios };
+  return { matrix: syncedMatrix, ilsComputed, ilsScenarios, computed, scenarios };
 }
 
 /** @deprecated Use syncMatrixFromEquifyState */

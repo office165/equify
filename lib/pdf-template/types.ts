@@ -1,4 +1,4 @@
-/** סוגי נתונים לתבנית PDF — כולל כל שדות האשף והתוצאות המחושבות */
+import type { ActiveCurrencyProfile } from '../utils/formatCurrency';
 
 export type ScenarioKey = 'bear' | 'base' | 'bull';
 
@@ -149,6 +149,8 @@ export interface ValuationData {
   growthPct: number;
   debtK: number;
   currency?: 'ILS' | 'USD' | 'EUR' | string;
+  /** Reporting-currency token profile — frozen at export for PDF/UI parity. */
+  activeCurrency?: ActiveCurrencyProfile;
   fiscalYear?: number;
 
   // —— שלב 3: סיכון ——
@@ -162,6 +164,14 @@ export interface ValuationData {
 
   // —— תוצאות וולואציה (בסיס) ——
   equity: number;
+  /** Canonical ILS equity (absolute ₪) — engine output before reporting FX. */
+  equityIls?: number;
+  /** Display-only USD / EUR equivalents of {@link equityIls}. */
+  equityUsd?: number;
+  equityEur?: number;
+  fxUsdRate?: number;
+  fxEurRate?: number;
+  fxAsOf?: string;
   enterpriseValue: number;
   bearEquity: number;
   bullEquity: number;

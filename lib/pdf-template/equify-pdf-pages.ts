@@ -1,6 +1,7 @@
 import {
   escHtml,
   equityCoverValHtml,
+  equityTriCurrencyCoverHtml,
   fmtMoneyCompactHtml,
   fmtMoneyCompactSignedHtml,
   fmtMoneyNarrativeHe,
@@ -11,9 +12,10 @@ import {
   pctHtml,
   reportDateHe,
   reportDateShortHe,
+  resolvePdfActiveCurrency,
   resolvePdfLocale,
 } from '../pdf/print/print_formatters';
-import { formatReportEvHeader, formatReportMillionsUnit } from '../utils/formatCurrency';
+import { formatReportEvHeader, formatReportMillionsUnitFromProfile } from '../utils/formatCurrency';
 import {
   buildEbitdaSensitivityTable,
   buildSensitivityMatrixTable,
@@ -50,19 +52,22 @@ import {
 
 const TOTAL_PAGES = 8;
 
-function pdfFmt(data: Pick<ValuationData, 'locale' | 'currency'>) {
+function pdfFmt(data: Pick<ValuationData, 'locale' | 'currency' | 'activeCurrency'>) {
   const currency = data.currency ?? 'ILS';
   const locale = data.locale;
   const pdfLocale = resolvePdfLocale(locale);
+  const activeCurrency = resolvePdfActiveCurrency(currency, locale, data.activeCurrency);
   return {
-    money: (v: number | null | undefined) => fmtMoneyCompactHtml(v, locale, currency),
+    money: (v: number | null | undefined) =>
+      fmtMoneyCompactHtml(v, locale, currency, activeCurrency),
     moneyNarrative: (v: number | null | undefined) =>
       pdfLocale === 'en'
-        ? fmtMoneyCompactHtml(v, locale, currency)
+        ? fmtMoneyCompactHtml(v, locale, currency, activeCurrency)
         : escHtml(fmtMoneyNarrativeHe(v, currency)),
-    moneySigned: (v: number) => fmtMoneyCompactSignedHtml(v, locale, currency),
-    equityCover: (v: number) => equityCoverValHtml(v, locale, currency),
-    unitLabel: formatReportMillionsUnit(currency, pdfLocale),
+    moneySigned: (v: number) =>
+      fmtMoneyCompactSignedHtml(v, locale, currency, activeCurrency),
+    equityCover: (v: number) => equityCoverValHtml(v, locale, currency, activeCurrency),
+    unitLabel: formatReportMillionsUnitFromProfile(activeCurrency, pdfLocale),
     evHeader: formatReportEvHeader(currency, pdfLocale),
     pct: (v: number, decimals = 1) => pctHtml(v, decimals),
     mult: (v: number, decimals = 1) => multHtml(v, decimals),
@@ -149,7 +154,7 @@ function buildPage1Cover(data: ValuationData): string {
         <div class="c-meta">${metaLine(data)}</div>
         <div class="c-id">${identityLine(data)}</div>
       </div>
-      ${buildCoverCircleStageHtml(f.equityCover(data.equity), data.equity)}
+      ${buildCoverCircleStageHtml(equityTriCurrencyCoverHtml(data), data.equityIls ?? data.equity)}
     </div>
     <div class="cover-lower-stack">
       <div class="c-cap">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח ${f.money(data.bearEquity)} – ${f.money(data.bullEquity)}</div>
@@ -164,9 +169,26 @@ function buildPage1Cover(data: ValuationData): string {
   return wrapSheet(1, 'cover', body, data.locale);
 }
 
+function formatWaterfallNetDebtRow(
+  netDebt: number,
+  f: ReturnType<typeof pdfFmt>,
+): { label: string; valueHtml: string } {
+  if (netDebt < 0) {
+    return {
+      label: 'עודף מזומנים נטו',
+      valueHtml: `<b style="color:var(--turq)">+${f.money(Math.abs(netDebt))}</b>`,
+    };
+  }
+  return {
+    label: 'חוב נטו',
+    valueHtml: `<b style="color:#C24A4A">−${f.money(netDebt)}</b>`,
+  };
+}
+
 function buildPage2ExecSummary(data: ValuationData): string {
   const f = pdfFmt(data);
   const wf = computeWaterfallFills(data);
+  const netDebtRow = formatWaterfallNetDebtRow(data.netDebt, f);
   const summary = resolveExecutiveSummaryHtml(data, defaultExecutiveSummary);
   const moatCallout = buildMoatNotesCalloutHtml(data);
   const blendRows = data.modelBlend
@@ -200,7 +222,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
         <div class="box">
           <h3>מ-EV לשווי לבעלים</h3>
           <div class="wf-row"><span class="lbl">שווי פעילות</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${f.money(data.enterpriseValue)}</b></div>
-          <div class="wf-row"><span class="lbl">חוב נטו</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${wf.debtPct.toFixed(1)}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div><b style="color:#C24A4A">−${f.money(data.netDebt)}</b></div>
+          <div class="wf-row"><span class="lbl">${netDebtRow.label}</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${wf.debtPct.toFixed(1)}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div>${netDebtRow.valueHtml}</div>
           <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:'Assistant'">שווי לבעלים</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.equityPct.toFixed(1)}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${f.money(data.equity)}</b></div>
         </div>
       </section>
@@ -503,7 +525,7 @@ function buildPage8Combined(data: ValuationData): string {
     <span class="eyebrow" style="justify-content:center">08 · שווי משולב</span>
     <h2>שווי משולב</h2>
     <div style="display:flex;height:13mm;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:5mm auto 0;max-width:150mm;width:100%">${blendWeightBar(data)}</div>
-    <div class="c-val" style="margin:10mm 0 2mm">${f.equityCover(data.equity)}</div>
+    <div class="c-val" style="margin:10mm 0 2mm">${equityTriCurrencyCoverHtml(data)}</div>
     <div class="c-cap">שווי לבעלים · תרחיש בסיס · טווח ${f.money(data.bearEquity)} – ${f.money(data.bullEquity)} · נכון ל-${escHtml(dateLabel)}</div>
     <div class="seal" style="margin:9mm auto 0"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY</div>
     <p class="note" style="text-align:right;margin-top:8mm"><b>גילוי נאות:</b> ${escHtml(data.disclaimer ?? defaultDisclaimer())}</p>

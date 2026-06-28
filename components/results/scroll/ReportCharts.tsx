@@ -2,7 +2,7 @@
 
 import type { FinBarPoint } from '../../../lib/results/scroll-report-vm';
 import type { WaccDonutSlice } from '../../../lib/results/report-view-model';
-import { formatReportMillionsUnit } from '../../../lib/utils/formatCurrency';
+import { formatReportMillionsUnitFromProfile, resolveActiveCurrency } from '../../../lib/utils/formatCurrency';
 
 const W = 880;
 const H = 340;
@@ -26,6 +26,7 @@ export function FinancialBarChart({
   blendedNote,
   currency = 'ILS',
 }: FinancialBarChartProps) {
+  const activeCurrency = resolveActiveCurrency(currency, 'he');
   const maxM = Math.max(
     ...data.flatMap((d) => [d.revenueM, d.ebitdaM]),
     4.5,
@@ -34,7 +35,7 @@ export function FinancialBarChart({
 
   return (
     <div className="chart-card rv">
-      <h3>הכנסות מול EBITDA · {formatReportMillionsUnit(currency)}</h3>
+      <h3>הכנסות מול EBITDA · {formatReportMillionsUnitFromProfile(activeCurrency, 'he')}</h3>
       <p className="ch-sub">
         {growthNote} · {marginNote}
         {blendedNote ? ` · ${blendedNote}` : ''}

@@ -1,11 +1,12 @@
 /** Print-safe formatting — currency-aware compact amounts for PDF/HTML reports */
 
 import {
-  formatCurrency,
   formatCurrencyNarrativeHe,
-  getCurrencySymbol,
+  formatCurrencyValue,
   normalizeCurrencyCode,
+  resolveActiveCurrency,
   splitCompactAmount,
+  type ActiveCurrencyProfile,
 } from '../../utils/formatCurrency';
 
 export type PdfLocale = 'he' | 'en';
@@ -54,13 +55,28 @@ export function fmtMoneyILS(value: number | null | undefined): string {
   return formatted.replace(/\u00a0/g, ' ');
 }
 
+/** Resolve PDF currency profile — prefers frozen export snapshot profile. */
+export function resolvePdfActiveCurrency(
+  currency: string | undefined,
+  locale?: string,
+  activeCurrency?: ActiveCurrencyProfile,
+): ActiveCurrencyProfile {
+  if (activeCurrency) return activeCurrency;
+  return resolveActiveCurrency(currency, resolvePdfLocale(locale));
+}
+
 /** Compact amount for blend breakdown lines (e.g. ₪328.1M, $22.0B). */
 export function fmtMoneyCompact(
   value: number | null | undefined,
-  currency: string = 'ILS',
+  currency: string | ActiveCurrencyProfile = 'ILS',
+  locale?: string,
 ): string {
   if (!isMeaningfulNumber(value, { allowZero: true })) return '—';
-  return formatCurrency(value, normalizeCurrencyCode(currency), { short: true });
+  const profile =
+    typeof currency === 'string'
+      ? resolvePdfActiveCurrency(currency, locale)
+      : currency;
+  return formatCurrencyValue(value!, profile, { short: true });
 }
 
 /** Hebrew narrative for executive copy — e.g. 75.5M דולר ארה״ב */
@@ -92,73 +108,121 @@ function compactMoneyParts(value: number): { amount: string; suffix: string } | 
   return { amount, suffix: unit };
 }
 
-/** Currency in PDF: RTL ILS → amount then ₪; USD/EUR → prefix symbol */
+/** Currency in PDF — uses shared activeCurrency profile for symbol placement. */
 export function fmtMoneyCompactHtml(
   value: number | null | undefined,
   locale?: string,
-  currency: string = 'ILS',
+  currency: string | ActiveCurrencyProfile = 'ILS',
+  activeCurrency?: ActiveCurrencyProfile,
 ): string {
   if (!isMeaningfulNumber(value, { allowZero: true })) return numHtml('—');
-  const code = normalizeCurrencyCode(currency);
-  const parts = compactMoneyParts(value!);
-  const rtl = pdfDocumentDir(locale) === 'rtl';
-  const sym = getCurrencySymbol(code);
-
-  if (!parts) {
-    const formatted = formatCurrency(value!, code, { short: false });
-    const stripped = formatted.replace(/[₪$€\s\u00a0]/g, '').trim();
-    if (code === 'ILS') {
-      return rtl ? `${numHtml(stripped)} ₪` : numHtml(`₪${stripped}`);
-    }
-    return numHtml(formatCurrency(value!, code, { short: true }));
-  }
-
-  const amount = `${parts.amount}${parts.suffix}`;
-  if (code === 'ILS') {
-    return rtl ? `${numHtml(amount)} ₪` : numHtml(`₪${amount}`);
-  }
-  return numHtml(`${sym}${amount}`);
+  const profile =
+    typeof currency === 'string'
+      ? resolvePdfActiveCurrency(currency, locale, activeCurrency)
+      : currency;
+  const formatted = formatCurrencyValue(value!, profile, { short: true });
+  return numHtml(formatted);
 }
 
 export function fmtMoneyCompactSignedHtml(
   value: number,
   locale?: string,
-  currency: string = 'ILS',
+  currency: string | ActiveCurrencyProfile = 'ILS',
+  activeCurrency?: ActiveCurrencyProfile,
 ): string {
-  if (value < 0) return `−${fmtMoneyCompactHtml(Math.abs(value), locale, currency)}`;
-  return fmtMoneyCompactHtml(value, locale, currency);
+  if (value < 0) {
+    return `−${fmtMoneyCompactHtml(Math.abs(value), locale, currency, activeCurrency)}`;
+  }
+  return fmtMoneyCompactHtml(value, locale, currency, activeCurrency);
 }
 
-/** Cover hero equity — RTL ILS: 22.0B ₪ · USD/EUR: $22.0B */
+/** Cover hero equity — profile-aware symbol placement. */
 export function equityCoverValHtml(
   equity: number,
   locale?: string,
-  currency: string = 'ILS',
+  currency: string | ActiveCurrencyProfile = 'ILS',
+  activeCurrency?: ActiveCurrencyProfile,
 ): string {
+  const profile =
+    typeof currency === 'string'
+      ? resolvePdfActiveCurrency(currency, locale, activeCurrency)
+      : currency;
   const parts = compactMoneyParts(equity);
   const rtl = pdfDocumentDir(locale) === 'rtl';
-  const code = normalizeCurrencyCode(currency);
-  const sym = getCurrencySymbol(code);
 
   if (!parts) {
-    const formatted = formatCurrency(equity, code, { short: false });
+    const formatted = formatCurrencyValue(equity, profile, { short: false });
     const stripped = formatted.replace(/[₪$€\s\u00a0]/g, '').trim();
     const core = escHtml(stripped);
-    if (code === 'ILS') {
+    if (profile.position === 'after') {
       return rtl
-        ? `<span dir="ltr" class="num c-val">${core}</span> ₪`
-        : `<span dir="ltr" class="num c-val">₪${core}</span>`;
+        ? `<span dir="ltr" class="num c-val">${core}</span> ${escHtml(profile.symbol)}`
+        : `<span dir="ltr" class="num c-val">${escHtml(profile.symbol)}${core}</span>`;
     }
-    return `<span dir="ltr" class="num c-val">${sym}${core}</span>`;
+    return `<span dir="ltr" class="num c-val">${escHtml(profile.symbol)}${core}</span>`;
   }
 
   const core = `${escHtml(parts.amount)}<em>${escHtml(parts.suffix)}</em>`;
-  if (code === 'ILS') {
+  if (profile.position === 'after') {
     return rtl
-      ? `<span dir="ltr" class="num c-val">${core}</span> ₪`
-      : `<span dir="ltr" class="num c-val">₪${core}</span>`;
+      ? `<span dir="ltr" class="num c-val">${core}</span> ${escHtml(profile.symbol)}`
+      : `<span dir="ltr" class="num c-val">${escHtml(profile.symbol)}${core}</span>`;
   }
-  return `<span dir="ltr" class="num c-val">${sym}${core}</span>`;
+  return `<span dir="ltr" class="num c-val">${escHtml(profile.symbol)}${core}</span>`;
+}
+
+function formatFxRateLabel(rate: number): string {
+  return rate.toFixed(2);
+}
+
+/** Cover / closing page — primary ILS equity + USD/EUR equivalents with FX footnote. */
+export function equityTriCurrencyCoverHtml(data: {
+  equityIls?: number;
+  equityUsd?: number;
+  equityEur?: number;
+  fxUsdRate?: number;
+  fxEurRate?: number;
+  fxAsOf?: string;
+  equity?: number;
+}): string {
+  const equityIls = data.equityIls ?? data.equity;
+  if (equityIls == null || !Number.isFinite(equityIls)) {
+    return equityCoverValHtml(data.equity ?? 0, 'he', 'ILS');
+  }
+
+  const primary = equityCoverValHtml(equityIls, 'he', 'ILS');
+  const usd =
+    data.equityUsd != null && Number.isFinite(data.equityUsd)
+      ? fmtMoneyCompactHtml(data.equityUsd, 'he', 'USD')
+      : null;
+  const eur =
+    data.equityEur != null && Number.isFinite(data.equityEur)
+      ? fmtMoneyCompactHtml(data.equityEur, 'he', 'EUR')
+      : null;
+
+  const usdRate =
+    data.fxUsdRate != null && Number.isFinite(data.fxUsdRate)
+      ? formatFxRateLabel(data.fxUsdRate)
+      : null;
+  const eurRate =
+    data.fxEurRate != null && Number.isFinite(data.fxEurRate)
+      ? formatFxRateLabel(data.fxEurRate)
+      : null;
+
+  const fxDate = data.fxAsOf && data.fxAsOf !== 'static' ? escHtml(data.fxAsOf) : escHtml(
+    new Date().toISOString().slice(0, 10),
+  );
+
+  const secondaryLines = [
+    usd ? `<div class="cv-fx-line">≈ ${usd} USD${usdRate ? ` <span class="cv-fx-rate">(שער: ${numHtml(usdRate)})</span>` : ''}</div>` : '',
+    eur ? `<div class="cv-fx-line">≈ ${eur} EUR${eurRate ? ` <span class="cv-fx-rate">(שער: ${numHtml(eurRate)})</span>` : ''}</div>` : '',
+  ]
+    .filter(Boolean)
+    .join('');
+
+  const footnote = `<div class="cv-fx-footnote">שערי המרה נכון ל-${fxDate} לפי שוק הבינלאומי</div>`;
+
+  return `<div class="cv-tri-currency">${primary}${secondaryLines ? `<div class="cv-fx-secondary">${secondaryLines}</div>` : ''}${footnote}</div>`;
 }
 
 export function fmtMultipleHtml(value: number | null | undefined): string {

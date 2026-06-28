@@ -38,5 +38,6 @@ export function buildExportValuationDataFromLiveSession(
     fxRates,
     locale,
     reportId,
+    sync.ilsComputed,
   );
 }

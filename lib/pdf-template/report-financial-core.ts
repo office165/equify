@@ -1,16 +1,18 @@
 import type { ValuationComputed } from '../valuation';
-import {
-  convertIlsKToReportingK,
-  getIlsToReportingMultiplier,
-  type FxRatesSnapshot,
-} from '../utils/fxService';
-import type { EquifyWizardState } from '../wizard/map_equify_wizard';
+import type { FxRatesSnapshot } from '../utils/fxService';
+import type { EquifyWizardFinancials, EquifyWizardState } from '../wizard/map_equify_wizard';
+import { buildFinancialTrajectoryFromEquifyState } from '../wizard/financial_history';
 import type { TrajectoryPoint, ValuationData, ReportFinancialCore } from './types';
 
 export type { ReportFinancialCore } from './types';
 
-function absFromReportingK(amountK: number): number {
+/** Wizard storage K → absolute reporting-currency amount (matches live Step 2 inputs). */
+export function wizardFinancialAbsFromK(amountK: number): number {
   return amountK * 1000;
+}
+
+function absFromReportingK(amountK: number): number {
+  return wizardFinancialAbsFromK(amountK);
 }
 
 export function buildReportFinancialCore(
@@ -18,23 +20,19 @@ export function buildReportFinancialCore(
   fxComputed: ValuationComputed,
   computed: ValuationComputed,
   netDebtK: number,
-  fxRates: FxRatesSnapshot,
+  _fxRates: FxRatesSnapshot,
 ): ReportFinancialCore {
-  const currency = state.profile.currency ?? 'ILS';
-  const auditedEbitda2026K = convertIlsKToReportingK(
-    state.financials.y2026.ebitdaK,
-    currency,
-    fxRates,
-  );
-  const netDebtReportingK = convertIlsKToReportingK(netDebtK, currency, fxRates);
+  // Historical wizard inputs are already in reporting currency (₪K / $K / €K storage).
+  const auditedEbitda2026Abs = wizardFinancialAbsFromK(state.financials.y2026.ebitdaK);
+  const netDebtAbs = wizardFinancialAbsFromK(netDebtK);
 
   return {
-    auditedEbitda2026Abs: absFromReportingK(auditedEbitda2026K),
+    auditedEbitda2026Abs,
     blendedEbitdaBaseAbs: absFromReportingK(fxComputed.ebitda),
     multipleLegEbitdaBaseAbs: absFromReportingK(fxComputed.baseEbitdaForMultiple),
     effectiveMultiple: computed.effectiveMult,
     blendedEnterpriseValueAbs: absFromReportingK(fxComputed.ev),
-    netDebtAbs: absFromReportingK(netDebtReportingK),
+    netDebtAbs,
     equityBaseAbs: absFromReportingK(fxComputed.equity),
     dcfEvAbs: absFromReportingK(fxComputed.dcf),
     ebitdaMultipleEvAbs: absFromReportingK(fxComputed.ebtMult),
@@ -43,21 +41,23 @@ export function buildReportFinancialCore(
   };
 }
 
-/** Applies reporting-currency FX to trajectory chart/table values (engine ₪M → target currency M). */
+/**
+ * PDF Page 3 trajectory — same path as live results (`buildReportViewModel` / scroll report).
+ * Wizard year buckets are stored in reporting-currency K; convert K→M only (no FX rescale).
+ */
+export function buildWizardReportTrajectory(
+  financials: EquifyWizardFinancials,
+): TrajectoryPoint[] {
+  return buildFinancialTrajectoryFromEquifyState(financials);
+}
+
+/** @deprecated Wizard trajectory is reporting-native — use {@link buildWizardReportTrajectory}. */
 export function scaleTrajectoryForReportingCurrency(
   trajectory: TrajectoryPoint[],
-  reportingCurrency: string | undefined,
-  fxRates: FxRatesSnapshot,
+  _reportingCurrency?: string,
+  _fxRates?: FxRatesSnapshot,
 ): TrajectoryPoint[] {
-  const multiplier = getIlsToReportingMultiplier(reportingCurrency, fxRates);
-  if (multiplier === 1) return trajectory;
-
-  return trajectory.map((point) => ({
-    ...point,
-    revenueM: point.revenueM * multiplier,
-    ebitdaM: point.ebitdaM * multiplier,
-    fcffM: point.fcffM != null ? point.fcffM * multiplier : undefined,
-  }));
+  return trajectory;
 }
 
 /** Builds a core block for legacy API payloads that lack wizard state. */

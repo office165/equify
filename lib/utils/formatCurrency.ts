@@ -4,11 +4,32 @@ export type CompactAmountUnit = 'B' | 'M' | 'K' | '';
 
 export type ReportingCurrencyCode = 'ILS' | 'USD' | 'EUR';
 
+export type CurrencySymbolPosition = 'before' | 'after';
+
+export type UiLocale = 'he' | 'en';
+
+/** Active reporting-currency token profile — shared by live UI and PDF export. */
+export interface ActiveCurrencyProfile {
+  symbol: string;
+  code: ReportingCurrencyCode;
+  position: CurrencySymbolPosition;
+  locale: string;
+}
+
 const CURRENCY_SYMBOLS: Record<string, string> = {
   ILS: '₪',
   USD: '$',
   EUR: '€',
   GBP: '£',
+};
+
+const ACTIVE_CURRENCY_BASE: Record<
+  ReportingCurrencyCode,
+  Omit<ActiveCurrencyProfile, 'code'>
+> = {
+  ILS: { symbol: '₪', position: 'after', locale: 'he-IL' },
+  USD: { symbol: '$', position: 'before', locale: 'en-US' },
+  EUR: { symbol: '€', position: 'before', locale: 'en-US' },
 };
 
 /** Resolve display symbol for ISO currency code (defaults to ₪). */
@@ -21,6 +42,79 @@ export function normalizeCurrencyCode(currency: string | undefined): ReportingCu
   const code = (currency ?? 'ILS').toUpperCase();
   if (code === 'USD' || code === 'EUR') return code;
   return 'ILS';
+}
+
+/** Build the active currency profile from ISO code + UI locale (wizard / PDF). */
+export function resolveActiveCurrency(
+  currency: string | undefined,
+  uiLocale: UiLocale = 'he',
+): ActiveCurrencyProfile {
+  const code = normalizeCurrencyCode(currency);
+  const base = ACTIVE_CURRENCY_BASE[code];
+  return {
+    code,
+    symbol: base.symbol,
+    position: base.position,
+    locale: uiLocale === 'en' && code === 'ILS' ? 'en-US' : base.locale,
+  };
+}
+
+export interface FormatCurrencyValueOptions {
+  /** Use K/M/B compaction (default true). */
+  short?: boolean;
+  /** Force a scale suffix when value is below compact threshold. */
+  compactUnit?: CompactAmountUnit;
+}
+
+/** Attach symbol per active profile — e.g. "$1.28M" vs "1.28M ₪". */
+export function attachCurrencySymbol(
+  amountCore: string,
+  activeCurrency: ActiveCurrencyProfile,
+): string {
+  if (amountCore === '—' || !amountCore) return '—';
+  if (activeCurrency.position === 'before') {
+    return `${activeCurrency.symbol}${amountCore}`;
+  }
+  return `${amountCore} ${activeCurrency.symbol}`;
+}
+
+/**
+ * Central monetary formatter — reads active token profile for symbol placement.
+ * Does not convert amounts (display layer only).
+ */
+export function formatCurrencyValue(
+  value: number,
+  activeCurrency: ActiveCurrencyProfile,
+  opts?: FormatCurrencyValueOptions,
+): string {
+  if (!Number.isFinite(value)) return '—';
+
+  const useShort = opts?.short !== false;
+  if (useShort) {
+    const { amount, unit } = splitCompactAmount(value);
+    const scale = unit || opts?.compactUnit || '';
+    const core = scale ? `${amount}${scale}` : amount;
+    return attachCurrencySymbol(core, activeCurrency);
+  }
+
+  const formatted = value.toLocaleString(activeCurrency.locale, {
+    maximumFractionDigits: 0,
+  });
+  return attachCurrencySymbol(formatted, activeCurrency);
+}
+
+/** Chart/table axis unit — e.g. ₪M, $M, €M (English ILS: M ₪). */
+export function formatReportMillionsUnitFromProfile(
+  activeCurrency: ActiveCurrencyProfile,
+  uiLocale: UiLocale = 'he',
+): string {
+  if (uiLocale === 'en' && activeCurrency.code === 'ILS') {
+    return `M ${activeCurrency.symbol}`;
+  }
+  if (activeCurrency.position === 'before') {
+    return `${activeCurrency.symbol}M`;
+  }
+  return `${activeCurrency.symbol}M`;
 }
 
 const CURRENCY_NAMES_HE: Record<ReportingCurrencyCode, string> = {
@@ -37,20 +131,15 @@ export function getCurrencyNameHebrew(currencyCode: string): string {
 /** Chart/table axis unit — e.g. ₪M, $M, €M (English ILS: M ₪). */
 export function formatReportMillionsUnit(
   currency: string,
-  locale: 'he' | 'en' = 'he',
+  locale: UiLocale = 'he',
 ): string {
-  const sym = getCurrencySymbol(currency);
-  const code = normalizeCurrencyCode(currency);
-  if (locale === 'en') {
-    return code === 'ILS' ? `M ${sym}` : `${sym}M`;
-  }
-  return `${sym}M`;
+  return formatReportMillionsUnitFromProfile(resolveActiveCurrency(currency, locale), locale);
 }
 
 /** Comps / sensitivity table header — e.g. EV (₪M) or EV ($M). */
 export function formatReportEvHeader(
   currency: string,
-  locale: 'he' | 'en' = 'he',
+  locale: UiLocale = 'he',
 ): string {
   return `EV (${formatReportMillionsUnit(currency, locale)})`;
 }
@@ -88,20 +177,14 @@ export function formatCompactAmount(value: number): string {
 /** Attach currency symbol to an already-compact amount string. */
 export function formatCurrencyCompact(
   compactAmount: string,
-  currency: string = 'ILS',
+  currency: string | ActiveCurrencyProfile = 'ILS',
+  uiLocale: UiLocale = 'he',
 ): string {
   if (compactAmount === '—') return '—';
 
-  const sym = getCurrencySymbol(currency);
-  const code = normalizeCurrencyCode(currency);
-
-  // ILS — suffix (e.g. 3.15B ₪)
-  if (code === 'ILS') {
-    return `${compactAmount} ${sym}`;
-  }
-
-  // USD / EUR — prefix (e.g. $3.15B, €3.15B)
-  return `${sym}${compactAmount}`;
+  const profile =
+    typeof currency === 'string' ? resolveActiveCurrency(currency, uiLocale) : currency;
+  return attachCurrencySymbol(compactAmount, profile);
 }
 
 /** Numeric portion of compact display (e.g. 3.15 for ₪3.15B) — for count-up animations. */
@@ -130,6 +213,7 @@ export function splitCompactAmount(value: number): {
 export interface FormatCurrencyOptions {
   short?: boolean;
   locale?: string;
+  uiLocale?: UiLocale;
 }
 
 /**
@@ -138,25 +222,28 @@ export interface FormatCurrencyOptions {
  */
 export function formatCurrency(
   value: number,
-  currency: string = 'ILS',
+  currency: string | ActiveCurrencyProfile = 'ILS',
   opts?: FormatCurrencyOptions,
 ): string {
   if (!Number.isFinite(value)) return '—';
 
-  const code = normalizeCurrencyCode(currency);
+  const uiLocale: UiLocale =
+    opts?.uiLocale ?? (opts?.locale === 'en-US' ? 'en' : 'he');
+  const profile =
+    typeof currency === 'string'
+      ? resolveActiveCurrency(currency, uiLocale)
+      : currency;
   const useShort = opts?.short !== false;
 
   if (useShort) {
     const compact = formatCompactAmount(value);
     if (/[BMK]$/.test(compact) || compact === '—') {
-      return formatCurrencyCompact(compact, code);
+      return formatCurrencyCompact(compact, profile);
     }
   }
 
-  const locale =
-    opts?.locale ?? (code === 'ILS' ? 'he-IL' : 'en-US');
-  const formatted = value.toLocaleString(locale, { maximumFractionDigits: 0 });
-  return formatCurrencyCompact(formatted, code);
+  const formatted = value.toLocaleString(profile.locale, { maximumFractionDigits: 0 });
+  return attachCurrencySymbol(formatted, profile);
 }
 
 /** ILS shorthand — delegates to {@link formatCurrency}. */
@@ -165,6 +252,27 @@ export function formatILS(value: number, opts?: { short?: boolean }): string {
 }
 
 /** K / M / B shorthand for any supported ISO currency code. */
-export function formatCurrencyShort(value: number, currency = 'ILS'): string {
-  return formatCurrency(value, currency, { short: true });
+export function formatCurrencyShort(
+  value: number,
+  currency: string | ActiveCurrencyProfile = 'ILS',
+  uiLocale: UiLocale = 'he',
+): string {
+  const profile =
+    typeof currency === 'string' ? resolveActiveCurrency(currency, uiLocale) : currency;
+  return formatCurrencyValue(value, profile, { short: true });
+}
+
+/** Split hero display parts aligned with {@link formatCurrencyValue}. */
+export function formatCurrencyHeroParts(
+  value: number,
+  activeCurrency: ActiveCurrencyProfile,
+): { prefix: string; suffix: string; amount: string } {
+  const { amount, unit } = splitCompactAmount(value);
+  const scale = unit || 'M';
+
+  if (activeCurrency.position === 'before') {
+    return { prefix: activeCurrency.symbol, suffix: scale, amount };
+  }
+
+  return { prefix: '', suffix: `${scale} ${activeCurrency.symbol}`, amount };
 }
