@@ -2,7 +2,7 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { EquifyLifecycleKey } from '../../../../lib/valuation';
-import { SECTOR_SELECT_OPTIONS, coerceWizardSectorSelection, getSubSectorsForSector } from '../../../../lib/constants/industry_config';
+import { SECTOR_SELECT_OPTIONS, coerceWizardSectorSelection, getSubSectorChipLabel, getSubSectorsForSector } from '../../../../lib/constants/industry_config';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { lockLeadPayload } from '../../../../lib/wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_wizard';
@@ -281,15 +281,22 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
             <label>
               {t.common.subSector} <span className="req">*</span>
             </label>
-            <div className="chips" role="group" aria-label={t.common.selectSubSector}>
+            <div
+              className="chips chips-sub-sectors"
+              role="group"
+              aria-label={t.common.selectSubSector}
+              dir={isHe ? 'rtl' : 'ltr'}
+            >
               {subSectors.map((s) => (
                 <button
                   key={s.id}
                   type="button"
                   className={`chip${profile.subSector === s.id ? ' on' : ''}`}
                   onClick={() => handleSubSectorSelect(s.id)}
+                  dir={isHe ? 'rtl' : 'ltr'}
+                  lang={isHe ? 'he' : 'en'}
                 >
-                  {isHe ? s.labelHe : s.labelEn}
+                  {getSubSectorChipLabel(profile.sector, s, locale)}
                 </button>
               ))}
             </div>

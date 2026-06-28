@@ -722,7 +722,7 @@ export function coerceWizardSectorSelection(
     if (
       (dedicatedMain === 'retail_trade' && nextSector === 'ecom') ||
       (dedicatedMain === 'hospitality' &&
-        (nextSector === 'food_service' || nextSector === 'hospitality'))
+        (sector === 'food_service' || nextSector === 'hospitality'))
     ) {
       nextSector = dedicatedMain;
     }

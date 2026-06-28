@@ -48,7 +48,11 @@ export interface EquifyWizardStepStrings {
       /** Sub-sector premium insight blocks (Hebrew RTL microcopy). */
       subSectorPremium?: Partial<
         Record<
-          'restaurants-fb' | 'retail-supermarkets' | 'retail-fashion',
+          | 'restaurants-fb'
+          | 'retail-supermarkets'
+          | 'retail-fashion'
+          | 'marketplace'
+          | 'marketplace_ecom',
           { title: string; subtitle: string; description: string }
         >
       >;
@@ -256,6 +260,18 @@ const HE: EquifyWizardStepStrings = {
           subtitle: 'מתודולוגיית ליבה: שקלול סיכוני מלאי מת ועונתיות (מכפיל 3.5x)',
           description:
             'הערכת השווי לוקחת בחשבון את מדד הסיכון של מלאי עונתי והאטה פוטנציאלית בצריכה פרטית, ומאזנת את השווי בשילוב מודל מכפיל EBITDA מותאם למגזר הקמעונאי.',
+        },
+        marketplace: {
+          title: 'תובנת שוק: מרקטפלייס טכנולוגי (תוכנה)',
+          subtitle: 'מדד הערכה מוביל: מכפיל הכנסות ענפי (5.7x)',
+          description:
+            'מודל זה מייצג פלטפורמות דיגיטליות טהורות (כמו Fiverr או Airbnb) המחברות בין משתמשים ללא עלויות מלאי או לוגיסטיקה, ולכן הערכת השווי מתבססת על מחזור המכירות והצמיחה.',
+        },
+        marketplace_ecom: {
+          title: 'תובנת שוק: מרקטפלייס מסחרי וסחר פיזי',
+          subtitle: 'מדד הערכה מוביל: מכפיל רווח תפעולי EBITDA ענפי (7.1x)',
+          description:
+            'מודל זה מייצג זירות מסחר המנהלות מוצרים פיזיים, שילוח או מלאי. מכיוון שעלויות התפעול בענף זה גבוהות, הערכת השווי מתבססת על הרווח התפעולי הממשי בשורה התחתונה (ולא על מחזור המכירות).',
         },
       },
     },
