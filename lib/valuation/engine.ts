@@ -4,6 +4,7 @@
  */
 
 import type { ValuationWizardFormValues } from '../../ValuationWizard';
+import { getLiveMultiples } from '../market-data/live-multiples';
 import { parseFinancialInput } from '../utils/financialParser';
 import { formatILS } from '../utils/formatCurrency';
 import {
@@ -154,10 +155,10 @@ function buildSanityCheck(
  * Run Israeli multiples framework for wizard intake.
  * All private companies receive a 20% illiquidity discount (default).
  */
-export function runIsraelMultiplesValuation(
+export async function runIsraelMultiplesValuation(
   wizard: ValuationWizardFormValues,
   options?: { stage?: LifecycleStage; isPrivate?: boolean },
-): MultiplesAnalysisSnapshot {
+): Promise<MultiplesAnalysisSnapshot> {
   const industry = mapWizardIndustry(wizard.industry);
   const lifecycleStage = options?.stage ?? mapWizardLifecycle(wizard.lifecycleStage);
   const isPrivate = options?.isPrivate ?? true;
@@ -182,7 +183,8 @@ export function runIsraelMultiplesValuation(
     hasEbitda,
     isPrivate,
   );
-  const multiplesUsed = ISRAEL_MULTIPLES_2026[industry];
+  const liveMultiples = await getLiveMultiples();
+  const multiplesUsed = liveMultiples[industry] ?? ISRAEL_MULTIPLES_2026[industry];
   const multipleRange = multiplesUsed[selectedMultiple.multiple];
   const metricValue = resolveMetricValue(
     selectedMultiple.multiple,

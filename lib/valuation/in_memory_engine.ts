@@ -71,15 +71,15 @@ export function deriveWaccFromWizard(wizard: ValuationWizardFormValues): number 
   );
 }
 
-function applyWaccToMatrix(
+async function applyWaccToMatrix(
   matrix: ReturnType<typeof buildForecastMatrixFromWizard>,
   wacc: number,
   wizard: ValuationWizardFormValues,
-): ReturnType<typeof buildForecastMatrixFromWizard> {
+): Promise<ReturnType<typeof buildForecastMatrixFromWizard>> {
   const revenue = parseWizardNumber(wizard.annualRevenue, matrix.assumptions.base_revenue);
   const ebitda = parseWizardNumber(wizard.ebitda, 0);
 
-  const multiplesAnalysis = runIsraelMultiplesValuation(wizard, { isPrivate: true });
+  const multiplesAnalysis = await runIsraelMultiplesValuation(wizard, { isPrivate: true });
   const { low: bearEv, base: baseEv, high: bullEv } = multiplesAnalysis.valuationRange;
 
   const netDebt = resolveNetDebtFromWizard(wizard);
@@ -115,15 +115,15 @@ function applyWaccToMatrix(
 /**
  * Run valuation entirely in memory — mock payment + UUID, no persistence layer.
  */
-export function executeInMemoryValuation(
+export async function executeInMemoryValuation(
   body: WizardValuationCalculateRequest,
-): ValuationCalculateSuccessResponse {
+): Promise<ValuationCalculateSuccessResponse> {
   const valuationId = crypto.randomUUID();
   const locale: ValuationLocale = body.locale === 'he' ? 'he' : 'en';
   const wacc = deriveWaccFromWizard(body.wizard);
 
   const rawMatrix = buildForecastMatrixFromWizard(body.wizard, valuationId, locale);
-  const forecast_matrix_json = applyWaccToMatrix(rawMatrix, wacc, body.wizard);
+  const forecast_matrix_json = await applyWaccToMatrix(rawMatrix, wacc, body.wizard);
 
   const record: InMemoryValuationRecord = {
     valuationId,

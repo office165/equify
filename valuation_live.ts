@@ -312,9 +312,9 @@ async function acquireOnDemandToken(
 }
 
 /** @deprecated Use `executeInMemoryValuation` — MVP bypasses all database I/O. */
-export function buildOfflineWizardValuationResult(
+export async function buildOfflineWizardValuationResult(
   body: WizardValuationCalculateRequest,
-): ValuationCalculateSuccessResponse {
+): Promise<ValuationCalculateSuccessResponse> {
   return executeInMemoryValuation(body);
 }
 
@@ -324,7 +324,7 @@ export function buildOfflineWizardValuationResult(
 export async function tryPersistWizardValuation(
   body: WizardValuationCalculateRequest,
 ): Promise<ValuationCalculateSuccessResponse> {
-  return executeInMemoryValuation(body);
+  return await executeInMemoryValuation(body);
 }
 
 export async function handleWizardValuationCalculate(

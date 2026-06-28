@@ -11,9 +11,9 @@ export interface ValuationExecutionContact {
 
 export interface ValuationExecutionResult {
   valuationId: string;
-  forecast_matrix_json: ReturnType<
+  forecast_matrix_json: Awaited<ReturnType<
     typeof executeInMemoryValuation
-  >['forecast_matrix_json'];
+  >>['forecast_matrix_json'];
   locale: ValuationLocale;
   companyName: string;
   pdfDownloadUrl: string;
@@ -61,7 +61,7 @@ export async function runValuationExecutionPipeline(options: {
     contactPhoneE164: options.contact?.phoneE164 ?? undefined,
   };
 
-  const result = executeInMemoryValuation(wizardRequest);
+  const result = await executeInMemoryValuation(wizardRequest);
   const companyName =
     options.body.wizard.companyName.trim() || options.body.companyId;
   const pdfDownloadUrl = buildValuationPdfDownloadUrl(
