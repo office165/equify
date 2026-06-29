@@ -11,6 +11,7 @@ import {
 import { BACKLOG_INFLECTION_RATIO_THRESHOLD } from '../valuation/backlog_inflection_accelerator';
 import { normalizeValuationInputsToIls } from '../currency-normalize';
 import { getCachedFxRates } from '../utils/fxService';
+import { parseCapexPct } from '../valuation/capex_fcf';
 import type { EquifyWizardState } from './map_equify_wizard';
 import { computeNetDebtK } from './map_equify_wizard';
 import { syncFinancialsDerived } from './financial_history';
@@ -38,7 +39,7 @@ export function buildValuationInputsFromEquifyState(
     grossDebt: financials.grossDebtK,
     cash: financials.cashK,
     normalizedOwnerSalary: financials.normalizedOwnerSalaryK,
-    capexLevelPct: financials.capexLevelPct,
+    capexLevelPct: parseCapexPct(financials.capexLevelPct),
     sector: profile.sector,
     subSector: profile.subSector,
     sectorMult: resolveLiveSectorMult(

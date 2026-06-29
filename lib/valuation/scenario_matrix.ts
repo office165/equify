@@ -2,6 +2,12 @@ import type { ValuationComputed, ValuationInputs, ValuationScenarios } from '../
 import { calibrateCenterOfGravity } from './base_case_calibration';
 import { computeBacklogCoverageRatio } from './backlog_metrics';
 import {
+  applyCapexMonotonicityGuard,
+  computeFCFF,
+  computeTerminalValue,
+  parseCapexPct,
+} from './capex_fcf';
+import {
   type ScenarioElasticity,
   buildVarianceRibbon,
   resolveScenarioElasticity,
@@ -69,43 +75,31 @@ export interface DcfHorizonProjection {
   dcfGrowthPct: number;
 }
 
-function clamp(n: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, n));
-}
-
 /**
- * Headline growth capped by reinvestment capacity (CAPEX / revenue).
- * Ultra-low CAPEX cannot fund double-digit FCFF expansion.
+ * Headline growth capped by reinvestment capacity.
+ * Ceiling rises smoothly with CAPEX — avoids step jumps at 1% / 3% thresholds.
  */
 export function resolveDcfGrowthPct(headlineGrowthPct: number, capexLevelPct: number): number {
   const g = Math.max(-5, headlineGrowthPct);
-  const capex = Math.max(0, capexLevelPct);
-  if (capex <= 1) return Math.min(g, capex * 3.5 + 2.5);
-  if (capex <= REINVESTMENT_CONSTRAINED_CAPEX_PCT) return Math.min(g, capex * 2.5 + 4);
-  return Math.min(g, 7.5 + capex * 0.45);
+  const capex = parseCapexPct(capexLevelPct);
+  const maxFundableGrowth = 2.5 + Math.min(capex, 8) * 0.35;
+  return Math.min(g, maxFundableGrowth);
 }
 
-/** Year-1 FCFF from blended EBITDA — maintenance + growth-reinvestment aware (₪K). */
+/** Year-1 FCFF (₪K) — industry-aware CAPEX base via {@link computeFCFF}. */
 export function computeInitialFcffK(
   ebitdaK: number,
   revK: number,
   capexLevelPct: number,
-  headlineGrowthPct = 0,
+  _headlineGrowthPct = 0,
+  industry = 'other',
 ): number {
-  const capexPct = Math.max(0, capexLevelPct);
-  const capexK = revK * (capexPct / 100);
-  const ebitdaToCash = clamp(0.72 - capexPct / 250, 0.48, 0.72);
-  const maintenanceFactor =
-    capexPct <= 1 ? 0.72 : capexPct <= REINVESTMENT_CONSTRAINED_CAPEX_PCT ? 0.58 : 0.38;
-  const maintenanceCapexK = capexK * maintenanceFactor;
-  const growthReinvestmentK =
-    revK * (Math.max(0, headlineGrowthPct) / 100) * (capexPct <= 1 ? 0.18 : capexPct <= 3 ? 0.12 : 0.06);
-  return Math.max(0, ebitdaK * ebitdaToCash - maintenanceCapexK - growthReinvestmentK);
+  return computeFCFF(ebitdaK, capexLevelPct, revK, industry);
 }
 
 /**
- * Explicit-period growth with conservative decay in years 3–5 (2028–2031).
- * Ultra-low CAPEX (≤1%) cannot sustain high growth — reinvestment constrained.
+ * Explicit-period growth with conservative decay in years 3–5.
+ * Single continuous path — no CAPEX regime switches that cause EV jumps.
  */
 export function explicitGrowthRateForYear(
   yearIndex1Based: number,
@@ -115,36 +109,12 @@ export function explicitGrowthRateForYear(
   const dcfGrowthPct = resolveDcfGrowthPct(baseGrowthPct, capexLevelPct);
   const gBase = Math.max(-0.05, dcfGrowthPct / 100);
   const gTerm = TERMINAL_GROWTH_RATE;
-  const capexPct = Math.max(0, capexLevelPct);
-
-  if (capexPct <= 1) {
-    const reinvestmentPath = [
-      gBase,
-      gBase * 0.78,
-      gBase * 0.52,
-      gBase * 0.32,
-      gTerm + 0.005,
-    ];
-    return reinvestmentPath[yearIndex1Based - 1] ?? gTerm;
-  }
-
-  if (capexPct <= REINVESTMENT_CONSTRAINED_CAPEX_PCT) {
-    const path = [
-      gBase,
-      gBase * 0.88,
-      gBase * 0.62,
-      gBase * 0.4,
-      gTerm + 0.008,
-    ];
-    return path[yearIndex1Based - 1] ?? gTerm;
-  }
-
   const path = [
     gBase,
     gBase * 0.9,
     gBase * 0.68,
     gBase * 0.46,
-    gTerm + 0.01,
+    Math.max(gTerm + 0.008, gBase * 0.32),
   ];
   return path[yearIndex1Based - 1] ?? gTerm;
 }
@@ -160,15 +130,20 @@ function computeCappedTerminalValue(params: {
   waccPct: number;
   explicitPvK: number;
   terminalDiscountExponent: number;
+  capexLevelPct: number;
 }): number {
   const w = params.waccPct / 100;
   const g = TERMINAL_GROWTH_RATE;
-  const spread = Math.max(MIN_TERMINAL_SPREAD, w - g);
-  const tvRaw =
-    (params.terminalFcffK * (1 + g)) /
-    spread /
-    (1 + w) ** params.terminalDiscountExponent;
-  return Math.min(tvRaw, params.explicitPvK * TERMINAL_TO_EXPLICIT_PV_MAX);
+  const tvRaw = computeTerminalValue(
+    params.terminalFcffK,
+    Math.max(w, g + MIN_TERMINAL_SPREAD),
+    g,
+    params.capexLevelPct,
+  );
+  return Math.min(
+    tvRaw / (1 + w) ** params.terminalDiscountExponent,
+    params.explicitPvK * TERMINAL_TO_EXPLICIT_PV_MAX,
+  );
 }
 
 /** Projects explicit FCFF + capped terminal value (₪K EV). */
@@ -178,12 +153,14 @@ export function projectDcfHorizon(params: {
   capexLevelPct: number;
   dcfGrowthPct: number;
   wacc: number;
+  industry?: string;
 }): DcfHorizonProjection {
-  const { ebitdaK, revK, capexLevelPct, dcfGrowthPct, wacc } = params;
+  const { ebitdaK, revK, dcfGrowthPct, wacc, industry = 'other' } = params;
+  const capexLevelPct = parseCapexPct(params.capexLevelPct);
   const w = wacc / 100;
   const effectiveDcfGrowthPct = resolveDcfGrowthPct(dcfGrowthPct, capexLevelPct);
 
-  let fcff = computeInitialFcffK(ebitdaK, revK, capexLevelPct, dcfGrowthPct);
+  let fcff = computeInitialFcffK(ebitdaK, revK, capexLevelPct, dcfGrowthPct, industry);
   const fcffByYearK: number[] = [];
   const growthByYear: number[] = [];
   let explicitPvK = 0;
@@ -203,6 +180,7 @@ export function projectDcfHorizon(params: {
     waccPct: wacc,
     explicitPvK,
     terminalDiscountExponent,
+    capexLevelPct,
   });
 
   let totalEvK = explicitPvK + terminalPvK;
@@ -229,8 +207,14 @@ export function computeDcfWithGrowthDecay(params: {
   capexLevelPct: number;
   dcfGrowthPct: number;
   wacc: number;
+  industry?: string;
 }): number {
-  return projectDcfHorizon(params).totalEvK;
+  const capexPct = parseCapexPct(params.capexLevelPct);
+  const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
+  if (capexPct <= 0) return projection.totalEvK;
+
+  const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;
+  return applyCapexMonotonicityGuard(projection.totalEvK, capexPct, baseEv);
 }
 
 export type ScenarioInputs = Pick<

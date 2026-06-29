@@ -8,6 +8,7 @@ import {
   STUB_PERIOD_DISCOUNT_EXPONENT,
   projectDcfHorizon,
 } from '../valuation/scenario_matrix';
+import { parseCapexPct, resolveCapexIndustryKey } from '../valuation/capex_fcf';
 import type { ValuationLocale } from '../../api_client';
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
 import type {
@@ -175,7 +176,7 @@ function buildDcfRows(
   computed: ValuationComputed,
 ): { rows: DcfYearRow[]; terminalPvM: number; terminalSharePct: number } {
   const revK = inputs.revenue2026K ?? inputs.rev ?? 0;
-  const capexLevelPct = inputs.capexLevelPct ?? 0;
+  const capexLevelPct = parseCapexPct(inputs.capexLevelPct ?? 0);
   const headlineGrowthPct =
     coercePercentNumber(computed.dcfGrowthPct) || coercePercentNumber(inputs.growth);
   const w = computed.wacc / 100;
@@ -185,6 +186,7 @@ function buildDcfRows(
     capexLevelPct,
     dcfGrowthPct: headlineGrowthPct,
     wacc: computed.wacc,
+    industry: resolveCapexIndustryKey(inputs.sector, inputs.subSector),
   });
   const rows: DcfYearRow[] = [];
   const baseYear = new Date().getFullYear() + 1;

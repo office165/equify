@@ -24,6 +24,7 @@ import {
   resolveScaleModifierProfile,
 } from './scale_modifier_pipeline';
 import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
+import { parseCapexPct, resolveCapexIndustryKey } from './capex_fcf';
 import { calibrateCenterOfGravity } from './base_case_calibration';
 import { OMWISE_CALIBRATION_QS } from './scenario_elasticity';
 import { createValuationStrategy } from './strategies/valuation_strategy';
@@ -95,8 +96,17 @@ function computeDcf(params: {
   capexLevelPct: number;
   dcfGrowthPct: number;
   wacc: number;
+  sector?: ValuationInputs['sector'];
+  subSector?: string;
 }): number {
-  return computeDcfWithGrowthDecay(params);
+  return computeDcfWithGrowthDecay({
+    ebitdaK: params.ebitdaK,
+    revK: params.revK,
+    capexLevelPct: parseCapexPct(params.capexLevelPct),
+    dcfGrowthPct: params.dcfGrowthPct,
+    wacc: params.wacc,
+    industry: resolveCapexIndustryKey(params.sector, params.subSector),
+  });
 }
 
 /**
@@ -297,9 +307,11 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   const dcf = computeDcf({
     ebitdaK: ebitda,
     revK,
-    capexLevelPct,
+    capexLevelPct: parseCapexPct(capexLevelPct),
     dcfGrowthPct: growth,
     wacc,
+    sector: inputs.sector,
+    subSector: inputs.subSector,
   });
 
   const strategy = createValuationStrategy(sectorConfig);

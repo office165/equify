@@ -1,4 +1,5 @@
 import type { EquifySectorKey } from '../valuation';
+import { parseCapexPct } from '../valuation/capex_fcf';
 import { resolveSectorMethodologyConfig } from '../valuation/sector_methodology_resolver';
 import { getMedianMultiple, ISRAEL_MULTIPLES_2026, type Industry } from '../valuation/multiples';
 import type { SectorMetricsResult } from '../utils/financialData';
@@ -134,7 +135,7 @@ export function deriveFinancialDefaultsFromSectorMetrics(
 
   const capexBase = SECTOR_CAPEX_BASE_PCT[sector] ?? 6;
   const capexRaw = capexBase * (0.88 + metrics.unleveredBeta * 0.08);
-  const capexLevelPct = Math.round(clamp(capexRaw, 0, 30));
+  const capexLevelPct = parseCapexPct(clamp(capexRaw, 0, 30));
 
   return { growthPct, capexLevelPct };
 }
