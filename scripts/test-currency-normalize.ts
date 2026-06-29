@@ -154,7 +154,7 @@ function testNormalizeValuationInputs(): void {
   };
 
   const normalized = normalizeValuationInputsToIls(base, 'USD', FALLBACK_RATES);
-  assert(Math.abs(normalized.rev - 4162.5) < 1, '1110 USD K → ~4162.5 ILS K at 3.75');
+  assert(Math.abs(normalized.rev - 3330) < 1, '1110 USD K → ~3330 ILS K at 3.00');
   console.log('✓ normalizeValuationInputsToIls scales monetary fields');
 }
 

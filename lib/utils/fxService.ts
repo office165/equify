@@ -1,19 +1,20 @@
 import type { ReportingCurrencyCode } from './formatCurrency';
 import { normalizeCurrencyCode } from './formatCurrency';
 
-export type FxCurrency = ReportingCurrencyCode;
+export type FxCurrency = ReportingCurrencyCode | 'GBP';
 
 /** Wizard financial inputs are modeled in ILS (₪K storage). */
 export const VALUATION_BASE_CURRENCY: FxCurrency = 'ILS';
 
 /**
- * Static fallback — 1 USD = 3.75 ILS, 1 EUR = 4.05 ILS.
+ * Static fallback — 1 USD = 3.00 ILS, 1 EUR = 3.42 ILS, 1 GBP = 3.80 ILS.
  * Values are multipliers: amount_ILS × rate → amount_in_target (same numeric scale).
  */
 export const STATIC_FX_FROM_ILS: Readonly<Record<FxCurrency, number>> = {
   ILS: 1,
-  USD: 1 / 3.75,
-  EUR: 1 / 4.05,
+  USD: 1 / 3.0,
+  EUR: 1 / 3.42,
+  GBP: 1 / 3.8,
 };
 
 export type FxRateSource = 'live' | 'fallback' | 'cache';
@@ -26,8 +27,7 @@ export interface FxRatesSnapshot {
   fetchedAt: number;
 }
 
-const FRANKFURTER_URL =
-  'https://api.frankfurter.app/latest?from=ILS&to=USD,EUR';
+const EXCHANGE_RATES_API = '/api/exchange-rates';
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 4_000;
 
@@ -46,23 +46,44 @@ function isFresh(snapshot: FxRatesSnapshot): boolean {
   return Date.now() - snapshot.fetchedAt < CACHE_TTL_MS;
 }
 
-function parseFrankfurterPayload(payload: unknown): FxRatesSnapshot | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const body = payload as { base?: string; date?: string; rates?: Record<string, number> };
-  if (body.base !== 'ILS' || !body.rates) return null;
+interface ExchangeRatesApiResponse {
+  USD: number;
+  EUR: number;
+  GBP: number;
+  source: 'live' | 'fallback';
+  fetchedAt: string;
+}
 
-  const usd = body.rates.USD;
-  const eur = body.rates.EUR;
-  if (!Number.isFinite(usd) || !Number.isFinite(eur) || usd <= 0 || eur <= 0) {
+function parseExchangeRatesPayload(payload: unknown): FxRatesSnapshot | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const body = payload as ExchangeRatesApiResponse;
+  const { USD, EUR, GBP, source, fetchedAt } = body;
+  if (!Number.isFinite(USD) || !Number.isFinite(EUR) || USD <= 0 || EUR <= 0) {
     return null;
   }
 
+  const gbpIlsPerUnit =
+    Number.isFinite(GBP) && GBP > 0 ? GBP : 1 / STATIC_FX_FROM_ILS.GBP;
+
   return {
-    fromIls: { ILS: 1, USD: usd, EUR: eur },
-    source: 'live',
-    asOf: typeof body.date === 'string' ? body.date : 'live',
-    fetchedAt: Date.now(),
+    fromIls: {
+      ILS: 1,
+      USD: 1 / USD,
+      EUR: 1 / EUR,
+      GBP: 1 / gbpIlsPerUnit,
+    },
+    source: source === 'live' ? 'live' : 'fallback',
+    asOf: source === 'live' ? 'live' : 'static',
+    fetchedAt: new Date(fetchedAt).getTime() || Date.now(),
   };
+}
+
+function resolveExchangeRatesUrl(): string {
+  if (typeof window !== 'undefined') {
+    return EXCHANGE_RATES_API;
+  }
+  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';
+  return `${base}${EXCHANGE_RATES_API}`;
 }
 
 /** Synchronous read — cached live rates or static fallback (never blocks UI). */
@@ -88,7 +109,7 @@ export function convertIlsKToReportingK(
   return amountK * getIlsToReportingMultiplier(target, rates);
 }
 
-/** Fetch latest FX from Frankfurter; falls back silently on failure. */
+/** Fetch latest FX via server API route; falls back silently on failure. */
 export async function refreshFxRates(force = false): Promise<FxRatesSnapshot> {
   if (!force && isFresh(cachedRates) && cachedRates.source !== 'fallback') {
     return cachedRates;
@@ -98,13 +119,13 @@ export async function refreshFxRates(force = false): Promise<FxRatesSnapshot> {
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
-    const res = await fetch(FRANKFURTER_URL, {
+    const res = await fetch(resolveExchangeRatesUrl(), {
       signal: controller.signal,
       cache: 'no-store',
     });
-    if (!res.ok) throw new Error(`Frankfurter HTTP ${res.status}`);
-    const parsed = parseFrankfurterPayload(await res.json());
-    if (!parsed) throw new Error('Frankfurter payload invalid');
+    if (!res.ok) throw new Error(`Exchange rates HTTP ${res.status}`);
+    const parsed = parseExchangeRatesPayload(await res.json());
+    if (!parsed) throw new Error('Exchange rates payload invalid');
     cachedRates = { ...parsed, source: 'cache' };
     return cachedRates;
   } catch {
