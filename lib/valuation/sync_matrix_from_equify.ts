@@ -17,6 +17,7 @@ import {
 } from '../wizard/map_equify_wizard';
 import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
 import { applyReportingFxLayer } from './apply_reporting_fx';
+import { parseCapexPct } from './capex_fcf';
 import { getCachedFxRates } from '../utils/fxService';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import { buildWizardContextFromWizard } from '../../valuation_forecast';
@@ -89,7 +90,7 @@ export function syncMatrixFromEquifyState(
         growthDec * 0.72,
       ],
       ebit_margin_targets: Array(5).fill(financials.margin / 100),
-      capex_pct_of_revenue: financials.capexLevelPct / 100,
+      capex_pct_of_revenue: parseCapexPct(financials.capexLevelPct) / 100,
     },
     capital_structure: {
       ...matrix.capital_structure,

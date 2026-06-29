@@ -2,7 +2,7 @@ import type { ValuationComputed, ValuationInputs, ValuationScenarios } from '../
 import { calibrateCenterOfGravity } from './base_case_calibration';
 import { computeBacklogCoverageRatio } from './backlog_metrics';
 import {
-  applyCapexMonotonicityGuard,
+  enforceCapexMonotonicity,
   computeFCFF,
   computeTerminalValue,
   parseCapexPct,
@@ -86,15 +86,21 @@ export function resolveDcfGrowthPct(headlineGrowthPct: number, capexLevelPct: nu
   return Math.min(g, maxFundableGrowth);
 }
 
-/** Year-1 FCFF (₪K) — industry-aware CAPEX base via {@link computeFCFF}. */
+/** Year-1 FCFF (₪K) — Damodaran FCFF via {@link computeFCFF}. */
 export function computeInitialFcffK(
   ebitdaK: number,
   revK: number,
   capexLevelPct: number,
-  _headlineGrowthPct = 0,
+  headlineGrowthPct = 0,
   industry = 'other',
 ): number {
-  return computeFCFF(ebitdaK, capexLevelPct, revK, industry);
+  return computeFCFF({
+    ebitda: ebitdaK,
+    revenue: revK,
+    capexPct: capexLevelPct,
+    industry,
+    growthRate: Math.max(0, headlineGrowthPct) / 100,
+  }).fcff;
 }
 
 /**
@@ -134,12 +140,12 @@ function computeCappedTerminalValue(params: {
 }): number {
   const w = params.waccPct / 100;
   const g = TERMINAL_GROWTH_RATE;
-  const tvRaw = computeTerminalValue(
-    params.terminalFcffK,
-    Math.max(w, g + MIN_TERMINAL_SPREAD),
-    g,
-    params.capexLevelPct,
-  );
+  const tvRaw = computeTerminalValue({
+    fcff: params.terminalFcffK,
+    wacc: Math.max(w, g + MIN_TERMINAL_SPREAD),
+    terminalGrowthRate: g,
+    capexPct: params.capexLevelPct,
+  });
   return Math.min(
     tvRaw / (1 + w) ** params.terminalDiscountExponent,
     params.explicitPvK * TERMINAL_TO_EXPLICIT_PV_MAX,
@@ -214,7 +220,12 @@ export function computeDcfWithGrowthDecay(params: {
   if (capexPct <= 0) return projection.totalEvK;
 
   const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;
-  return applyCapexMonotonicityGuard(projection.totalEvK, capexPct, baseEv);
+  return enforceCapexMonotonicity({
+    equityValue: projection.totalEvK,
+    capexPct,
+    baseEquityValue: baseEv,
+    industry: params.industry ?? 'other',
+  });
 }
 
 export type ScenarioInputs = Pick<

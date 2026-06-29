@@ -24,7 +24,7 @@ import {
   resolveScaleModifierProfile,
 } from './scale_modifier_pipeline';
 import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
-import { parseCapexPct, resolveCapexIndustryKey } from './capex_fcf';
+import { parseCapexPct, resolveCapexIndustryKey, computeFCFF } from './capex_fcf';
 import { calibrateCenterOfGravity } from './base_case_calibration';
 import { OMWISE_CALIBRATION_QS } from './scenario_elasticity';
 import { createValuationStrategy } from './strategies/valuation_strategy';
@@ -314,6 +314,15 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     subSector: inputs.subSector,
   });
 
+  const fcfIndustry = resolveCapexIndustryKey(inputs.sector, inputs.subSector);
+  const fcffAudit = computeFCFF({
+    ebitda,
+    revenue: revK,
+    capexPct: parseCapexPct(capexLevelPct),
+    industry: fcfIndustry,
+    growthRate: Math.max(0, growth) / 100,
+  });
+
   const strategy = createValuationStrategy(sectorConfig);
   const legs = strategy.computeLegs({
     inputs: calibrated,
@@ -348,6 +357,18 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     organicForwardRevenue2027K,
     backlogCoverageRatio,
   });
+
+  console.log(
+    '[FCF Audit]',
+    JSON.stringify({
+      industry: fcfIndustry,
+      ebitda,
+      revenue: revK,
+      capexPct: parseCapexPct(capexLevelPct),
+      breakdown: fcffAudit.breakdown,
+      finalEquityValue: cog.calibratedEquityK,
+    }),
+  );
 
   return {
     ebitda,
