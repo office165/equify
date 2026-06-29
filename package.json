@@ -14,12 +14,14 @@
     "test:pdf": "tsx scripts/test-maximal-pdf.ts",
     "test:canonical": "tsx scripts/test-canonical-reconciliation.ts",
     "test:report-coherence": "tsx scripts/test-report-financial-coherence.ts",
+    "test:engine": "tsx scripts/test-valuation-engine.ts",
     "test:omwise-calibration": "tsx scripts/test-omwise-calibration.ts",
     "test:scale-modifier": "tsx scripts/test-scale-modifier-pipeline.ts",
     "test:currency-normalize": "tsx scripts/test-currency-normalize.ts",
     "test:monday-leads": "tsx scripts/test-monday-leads-e2e.ts",
     "test:monday-lead": "tsx scripts/test-monday-lead.ts",
-    "monday:introspect": "tsx scripts/monday-introspect.ts"
+    "monday:introspect": "tsx scripts/monday-introspect.ts",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true && chmod +x .githooks/pre-commit 2>/dev/null || true"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.0",

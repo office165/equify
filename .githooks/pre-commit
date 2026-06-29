@@ -1,0 +1,6 @@
+#!/bin/sh
+# Blocks commits when valuation engine regressions are detected.
+set -e
+
+echo "▶ Running valuation engine regression suite (test:engine)..."
+npm run test:engine --silent

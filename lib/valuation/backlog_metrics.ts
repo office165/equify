@@ -1,7 +1,7 @@
 import type { ValuationInputs } from '../valuation';
 
-/** Minimum backlog / revenue ratio before any inflection signal (8% — ARR-style visibility). */
-export const BACKLOG_INFLECTION_RATIO_THRESHOLD = 0.08;
+/** Minimum backlog / revenue ratio before any inflection signal (5% — SMB contracted orders). */
+export const BACKLOG_INFLECTION_RATIO_THRESHOLD = 0.05;
 
 /** Max WACC specific-risk reduction when backlog covers forward revenue (percentage points). */
 export const BACKLOG_WACC_RISK_REDUCTION_MAX_PP = 1.5;
@@ -147,7 +147,7 @@ export function computeBacklogCoverageRatio(
 
 /**
  * Proportional backlog signal — plateau weights per band with narrow boundary ramps.
- * ratio &lt; 8%: none · 8–20%: 0.3 · 20–50%: 0.6 · &gt;50%: 1.0
+ * ratio &lt; 5%: none · 5–20%: ramp to 0.3 · 20–50%: 0.6 · &gt;50%: 1.0
  */
 export function computeBacklogInflectionWeight(
   backlogK: number,
@@ -172,8 +172,8 @@ export function computeBacklogInflectionWeight(
     return 0.6;
   }
 
-  if (ratio < 0.52) {
-    return 0.6 + 0.4 * ((ratio - 0.5) / 0.02);
+  if (ratio < 1.0) {
+    return 0.6 + 0.4 * ((ratio - 0.5) / 0.5);
   }
 
   return 1.0;
