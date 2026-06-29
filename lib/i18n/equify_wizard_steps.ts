@@ -131,6 +131,8 @@ export interface EquifyWizardStepStrings {
       multipleLabel: string,
       multiplePct: number,
     ) => string;
+    backlogEquityUplift: (pct: number, amount: string) => string;
+    backlogEquityUpliftLabel: string;
     hasSignificantBacklog: string;
     hasSignificantBacklogHint: string;
     projected2027F: string;
@@ -349,6 +351,9 @@ const HE: EquifyWizardStepStrings = {
       'לחץ לפתיחה • כל נתון נוסף משפר משמעותית את דיוק הערכת השווי',
     inflectionActive: (pct, dcfPct, multipleLabel, multiplePct) =>
       `DCF ${dcfPct}% · Inflection פעיל · צבר/הכנסות ${pct}% · ${multipleLabel} ${multiplePct}%`,
+    backlogEquityUplift: (pct, amount) =>
+      `+${pct.toFixed(1)}% תוספת שווי מצבר הזמנות · ${amount}`,
+    backlogEquityUpliftLabel: 'תוספת צבר הזמנות',
     hasSignificantBacklog:
       'צבר הזמנות חתום / חוזים מהותיים קדימה (2026-2027)',
     hasSignificantBacklogHint:
@@ -543,6 +548,9 @@ const EN: EquifyWizardStepStrings = {
       'Click to open • Every additional data point significantly improves valuation accuracy',
     inflectionActive: (pct, dcfPct, multipleLabel, multiplePct) =>
       `DCF ${dcfPct}% · Inflection active · backlog/revenue ${pct}% · ${multipleLabel} ${multiplePct}%`,
+    backlogEquityUplift: (pct, amount) =>
+      `+${pct.toFixed(1)}% backlog equity uplift · ${amount}`,
+    backlogEquityUpliftLabel: 'Backlog uplift',
     hasSignificantBacklog:
       'Signed order backlog / material forward contracts (2026-2027)',
     hasSignificantBacklogHint:

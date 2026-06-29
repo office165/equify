@@ -140,6 +140,22 @@ export function ResultsScreen({
             </div>
           </div>
         ) : null}
+        {computed.backlogEquityUpliftK != null && computed.backlogEquityUpliftK > 0 ? (
+          <div className="ml-row" style={{ marginBottom: 12 }}>
+            <div>
+              <div className="mr-name">תוספת שווי מצבר הזמנות</div>
+              <div className="mr-desc">
+                +{(computed.backlogEquityUpliftPct ?? 0).toFixed(1)}% על שווי לפני צבר (
+                {fmtAmount(computed.equityBeforeBacklogUplift ?? computed.equity)})
+              </div>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div className="mr-val mono" style={{ color: 'var(--green)' }}>
+                +{fmtAmount(computed.backlogEquityUpliftK)}
+              </div>
+            </div>
+          </div>
+        ) : null}
         <div className="ml-row">
           <div>
             <div className="mr-name">DCF + WACC</div>

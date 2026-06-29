@@ -197,14 +197,38 @@ export function computeBacklogWaccRiskReduction(
   return -alpha * inflectionWeight * coverageFactor;
 }
 
-/**
- * @deprecated Backlog no longer inflates equity — always returns 1.
- */
-export function computeBacklogValuationHealthFactor(
-  _coverageRatio: number,
-  _inflectionActive: boolean,
-): number {
-  return 1;
+/** Max equity uplift at full inflection weight (weight 1.0 → +14%). */
+export const BACKLOG_EQUITY_UPLIFT_COEFFICIENT = 0.14;
+
+export interface BacklogEquityUplift {
+  multiplier: number;
+  /** Fractional uplift — e.g. 0.06 = +6% to equity. */
+  upliftFraction: number;
+  /** Display percentage points — e.g. 6 for +6%. */
+  upliftPctPoints: number;
+}
+
+/** equityValue × (1 + 0.14 × inflectionWeight) */
+export function computeBacklogEquityUplift(inflectionWeight: number): BacklogEquityUplift {
+  const w = Math.max(0, Math.min(1, inflectionWeight));
+  const upliftFraction = BACKLOG_EQUITY_UPLIFT_COEFFICIENT * w;
+  return {
+    multiplier: 1 + upliftFraction,
+    upliftFraction,
+    upliftPctPoints: upliftFraction * 100,
+  };
+}
+
+export function applyBacklogEquityUplift(
+  equityK: number,
+  inflectionWeight: number,
+): { equityK: number; upliftK: number; uplift: BacklogEquityUplift } {
+  const uplift = computeBacklogEquityUplift(inflectionWeight);
+  if (equityK <= 0 || uplift.upliftFraction <= 0) {
+    return { equityK: Math.max(0, equityK), upliftK: 0, uplift };
+  }
+  const upliftK = equityK * uplift.upliftFraction;
+  return { equityK: equityK + upliftK, upliftK, uplift };
 }
 
 /** Forward EBITDA blend base: 50% historical avg + 50% organic 2027F. */

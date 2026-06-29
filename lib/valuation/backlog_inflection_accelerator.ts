@@ -18,7 +18,10 @@ export const BACKLOG_INFLECTION_WACC_PREMIUM = -1.0;
 export {
   BACKLOG_INFLECTION_RATIO_THRESHOLD,
   BACKLOG_INFLECTION_TARGETS,
+  BACKLOG_EQUITY_UPLIFT_COEFFICIENT,
   computeBacklogInflectionWeight,
+  computeBacklogEquityUplift,
+  applyBacklogEquityUplift,
 } from './backlog_metrics';
 
 export type { BacklogInflectionResult } from './backlog_metrics';

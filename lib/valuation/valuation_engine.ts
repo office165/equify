@@ -14,6 +14,7 @@ import { applyBacklogInflectionAccelerator } from './backlog_inflection_accelera
 import {
   computeBacklogCoverageRatio,
   computeOrganicForwardRevenue2027K,
+  applyBacklogEquityUplift,
 } from './backlog_metrics';
 import { resolveCurrentYearEbitdaK } from './backlog_valuation';
 import { capGrowthPctForMethodology } from './sector_methodology_matrix';
@@ -359,6 +360,13 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     backlogCoverageRatio,
   });
 
+  const backlogEquity = applyBacklogEquityUplift(
+    cog.calibratedEquityK,
+    backlog.inflectionIntensity,
+  );
+  const calibratedEquityK = backlogEquity.equityK;
+  const calibratedEvK = cog.calibratedEvK + backlogEquity.upliftK;
+
   console.log(
     '[FCF Audit]',
     JSON.stringify({
@@ -367,7 +375,9 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
       revenue: revK,
       capexPct: parseCapexPct(capexLevelPct),
       breakdown: fcffAudit.breakdown,
-      finalEquityValue: cog.calibratedEquityK,
+      finalEquityValue: calibratedEquityK,
+      backlogEquityUpliftPct: backlogEquity.uplift.upliftPctPoints,
+      backlogEquityUpliftK: backlogEquity.upliftK,
     }),
   );
 
@@ -386,10 +396,13 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     revMult: legs.revMult,
     revMultiplier: legs.revMultiplier,
     dcf,
-    ev: cog.calibratedEvK,
-    equity: cog.calibratedEquityK,
+    ev: calibratedEvK,
+    equity: calibratedEquityK,
     rawEv: cog.rawEvK,
     rawEquity: cog.rawEquityK,
+    equityBeforeBacklogUplift: cog.calibratedEquityK,
+    backlogEquityUpliftK: backlogEquity.upliftK,
+    backlogEquityUpliftPct: backlogEquity.uplift.upliftPctPoints,
     centerOfGravityFactor: cog.calibrationFactor,
     forwardRunRateK: cog.forwardRunRateK,
     blendWeights,

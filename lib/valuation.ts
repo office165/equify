@@ -265,6 +265,12 @@ export interface ValuationComputed {
   /** Pre-calibration engine output (trailing run-rate). */
   rawEv?: number;
   rawEquity?: number;
+  /** Pre-backlog-equity-uplift engine output (₪K). */
+  equityBeforeBacklogUplift?: number;
+  /** Backlog inflection equity uplift amount (₪K). */
+  backlogEquityUpliftK?: number;
+  /** Backlog inflection equity uplift as percentage points (e.g. 6 = +6%). */
+  backlogEquityUpliftPct?: number;
   centerOfGravityFactor?: number;
   forwardRunRateK?: number;
   blendWeights: { dcf: number; ebitda: number; rev: number };

@@ -1,6 +1,6 @@
 /**
- * Base-case center of gravity — trailing run-rate anchor only.
- * Backlog affects WACC (not top-line / equity uplift).
+ * Base-case center of gravity — trailing run-rate anchor.
+ * Backlog equity uplift is applied after calibration in the valuation engine.
  */
 
 /** @deprecated Backlog no longer inflates forward run-rate — retained for legacy exports. */

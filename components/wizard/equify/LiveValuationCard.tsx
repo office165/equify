@@ -157,6 +157,17 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
           )}
         </div>
       ) : null}
+      {computed.backlogEquityUpliftK != null && computed.backlogEquityUpliftK > 0 ? (
+        <div className="cl-row" style={{ marginTop: 8 }}>
+          <span>{t.step2.backlogEquityUpliftLabel}</span>
+          <b className="mono eq-currency-value">
+            {t.step2.backlogEquityUplift(
+              computed.backlogEquityUpliftPct ?? 0,
+              fmtLiveK(computed.backlogEquityUpliftK),
+            )}
+          </b>
+        </div>
+      ) : null}
       <div className="cl-mult-override rv mb-4">
         <ValuationMultipleInput
           label={t.step2.effectiveMultiple}
