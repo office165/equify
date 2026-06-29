@@ -224,7 +224,7 @@ const SMB_SUB_RETAIL_FASHION: SubSectorOption = {
 const SMB_SUB_RESTAURANTS_FB: SubSectorOption = {
   id: 'restaurants-fb',
   institutionalId: 'restaurants-fb',
-  labelHe: 'מסעדנות, קייטרинг ושירותי מזון',
+  labelHe: 'מסעדות, קייטרинг ושירותי מזון',
   labelEn: 'Restaurants, Catering & Food Service',
   multAdj: 0.82,
   institutional: SMB_INSTITUTIONAL_BY_ID['restaurants-fb'],
@@ -273,7 +273,6 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
     subSectors: [
       { id: 'boutique_hotel', labelHe: 'מלון בוטיק', labelEn: 'Boutique hotel', multAdj: 1.05 },
       { id: 'hotel_chain', labelHe: 'רשת מלונות', labelEn: 'Hotel chain', multAdj: 1.12 },
-      SMB_SUB_RESTAURANTS_FB,
       { id: 'events', labelHe: 'אירועים / נופש', labelEn: 'Events & leisure', multAdj: 0.98 },
     ],
   },
@@ -289,7 +288,7 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
       { id: 'b2b_saas', labelHe: 'B2B SaaS', labelEn: 'B2B SaaS', multAdj: 1.15 },
       { id: 'b2c_saas', labelHe: 'B2C / Consumer', labelEn: 'B2C SaaS', multAdj: 1.0 },
       { id: 'devtools', labelHe: 'DevTools / Infra', labelEn: 'DevTools', multAdj: 1.2 },
-      { id: 'marketplace', labelHe: 'Marketplace', labelEn: 'Marketplace', multAdj: 0.95 },
+      { id: 'marketplace', labelHe: 'Marketplace טכנולוגי (תוכנה)', labelEn: 'Marketplace', multAdj: 0.95 },
     ],
   },
   fintech: {
@@ -332,7 +331,7 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
     multiplesSectorPhraseEn: 'in health & biotech',
     subSectors: [
       { id: 'medtech', labelHe: 'MedTech', labelEn: 'MedTech', multAdj: 1.08 },
-      { id: 'biotech', labelHe: 'Biotech / פארמה', labelEn: 'Biotech', multAdj: 1.15 },
+      { id: 'biotech', labelHe: 'פארמה / Biotech', labelEn: 'Biotech', multAdj: 1.15 },
       { id: 'digital_health', labelHe: 'Digital Health', labelEn: 'Digital health', multAdj: 1.1 },
       { id: 'services_health', labelHe: 'שירותי בריאות', labelEn: 'Health services', multAdj: 0.88 },
     ],
@@ -376,9 +375,9 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
     multiplesSectorPhraseHe: 'בענפי המסחר והאיקומרס',
     multiplesSectorPhraseEn: 'in retail & e-commerce',
     subSectors: [
-      { id: 'd2c', labelHe: 'D2C / מותג ישיר', labelEn: 'D2C brand', multAdj: 1.05 },
-      { id: 'marketplace_ecom', labelHe: 'Marketplace', labelEn: 'Marketplace', multAdj: 0.95 },
-      { id: 'subscription', labelHe: 'מנויים / Box', labelEn: 'Subscription', multAdj: 1.02 },
+      { id: 'd2c', labelHe: 'D2C ומותגי ישיר', labelEn: 'D2C brand', multAdj: 1.05 },
+      { id: 'marketplace_ecom', labelHe: 'Marketplace מסחרי וזירות סחר', labelEn: 'Marketplace', multAdj: 0.95 },
+      { id: 'subscription', labelHe: 'מודל מנויים וקופסאות הפצה', labelEn: 'Subscription', multAdj: 1.02 },
     ],
   },
   retail_trade: {
@@ -389,7 +388,12 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
     maDealCount: 12,
     multiplesSectorPhraseHe: 'בענפי המסחר והקמעונאות הפיזית',
     multiplesSectorPhraseEn: 'in physical retail trade',
-    subSectors: [SMB_SUB_RETAIL_SUPERMARKETS, SMB_SUB_RETAIL_FASHION],
+    subSectors: [
+      SMB_SUB_RETAIL_SUPERMARKETS,
+      { id: 'd2c', labelHe: 'D2C ומותגי ישיר', labelEn: 'D2C brand', multAdj: 1.05 },
+      SMB_SUB_RETAIL_FASHION,
+      { id: 'marketplace_retail', labelHe: 'Marketplace מסחרי וזירות סחר', labelEn: 'Marketplace & trade', multAdj: 0.95 },
+    ],
   },
   food_service: {
     sectorKey: 'food_service',
@@ -399,7 +403,10 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
     maDealCount: 12,
     multiplesSectorPhraseHe: 'בענפי המסעדנות ושירותי המזון',
     multiplesSectorPhraseEn: 'in food service & restaurants',
-    subSectors: [SMB_SUB_RESTAURANTS_FB],
+    subSectors: [
+      SMB_SUB_RESTAURANTS_FB,
+      { id: 'subscription', labelHe: 'מודל מנויים וקופסאות הפצה', labelEn: 'Subscription box', multAdj: 1.02 },
+    ],
   },
   energy: {
     sectorKey: 'energy',
@@ -572,6 +579,15 @@ export function getSectorChipLabel(
 ): string {
   const entry = getIndustryConfig(sector);
   return locale === 'he' ? entry.chipLabelHe : entry.chipLabelEn;
+}
+
+/** Sub-sector chip label for wizard Step 1 (distinct from main sector chip). */
+export function getSubSectorChipLabel(
+  _sector: EquifySectorKey,
+  subSector: SubSectorOption,
+  locale: ValuationLocale = 'he',
+): string {
+  return locale === 'he' ? subSector.labelHe : subSector.labelEn;
 }
 
 /** Page 5 multiples intro */
