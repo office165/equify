@@ -47,12 +47,12 @@ const WIZARD_SUB_SECTOR_BLEND_WEIGHTS: Record<string, SubSectorBlendWeightEntry>
   vacation: { dcf: 0.4, multiple: 0.6 },
   airbnb_mgmt: { dcf: 0.45, multiple: 0.55 },
   // Food service
+  restaurant: { dcf: 0.4, multiple: 0.6 },
   restaurant_qsr: { dcf: 0.4, multiple: 0.6 },
   cafe: { dcf: 0.4, multiple: 0.6 },
   catering: { dcf: 0.4, multiple: 0.6 },
   franchise: { dcf: 0.4, multiple: 0.6 },
   delivery: { dcf: 0.4, multiple: 0.6 },
-  restaurant: { dcf: 0.4, multiple: 0.6 },
   'restaurants-fb': { dcf: 0.4, multiple: 0.6 },
   events: { dcf: 0.4, multiple: 0.6 },
   // SaaS / Tech
@@ -113,10 +113,10 @@ const WIZARD_SUB_SECTOR_BLEND_WEIGHTS: Record<string, SubSectorBlendWeightEntry>
 const SUB_SECTOR_WEIGHT_ALIASES: Record<string, keyof typeof WIZARD_SUB_SECTOR_BLEND_WEIGHTS> =
   {
     hotel_boutique: 'boutique_hotel',
-    restaurants: 'restaurant_qsr',
-    restaurant: 'restaurant_qsr',
-    'restaurants-fb': 'restaurant_qsr',
-    restaurants_fb: 'restaurant_qsr',
+    restaurants: 'restaurant',
+    'restaurants-fb': 'restaurant',
+    restaurants_fb: 'restaurant',
+    restaurant_qsr: 'restaurant',
     events_leisure: 'vacation',
     events: 'vacation',
     b2c_tech: 'b2c_saas',

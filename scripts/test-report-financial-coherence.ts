@@ -113,7 +113,7 @@ function testUsdTrajectoryMatchesWizardInputs(): void {
       companyName: 'Pizza zuli',
       currency: 'USD',
       sector: 'food_service',
-      subSector: 'restaurant_qsr',
+      subSector: 'restaurant',
     },
     financials: {
       ...buildSampleWizardState().financials,

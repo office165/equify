@@ -221,11 +221,11 @@ const SMB_SUB_RETAIL_FASHION: SubSectorOption = {
   },
 };
 
-const SMB_SUB_RESTAURANT_QSR: SubSectorOption = {
-  id: 'restaurant_qsr',
+const SMB_SUB_RESTAURANT: SubSectorOption = {
+  id: 'restaurant',
   institutionalId: 'restaurants-fb',
-  labelHe: 'מסעדות, קייטרинг ושירותי מזון',
-  labelEn: 'Restaurants, Catering & Food Service',
+  labelHe: 'מסעדות ופיצריות',
+  labelEn: 'Restaurants & Pizzerias',
   multAdj: 0.82,
   institutional: SMB_INSTITUTIONAL_BY_ID['restaurants-fb'],
   valuation: {
@@ -233,9 +233,9 @@ const SMB_SUB_RESTAURANT_QSR: SubSectorOption = {
     multipleRange: [2.5, 4.0],
     multiplesIndustry: 'food_service',
     disclaimerHe:
-      'מסעדנות, קייטרинг ושירותי מזון — מכפיל EBITDA שמרני (2.0×–3.0×) ו-WACC גבוה (19%) בשל תנודתיות תפעולית.',
+      'מסעדות ופיצריות — מכפיל EBITDA שמרני (2.5×–4.0×); סיכון תפעולי ותנודתיות מלאי גבוהים.',
     disclaimerEn:
-      'Restaurants, catering and food service — conservative EBITDA multiples (2.0×–3.0×) and elevated WACC (19%) reflecting operational volatility.',
+      'Restaurants & pizzerias — conservative EBITDA multiples (2.5×–4.0×); high operational risk.',
   },
   engine: {
     defaultMultipleType: 'EBITDA',
@@ -588,7 +588,7 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
     multiplesSectorPhraseHe: 'בענפי המסעדנות והמזון',
     multiplesSectorPhraseEn: 'in food & restaurants',
     subSectors: [
-      SMB_SUB_RESTAURANT_QSR,
+      SMB_SUB_RESTAURANT,
       SMB_SUB_CAFE,
       SMB_SUB_CATERING,
       SMB_SUB_FRANCHISE,
@@ -893,6 +893,7 @@ const SMB_SUB_SECTOR_MAIN_SECTOR: Record<string, EquifySectorKey> = {
   'retail-fashion': 'retail_unified',
   'restaurants-fb': 'food_service',
   restaurant_qsr: 'food_service',
+  restaurant: 'food_service',
 };
 
 /**
@@ -912,8 +913,8 @@ export function coerceWizardSectorSelection(
   }
 
   // Legacy sub-sector id migration
-  if (nextSub === 'restaurants-fb' || nextSub === 'restaurant') {
-    nextSub = 'restaurant_qsr';
+  if (nextSub === 'restaurants-fb' || nextSub === 'restaurant_qsr') {
+    nextSub = 'restaurant';
     if (nextSector === 'hospitality') {
       nextSector = 'food_service';
     }
