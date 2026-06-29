@@ -24,26 +24,36 @@ export interface ValuationStrategy {
   computeLegs(ctx: ValuationStrategyContext): ValuationStrategyLegs;
 }
 
+/** Implied EBITDA-multiple leg EV (₪K) — must match report coherence anchors. */
+export function computeEbitdaMultipleLegEvK(
+  ebitdaBaseK: number,
+  multiple: number,
+): number {
+  if (!Number.isFinite(ebitdaBaseK) || !Number.isFinite(multiple)) return 0;
+  return Math.round(ebitdaBaseK * multiple * 100) / 100;
+}
+
 /** historical_blended_ebitda — EBITDA multiple leg from backlog-resolved base. */
 class HistoricalBlendedEbitdaStrategy implements ValuationStrategy {
   computeLegs(ctx: ValuationStrategyContext): ValuationStrategyLegs {
     const base = ctx.backlog.baseEbitdaForMultiple;
     return {
       ebitdaBaseForMultiple: base,
-      ebtMult: base * ctx.effectiveMult,
+      ebtMult: computeEbitdaMultipleLegEvK(base, ctx.effectiveMult),
       revMult: 0,
       revMultiplier: 0,
     };
   }
 }
 
-/** current_run_rate_revenue — revenue run-rate multiple (2026) + optional EBITDA reference. */
+/** current_run_rate_revenue — revenue run-rate multiple (2026) + EBITDA reference leg for reports. */
 class CurrentRunRateRevenueStrategy implements ValuationStrategy {
   computeLegs(ctx: ValuationStrategyContext): ValuationStrategyLegs {
+    const base = ctx.backlog.baseEbitdaForMultiple;
     const revMultiplier = ctx.effectiveMult;
     return {
-      ebitdaBaseForMultiple: ctx.currentYearEbitdaK,
-      ebtMult: 0,
+      ebitdaBaseForMultiple: base,
+      ebtMult: computeEbitdaMultipleLegEvK(base, ctx.effectiveMult),
       revMult: ctx.revenueRunRateK * revMultiplier,
       revMultiplier,
     };

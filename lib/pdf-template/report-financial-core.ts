@@ -15,6 +15,17 @@ function absFromReportingK(amountK: number): number {
   return wizardFinancialAbsFromK(amountK);
 }
 
+function resolveEbitdaMultipleEvAbs(
+  ebitdaBaseK: number,
+  ebitdaMultipleEvK: number,
+  effectiveMultiple: number,
+): number {
+  const fromEngine = absFromReportingK(ebitdaMultipleEvK);
+  if (fromEngine > 0) return fromEngine;
+  const baseAbs = absFromReportingK(ebitdaBaseK);
+  return Math.round(baseAbs * effectiveMultiple * 100) / 100;
+}
+
 export function buildReportFinancialCore(
   state: EquifyWizardState,
   fxComputed: ValuationComputed,
@@ -35,7 +46,11 @@ export function buildReportFinancialCore(
     netDebtAbs,
     equityBaseAbs: absFromReportingK(fxComputed.equity),
     dcfEvAbs: absFromReportingK(fxComputed.dcf),
-    ebitdaMultipleEvAbs: absFromReportingK(fxComputed.ebtMult),
+    ebitdaMultipleEvAbs: resolveEbitdaMultipleEvAbs(
+      fxComputed.baseEbitdaForMultiple,
+      fxComputed.ebtMult,
+      computed.effectiveMult,
+    ),
     revenueMultipleEvAbs: absFromReportingK(fxComputed.revMult),
     blendWeights: { ...computed.blendWeights },
   };
@@ -68,6 +83,10 @@ export function synthesizeFinancialCoreFromValuationData(
   const multipleLegEbitdaBaseAbs =
     data.multipleLegEbitdaBase ??
     (data.effectiveMult > 0 ? data.ebitdaEv / data.effectiveMult : data.ebitda);
+  const ebitdaMultipleEvAbs =
+    data.ebitdaEv > 0
+      ? data.ebitdaEv
+      : Math.round(multipleLegEbitdaBaseAbs * data.effectiveMult * 100) / 100;
 
   return {
     auditedEbitda2026Abs: data.ebitda,
@@ -78,7 +97,7 @@ export function synthesizeFinancialCoreFromValuationData(
     netDebtAbs: data.netDebt,
     equityBaseAbs: data.equity,
     dcfEvAbs: data.dcfEv,
-    ebitdaMultipleEvAbs: data.ebitdaEv,
+    ebitdaMultipleEvAbs,
     revenueMultipleEvAbs: data.revenueEv,
     blendWeights: weights,
   };
