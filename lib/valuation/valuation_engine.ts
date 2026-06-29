@@ -22,7 +22,6 @@ import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
 import { resolveValuationBlendWeights } from './valuation_weights_registry';
 import {
   applyScaleAdjustedBlendWeights,
-  applyScaleMultipleDampener,
   resolveScaleModifierProfile,
 } from './scale_modifier_pipeline';
 import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
@@ -31,6 +30,10 @@ import { calibrateCenterOfGravity } from './base_case_calibration';
 import { createValuationStrategy } from './strategies/valuation_strategy';
 import { resolveEbitdaBaseForMultipleLeg } from './cyclical_ebitda_normalization';
 import { resolveActiveEffectiveMultiple } from './multiple_override';
+import {
+  normalizeMultipleForPrivateCompany,
+  type MultipleNormalizationBreakdown,
+} from './normalize_multiple';
 import { computeCapmWacc } from './capm_wacc';
 
 function qualityScoreGrade(qs: number): QualityGrade {
@@ -289,22 +292,25 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     inputs: calibrated,
     sectorConfig,
   });
-  const multipleFloor = sectorConfig.minMultiple * 0.78;
-  let effectiveMult = multipleResolution.activeMultiple;
-  if (!multipleResolution.isManual) {
-    effectiveMult = applyScaleMultipleDampener(
-      effectiveMult,
-      scaleProfile,
-      multipleFloor,
-    );
-  }
-  const automaticEffectiveMult = multipleResolution.isManual
-    ? qsAdjustedMult
-    : applyScaleMultipleDampener(
-        multipleResolution.automaticMultiple,
-        scaleProfile,
-        multipleFloor,
-      );
+
+  const fcfIndustry = resolveCapexIndustryKey(inputs.sector, inputs.subSector);
+  const normalization = normalizeMultipleForPrivateCompany({
+    rawMultiple: multipleResolution.activeMultiple,
+    revenueK: revK,
+    industry: fcfIndustry,
+    lifecycleStage: lifecycle ?? 'growth',
+    isManualOverride: multipleResolution.isManual,
+  });
+  const effectiveMult = normalization.adjustedMultiple;
+
+  const automaticNormalization = normalizeMultipleForPrivateCompany({
+    rawMultiple: multipleResolution.automaticMultiple,
+    revenueK: revK,
+    industry: fcfIndustry,
+    lifecycleStage: lifecycle ?? 'growth',
+    isManualOverride: false,
+  });
+  const automaticEffectiveMult = automaticNormalization.adjustedMultiple;
 
   const dcf = computeDcf({
     ebitdaK: ebitda,
@@ -316,7 +322,6 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     subSector: inputs.subSector,
   });
 
-  const fcfIndustry = resolveCapexIndustryKey(inputs.sector, inputs.subSector);
   const fcffAudit = computeFCFF({
     ebitda,
     revenue: revK,
@@ -422,6 +427,8 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     waccBacklogAdjustment,
     multipleBase: multipleResult.baseMultiple,
     multipleConcentrationPenalty: multipleResult.concentrationPenalty,
+    multipleNormalizationBreakdown: normalization.breakdown,
+    rawMultiple: normalization.breakdown.rawMultiple,
   };
 }
 

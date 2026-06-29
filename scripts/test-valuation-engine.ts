@@ -336,6 +336,68 @@ async function testExchangeRatesLive(): Promise<void> {
   pass(test, `USD=${rates.USD.toFixed(3)} EUR=${rates.EUR.toFixed(3)} (${rates.source})`);
 }
 
+async function testMultiplePathInvariance(): Promise<void> {
+  const test = 'TEST 7 — Multiple path invariance';
+  const saasInputs: Partial<ValuationInputs> = {
+    rev: 20_000,
+    margin: 15,
+    growth: 12,
+    debt: 500,
+    sector: 'saas',
+    subSector: 'b2b_saas',
+    sectorMult: SECTOR_MULTIPLIERS.saas,
+    lifecycle: 'growth',
+    lifecycleAdj: LIFECYCLE_ADJ.growth,
+    recurring: 70,
+    topCustomer: 12,
+    founderDep: false,
+    competition: false,
+    ip: true,
+    contracts: true,
+    revenue2026K: 20_000,
+    ebitda2026K: 3_000,
+    ebitda2025K: 2_700,
+    ebitda2024K: 2_400,
+    revenue2025K: 18_000,
+    revenue2024K: 16_000,
+    backlogSignedK: 0,
+    capexLevelPct: 3,
+    normalizedOwnerSalary: 0,
+  };
+
+  const autoRun = runValuationEngine(
+    baseInputs({
+      ...saasInputs,
+      isManualMultiple: false,
+      customMultiple: null,
+    }),
+  );
+  const rawMultiple = autoRun.computed.configuredDefaultMultiple;
+  const autoEquity = autoRun.computed.equity;
+
+  const manualRun = runValuationEngine(
+    baseInputs({
+      ...saasInputs,
+      isManualMultiple: true,
+      customMultiple: rawMultiple,
+    }),
+  );
+  const manualEquity = manualRun.computed.equity;
+  const deltaPct =
+    autoEquity > 0 ? (Math.abs(autoEquity - manualEquity) / autoEquity) * 100 : 0;
+
+  assert(
+    test,
+    deltaPct < 1,
+    `INVARIANT VIOLATION: auto=${autoEquity.toFixed(0)} manual=${manualEquity.toFixed(0)} delta=${deltaPct.toFixed(2)}% (rawMultiple=${rawMultiple})`,
+  );
+
+  pass(
+    test,
+    `raw=${rawMultiple}x auto=${autoEquity.toFixed(0)} manual=${manualEquity.toFixed(0)} Δ=${deltaPct.toFixed(3)}%`,
+  );
+}
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
@@ -346,6 +408,7 @@ async function main(): Promise<void> {
   testIndustryMultiplesRanges();
   testOwnerSalaryZeroHandling();
   testCustomerConcentrationSmooth();
+  await testMultiplePathInvariance();
   await testExchangeRatesLive();
 
   console.log('\n' + '═'.repeat(72));

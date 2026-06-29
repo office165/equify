@@ -9,6 +9,18 @@ export interface ValuationMultipleInputCopy {
   autoBadge: string;
   manualBadge: string;
   reset: string;
+  multipleEntered?: (value: string) => string;
+  multipleAfterDlom?: (pct: number, value: string) => string;
+  multipleAfterScale?: (value: string) => string;
+  multipleEffective?: (value: string) => string;
+}
+
+export interface MultipleNormalizationBreakdownView {
+  rawMultiple: number;
+  dlomAdjusted: number;
+  scaleAdjusted: number;
+  finalMultiple: number;
+  dlomFactor: number;
 }
 
 export interface ValuationMultipleInputProps {
@@ -26,6 +38,7 @@ export interface ValuationMultipleInputProps {
   copy: ValuationMultipleInputCopy;
   locale?: 'he' | 'en';
   ariaLabel?: string;
+  normalizationBreakdown?: MultipleNormalizationBreakdownView | null;
 }
 
 function formatMultipleDisplay(value: number): string {
@@ -59,6 +72,7 @@ export function ValuationMultipleInput({
   copy,
   locale = 'he',
   ariaLabel,
+  normalizationBreakdown,
 }: ValuationMultipleInputProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -199,14 +213,43 @@ export function ValuationMultipleInput({
         </div>
 
         {isManualMultiple ? (
-          <div className="flex w-full justify-start">
-            <button
-              type="button"
-              className="shrink-0 whitespace-nowrap text-xs text-gray-500 transition-colors duration-300 ease-in-out hover:text-teal-400 cursor-pointer"
-              onClick={handleReset}
-            >
-              {copy.reset}
-            </button>
+          <div className="flex w-full flex-col gap-1">
+            {normalizationBreakdown && copy.multipleEntered ? (
+              <div className="vm-mult-breakdown mono text-xs text-gray-400 leading-relaxed">
+                <div>{copy.multipleEntered(formatMultipleWithSuffix(normalizationBreakdown.rawMultiple))}</div>
+                {copy.multipleAfterDlom ? (
+                  <div>
+                    {copy.multipleAfterDlom(
+                      Math.round((1 - normalizationBreakdown.dlomFactor) * 100),
+                      formatMultipleWithSuffix(normalizationBreakdown.dlomAdjusted),
+                    )}
+                  </div>
+                ) : null}
+                {copy.multipleAfterScale ? (
+                  <div>
+                    {copy.multipleAfterScale(
+                      formatMultipleWithSuffix(normalizationBreakdown.scaleAdjusted),
+                    )}
+                  </div>
+                ) : null}
+                {copy.multipleEffective ? (
+                  <div>
+                    {copy.multipleEffective(
+                      formatMultipleWithSuffix(normalizationBreakdown.finalMultiple),
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="flex w-full justify-start">
+              <button
+                type="button"
+                className="shrink-0 whitespace-nowrap text-xs text-gray-500 transition-colors duration-300 ease-in-out hover:text-teal-400 cursor-pointer"
+                onClick={handleReset}
+              >
+                {copy.reset}
+              </button>
+            </div>
           </div>
         ) : null}
       </div>

@@ -150,6 +150,10 @@ export interface EquifyWizardStepStrings {
     multipleAutoBadge: string;
     multipleManualBadge: string;
     multipleReset: string;
+    multipleEntered?: (value: string) => string;
+    multipleAfterDlom?: (pct: number, value: string) => string;
+    multipleAfterScale?: (value: string) => string;
+    multipleEffective?: (value: string) => string;
   };
   step3: {
     titlePrefix: string;
@@ -375,6 +379,10 @@ const HE: EquifyWizardStepStrings = {
     multipleAutoBadge: '✨ אוטומטי (לפי ענף)',
     multipleManualBadge: '✍️ ידני (מצב מומחה)',
     multipleReset: '🔄 אפס לממוצע הענף',
+    multipleEntered: (value) => `מכפיל שהוזן: ${value}`,
+    multipleAfterDlom: (pct, value) => `אחרי DLOM (${pct}%): ${value}`,
+    multipleAfterScale: (value) => `אחרי הנחת גודל: ${value}`,
+    multipleEffective: (value) => `מכפיל אפקטיבי: ${value}`,
   },
   step3: {
     titlePrefix: 'מדדי סיכון',
@@ -572,6 +580,10 @@ const EN: EquifyWizardStepStrings = {
     multipleAutoBadge: '✨ Auto (sector)',
     multipleManualBadge: '✍️ Manual (expert)',
     multipleReset: '🔄 Reset to sector default',
+    multipleEntered: (value) => `Entered multiple: ${value}`,
+    multipleAfterDlom: (pct, value) => `After DLOM (${pct}%): ${value}`,
+    multipleAfterScale: (value) => `After size discount: ${value}`,
+    multipleEffective: (value) => `Effective multiple: ${value}`,
   },
   step3: {
     titlePrefix: 'Risk metrics',

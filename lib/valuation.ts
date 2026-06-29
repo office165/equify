@@ -33,6 +33,11 @@ export {
   resolveSectorMethodologyKey,
 } from './valuation/sector_methodology_resolver';
 export {
+  normalizeMultipleForPrivateCompany,
+  PRIVATE_COMPANY_DLOM_FACTOR,
+  type MultipleNormalizationBreakdown,
+} from './valuation/normalize_multiple';
+export {
   resolveActiveEffectiveMultiple,
   resolveConfiguredDefaultMultiple,
   type ActiveMultipleResolution,
@@ -294,6 +299,10 @@ export interface ValuationComputed {
   waccBacklogAdjustment: number;
   multipleBase: number;
   multipleConcentrationPenalty: number;
+  /** DLOM + scale pipeline applied to the active multiple (manual or auto). */
+  multipleNormalizationBreakdown?: import('./valuation/normalize_multiple').MultipleNormalizationBreakdown;
+  /** Raw multiple before institutional normalization (×). */
+  rawMultiple?: number;
 }
 
 export interface ScenarioRow {

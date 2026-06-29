@@ -183,7 +183,14 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
             autoBadge: t.step2.multipleAutoBadge,
             manualBadge: t.step2.multipleManualBadge,
             reset: t.step2.multipleReset,
+            multipleEntered: t.step2.multipleEntered,
+            multipleAfterDlom: t.step2.multipleAfterDlom,
+            multipleAfterScale: t.step2.multipleAfterScale,
+            multipleEffective: t.step2.multipleEffective,
           }}
+          normalizationBreakdown={
+            financials.isManualMultiple ? computed.multipleNormalizationBreakdown : null
+          }
           locale={locale}
           ariaLabel={t.step2.effectiveMultiple}
         />
