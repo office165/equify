@@ -18,16 +18,15 @@ export interface ScenarioNarrativeParams {
 }
 
 const SECTOR_MARKET_HE: Record<EquifySectorKey, string> = {
-  hospitality: 'שוק האירוח והשירותים',
+  hospitality: 'שוק המלונאות והאירוח',
   saas: 'שוק התוכנה וה-SaaS',
   fintech: 'שוק הפינטק והשירותים הפיננסיים',
   cyber: 'שוק הסייבר והטכנולוגיה',
   health: 'שוק הבריאות והביוטק',
   services: 'שוק השירותים המקצועיים',
   industry: 'שוק התעשייה והייצור',
-  ecom: 'שוק המסחר, הקמעונאות והאיקומרס',
-  retail_trade: 'שוק המסחר, הקמעונאות והאיקומרס',
-  food_service: 'שוק המסעדנות ושירותי המזון',
+  retail_unified: 'שוק הקמעונאות והמסחר',
+  food_service: 'שוק המסעדנות והמזון',
   energy: 'שוק האנרגיה והתשתיות',
   defense_aerospace: 'שוק הביטחון, התעופה והחלל',
   real_estate: 'שוק הנדל"ן, הבינוי והתשתיות',
@@ -35,15 +34,14 @@ const SECTOR_MARKET_HE: Record<EquifySectorKey, string> = {
 };
 
 const SECTOR_MARKET_EN: Record<EquifySectorKey, string> = {
-  hospitality: 'hospitality and services',
+  hospitality: 'hotels and hospitality',
   saas: 'software and SaaS',
   fintech: 'fintech and financial services',
   cyber: 'cyber and technology',
   health: 'healthcare and biotech',
   services: 'professional services',
   industry: 'industry and manufacturing',
-  ecom: 'retail, commerce and e-commerce',
-  retail_trade: 'retail, commerce and e-commerce',
+  retail_unified: 'retail and commerce',
   food_service: 'food service and restaurants',
   energy: 'energy and infrastructure',
   defense_aerospace: 'defense, aviation and aerospace',
@@ -172,6 +170,15 @@ export function getScenarioNarrative(
 }
 
 export function resolveEquifySectorKey(sector?: string): EquifySectorKey {
+  const legacyMap: Record<string, EquifySectorKey> = {
+    ecom: 'retail_unified',
+    retail_trade: 'retail_unified',
+    food: 'food_service',
+  };
+  if (sector && legacyMap[sector]) {
+    return legacyMap[sector];
+  }
+
   const keys: EquifySectorKey[] = [
     'hospitality',
     'saas',
@@ -180,8 +187,7 @@ export function resolveEquifySectorKey(sector?: string): EquifySectorKey {
     'health',
     'services',
     'industry',
-    'ecom',
-    'retail_trade',
+    'retail_unified',
     'food_service',
     'energy',
     'defense_aerospace',

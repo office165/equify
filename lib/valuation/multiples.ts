@@ -1,19 +1,15 @@
+import { resolveIndustryKey } from './industry_migration';
+
+export type { Industry } from './industry_types';
+export {
+  migrateLegacyIndustryKey,
+  migrateLegacyEquifySectorKey,
+  resolveIndustryKey,
+} from './industry_migration';
+
 export type LifecycleStage = 'seed' | 'early' | 'growth' | 'mature' | 'distressed';
 
-export type Industry =
-  | 'saas'
-  | 'fintech'
-  | 'healthtech'
-  | 'cyber'
-  | 'realestate'
-  | 'construction'
-  | 'manufacturing'
-  | 'retail'
-  | 'food'
-  | 'professional_services'
-  | 'defense'
-  | 'energy'
-  | 'other';
+import type { Industry } from './industry_types';
 
 export interface MultiplesRange {
   evEbitda: [number, number];
@@ -23,6 +19,12 @@ export interface MultiplesRange {
   pbv?: [number, number];
 }
 
+/**
+ * Israeli private-market multiples (2024–2026) — Damodaran baselines + 20% DLOM calibration.
+ * food_service: standalone restaurants (CBS ענף 56) — never hotel multiples.
+ * hospitality: hotels & lodging only.
+ * retail_unified: thin-margin commerce (physical + D2C + marketplace).
+ */
 export const ISRAEL_MULTIPLES_2026: Record<Industry, MultiplesRange> = {
   saas: {
     evEbitda: [12, 18],
@@ -66,17 +68,29 @@ export const ISRAEL_MULTIPLES_2026: Record<Industry, MultiplesRange> = {
     evSales: [0.5, 1.0],
     pe: [8, 14],
   },
-  retail: {
-    evEbitda: [6, 9],
-    evEbita: [7, 11],
-    evSales: [0.3, 0.6],
-    pe: [10, 18],
+  /** Unified retail & commerce — replaces legacy retail/ecom split. */
+  retail_unified: {
+    evEbitda: [4.5, 8.0],
+    evEbita: [5.5, 9.5],
+    evSales: [0.25, 0.55],
+    pe: [9, 16],
   },
-  food: {
-    evEbitda: [7, 10],
-    evEbita: [8, 12],
-    evSales: [0.8, 1.4],
-    pe: [10, 18],
+  /**
+   * Food & restaurants (ענף 56) — QSR 3–4×, chains 5–7×, franchise up to 9×.
+   * Asset-heavy kitchens; EBITDA margin cap ~22%.
+   */
+  food_service: {
+    evEbitda: [3.5, 6.5],
+    evEbita: [4.0, 8.0],
+    evSales: [0.35, 0.85],
+    pe: [8, 15],
+  },
+  /** Hotels & lodging only — no restaurant sub-sectors. */
+  hospitality: {
+    evEbitda: [7.5, 12.0],
+    evEbita: [8.5, 14.0],
+    evSales: [1.2, 2.8],
+    pe: [12, 22],
   },
   professional_services: {
     evEbitda: [7, 10],
@@ -112,8 +126,9 @@ export const INDUSTRY_GROWTH_RATES: Record<Industry, number> = {
   realestate: 0.08,
   construction: 0.06,
   manufacturing: 0.05,
-  retail: 0.04,
-  food: 0.05,
+  retail_unified: 0.035,
+  food_service: 0.045,
+  hospitality: 0.055,
   professional_services: 0.08,
   defense: 0.1,
   energy: 0.15,
@@ -130,6 +145,10 @@ export interface SelectedMultiple {
 
 export function getMedianMultiple(range: [number, number]): number {
   return (range[0] + range[1]) / 2;
+}
+
+export function getIndustryMultiples(industry: Industry | string): MultiplesRange {
+  return ISRAEL_MULTIPLES_2026[resolveIndustryKey(industry)];
 }
 
 export function selectPrimaryMultiple(
@@ -188,16 +207,12 @@ export function calculateValuationRange(
   multipleRange: [number, number],
   isPrivate: boolean,
 ): ValuationRangeResult {
-  // DLOM (Discount for Lack of Marketability): 20% for private companies
-  const dlom = isPrivate ? 0.80 : 1.0;
+  const dlom = isPrivate ? 0.8 : 1.0;
   const median = getMedianMultiple(multipleRange);
 
-  // Bear: low multiple × DLOM × additional 10% stress
-  // Base: median multiple × DLOM
-  // Bull: high multiple × DLOM × slight optimism premium
   return {
-    low:  Math.round(metric * multipleRange[0] * dlom * 0.92 * 100) / 100,
-    base: Math.round(metric * median            * dlom         * 100) / 100,
-    high: Math.round(metric * multipleRange[1]  * dlom * 1.05  * 100) / 100,
+    low: Math.round(metric * multipleRange[0] * dlom * 0.92 * 100) / 100,
+    base: Math.round(metric * median * dlom * 100) / 100,
+    high: Math.round(metric * multipleRange[1] * dlom * 1.05 * 100) / 100,
   };
 }

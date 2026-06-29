@@ -179,7 +179,7 @@ const SMB_SUB_RETAIL_SUPERMARKETS: SubSectorOption = {
   valuation: {
     primaryMultiple: 'ev_ebitda',
     multipleRange: [4.0, 5.0],
-    multiplesIndustry: 'retail',
+    multiplesIndustry: 'retail_unified',
     disclaimerHe:
       'סופרים שכונתיים, רשתות מזון וחנויות נוחות — פרופיל סיכון נמוך יותר; מכפיל EBITDA יציב (4.0×–5.0×).',
     disclaimerEn:
@@ -205,7 +205,7 @@ const SMB_SUB_RETAIL_FASHION: SubSectorOption = {
   valuation: {
     primaryMultiple: 'ev_ebitda',
     multipleRange: [3.0, 4.0],
-    multiplesIndustry: 'retail',
+    multiplesIndustry: 'retail_unified',
     disclaimerHe:
       'חנויות בגדים, הנעלה ואקססוריז — מכפיל מושפע ממלאי מת, עונתיות וצריכה דיסcretionary (3.0×–4.0×).',
     disclaimerEn:
@@ -221,8 +221,8 @@ const SMB_SUB_RETAIL_FASHION: SubSectorOption = {
   },
 };
 
-const SMB_SUB_RESTAURANTS_FB: SubSectorOption = {
-  id: 'restaurants-fb',
+const SMB_SUB_RESTAURANT_QSR: SubSectorOption = {
+  id: 'restaurant_qsr',
   institutionalId: 'restaurants-fb',
   labelHe: 'מסעדות, קייטרинг ושירותי מזון',
   labelEn: 'Restaurants, Catering & Food Service',
@@ -230,8 +230,8 @@ const SMB_SUB_RESTAURANTS_FB: SubSectorOption = {
   institutional: SMB_INSTITUTIONAL_BY_ID['restaurants-fb'],
   valuation: {
     primaryMultiple: 'ev_ebitda',
-    multipleRange: [2.0, 3.0],
-    multiplesIndustry: 'food',
+    multipleRange: [2.5, 4.0],
+    multiplesIndustry: 'food_service',
     disclaimerHe:
       'מסעדנות, קייטרинг ושירותי מזון — מכפיל EBITDA שמרני (2.0×–3.0×) ו-WACC גבוה (19%) בשל תנודתיות תפעולית.',
     disclaimerEn:
@@ -239,11 +239,87 @@ const SMB_SUB_RESTAURANTS_FB: SubSectorOption = {
   },
   engine: {
     defaultMultipleType: 'EBITDA',
-    defaultMultipleValue: 2.5,
-    weightDcf: 0.3,
-    weightEbitda: 0.7,
-    waccBasePct: 19.0,
+    defaultMultipleValue: 3.5,
+    weightDcf: 0.4,
+    weightEbitda: 0.6,
+    waccBasePct: 15.5,
     isCyclicalNormalized: false,
+  },
+};
+
+const SMB_SUB_CAFE: SubSectorOption = {
+  id: 'cafe',
+  labelHe: 'בתי קפה ומשקאות',
+  labelEn: 'Cafes & Beverages',
+  multAdj: 0.88,
+  valuation: {
+    primaryMultiple: 'ev_ebitda',
+    multipleRange: [3.0, 5.0],
+    multiplesIndustry: 'food_service',
+  },
+  engine: {
+    defaultMultipleType: 'EBITDA',
+    defaultMultipleValue: 4.0,
+    weightDcf: 0.4,
+    weightEbitda: 0.6,
+    waccBasePct: 15.0,
+  },
+};
+
+const SMB_SUB_CATERING: SubSectorOption = {
+  id: 'catering',
+  labelHe: 'קייטרינג ואירועים',
+  labelEn: 'Catering & Events',
+  multAdj: 0.9,
+  valuation: {
+    primaryMultiple: 'ev_ebitda',
+    multipleRange: [3.5, 5.5],
+    multiplesIndustry: 'food_service',
+  },
+  engine: {
+    defaultMultipleType: 'EBITDA',
+    defaultMultipleValue: 4.5,
+    weightDcf: 0.4,
+    weightEbitda: 0.6,
+    waccBasePct: 14.5,
+  },
+};
+
+const SMB_SUB_FRANCHISE: SubSectorOption = {
+  id: 'franchise',
+  labelHe: 'רשתות מזון וזכיינות',
+  labelEn: 'Food Chains & Franchise',
+  multAdj: 1.05,
+  valuation: {
+    primaryMultiple: 'ev_ebitda',
+    multipleRange: [5.0, 8.0],
+    multiplesIndustry: 'food_service',
+  },
+  engine: {
+    defaultMultipleType: 'EBITDA',
+    defaultMultipleValue: 6.5,
+    weightDcf: 0.4,
+    weightEbitda: 0.6,
+    waccBasePct: 14.0,
+  },
+};
+
+const SMB_SUB_DELIVERY: SubSectorOption = {
+  id: 'delivery',
+  labelHe: 'מזון מוכן ודלוורי',
+  labelEn: 'Ready Food & Delivery',
+  multAdj: 0.95,
+  valuation: {
+    primaryMultiple: 'ev_ebitda',
+    multipleRange: [3.0, 5.5],
+    multiplesIndustry: 'food_service',
+  },
+  engine: {
+    defaultMultipleType: 'EBITDA',
+    defaultMultipleValue: 4.2,
+    weightDcf: 0.4,
+    weightEbitda: 0.6,
+    waccBasePct: 15.5,
   },
 };
 
@@ -264,16 +340,85 @@ export interface IndustryConfigEntry {
 export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
   hospitality: {
     sectorKey: 'hospitality',
-    chipLabelHe: 'מלונאות / אירוח',
-    chipLabelEn: 'Hospitality & Services',
-    industryCode: 'Hospitality',
+    chipLabelHe: 'מלונאות ואירוח',
+    chipLabelEn: 'Hotels & Hospitality',
+    industryCode: 'מלונאות ואירוח',
     maDealCount: 12,
-    multiplesSectorPhraseHe: 'בענפי האירוח והשירותים',
-    multiplesSectorPhraseEn: 'in hospitality & services',
+    multiplesSectorPhraseHe: 'בענפי המלונאות והאירוח',
+    multiplesSectorPhraseEn: 'in hotels & hospitality',
     subSectors: [
-      { id: 'boutique_hotel', labelHe: 'מלון בוטיק', labelEn: 'Boutique hotel', multAdj: 1.05 },
-      { id: 'hotel_chain', labelHe: 'רשת מלונות', labelEn: 'Hotel chain', multAdj: 1.12 },
-      { id: 'events', labelHe: 'אירועים / נופש', labelEn: 'Events & leisure', multAdj: 0.98 },
+      {
+        id: 'boutique_hotel',
+        labelHe: 'מלון בוטיק',
+        labelEn: 'Boutique Hotel',
+        multAdj: 1.05,
+        valuation: {
+          primaryMultiple: 'ev_ebitda',
+          multipleRange: [8.0, 11.0],
+          multiplesIndustry: 'hospitality',
+        },
+        engine: {
+          defaultMultipleType: 'EBITDA',
+          defaultMultipleValue: 9.5,
+          weightDcf: 0.55,
+          weightEbitda: 0.45,
+          waccBasePct: 13.8,
+        },
+      },
+      {
+        id: 'hotel_chain',
+        labelHe: 'רשת מלונות',
+        labelEn: 'Hotel Chain',
+        multAdj: 1.12,
+        valuation: {
+          primaryMultiple: 'ev_ebitda',
+          multipleRange: [9.0, 12.0],
+          multiplesIndustry: 'hospitality',
+        },
+        engine: {
+          defaultMultipleType: 'EBITDA',
+          defaultMultipleValue: 10.5,
+          weightDcf: 0.55,
+          weightEbitda: 0.45,
+          waccBasePct: 13.5,
+        },
+      },
+      {
+        id: 'vacation',
+        labelHe: 'אירועים ונופש',
+        labelEn: 'Events & Vacation',
+        multAdj: 0.98,
+        valuation: {
+          primaryMultiple: 'ev_ebitda',
+          multipleRange: [7.5, 10.5],
+          multiplesIndustry: 'hospitality',
+        },
+        engine: {
+          defaultMultipleType: 'EBITDA',
+          defaultMultipleValue: 9.0,
+          weightDcf: 0.55,
+          weightEbitda: 0.45,
+          waccBasePct: 13.8,
+        },
+      },
+      {
+        id: 'airbnb_mgmt',
+        labelHe: 'ניהול נכסי אירוח',
+        labelEn: 'Short-term Rental Mgmt',
+        multAdj: 1.0,
+        valuation: {
+          primaryMultiple: 'ev_ebitda',
+          multipleRange: [7.0, 10.0],
+          multiplesIndustry: 'hospitality',
+        },
+        engine: {
+          defaultMultipleType: 'EBITDA',
+          defaultMultipleValue: 8.5,
+          weightDcf: 0.5,
+          weightEbitda: 0.5,
+          waccBasePct: 14.0,
+        },
+      },
     ],
   },
   saas: {
@@ -366,46 +511,88 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
       { id: 'traditional', labelHe: 'תעשייה מסורתית', labelEn: 'Traditional mfg', multAdj: 0.85 },
     ],
   },
-  ecom: {
-    sectorKey: 'ecom',
-    chipLabelHe: 'קמעונאות / איקומרס',
-    chipLabelEn: 'E-Commerce',
-    industryCode: 'E-Commerce',
+  retail_unified: {
+    sectorKey: 'retail_unified',
+    chipLabelHe: 'קמעונאות ומסחר',
+    chipLabelEn: 'Retail & Commerce',
+    industryCode: 'קמעונאות ומסחר',
     maDealCount: 12,
-    multiplesSectorPhraseHe: 'בענפי המסחר והאיקומרס',
-    multiplesSectorPhraseEn: 'in retail & e-commerce',
-    subSectors: [
-      { id: 'd2c', labelHe: 'D2C ומותגי ישיר', labelEn: 'D2C brand', multAdj: 1.05 },
-      { id: 'marketplace_ecom', labelHe: 'Marketplace מסחרי וזירות סחר', labelEn: 'Marketplace', multAdj: 0.95 },
-      { id: 'subscription', labelHe: 'מודל מנויים וקופסאות הפצה', labelEn: 'Subscription', multAdj: 1.02 },
-    ],
-  },
-  retail_trade: {
-    sectorKey: 'retail_trade',
-    chipLabelHe: 'מסחר וקמעונאות',
-    chipLabelEn: 'Retail Trade',
-    industryCode: 'Retail Trade',
-    maDealCount: 12,
-    multiplesSectorPhraseHe: 'בענפי המסחר והקמעונאות הפיזית',
-    multiplesSectorPhraseEn: 'in physical retail trade',
+    multiplesSectorPhraseHe: 'בענפי הקמעונאות והמסחר',
+    multiplesSectorPhraseEn: 'in retail & commerce',
     subSectors: [
       SMB_SUB_RETAIL_SUPERMARKETS,
-      { id: 'd2c', labelHe: 'D2C ומותגי ישיר', labelEn: 'D2C brand', multAdj: 1.05 },
+      {
+        id: 'd2c',
+        labelHe: 'D2C ומותגי ישיר',
+        labelEn: 'D2C & Direct Brands',
+        multAdj: 1.05,
+        valuation: {
+          primaryMultiple: 'ev_ebitda',
+          multipleRange: [5.0, 7.5],
+          multiplesIndustry: 'retail_unified',
+        },
+        engine: {
+          defaultMultipleType: 'EBITDA',
+          defaultMultipleValue: 6.0,
+          weightDcf: 0.35,
+          weightEbitda: 0.65,
+          waccBasePct: 14.0,
+        },
+      },
       SMB_SUB_RETAIL_FASHION,
-      { id: 'marketplace_retail', labelHe: 'Marketplace מסחרי וזירות סחר', labelEn: 'Marketplace & trade', multAdj: 0.95 },
+      {
+        id: 'marketplace',
+        labelHe: 'Marketplace מסחרי',
+        labelEn: 'Commercial Marketplace',
+        multAdj: 0.95,
+        valuation: {
+          primaryMultiple: 'ev_revenue',
+          multipleRange: [0.4, 0.8],
+          multiplesIndustry: 'retail_unified',
+        },
+        engine: {
+          defaultMultipleType: 'Revenue',
+          defaultMultipleValue: 0.6,
+          weightDcf: 0.3,
+          weightEbitda: 0,
+          weightRev: 0.7,
+          waccBasePct: 14.5,
+        },
+      },
+      {
+        id: 'specialty',
+        labelHe: 'חנויות מתמחות',
+        labelEn: 'Specialty Retail',
+        multAdj: 0.9,
+        valuation: {
+          primaryMultiple: 'ev_ebitda',
+          multipleRange: [4.0, 6.5],
+          multiplesIndustry: 'retail_unified',
+        },
+        engine: {
+          defaultMultipleType: 'EBITDA',
+          defaultMultipleValue: 5.2,
+          weightDcf: 0.35,
+          weightEbitda: 0.65,
+          waccBasePct: 14.8,
+        },
+      },
     ],
   },
   food_service: {
     sectorKey: 'food_service',
-    chipLabelHe: 'מסעדנות ושירותי מזון',
-    chipLabelEn: 'Food Service & Restaurants',
-    industryCode: 'Food Service',
+    chipLabelHe: 'מזון ומסעדנות',
+    chipLabelEn: 'Food & Restaurant',
+    industryCode: 'מזון ומסעדנות',
     maDealCount: 12,
-    multiplesSectorPhraseHe: 'בענפי המסעדנות ושירותי המזון',
-    multiplesSectorPhraseEn: 'in food service & restaurants',
+    multiplesSectorPhraseHe: 'בענפי המסעדנות והמזון',
+    multiplesSectorPhraseEn: 'in food & restaurants',
     subSectors: [
-      SMB_SUB_RESTAURANTS_FB,
-      { id: 'subscription', labelHe: 'מודל מנויים וקופסאות הפצה', labelEn: 'Subscription box', multAdj: 1.02 },
+      SMB_SUB_RESTAURANT_QSR,
+      SMB_SUB_CAFE,
+      SMB_SUB_CATERING,
+      SMB_SUB_FRANCHISE,
+      SMB_SUB_DELIVERY,
     ],
   },
   energy: {
@@ -682,14 +869,13 @@ export function resolveSubSectorMultiplesIndustry(
     real_estate: 'realestate',
     industry: 'manufacturing',
     services: 'professional_services',
-    hospitality: 'food',
+    hospitality: 'hospitality',
     saas: 'saas',
     fintech: 'fintech',
     cyber: 'cyber',
     health: 'healthtech',
-    ecom: 'retail',
-    retail_trade: 'retail',
-    food_service: 'food',
+    retail_unified: 'retail_unified',
+    food_service: 'food_service',
     energy: 'energy',
     defense_aerospace: 'defense',
     other: 'other',
@@ -701,14 +887,12 @@ export function getSubSectorsForSector(sector: EquifySectorKey): SubSectorOption
   return getIndustryConfig(sector).subSectors;
 }
 
-/** Main sectors hidden from Step 1 — consolidated under a parent sector. */
-const WIZARD_HIDDEN_MAIN_SECTORS: EquifySectorKey[] = ['food_service'];
-
-/** Maps legacy wizard sector+sub-sector pairs to dedicated SMB main sectors. */
+/** Maps legacy wizard sub-sector ids to their dedicated main sector. */
 const SMB_SUB_SECTOR_MAIN_SECTOR: Record<string, EquifySectorKey> = {
-  'retail-supermarkets': 'retail_trade',
-  'retail-fashion': 'retail_trade',
-  'restaurants-fb': 'hospitality',
+  'retail-supermarkets': 'retail_unified',
+  'retail-fashion': 'retail_unified',
+  'restaurants-fb': 'food_service',
+  restaurant_qsr: 'food_service',
 };
 
 /**
@@ -722,31 +906,35 @@ export function coerceWizardSectorSelection(
   let nextSector = sector;
   let nextSub = subSector ?? '';
 
-  if (nextSector === 'food_service') {
-    nextSector = 'hospitality';
-    if (!nextSub) {
-      nextSub = 'restaurants-fb';
-    }
+  // Legacy EquifySectorKey migration
+  if ((nextSector as string) === 'ecom' || (nextSector as string) === 'retail_trade') {
+    nextSector = 'retail_unified';
   }
 
-  if (nextSector === 'hospitality' && nextSub === 'restaurant') {
-    nextSub = 'restaurants-fb';
+  // Legacy sub-sector id migration
+  if (nextSub === 'restaurants-fb' || nextSub === 'restaurant') {
+    nextSub = 'restaurant_qsr';
+    if (nextSector === 'hospitality') {
+      nextSector = 'food_service';
+    }
+  }
+  if (nextSub === 'events') {
+    nextSub = 'vacation';
+  }
+  if (nextSub === 'marketplace_ecom' || nextSub === 'marketplace_retail') {
+    nextSub = 'marketplace';
+    if ((nextSector as string) === 'ecom' || (nextSector as string) === 'retail_trade') {
+      nextSector = 'retail_unified';
+    }
+  }
+  if (nextSub === 'retail' && (nextSector as string) === 'ecom') {
+    nextSector = 'retail_unified';
+    nextSub = 'retail-supermarkets';
   }
 
   const dedicatedMain = nextSub ? SMB_SUB_SECTOR_MAIN_SECTOR[nextSub] : undefined;
   if (dedicatedMain && nextSector !== dedicatedMain) {
-    if (
-      (dedicatedMain === 'retail_trade' && nextSector === 'ecom') ||
-      (dedicatedMain === 'hospitality' &&
-        (sector === 'food_service' || nextSector === 'hospitality'))
-    ) {
-      nextSector = dedicatedMain;
-    }
-  }
-
-  if (nextSector === 'ecom' && nextSub === 'retail') {
-    nextSector = 'retail_trade';
-    nextSub = 'retail-supermarkets';
+    nextSector = dedicatedMain;
   }
 
   const subs = getSubSectorsForSector(nextSector);
@@ -781,10 +969,8 @@ export function getSectorDisplayLabel(
 
 export const SECTOR_SELECT_OPTIONS = (
   Object.keys(INDUSTRY_CONFIG) as EquifySectorKey[]
-)
-  .filter((key) => !WIZARD_HIDDEN_MAIN_SECTORS.includes(key))
-  .map((key) => ({
-    key,
-    labelHe: INDUSTRY_CONFIG[key].chipLabelHe,
-    labelEn: INDUSTRY_CONFIG[key].chipLabelEn,
-  }));
+).map((key) => ({
+  key,
+  labelHe: INDUSTRY_CONFIG[key].chipLabelHe,
+  labelEn: INDUSTRY_CONFIG[key].chipLabelEn,
+}));

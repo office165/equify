@@ -41,11 +41,19 @@ export function assertSubSectorBlendWeightsSum(
  * Aliases (e.g. hotel_boutique → boutique_hotel) are resolved at lookup time.
  */
 const WIZARD_SUB_SECTOR_BLEND_WEIGHTS: Record<string, SubSectorBlendWeightEntry> = {
-  // Hospitality
+  // Hospitality (hotels only)
   boutique_hotel: { dcf: 0.5, multiple: 0.5 },
   hotel_chain: { dcf: 0.6, multiple: 0.4 },
-  restaurant: { dcf: 0.3, multiple: 0.7 },
-  'restaurants-fb': { dcf: 0.3, multiple: 0.7 },
+  vacation: { dcf: 0.4, multiple: 0.6 },
+  airbnb_mgmt: { dcf: 0.45, multiple: 0.55 },
+  // Food service
+  restaurant_qsr: { dcf: 0.4, multiple: 0.6 },
+  cafe: { dcf: 0.4, multiple: 0.6 },
+  catering: { dcf: 0.4, multiple: 0.6 },
+  franchise: { dcf: 0.4, multiple: 0.6 },
+  delivery: { dcf: 0.4, multiple: 0.6 },
+  restaurant: { dcf: 0.4, multiple: 0.6 },
+  'restaurants-fb': { dcf: 0.4, multiple: 0.6 },
   events: { dcf: 0.4, multiple: 0.6 },
   // SaaS / Tech
   b2b_saas: { dcf: 0.3, multiple: 0.7 },
@@ -77,9 +85,10 @@ const WIZARD_SUB_SECTOR_BLEND_WEIGHTS: Record<string, SubSectorBlendWeightEntry>
   distribution: { dcf: 0.6, multiple: 0.4 },
   food_bev: { dcf: 0.5, multiple: 0.5 },
   traditional: { dcf: 0.6, multiple: 0.4 },
-  // Retail / E-com
+  // Retail / Commerce
   d2c: { dcf: 0.35, multiple: 0.65 },
   marketplace_ecom: { dcf: 0.3, multiple: 0.7 },
+  specialty: { dcf: 0.35, multiple: 0.65 },
   retail: { dcf: 0.4, multiple: 0.6 },
   'retail-supermarkets': { dcf: 0.4, multiple: 0.6 },
   'retail-fashion': { dcf: 0.35, multiple: 0.65 },
@@ -104,11 +113,12 @@ const WIZARD_SUB_SECTOR_BLEND_WEIGHTS: Record<string, SubSectorBlendWeightEntry>
 const SUB_SECTOR_WEIGHT_ALIASES: Record<string, keyof typeof WIZARD_SUB_SECTOR_BLEND_WEIGHTS> =
   {
     hotel_boutique: 'boutique_hotel',
-    restaurants: 'restaurants-fb',
-    restaurant: 'restaurants-fb',
-    'restaurants-fb': 'restaurants-fb',
-    restaurants_fb: 'restaurants-fb',
-    events_leisure: 'events',
+    restaurants: 'restaurant_qsr',
+    restaurant: 'restaurant_qsr',
+    'restaurants-fb': 'restaurant_qsr',
+    restaurants_fb: 'restaurant_qsr',
+    events_leisure: 'vacation',
+    events: 'vacation',
     b2c_tech: 'b2c_saas',
     devtools_infra: 'devtools',
     marketplace_tech: 'marketplace',
@@ -126,8 +136,9 @@ const SUB_SECTOR_WEIGHT_ALIASES: Record<string, keyof typeof WIZARD_SUB_SECTOR_B
     food_beverage: 'food_bev',
     traditional_industry: 'traditional',
     d2c_brand: 'd2c',
-    marketplace_retail: 'marketplace_ecom',
-    physical_retail: 'retail',
+    marketplace_retail: 'marketplace',
+    marketplace_ecom: 'marketplace',
+    physical_retail: 'specialty',
     retail_supermarkets: 'retail-supermarkets',
     retail_fashion: 'retail-fashion',
     subscriptions_box: 'subscription',

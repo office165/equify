@@ -53,19 +53,46 @@ function parseWizardNumber(value: string, fallback = 0): number {
 export function mapWizardIndustry(industry: string): Industry {
   const key = industry.trim();
   const mapping: Record<string, Industry> = {
+    // Tech
     'Software/SaaS': 'saas',
     FinTech: 'fintech',
     HealthTech: 'healthtech',
     Biotech: 'healthtech',
     Cybersecurity: 'cyber',
-    'E-Commerce': 'retail',
+
+    // Commerce — unified
+    'E-Commerce': 'retail_unified',
+    'קמעונאות ומסחר': 'retail_unified',
+    'מסחר וקמעונאות': 'retail_unified',
+    'מסחר, קמעונאות ואיקומרס': 'retail_unified',
+    retail_trade: 'retail_unified',
+    ecom: 'retail_unified',
+
+    // Food — standalone
+    'מזון ומסעדנות': 'food_service',
+    food_service: 'food_service',
+    מסעדנות: 'food_service',
+    food: 'food_service',
+
+    // Hospitality — hotels only
+    'מלונאות / אירוח': 'hospitality',
+    'מלונאות ואירוח': 'hospitality',
+    hospitality: 'hospitality',
+
+    // Others
     'Hardware & IoT': 'manufacturing',
     'Professional Services': 'professional_services',
+    'שירותים מקצועיים': 'professional_services',
     Industrial: 'manufacturing',
+    תעשייה: 'manufacturing',
     'Defense & Military': 'defense',
     'Defense & Aerospace': 'defense',
+    'ביטחון ותעופה': 'defense',
     renewable_energy: 'energy',
+    אנרגיה: 'energy',
+    'נדל"ן, בינוי ותשתיות': 'realestate',
     Other: 'other',
+    אחר: 'other',
   };
   return mapping[key] ?? 'other';
 }
@@ -120,8 +147,9 @@ function buildComparisonGroup(industry: Industry, stage: LifecycleStage): string
     realestate: 'נדל"ן',
     construction: 'בנייה',
     manufacturing: 'ייצור',
-    retail: 'קמעונאות',
-    food: 'מזון',
+    retail_unified: 'קמעונאות ומסחר',
+    food_service: 'מזון ומסעדנות',
+    hospitality: 'מלונאות ואירוח',
     professional_services: 'שירותים מקצועיים',
     defense: 'ביטחון',
     energy: 'אנרגיה',

@@ -4,7 +4,7 @@ import { fetchYahooIsraelMultiples, computeIsraelMedianByIndustry } from '../../
 import { computeBlendedMultiples } from '../../../../lib/market-data/compute-multiples';
 import { DAMODARAN_2026_FALLBACK } from '../../../../lib/market-data/damodaran';
 
-const INDUSTRIES = ['saas','fintech','healthtech','cyber','realestate','construction','manufacturing','retail','food','professional_services','defense','energy','other'];
+const INDUSTRIES = ['saas','fintech','healthtech','cyber','realestate','construction','manufacturing','retail_unified','food_service','hospitality','professional_services','defense','energy','other'];
 
 export async function GET(req: Request) {
   // Verify cron secret

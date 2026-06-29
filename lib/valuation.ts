@@ -166,8 +166,7 @@ export type EquifySectorKey =
   | 'health'
   | 'services'
   | 'industry'
-  | 'ecom'
-  | 'retail_trade'
+  | 'retail_unified'
   | 'food_service'
   | 'energy'
   | 'defense_aerospace'
@@ -315,15 +314,14 @@ export interface ValuationScenarios {
 }
 
 export const SECTOR_MULTIPLIERS: Record<EquifySectorKey, number> = {
-  hospitality: 1.05,
+  hospitality: 1.08,
   saas: 1.4,
   fintech: 1.5,
   cyber: 1.45,
   health: 1.3,
   services: 1.0,
   industry: 0.88,
-  ecom: 0.95,
-  retail_trade: 0.92,
+  retail_unified: 0.94,
   food_service: 0.82,
   energy: 1.1,
   defense_aerospace: 1.28,
