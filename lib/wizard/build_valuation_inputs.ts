@@ -8,7 +8,7 @@ import {
   type EquifySectorKey,
   type ValuationInputs,
 } from '../valuation';
-import { BACKLOG_INFLECTION_RATIO_THRESHOLD } from '../valuation/backlog_inflection_accelerator';
+import { computeBacklogInflectionWeight } from '../valuation/backlog_metrics';
 import { normalizeValuationInputsToIls } from '../currency-normalize';
 import { getCachedFxRates } from '../utils/fxService';
 import { parseCapexPct } from '../valuation/capex_fcf';
@@ -28,8 +28,6 @@ export function buildValuationInputsFromEquifyState(
   const { y2024, y2025, y2026 } = financials;
   const backlogSignedK = financials.backlogSignedK ?? 0;
   const revenue2026K = y2026.revenueK ?? 0;
-  const backlogRatio =
-    revenue2026K > 0 && backlogSignedK > 0 ? backlogSignedK / revenue2026K : 0;
 
   const rawInputs: ValuationInputs = {
     rev: y2026.revenueK,
@@ -62,7 +60,8 @@ export function buildValuationInputsFromEquifyState(
     ip: risk.ip,
     contracts: risk.contracts,
     backlogSignedK,
-    hasSignificantBacklog: backlogRatio >= BACKLOG_INFLECTION_RATIO_THRESHOLD,
+    hasSignificantBacklog:
+      computeBacklogInflectionWeight(backlogSignedK, revenue2026K) > 0,
     projectedEbitdaK: financials.projectedEbitdaK,
     revenue2026K,
     revenue2024K: y2024.revenueK,

@@ -6,6 +6,7 @@ import type {
 } from '../valuation';
 import {
   applySectorMarginGuardrails,
+  computeConcentrationWaccPremium,
   computeDynamicMultiple,
 } from './adaptive_calibration';
 import { computeBlendedEbitda } from './blended_ebitda';
@@ -26,7 +27,6 @@ import {
 import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
 import { parseCapexPct, resolveCapexIndustryKey, computeFCFF } from './capex_fcf';
 import { calibrateCenterOfGravity } from './base_case_calibration';
-import { OMWISE_CALIBRATION_QS } from './scenario_elasticity';
 import { createValuationStrategy } from './strategies/valuation_strategy';
 import { resolveEbitdaBaseForMultipleLeg } from './cyclical_ebitda_normalization';
 import { resolveActiveEffectiveMultiple } from './multiple_override';
@@ -54,7 +54,7 @@ function computeSpecificRiskPremium(
     (ip ? -0.3 : 0) +
     (contracts ? -0.2 : 0);
   const recurPr = (1 - recurring / 100) * 0.8;
-  const concPr = topCustomer > 40 ? 0.8 : topCustomer > 20 ? 0.4 : 0;
+  const concPr = computeConcentrationWaccPremium(topCustomer);
   const sizePp = 3.1;
   const alphaPp = qualityPr + recurPr + concPr;
   return { totalPp: sizePp + alphaPp, sizePp, alphaPp };
@@ -263,10 +263,11 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     growth,
   });
   const ownerSalaryOmitted = !(normalizedOwnerSalary > 0);
-  const qs = ownerSalaryOmitted
-    ? Math.min(100, Math.max(OMWISE_CALIBRATION_QS - 3, qsRaw))
-    : qsRaw;
+  const qs = qsRaw;
   const qsGrade = qualityScoreGrade(qs);
+  const ownerSalaryWarnings: string[] = ownerSalaryOmitted
+    ? ['[equify-calibration] שכר בעלים לא הוזן — נורמליזציה ל-₪250K (DCF בלבד, ללא השפעה על ציון איכות)']
+    : [];
 
   const multipleResult = computeDynamicMultiple({
     config: sectorConfig,
@@ -398,7 +399,10 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     methodologyStrategy: sectorConfig.strategy,
     backlogInflectionActive: backlog.backlogInflectionActive,
     backlogRatio: backlog.backlogRatio,
-    calibrationWarnings: calibration.warnings.map((w) => w.message),
+    calibrationWarnings: [
+      ...calibration.warnings.map((w) => w.message),
+      ...ownerSalaryWarnings,
+    ],
     calibratedYears: calibration.calibratedYears,
     historicalAvgMarginPct: calibration.historicalAvgMarginPct,
     forwardEbitda2027K: backlog.forwardEbitda2027K,

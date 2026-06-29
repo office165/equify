@@ -131,7 +131,7 @@ export function deriveFinancialDefaultsFromSectorMetrics(
   const revenueMultipleNorm = clamp(metrics.evRevenue / 3, 0.7, 1.3);
 
   const growthRaw = growthCapPct * 0.36 * multipleNorm * betaNorm * revenueMultipleNorm;
-  const growthPct = Math.round(clamp(growthRaw, -10, 50));
+  const growthPct = Math.round(clamp(growthRaw, -10, 50) * 2) / 2;
 
   const capexBase = SECTOR_CAPEX_BASE_PCT[sector] ?? 6;
   const capexRaw = capexBase * (0.88 + metrics.unleveredBeta * 0.08);

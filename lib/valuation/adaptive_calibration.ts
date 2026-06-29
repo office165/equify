@@ -2,10 +2,10 @@ import type { ValuationInputs } from '../valuation';
 import type { SectorMethodologyConfig } from './sector_methodology_matrix';
 
 export interface CalibrationWarning {
-  code: 'margin_winsorized';
-  year: '2024' | '2025' | '2026';
-  inputMarginPct: number;
-  clampedMarginPct: number;
+  code: 'margin_winsorized' | 'owner_salary_normalized';
+  year?: '2024' | '2025' | '2026';
+  inputMarginPct?: number;
+  clampedMarginPct?: number;
   message: string;
 }
 
@@ -43,6 +43,19 @@ function safeK(n: number | undefined | null): number {
   return typeof n === 'number' && Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Soft margin cap — excess above institutional max preserved at 30% weight.
+ * Damodaran-style: extreme margins are damped, not discarded.
+ */
+export function winsorizeEbitdaMargin(
+  rawMarginDecimal: number,
+  maxHistoricalMargin: number,
+): number {
+  if (rawMarginDecimal <= maxHistoricalMargin) return rawMarginDecimal;
+  const excess = rawMarginDecimal - maxHistoricalMargin;
+  return maxHistoricalMargin + excess * 0.3;
+}
+
 function winsorizeYear(
   year: '2024' | '2025' | '2026',
   revenueK: number,
@@ -67,8 +80,12 @@ function winsorizeYear(
     };
   }
 
-  const clampedEbitda = rev * maxHistoricalMargin;
-  const clampedMarginPct = maxHistoricalMargin * 100;
+  const winsorizedMarginDecimal = winsorizeEbitdaMargin(
+    inputMarginDecimal,
+    maxHistoricalMargin,
+  );
+  const clampedEbitda = rev * winsorizedMarginDecimal;
+  const clampedMarginPct = winsorizedMarginDecimal * 100;
 
   return {
     slice: {
@@ -81,7 +98,7 @@ function winsorizeYear(
       year,
       inputMarginPct,
       clampedMarginPct,
-      message: `[equify-calibration] ${year} EBITDA margin ${inputMarginPct.toFixed(1)}% exceeds sector cap ${clampedMarginPct.toFixed(1)}% — winsorized to institutional baseline.`,
+      message: `[equify-calibration] ${year} EBITDA margin ${inputMarginPct.toFixed(1)}% exceeds sector cap ${(maxHistoricalMargin * 100).toFixed(1)}% — soft-winsorized to ${clampedMarginPct.toFixed(1)}%.`,
     },
   };
 }
@@ -162,8 +179,29 @@ export function applySectorMarginGuardrails(
 }
 
 /**
+ * Smooth customer-concentration multiple penalty — sqrt curve (Damodaran specific-risk).
+ * 20% top customer → ~8.9% of base multiple; capped at 22% of base.
+ */
+export function computeConcentrationPenalty(
+  topCustomerPct: number,
+  baseMultiple: number,
+): number {
+  if (topCustomerPct <= 0) return 0;
+  const penaltyPct = 0.02 * Math.sqrt(topCustomerPct);
+  return baseMultiple * Math.min(penaltyPct, 0.22);
+}
+
+/**
+ * Smooth WACC concentration premium (pp) — replaces discrete 20%/40% steps.
+ */
+export function computeConcentrationWaccPremium(topCustomerPct: number): number {
+  if (topCustomerPct <= 0) return 0;
+  return Math.min(0.008 * Math.sqrt(topCustomerPct), 0.012);
+}
+
+/**
  * Dynamic Multiple Linear Interpolation — Quality Score maps linearly between
- * sector min/max; high customer concentration applies a strict penalty.
+ * sector min/max; customer concentration applies a smooth sqrt penalty.
  */
 export function computeDynamicMultiple(params: {
   config: SectorMethodologyConfig;
@@ -182,12 +220,10 @@ export function computeDynamicMultiple(params: {
     config.minMultiple +
     (qs / 100) * (config.maxMultiple - config.minMultiple);
 
-  const concentrationPenalty =
-    customerConcentrationRatio >= 0.5
-      ? customerConcentrationRatio * (tier1Contracts ? 0.35 : 1.5)
-      : customerConcentrationRatio >= 0.35
-        ? customerConcentrationRatio * (tier1Contracts ? 0.2 : 0.6)
-        : 0;
+  let concentrationPenalty = computeConcentrationPenalty(topCustomerPct, baseMultiple);
+  if (tier1Contracts) {
+    concentrationPenalty *= 0.35;
+  }
 
   const multiple = Math.max(
     config.minMultiple * 0.78,

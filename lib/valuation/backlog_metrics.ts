@@ -1,7 +1,7 @@
 import type { ValuationInputs } from '../valuation';
 
-/** Backlog / revenue ratio at or above this threshold triggers inflection (OMWise-style). */
-export const BACKLOG_INFLECTION_RATIO_THRESHOLD = 0.5;
+/** Minimum backlog / revenue ratio before any inflection signal (8% — ARR-style visibility). */
+export const BACKLOG_INFLECTION_RATIO_THRESHOLD = 0.08;
 
 /** Max WACC specific-risk reduction when backlog covers forward revenue (percentage points). */
 export const BACKLOG_WACC_RISK_REDUCTION_MAX_PP = 1.5;
@@ -24,8 +24,10 @@ export const INSTITUTIONAL_BLEND_WEIGHTS = {
 
 export interface BacklogRatioResult {
   backlogRatio: number;
+  /** Proportional inflection weight 0–1 (smooth across ratio bands). */
+  inflectionWeight: number;
   triggerInflection: boolean;
-  reason: 'ratio_threshold' | 'below_threshold' | 'saas_excluded' | 'no_revenue';
+  reason: 'ratio_threshold' | 'below_threshold' | 'no_revenue';
 }
 
 export interface BacklogInflectionResult {
@@ -144,24 +146,55 @@ export function computeBacklogCoverageRatio(
 }
 
 /**
+ * Proportional backlog signal — plateau weights per band with narrow boundary ramps.
+ * ratio &lt; 8%: none · 8–20%: 0.3 · 20–50%: 0.6 · &gt;50%: 1.0
+ */
+export function computeBacklogInflectionWeight(
+  backlogK: number,
+  revenueK: number,
+): number {
+  if (revenueK <= 0 || backlogK <= 0) return 0;
+  const ratio = backlogK / revenueK;
+
+  if (ratio < BACKLOG_INFLECTION_RATIO_THRESHOLD) return 0;
+
+  if (ratio < 0.2) {
+    if (ratio < 0.1) {
+      return 0.3 * ((ratio - BACKLOG_INFLECTION_RATIO_THRESHOLD) / 0.02);
+    }
+    return 0.3;
+  }
+
+  if (ratio < 0.5) {
+    if (ratio < 0.22) {
+      return 0.3 + 0.3 * ((ratio - 0.2) / 0.02);
+    }
+    return 0.6;
+  }
+
+  if (ratio < 0.52) {
+    return 0.6 + 0.4 * ((ratio - 0.5) / 0.02);
+  }
+
+  return 1.0;
+}
+
+/**
  * Maps backlog coverage into a WACC idiosyncratic-Alpha reduction (negative pp).
- * Size premium is retained; Alpha (quality/recurrence/concentration) → 0% at ≥100% coverage.
+ * Scaled by {@link inflectionWeight} — partial backlog → partial WACC benefit.
  */
 export function computeBacklogWaccRiskReduction(
   coverageRatio: number,
-  inflectionActive: boolean,
+  inflectionWeight: number,
   idiosyncraticAlphaPp = BACKLOG_WACC_RISK_REDUCTION_MAX_PP,
 ): number {
-  if (!inflectionActive || coverageRatio <= 0) return 0;
-  if (coverageRatio >= BACKLOG_FULL_ALPHA_MITIGATION_COVERAGE) {
-    return -Math.max(0, idiosyncraticAlphaPp);
-  }
-  const span = 1 - BACKLOG_INFLECTION_RATIO_THRESHOLD;
-  const t = Math.min(
-    1,
-    Math.max(0, (coverageRatio - BACKLOG_INFLECTION_RATIO_THRESHOLD) / span),
-  );
-  return -BACKLOG_WACC_RISK_REDUCTION_MAX_PP * t;
+  if (inflectionWeight <= 0) return 0;
+  const alpha =
+    typeof idiosyncraticAlphaPp === 'number' && idiosyncraticAlphaPp > 0
+      ? idiosyncraticAlphaPp
+      : BACKLOG_WACC_RISK_REDUCTION_MAX_PP;
+  const coverageFactor = Math.min(1, Math.max(coverageRatio, inflectionWeight));
+  return -alpha * inflectionWeight * coverageFactor;
 }
 
 /**
@@ -187,19 +220,31 @@ export function computeBacklogRatio(
   revenue2026K: number | undefined,
 ): BacklogRatioResult {
   if (!isPositiveFinite(revenue2026K)) {
-    return { backlogRatio: 0, triggerInflection: false, reason: 'no_revenue' };
+    return {
+      backlogRatio: 0,
+      inflectionWeight: 0,
+      triggerInflection: false,
+      reason: 'no_revenue',
+    };
   }
 
   const backlog = backlogSignedK ?? 0;
   if (!isPositiveFinite(backlog)) {
-    return { backlogRatio: 0, triggerInflection: false, reason: 'below_threshold' };
+    return {
+      backlogRatio: 0,
+      inflectionWeight: 0,
+      triggerInflection: false,
+      reason: 'below_threshold',
+    };
   }
 
   const backlogRatio = backlog / revenue2026K;
-  const triggerInflection = backlogRatio >= BACKLOG_INFLECTION_RATIO_THRESHOLD;
+  const inflectionWeight = computeBacklogInflectionWeight(backlog, revenue2026K);
+  const triggerInflection = inflectionWeight > 0;
 
   return {
     backlogRatio,
+    inflectionWeight,
     triggerInflection,
     reason: triggerInflection ? 'ratio_threshold' : 'below_threshold',
   };

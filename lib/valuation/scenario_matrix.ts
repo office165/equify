@@ -216,10 +216,8 @@ export function computeDcfWithGrowthDecay(params: {
   industry?: string;
 }): number {
   const capexPct = parseCapexPct(params.capexLevelPct);
-  const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
-  if (capexPct <= 0) return projection.totalEvK;
-
   const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;
+  const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
   return enforceCapexMonotonicity({
     equityValue: projection.totalEvK,
     capexPct,

@@ -157,9 +157,13 @@ export function enforceCapexMonotonicity(params: {
   industry: string;
 }): number {
   const { equityValue, capexPct, baseEquityValue, industry } = params;
-  if (capexPct <= 0 || baseEquityValue <= 0) return equityValue;
+  if (baseEquityValue <= 0) return equityValue;
 
   const capexFloat = parseFloat(String(capexPct));
+  if (capexFloat <= 0) {
+    return Math.min(equityValue, baseEquityValue);
+  }
+
   const rate = CAPEX_REDUCTION_RATES[industry] ?? 0.03;
   const maxAllowed = baseEquityValue * (1 - rate) ** capexFloat;
   const minAllowed = baseEquityValue * 0.92 ** capexFloat;

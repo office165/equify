@@ -81,7 +81,7 @@ function lerp(min: number, max: number, t: number): number {
   return min + (max - min) * clamp(t, 0, 1);
 }
 
-/** 0 = micro/SMB band, 1 = enterprise-scale revenue within matrix. */
+/** 0 = micro/SMB band, 1 = mid-market / enterprise-scale revenue — linear ₪20M–₪120M. */
 function resolveRevenueScale(revenueK: number): number {
   const rev = Math.max(0, revenueK);
   const { smbMax, enterpriseMin } = SCALE_REVENUE_THRESHOLDS_K;
@@ -90,26 +90,20 @@ function resolveRevenueScale(revenueK: number): number {
   return (rev - smbMax) / (enterpriseMin - smbMax);
 }
 
+/** Soft tier label for diagnostics — derived from revenue scale, no hard revenue cliffs. */
 function resolveTierFromSignals(
   lifecycleStage: EquifyLifecycleKey,
-  revenueK: number,
+  revenueScale: number,
 ): ScaleTier {
-  const rev = Math.max(0, revenueK);
-  const lifecycleTier = SCALE_MODIFIER_MATRIX[lifecycleStage].tier;
+  if (revenueScale >= 0.85 && lifecycleStage === 'mature') return 'enterprise';
+  if (revenueScale >= 0.45) return 'growth';
+  if (lifecycleStage === 'mature' && revenueScale > 0.2) return 'growth';
+  return 'smb';
+}
 
-  if (rev >= SCALE_REVENUE_THRESHOLDS_K.enterpriseMin && lifecycleStage !== 'seed') {
-    return 'enterprise';
-  }
-  if (rev <= SCALE_REVENUE_THRESHOLDS_K.smbMax) {
-    return lifecycleStage === 'mature' ? 'growth' : 'smb';
-  }
-  if (lifecycleStage === 'seed' || lifecycleStage === 'early') {
-    return 'smb';
-  }
-  if (lifecycleStage === 'mature') {
-    return 'enterprise';
-  }
-  return lifecycleTier;
+function resolveSmallCapRow(lifecycleStage: EquifyLifecycleKey): ScaleModifierMatrixRow {
+  if (lifecycleStage === 'seed') return SCALE_MODIFIER_MATRIX.seed;
+  return SCALE_MODIFIER_MATRIX.early;
 }
 
 function interpolateRange(
@@ -121,7 +115,7 @@ function interpolateRange(
   return lerp(range.min, range.max, factor);
 }
 
-/** Resolve scale modifiers from global evaluation inputs (lifecycle + revenue). */
+/** Resolve scale modifiers — revenue-linear blend between SMB and mid-market (no hard ₪20M/₪120M cliffs). */
 export function resolveScaleModifierProfile(
   inputs: Pick<
     ValuationInputs,
@@ -130,32 +124,44 @@ export function resolveScaleModifierProfile(
 ): ScaleModifierProfile {
   const lifecycleStage = resolveLifecycleStage(inputs.lifecycle, inputs.lifecycleAdj);
   const revenueK = Math.max(0, inputs.revenue2026K ?? inputs.rev ?? 0);
-  const tier = resolveTierFromSignals(lifecycleStage, revenueK);
   const revenueScale = resolveRevenueScale(revenueK);
+  const tier = resolveTierFromSignals(lifecycleStage, revenueScale);
 
-  const lifecycleRow = SCALE_MODIFIER_MATRIX[lifecycleStage];
-  const tierRow =
-    tier === 'enterprise'
-      ? SCALE_MODIFIER_MATRIX.mature
-      : tier === 'smb'
-        ? SCALE_MODIFIER_MATRIX[
-            lifecycleStage === 'seed' || lifecycleStage === 'early' ? lifecycleStage : 'early'
-          ]
-        : SCALE_MODIFIER_MATRIX.growth;
+  const smallRow = resolveSmallCapRow(lifecycleStage);
+  const midRow = SCALE_MODIFIER_MATRIX.growth;
+  const matureRow = SCALE_MODIFIER_MATRIX.mature;
 
-  const waccSizePremiumOverlayPp =
-    tier === 'smb'
-      ? interpolateRange(tierRow.waccSizePremiumOverlayPp, 1 - revenueScale, false)
-      : tier === 'enterprise'
-        ? interpolateRange(tierRow.waccSizePremiumOverlayPp, revenueScale, false)
-        : interpolateRange(lifecycleRow.waccSizePremiumOverlayPp, revenueScale, false);
+  const smallWacc = interpolateRange(smallRow.waccSizePremiumOverlayPp, 0.5, false);
+  const midWacc = interpolateRange(midRow.waccSizePremiumOverlayPp, 0.5, false);
+  const matureWacc = interpolateRange(matureRow.waccSizePremiumOverlayPp, 1, false);
 
-  const multipleDampener =
-    tier === 'smb'
-      ? interpolateRange(tierRow.multipleDampener, 1 - revenueScale, false)
-      : tier === 'enterprise'
-        ? interpolateRange(tierRow.multipleDampener, revenueScale, false)
-        : interpolateRange(lifecycleRow.multipleDampener, revenueScale, false);
+  const smallDamp = interpolateRange(smallRow.multipleDampener, 0.5, false);
+  const midDamp = interpolateRange(midRow.multipleDampener, 0.5, false);
+  const matureDamp = interpolateRange(matureRow.multipleDampener, 1, false);
+
+  const smbToMidT = Math.min(revenueScale / 0.85, 1);
+  let waccSizePremiumOverlayPp = lerp(smallWacc, midWacc, smbToMidT);
+  let multipleDampener = lerp(smallDamp, midDamp, smbToMidT);
+
+  if (lifecycleStage === 'mature' && revenueScale > 0.7) {
+    const entT = clamp((revenueScale - 0.7) / 0.3, 0, 1);
+    waccSizePremiumOverlayPp = lerp(waccSizePremiumOverlayPp, matureWacc, entT);
+    multipleDampener = lerp(multipleDampener, matureDamp, entT);
+  }
+
+  const blendTargets: ScaleBlendTargets = {
+    dcf: lerp(smallRow.blendTargets.dcf, midRow.blendTargets.dcf, smbToMidT),
+    multiple: lerp(
+      smallRow.blendTargets.multiple,
+      midRow.blendTargets.multiple,
+      smbToMidT,
+    ),
+  };
+  const blendMixStrength = lerp(
+    smallRow.blendMixStrength,
+    midRow.blendMixStrength,
+    smbToMidT,
+  );
 
   return {
     tier,
@@ -164,8 +170,8 @@ export function resolveScaleModifierProfile(
     revenueScale,
     waccSizePremiumOverlayPp,
     multipleDampener,
-    blendTargets: tierRow.blendTargets,
-    blendMixStrength: tierRow.blendMixStrength,
+    blendTargets,
+    blendMixStrength,
   };
 }
 
