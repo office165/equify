@@ -24,7 +24,8 @@ function weightedEnterpriseValue(core: ReportFinancialCore): number {
   return (
     core.dcfEvAbs * core.blendWeights.dcf +
     core.ebitdaMultipleEvAbs * core.blendWeights.ebitda +
-    core.revenueMultipleEvAbs * core.blendWeights.rev
+    core.revenueMultipleEvAbs * core.blendWeights.rev +
+    (core.backlogEvAdjustmentAbs ?? 0)
   );
 }
 

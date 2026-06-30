@@ -16,6 +16,7 @@ import {
   type Industry,
 } from '../lib/valuation/multiples';
 import { computeBacklogInflectionWeight } from '../lib/valuation/backlog_metrics';
+import { sumModelBlendContributionsK } from '../lib/valuation/compute_final_enterprise_value';
 
 let passed = 0;
 let failed = 0;
@@ -398,6 +399,68 @@ async function testMultiplePathInvariance(): Promise<void> {
   );
 }
 
+function testEvBlendCoherenceInvariant(): void {
+  const test = 'TEST 8 — EV/blend coherence invariant';
+  const sectors: Array<ValuationInputs['sector']> = [
+    'food_service',
+    'saas',
+    'energy',
+    'retail_unified',
+    'hospitality',
+  ];
+  const lifecycles: Array<ValuationInputs['lifecycle']> = ['seed', 'growth', 'mature'];
+
+  for (let i = 0; i < 20; i += 1) {
+    const sector = sectors[i % sectors.length]!;
+    const lifecycle = lifecycles[i % lifecycles.length]!;
+    const rev = 2_000 + (i + 1) * 1_100;
+    const margin = 4 + (i % 12);
+    const backlogSignedK = i % 5 === 0 ? 0 : rev * (0.05 + (i % 8) * 0.12);
+    const debt = i % 3 === 0 ? rev * 0.15 : 0;
+
+    const { computed } = runValuationEngine(
+      baseInputs({
+        rev,
+        margin,
+        growth: 5 + (i % 15),
+        debt,
+        grossDebt: debt,
+        cash: 0,
+        sector,
+        sectorMult: SECTOR_MULTIPLIERS[sector],
+        lifecycle,
+        lifecycleAdj: LIFECYCLE_ADJ[lifecycle],
+        revenue2026K: rev,
+        ebitda2026K: rev * (margin / 100),
+        ebitda2025K: rev * (margin / 100) * 0.95,
+        ebitda2024K: rev * (margin / 100) * 0.9,
+        revenue2025K: rev * 0.94,
+        revenue2024K: rev * 0.88,
+        backlogSignedK,
+      }),
+    );
+
+    const contributions = computed.modelBlendContributions;
+    assert(
+      test,
+      contributions != null,
+      `run ${i + 1}: modelBlendContributions must be defined`,
+    );
+
+    const blendSumK = sumModelBlendContributionsK(contributions!);
+    const deltaPct =
+      computed.ev > 0 ? (Math.abs(computed.ev - blendSumK) / computed.ev) * 100 : 0;
+
+    assert(
+      test,
+      deltaPct < 0.01,
+      `run ${i + 1}: EV=${computed.ev.toFixed(2)} blendSum=${blendSumK.toFixed(2)} Δ=${deltaPct.toFixed(4)}% sector=${sector} backlog=${backlogSignedK}`,
+    );
+  }
+
+  pass(test, '20 randomized valuations — |EV − Σ contributions| < 0.01%');
+}
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
@@ -410,6 +473,7 @@ async function main(): Promise<void> {
   testCustomerConcentrationSmooth();
   await testMultiplePathInvariance();
   await testExchangeRatesLive();
+  testEvBlendCoherenceInvariant();
 
   console.log('\n' + '═'.repeat(72));
   console.log(`ALL ${passed} TESTS PASSED`);

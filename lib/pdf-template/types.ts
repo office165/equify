@@ -14,6 +14,8 @@ export interface ReportFinancialCore {
   ebitdaMultipleEvAbs: number;
   revenueMultipleEvAbs: number;
   blendWeights: { dcf: number; ebitda: number; rev: number };
+  /** Backlog contract uplift applied to blended EV (absolute reporting currency). */
+  backlogEvAdjustmentAbs?: number;
 }
 
 export interface TrajectoryPoint {

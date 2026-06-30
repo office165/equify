@@ -50,6 +50,25 @@ export function applyReportingFxToComputed(
         : computed.forwardRunRateK,
     forwardEbitda2027K: scaleK(computed.forwardEbitda2027K, multiplier),
     baseEbitdaForMultiple: scaleK(computed.baseEbitdaForMultiple, multiplier),
+    equityBeforeBacklogUplift:
+      computed.equityBeforeBacklogUplift != null
+        ? scaleK(computed.equityBeforeBacklogUplift, multiplier)
+        : computed.equityBeforeBacklogUplift,
+    backlogEquityUpliftK:
+      computed.backlogEquityUpliftK != null
+        ? scaleK(computed.backlogEquityUpliftK, multiplier)
+        : computed.backlogEquityUpliftK,
+    modelBlendContributions: computed.modelBlendContributions
+      ? {
+          dcf: scaleK(computed.modelBlendContributions.dcf, multiplier),
+          ebitda: scaleK(computed.modelBlendContributions.ebitda, multiplier),
+          rev: scaleK(computed.modelBlendContributions.rev, multiplier),
+          backlogAdjustment: scaleK(
+            computed.modelBlendContributions.backlogAdjustment,
+            multiplier,
+          ),
+        }
+      : computed.modelBlendContributions,
   };
 }
 

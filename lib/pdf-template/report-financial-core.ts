@@ -53,6 +53,11 @@ export function buildReportFinancialCore(
     ),
     revenueMultipleEvAbs: absFromReportingK(fxComputed.revMult),
     blendWeights: { ...computed.blendWeights },
+    backlogEvAdjustmentAbs: absFromReportingK(
+      fxComputed.modelBlendContributions?.backlogAdjustment ??
+        fxComputed.backlogEquityUpliftK ??
+        0,
+    ),
   };
 }
 
@@ -80,6 +85,9 @@ export function synthesizeFinancialCoreFromValuationData(
   data: ValuationData,
 ): ReportFinancialCore {
   const weights = inferBlendWeightsFromModelBlend(data.modelBlend);
+  const backlogRow = data.modelBlend.find((row) =>
+    /backlog|צבר/i.test(row.name),
+  );
   const multipleLegEbitdaBaseAbs =
     data.multipleLegEbitdaBase ??
     (data.effectiveMult > 0 ? data.ebitdaEv / data.effectiveMult : data.ebitda);
@@ -100,6 +108,7 @@ export function synthesizeFinancialCoreFromValuationData(
     ebitdaMultipleEvAbs,
     revenueMultipleEvAbs: data.revenueEv,
     blendWeights: weights,
+    backlogEvAdjustmentAbs: backlogRow?.contribution ?? 0,
   };
 }
 

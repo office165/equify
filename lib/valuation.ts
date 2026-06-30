@@ -93,6 +93,12 @@ export {
   runValuationEngine,
 } from './valuation/valuation_engine';
 export {
+  computeFinalEnterpriseValue,
+  sumModelBlendContributionsK,
+  type ModelBlendContributionsK,
+  type FinalEnterpriseValueResult,
+} from './valuation/compute_final_enterprise_value';
+export {
   applyReportingFxLayer,
   applyReportingFxToComputed,
   applyReportingFxToScenarios,
@@ -276,6 +282,8 @@ export interface ValuationComputed {
   backlogEquityUpliftK?: number;
   /** Backlog inflection equity uplift as percentage points (e.g. 6 = +6%). */
   backlogEquityUpliftPct?: number;
+  /** Canonical weighted model contributions (₪K) — sum must equal {@link ev}. */
+  modelBlendContributions?: import('./valuation/compute_final_enterprise_value').ModelBlendContributionsK;
   centerOfGravityFactor?: number;
   forwardRunRateK?: number;
   blendWeights: { dcf: number; ebitda: number; rev: number };

@@ -357,19 +357,26 @@ function buildModelBlendRows(
   inputs: ValuationInputs,
   locale: ValuationLocale,
 ): ModelBlendRow[] {
-  const { blendWeights } = computed;
+  const { blendWeights, modelBlendContributions } = computed;
   const dcfWeight = Math.round(blendWeights.dcf * 100);
   const ebitdaWeight = Math.round(blendWeights.ebitda * 100);
   const revWeight = Math.round(blendWeights.rev * 100);
   const revMultDisplay =
     inputs.rev > 0 ? computed.revMult / inputs.rev : computed.effectiveMult * 0.25;
 
+  const contributions = modelBlendContributions ?? {
+    dcf: computed.dcf * blendWeights.dcf,
+    ebitda: computed.ebtMult * blendWeights.ebitda,
+    rev: computed.revMult * blendWeights.rev,
+    backlogAdjustment: computed.backlogEquityUpliftK ?? 0,
+  };
+
   const rows: ModelBlendRow[] = [
     {
       name: `DCF + WACC (${computed.wacc.toFixed(1)}%)`,
       ev: kToNis(computed.dcf),
       weightPct: dcfWeight,
-      contribution: kToNis(computed.dcf * blendWeights.dcf),
+      contribution: kToNis(contributions.dcf),
     },
     {
       name:
@@ -378,7 +385,7 @@ function buildModelBlendRows(
           : `מכפיל EBITDA × ${computed.effectiveMult.toFixed(1)}`,
       ev: kToNis(computed.ebtMult),
       weightPct: ebitdaWeight,
-      contribution: kToNis(computed.ebtMult * blendWeights.ebitda),
+      contribution: kToNis(contributions.ebitda),
     },
   ];
 
@@ -390,7 +397,19 @@ function buildModelBlendRows(
           : `מכפיל הכנסות × ${revMultDisplay.toFixed(1)}`,
       ev: kToNis(computed.revMult),
       weightPct: revWeight,
-      contribution: kToNis(computed.revMult * blendWeights.rev),
+      contribution: kToNis(contributions.rev),
+    });
+  }
+
+  if (contributions.backlogAdjustment > 0) {
+    rows.push({
+      name:
+        locale === 'en'
+          ? `Backlog contract uplift (+${(computed.backlogEquityUpliftPct ?? 0).toFixed(1)}%)`
+          : `תוספת צבר הזמנות (+${(computed.backlogEquityUpliftPct ?? 0).toFixed(1)}%)`,
+      ev: kToNis(contributions.backlogAdjustment),
+      weightPct: 100,
+      contribution: kToNis(contributions.backlogAdjustment),
     });
   }
 
