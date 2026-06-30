@@ -371,7 +371,7 @@ export function EquifyResultsReport({
     );
   }
 
-  const waccSlices = buildWaccDonutSlices(base.waccPct);
+  const waccSlices = vm.waccDonutBase;
   const reportDate = formatReportDate(locale);
   const equityDisplay = scVal ?? scrollScenario.equityAmount;
   const scColor =

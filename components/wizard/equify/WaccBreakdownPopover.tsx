@@ -64,6 +64,7 @@ function InfoIcon() {
 export interface WaccBreakdownPopoverProps {
   wacc: number;
   breakdown: WaccBreakdown;
+  topCustomerPct?: number;
   copy: Pick<
     EquifyWizardStepStrings['step2'],
     | 'waccBreakdownAria'
@@ -72,6 +73,13 @@ export interface WaccBreakdownPopoverProps {
     | 'waccBreakdownBeta'
     | 'waccBreakdownErp'
     | 'waccBreakdownAlpha'
+    | 'waccBreakdownSpecificRisk'
+    | 'waccBreakdownSpecificRiskConcentration'
+    | 'waccBreakdownSpecificRiskFounder'
+    | 'waccBreakdownSpecificRiskIpProtected'
+    | 'waccBreakdownSpecificRiskIpUnprotected'
+    | 'waccBreakdownSpecificRiskContractsYes'
+    | 'waccBreakdownSpecificRiskContractsNo'
     | 'waccBreakdownKe'
     | 'waccBreakdownFormula'
   >;
@@ -83,6 +91,7 @@ export interface WaccBreakdownPopoverProps {
 export function WaccBreakdownPopover({
   wacc,
   breakdown,
+  topCustomerPct = 0,
   copy,
   locale,
   boundaryRef,
@@ -248,6 +257,32 @@ export function WaccBreakdownPopover({
     }
   }, [open]);
 
+  const srp = breakdown.specificRiskBreakdown;
+  const specificRiskSubRows = [
+    {
+      label: copy.waccBreakdownSpecificRiskConcentration(topCustomerPct),
+      value: formatPct(srp.concentrationRisk),
+    },
+    {
+      label: copy.waccBreakdownSpecificRiskFounder,
+      value: formatPct(srp.founderRisk),
+    },
+    {
+      label:
+        srp.ipRisk > 0
+          ? copy.waccBreakdownSpecificRiskIpUnprotected
+          : copy.waccBreakdownSpecificRiskIpProtected,
+      value: formatPct(srp.ipRisk),
+    },
+    {
+      label:
+        srp.contractRisk > 0
+          ? copy.waccBreakdownSpecificRiskContractsNo
+          : copy.waccBreakdownSpecificRiskContractsYes,
+      value: formatPct(srp.contractRisk),
+    },
+  ];
+
   const rows = [
     { label: copy.waccBreakdownRf, value: formatPct(breakdown.rf) },
     { label: copy.waccBreakdownBeta, value: breakdown.leveredBeta.toFixed(2) },
@@ -255,6 +290,11 @@ export function WaccBreakdownPopover({
     {
       label: copy.waccBreakdownAlpha,
       value: `+${formatPct(breakdown.alpha)}`,
+    },
+    {
+      label: copy.waccBreakdownSpecificRisk,
+      value: `+${formatPct(breakdown.specificRiskPremium)}`,
+      subRows: specificRiskSubRows,
     },
     { label: copy.waccBreakdownKe, value: formatPct(breakdown.ke) },
   ];
@@ -304,14 +344,28 @@ export function WaccBreakdownPopover({
             </div>
             <dl className="space-y-2.5">
               {rows.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-baseline justify-between gap-3 text-[12px] leading-snug"
-                >
-                  <dt className="text-gray-400">{row.label}</dt>
-                  <dd className="font-mono text-[12px] font-medium tabular-nums text-teal-100">
-                    {row.value}
-                  </dd>
+                <div key={row.label}>
+                  <div className="flex items-baseline justify-between gap-3 text-[12px] leading-snug">
+                    <dt className="text-gray-400">{row.label}</dt>
+                    <dd className="font-mono text-[12px] font-medium tabular-nums text-teal-100">
+                      {row.value}
+                    </dd>
+                  </div>
+                  {'subRows' in row && row.subRows ? (
+                    <div className="mt-1 space-y-1 border-s border-teal-900/40 ps-2.5">
+                      {row.subRows.map((sub) => (
+                        <div
+                          key={sub.label}
+                          className="flex items-baseline justify-between gap-3 text-[10px] leading-snug"
+                        >
+                          <span className="text-gray-500">{sub.label}</span>
+                          <span className="font-mono tabular-nums text-teal-200/80">
+                            {sub.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </dl>

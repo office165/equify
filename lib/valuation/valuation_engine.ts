@@ -6,7 +6,6 @@ import type {
 } from '../valuation';
 import {
   applySectorMarginGuardrails,
-  computeConcentrationWaccPremium,
   computeDynamicMultiple,
 } from './adaptive_calibration';
 import { computeBlendedEbitda } from './blended_ebitda';
@@ -16,6 +15,7 @@ import {
   computeOrganicForwardRevenue2027K,
 } from './backlog_metrics';
 import { computeFinalEnterpriseValue } from './compute_final_enterprise_value';
+import { computeSpecificRiskPremium } from './specific_risk_premium';
 import { resolveCurrentYearEbitdaK } from './backlog_valuation';
 import { capGrowthPctForMethodology } from './sector_methodology_matrix';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
@@ -43,25 +43,6 @@ function qualityScoreGrade(qs: number): QualityGrade {
   if (qs >= 55) return 'B';
   if (qs >= 45) return 'B−';
   return 'C+';
-}
-
-function computeSpecificRiskPremium(
-  inputs: Pick<
-    ValuationInputs,
-    'recurring' | 'topCustomer' | 'founderDep' | 'competition' | 'ip' | 'contracts'
-  >,
-): { totalPp: number; sizePp: number; alphaPp: number } {
-  const { recurring, topCustomer, founderDep, competition, ip, contracts } = inputs;
-  const qualityPr =
-    (founderDep ? 0.6 : 0) +
-    (competition ? 0.4 : 0) +
-    (ip ? -0.3 : 0) +
-    (contracts ? -0.2 : 0);
-  const recurPr = (1 - recurring / 100) * 0.8;
-  const concPr = computeConcentrationWaccPremium(topCustomer);
-  const sizePp = 3.1;
-  const alphaPp = qualityPr + recurPr + concPr;
-  return { totalPp: sizePp + alphaPp, sizePp, alphaPp };
 }
 
 /** Conservative owner-salary normalization when field omitted (₪K). */
@@ -167,13 +148,11 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     resolveCurrentYearEbitdaK({ ebitda2026K, rev: revK, margin });
 
   const ownerSalaryNormK = resolveNormalizedOwnerSalaryK(normalizedOwnerSalary);
-  const { alphaPp } = computeSpecificRiskPremium({
-    recurring,
-    topCustomer,
-    founderDep,
-    competition,
-    ip,
-    contracts,
+  const specificRisk = computeSpecificRiskPremium({
+    topCustomerPct: topCustomer,
+    founderDependency: founderDep,
+    ipProtection: ip,
+    hasLongTermContracts: contracts,
   });
 
   const backlog = applyBacklogInflectionAccelerator({
@@ -191,7 +170,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     },
     cappedGrowthPct: growth,
     historicalAvgMarginPct: calibration.historicalAvgMarginPct,
-    specificRiskPremiumPp: alphaPp,
+    specificRiskPremiumPp: specificRisk.totalPremiumPp,
   });
 
   const dcfGrowthPct = growth;
@@ -255,6 +234,13 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     sectorConfig,
     backlogAlphaReductionPp,
     scalePremiumOverlayPp: scaleProfile.waccSizePremiumOverlayPp,
+    specificRiskPremiumPp: specificRisk.totalPremiumPp,
+    specificRiskBreakdownPp: {
+      concentrationRisk: specificRisk.breakdown.concentrationRisk * 100,
+      founderRisk: specificRisk.breakdown.founderRisk * 100,
+      ipRisk: specificRisk.breakdown.ipRisk * 100,
+      contractRisk: specificRisk.breakdown.contractRisk * 100,
+    },
   });
 
   const qsRaw = computeQualityScore({

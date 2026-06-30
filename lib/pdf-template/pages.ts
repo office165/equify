@@ -207,14 +207,23 @@ export function buildPage3Financials(data: ValuationData): string {
 
 export function buildPage4Dcf(data: ValuationData): string {
   const waccRows = data.waccSegments
-    .map(
-      (seg) => `<tr>
+    .flatMap((seg) => {
+      const main = `<tr>
         <td>${escHtml(seg.label)}</td>
         <td class="n">${escHtml(seg.symbol ?? '')}</td>
         <td class="n">${seg.pct.toFixed(1)}%</td>
         <td style="font-size:8px;color:var(--dim)">${escHtml(seg.source ?? '')}</td>
+      </tr>`;
+      const subs = (seg.subRows ?? []).map(
+        (sub) => `<tr class="sub-row">
+        <td style="padding-inline-start:14px;font-size:8.5px;color:var(--dim)">└ ${escHtml(sub.label)}</td>
+        <td class="n"></td>
+        <td class="n" style="font-size:8.5px">${sub.pct.toFixed(1)}%</td>
+        <td></td>
       </tr>`,
-    )
+      );
+      return [main, ...subs];
+    })
     .join('');
 
   const yearCols = data.dcfRows.map((r) => `<th>${escHtml(r.label)}</th>`).join('');

@@ -19,11 +19,21 @@ export const LIFECYCLE_SIZE_ALPHA_PCT: Record<EquifyLifecycleKey, number> = {
   mature: 0.0,
 };
 
+export interface SpecificRiskPremiumBreakdownPp {
+  concentrationRisk: number;
+  founderRisk: number;
+  ipRisk: number;
+  contractRisk: number;
+}
+
 export interface WaccBreakdown {
   rf: number;
   leveredBeta: number;
   erp: number;
   alpha: number;
+  /** Company-specific risk premium (percentage points) — concentration, founder, IP, contracts. */
+  specificRiskPremium: number;
+  specificRiskBreakdown: SpecificRiskPremiumBreakdownPp;
   ke: number;
   kd: number;
 }
@@ -51,6 +61,9 @@ export interface CapmWaccParams {
   backlogAlphaReductionPp?: number;
   /** Scale-tier WACC size premium overlay (pp) — SMB +3..+5, enterprise ≤ 0. */
   scalePremiumOverlayPp?: number;
+  /** Idiosyncratic risk premium (pp) — added to Ke alongside lifecycle Alpha. */
+  specificRiskPremiumPp?: number;
+  specificRiskBreakdownPp?: SpecificRiskPremiumBreakdownPp;
 }
 
 function clamp(n: number, min: number, max: number): number {
@@ -146,6 +159,14 @@ export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
       ? params.scalePremiumOverlayPp
       : resolveLifecycleAlphaPct(params.lifecycle, params.lifecycleAdj, 0);
   const alpha = Math.max(0, baseAlpha - backlogReduction);
+  const specificRiskPremium = Math.max(0, params.specificRiskPremiumPp ?? 0);
+  const specificRiskBreakdown: SpecificRiskPremiumBreakdownPp =
+    params.specificRiskBreakdownPp ?? {
+      concentrationRisk: 0,
+      founderRisk: 0,
+      ipRisk: 0,
+      contractRisk: 0,
+    };
 
   const grossDebtK = resolveGrossDebtK(params);
   const netDebtK =
@@ -164,7 +185,7 @@ export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
   const unleveredBeta = resolveUnleveredBeta(params);
   const leveredBeta = computeLeveredBeta(unleveredBeta, grossDebtK, equityProxyK);
 
-  const ke = rf + leveredBeta * erp + alpha;
+  const ke = rf + leveredBeta * erp + alpha + specificRiskPremium;
   const kd = (rf + CAPM_CORPORATE_SPREAD_PCT) * (1 - CAPM_CORPORATE_TAX_RATE);
 
   const debtWeightCapital = grossDebtK;
@@ -185,6 +206,8 @@ export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
       leveredBeta,
       erp,
       alpha,
+      specificRiskPremium,
+      specificRiskBreakdown,
       ke,
       kd,
     },

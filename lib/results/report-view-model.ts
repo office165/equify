@@ -100,6 +100,9 @@ export interface ReportViewModel {
   revenue: number;
   ebitda: number;
   ebitdaBlend?: EbitdaBlendBreakdown;
+  specificRiskPremiumPp?: number;
+  specificRiskBreakdown?: import('../valuation/capm_wacc').SpecificRiskPremiumBreakdownPp;
+  topCustomerPct?: number;
 }
 
 export function confidenceToGrade(score: number): string {
@@ -182,13 +185,17 @@ function buildTrajectory(dcfRows: DcfRow[]): TrajectoryPoint[] {
   }));
 }
 
-export function buildWaccDonutSlices(waccPct: number): WaccDonutSlice[] {
+export function buildWaccDonutSlices(
+  waccPct: number,
+  specificRiskPremiumPp = 0,
+): WaccDonutSlice[] {
   const fixed =
     WACC_COMPONENTS.riskFree +
     WACC_COMPONENTS.erp +
     WACC_COMPONENTS.crp +
     WACC_COMPONENTS.size;
-  const quality = Math.max(0, waccPct - fixed);
+  const specificRisk =
+    specificRiskPremiumPp > 0 ? specificRiskPremiumPp : Math.max(0, waccPct - fixed);
 
   return [
     {
@@ -221,9 +228,9 @@ export function buildWaccDonutSlices(waccPct: number): WaccDonutSlice[] {
     },
     {
       key: 'quality',
-      labelHe: 'התאמת איכות',
-      labelEn: 'Quality adjustment',
-      pct: quality,
+      labelHe: 'סיכון ספציפי',
+      labelEn: 'Specific risk',
+      pct: specificRisk,
       color: '#163530',
     },
   ];
@@ -482,7 +489,10 @@ export function buildReportViewModel(
       : syncedEquifyState
         ? buildTrajectoryFromEquifyState(syncedEquifyState)
         : buildTrajectory(reportData.dcfRows),
-    waccDonutBase: buildWaccDonutSlices(baseWaccPct),
+    waccDonutBase: buildWaccDonutSlices(
+      baseWaccPct,
+      equifyComputed?.waccBreakdown.specificRiskPremium ?? 0,
+    ),
     scenarios,
     findings: reportData.findings,
     reportId: reportData.reportId,
@@ -493,5 +503,8 @@ export function buildReportViewModel(
     revenue,
     ebitda,
     ebitdaBlend: equifyComputed?.ebitdaBlend,
+    specificRiskPremiumPp: equifyComputed?.waccBreakdown.specificRiskPremium,
+    specificRiskBreakdown: equifyComputed?.waccBreakdown.specificRiskBreakdown,
+    topCustomerPct: syncedEquifyState?.risk.topCustomer,
   };
 }

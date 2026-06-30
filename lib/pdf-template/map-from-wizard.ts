@@ -122,29 +122,65 @@ function formatNetDebtNoteHe(
   return `חוב נטו ליום ההערכה: ${formatCurrencyNarrativeHe(net, currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
 }
 
+function buildSpecificRiskSubRows(
+  breakdown: ValuationComputed['waccBreakdown'],
+  topCustomerPct: number,
+  locale: 'he' | 'en',
+): Array<{ label: string; pct: number }> {
+  const b = breakdown.specificRiskBreakdown;
+  const pct = (v: number) => v;
+  if (locale === 'en') {
+    return [
+      {
+        label: `Customer concentration (${topCustomerPct}%):`,
+        pct: pct(b.concentrationRisk),
+      },
+      { label: 'Founder dependency:', pct: pct(b.founderRisk) },
+      {
+        label: b.ipRisk > 0 ? 'IP protection: unprotected' : 'IP protection: protected',
+        pct: pct(b.ipRisk),
+      },
+      {
+        label:
+          b.contractRisk > 0
+            ? 'Contract stability: no long-term contracts'
+            : 'Contract stability: long-term contracts',
+        pct: pct(b.contractRisk),
+      },
+    ];
+  }
+  return [
+    {
+      label: `ריכוזיות לקוחות (${topCustomerPct}%):`,
+      pct: pct(b.concentrationRisk),
+    },
+    { label: 'תלות במייסד:', pct: pct(b.founderRisk) },
+    {
+      label: b.ipRisk > 0 ? 'הגנת קניין רוחני: לא מוגן' : 'הגנת קניין רוחני: מוגן',
+      pct: pct(b.ipRisk),
+    },
+    {
+      label:
+        b.contractRisk > 0
+          ? 'יציבות חוזים: ללא חוזים ארוכי טווח'
+          : 'יציבות חוזים: חוזים ארוכי טווח',
+      pct: pct(b.contractRisk),
+    },
+  ];
+}
+
 function buildWaccSegments(
   waccPct: number,
   breakdown: ValuationComputed['waccBreakdown'],
   qs: number,
+  topCustomerPct: number,
+  locale: 'he' | 'en' = 'he',
 ): WaccSegment[] {
   const rf = breakdown.rf;
-  let marketRisk = breakdown.leveredBeta * breakdown.erp;
-  let crp = 1.6;
-  let size = breakdown.alpha;
-  let spec = waccPct - rf - marketRisk - crp - size;
-
-  if (spec < 0) {
-    const overflow = -spec;
-    const adjustable = crp + size;
-    if (adjustable > 0) {
-      const scale = Math.max(0, adjustable - overflow) / adjustable;
-      crp *= scale;
-      size *= scale;
-    }
-    spec = waccPct - rf - marketRisk - crp - size;
-  }
-  spec = Math.max(0, spec);
-  spec += waccPct - (rf + marketRisk + crp + size + spec);
+  const marketRisk = breakdown.leveredBeta * breakdown.erp;
+  const crp = 1.6;
+  const size = breakdown.alpha;
+  const spec = breakdown.specificRiskPremium;
 
   return [
     { label: 'ריבית חסרת סיכון', symbol: 'Rf', pct: rf, color: '#4DD6CE', source: 'Bank of Israel' },
@@ -158,17 +194,14 @@ function buildWaccSegments(
     { label: 'פרמיית סיכון מדינה', symbol: 'CRP', pct: crp, color: '#C9A84C', source: 'Damodaran Israel' },
     { label: 'פרמיית גודל', symbol: 'Size', pct: size, color: '#163530', source: 'Ibbotson' },
     {
-      label: 'סיכון ספציפי',
+      label: locale === 'en' ? 'Specific risk' : 'סיכון ספציפי',
       symbol: 'SRP',
       pct: spec,
       color: '#7FB8B4',
       source: `Quality Score ${qs}`,
+      subRows: buildSpecificRiskSubRows(breakdown, topCustomerPct, locale),
     },
   ];
-}
-
-function sumWaccSegmentPcts(segments: WaccSegment[]): number {
-  return segments.reduce((sum, segment) => sum + segment.pct, 0);
 }
 
 function buildDcfRows(
@@ -460,8 +493,9 @@ export function mapEngineResultToValuationData(
     fxComputed.wacc,
     fxComputed.waccBreakdown,
     fxComputed.qs,
+    syncedState.risk.topCustomer,
+    locale,
   );
-  const waccDisplayPct = sumWaccSegmentPcts(waccSegments);
   const activeCurrency = resolveActiveCurrency(reportingCurrency, locale);
   const equityIlsAbs = kToNis((ilsComputed ?? fxComputed).equity);
   const valuationOutput = formatValuationOutputSync(equityIlsAbs, fxRates);
@@ -522,7 +556,7 @@ export function mapEngineResultToValuationData(
     dcfEv: kToNis(fxComputed.dcf),
     ebitdaEv: kToNis(fxComputed.ebtMult),
     revenueEv: kToNis(fxComputed.revMult),
-    waccPct: waccDisplayPct,
+    waccPct: fxComputed.wacc,
     qualityScore: fxComputed.qs,
     qualityGrade: fxComputed.qsGrade,
     ebitda: financialCore.auditedEbitda2026Abs,

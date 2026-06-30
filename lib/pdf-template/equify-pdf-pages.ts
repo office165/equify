@@ -280,10 +280,14 @@ function buildPage3Financials(data: ValuationData): string {
 function buildPage4Dcf(data: ValuationData): string {
   const f = pdfFmt(data);
   const waccRows = data.waccSegments
-    .map(
-      (s) =>
-        `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${s.color};margin-inline-end:6px"></span>${escHtml(s.label)}</td><td class="n">${f.pct(s.pct)}</td></tr>`,
-    )
+    .flatMap((s) => {
+      const main = `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${s.color};margin-inline-end:6px"></span>${escHtml(s.label)}</td><td class="n">${f.pct(s.pct)}</td></tr>`;
+      const subs = (s.subRows ?? []).map(
+        (sub) =>
+          `<tr><td style="padding-inline-start:14px;font-size:8.5px;color:var(--dim)">└ ${escHtml(sub.label)}</td><td class="n" style="font-size:8.5px">${f.pct(sub.pct)}</td></tr>`,
+      );
+      return [main, ...subs];
+    })
     .join('');
   const dcfCols = data.dcfRows.map((r) => `<th>${escHtml(r.label)}</th>`).join('');
   const fcffRow = data.dcfRows.map((r) => `<td class="n">${f.fixed(r.fcffM, 2)}</td>`).join('');

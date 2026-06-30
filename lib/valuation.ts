@@ -93,6 +93,12 @@ export {
   runValuationEngine,
 } from './valuation/valuation_engine';
 export {
+  computeSpecificRiskPremium,
+  SPECIFIC_RISK_PREMIUM_CAP,
+  type SpecificRiskPremiumResult,
+  type SpecificRiskPremiumBreakdown,
+} from './valuation/specific_risk_premium';
+export {
   computeFinalEnterpriseValue,
   sumModelBlendContributionsK,
   type ModelBlendContributionsK,
@@ -249,15 +255,8 @@ export interface ValuationComputed {
   ebitda: number;
   ebitdaBlend: EbitdaBlendBreakdown;
   wacc: number;
-  /** CAPM actuarial layer — Rf, βL, ERP, Alpha, Ke, Kd (% points). */
-  waccBreakdown: {
-    rf: number;
-    leveredBeta: number;
-    erp: number;
-    alpha: number;
-    ke: number;
-    kd: number;
-  };
+  /** CAPM actuarial layer — Rf, βL, ERP, Alpha, specific risk, Ke, Kd (% points). */
+  waccBreakdown: import('./valuation/capm_wacc').WaccBreakdown;
   qs: number;
   qsGrade: QualityGrade;
   effectiveMult: number;

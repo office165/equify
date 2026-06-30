@@ -128,6 +128,7 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
             <WaccBreakdownPopover
               wacc={computed.wacc}
               breakdown={computed.waccBreakdown}
+              topCustomerPct={state.risk.topCustomer}
               locale={locale}
               boundaryRef={liveCardRef}
               copy={{
@@ -137,6 +138,18 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
                 waccBreakdownBeta: t.step2.waccBreakdownBeta,
                 waccBreakdownErp: t.step2.waccBreakdownErp,
                 waccBreakdownAlpha: t.step2.waccBreakdownAlpha,
+                waccBreakdownSpecificRisk: t.step2.waccBreakdownSpecificRisk,
+                waccBreakdownSpecificRiskConcentration:
+                  t.step2.waccBreakdownSpecificRiskConcentration,
+                waccBreakdownSpecificRiskFounder: t.step2.waccBreakdownSpecificRiskFounder,
+                waccBreakdownSpecificRiskIpProtected:
+                  t.step2.waccBreakdownSpecificRiskIpProtected,
+                waccBreakdownSpecificRiskIpUnprotected:
+                  t.step2.waccBreakdownSpecificRiskIpUnprotected,
+                waccBreakdownSpecificRiskContractsYes:
+                  t.step2.waccBreakdownSpecificRiskContractsYes,
+                waccBreakdownSpecificRiskContractsNo:
+                  t.step2.waccBreakdownSpecificRiskContractsNo,
                 waccBreakdownKe: t.step2.waccBreakdownKe,
                 waccBreakdownFormula: t.step2.waccBreakdownFormula,
               }}

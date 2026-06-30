@@ -32,6 +32,8 @@ export interface WaccSegment {
   pct: number;
   color: string;
   source?: string;
+  /** Transparent sub-breakdown for economist review (e.g. specific risk components). */
+  subRows?: Array<{ label: string; pct: number }>;
 }
 
 export interface DcfYearRow {

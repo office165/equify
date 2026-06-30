@@ -17,6 +17,7 @@ import {
 } from '../lib/valuation/multiples';
 import { computeBacklogInflectionWeight } from '../lib/valuation/backlog_metrics';
 import { sumModelBlendContributionsK } from '../lib/valuation/compute_final_enterprise_value';
+import { computeSpecificRiskPremium } from '../lib/valuation/specific_risk_premium';
 
 let passed = 0;
 let failed = 0;
@@ -461,6 +462,75 @@ function testEvBlendCoherenceInvariant(): void {
   pass(test, '20 randomized valuations — |EV − Σ contributions| < 0.01%');
 }
 
+function testSpecificRiskPremiumInputs(): void {
+  const test = 'TEST 9 — Specific risk premium responds to all risk inputs';
+
+  const caseA = computeSpecificRiskPremium({
+    topCustomerPct: 0,
+    founderDependency: false,
+    ipProtection: true,
+    hasLongTermContracts: true,
+  });
+  assert(test, caseA.totalPremium === 0, `Case A must be 0 (got ${caseA.totalPremium})`);
+
+  const caseB = computeSpecificRiskPremium({
+    topCustomerPct: 55,
+    founderDependency: false,
+    ipProtection: true,
+    hasLongTermContracts: true,
+  });
+  assert(
+    test,
+    caseB.totalPremium > 0 && caseB.totalPremium <= 0.012,
+    `Case B must be in (0, 0.012] (got ${caseB.totalPremium})`,
+  );
+
+  const caseC = computeSpecificRiskPremium({
+    topCustomerPct: 0,
+    founderDependency: true,
+    ipProtection: true,
+    hasLongTermContracts: true,
+  });
+  assert(
+    test,
+    caseC.totalPremium > caseA.totalPremium,
+    `Case C (${caseC.totalPremium}) must exceed Case A (${caseA.totalPremium})`,
+  );
+
+  const caseD = computeSpecificRiskPremium({
+    topCustomerPct: 55,
+    founderDependency: true,
+    ipProtection: false,
+    hasLongTermContracts: false,
+  });
+  assert(
+    test,
+    caseD.totalPremium > caseB.totalPremium &&
+      caseD.totalPremium > caseC.totalPremium &&
+      caseD.totalPremium <= 0.025,
+    `Case D must be max and capped at 0.025 (got ${caseD.totalPremium})`,
+  );
+
+  const wired = runValuationEngine(
+    baseInputs({
+      topCustomer: 55,
+      founderDep: true,
+      ip: false,
+      contracts: false,
+    }),
+  );
+  assert(
+    test,
+    Math.abs(wired.computed.waccBreakdown.specificRiskPremium - caseD.totalPremiumPp) < 0.01,
+    `Engine wiring: breakdown SRP ${wired.computed.waccBreakdown.specificRiskPremium} ≠ expected ${caseD.totalPremiumPp}`,
+  );
+
+  pass(
+    test,
+    `A=0 B=${caseB.totalPremium.toFixed(3)} C=${caseC.totalPremium.toFixed(3)} D=${caseD.totalPremium.toFixed(3)}`,
+  );
+}
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
@@ -474,6 +544,7 @@ async function main(): Promise<void> {
   await testMultiplePathInvariance();
   await testExchangeRatesLive();
   testEvBlendCoherenceInvariant();
+  testSpecificRiskPremiumInputs();
 
   console.log('\n' + '═'.repeat(72));
   console.log(`ALL ${passed} TESTS PASSED`);

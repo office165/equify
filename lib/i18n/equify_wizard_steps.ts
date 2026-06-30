@@ -97,6 +97,13 @@ export interface EquifyWizardStepStrings {
     waccBreakdownBeta: string;
     waccBreakdownErp: string;
     waccBreakdownAlpha: string;
+    waccBreakdownSpecificRisk: string;
+    waccBreakdownSpecificRiskConcentration: (pct: number) => string;
+    waccBreakdownSpecificRiskFounder: string;
+    waccBreakdownSpecificRiskIpProtected: string;
+    waccBreakdownSpecificRiskIpUnprotected: string;
+    waccBreakdownSpecificRiskContractsYes: string;
+    waccBreakdownSpecificRiskContractsNo: string;
     waccBreakdownKe: string;
     waccBreakdownFormula: string;
     modelDcf: string;
@@ -322,6 +329,13 @@ const HE: EquifyWizardStepStrings = {
     waccBreakdownBeta: 'מדד סיכון ענפי (Beta ממונפת)',
     waccBreakdownErp: 'פרמיית סיכון שוק (ERP)',
     waccBreakdownAlpha: 'פרמיית גודל חברה (Alpha)',
+    waccBreakdownSpecificRisk: 'סיכון ספציפי (SRP)',
+    waccBreakdownSpecificRiskConcentration: (pct) => `ריכוזיות לקוחות (${pct}%):`,
+    waccBreakdownSpecificRiskFounder: 'תלות במייסד:',
+    waccBreakdownSpecificRiskIpProtected: 'הגנת קניין רוחני: מוגן',
+    waccBreakdownSpecificRiskIpUnprotected: 'הגנת קניין רוחני: לא מוגן',
+    waccBreakdownSpecificRiskContractsYes: 'יציבות חוזים: חוזים ארוכי טווח',
+    waccBreakdownSpecificRiskContractsNo: 'יציבות חוזים: ללא חוזים ארוכי טווח',
     waccBreakdownKe: 'עלות הון עצמי (Ke)',
     waccBreakdownFormula: 'נוסחת מודל: CAPM (Capital Asset Pricing Model)',
     modelDcf: 'DCF',
@@ -523,6 +537,13 @@ const EN: EquifyWizardStepStrings = {
     waccBreakdownBeta: 'Industry beta (levered β)',
     waccBreakdownErp: 'Equity risk premium (ERP)',
     waccBreakdownAlpha: 'Size premium (Alpha)',
+    waccBreakdownSpecificRisk: 'Specific risk (SRP)',
+    waccBreakdownSpecificRiskConcentration: (pct) => `Customer concentration (${pct}%):`,
+    waccBreakdownSpecificRiskFounder: 'Founder dependency:',
+    waccBreakdownSpecificRiskIpProtected: 'IP protection: protected',
+    waccBreakdownSpecificRiskIpUnprotected: 'IP protection: unprotected',
+    waccBreakdownSpecificRiskContractsYes: 'Contract stability: long-term contracts',
+    waccBreakdownSpecificRiskContractsNo: 'Contract stability: no long-term contracts',
     waccBreakdownKe: 'Cost of equity (Ke)',
     waccBreakdownFormula: 'Model: CAPM (Capital Asset Pricing Model)',
     modelDcf: 'DCF',

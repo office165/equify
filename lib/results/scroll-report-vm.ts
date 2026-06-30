@@ -242,7 +242,7 @@ export function buildWaccRows(
   scenario: ValuationScenario,
 ): { label: string; pct: string }[] {
   const wacc = vm.scenarios[scenario].waccPct;
-  const slices = buildWaccDonutSlices(wacc);
+  const slices = buildWaccDonutSlices(wacc, vm.specificRiskPremiumPp ?? 0);
   return slices.map((s) => ({
     label: s.labelHe,
     pct: `${s.pct.toFixed(1)}%`,
