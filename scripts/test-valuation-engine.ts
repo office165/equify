@@ -909,27 +909,44 @@ function testMaEbitdaPanelOwnerSalaryLeak(): void {
   pass(test, `default current=${blend.current.toFixed(0)} explicit120 current=${blendExplicit.current.toFixed(0)}`);
 }
 
+/** Ordered regression suites — labels skip TEST 10 (never allocated; see suite list). */
+const TEST_SUITES: Array<{ run: () => void | Promise<void> }> = [
+  { run: testBacklogProportionalImpact },
+  { run: testCapexMonotonicDecrease },
+  { run: testIndustryMultiplesRanges },
+  { run: testOwnerSalaryZeroHandling },
+  { run: testCustomerConcentrationSmooth },
+  { run: testMultiplePathInvariance },
+  { run: testExchangeRatesLive },
+  { run: testEvBlendCoherenceInvariant },
+  { run: testSpecificRiskPremiumInputs },
+  { run: testNegativeEbitdaRegime },
+  { run: testSectorWeightDynamismRestored },
+  { run: testNormalizedEbitdaHistoricalSensitivity },
+  { run: testMaEbitdaPanelOwnerSalaryLeak },
+];
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
   console.log('═'.repeat(72));
 
-  testBacklogProportionalImpact();
-  testCapexMonotonicDecrease();
-  testIndustryMultiplesRanges();
-  testOwnerSalaryZeroHandling();
-  testCustomerConcentrationSmooth();
-  await testMultiplePathInvariance();
-  await testExchangeRatesLive();
-  testEvBlendCoherenceInvariant();
-  testSpecificRiskPremiumInputs();
-  testNegativeEbitdaRegime();
-  testSectorWeightDynamismRestored();
-  testNormalizedEbitdaHistoricalSensitivity();
-  testMaEbitdaPanelOwnerSalaryLeak();
+  let executed = 0;
+  for (const suite of TEST_SUITES) {
+    await suite.run();
+    executed += 1;
+  }
 
   console.log('\n' + '═'.repeat(72));
-  console.log(`ALL ${passed} TESTS PASSED`);
+  if (passed !== executed) {
+    fail(
+      'Runner',
+      `pass count (${passed}) must equal executed suites (${executed})`,
+    );
+  }
+  console.log(
+    `ALL ${passed} / ${executed} TEST SUITES PASSED (labels TEST 1–9, 11–14)`,
+  );
   console.log('═'.repeat(72));
 }
 
