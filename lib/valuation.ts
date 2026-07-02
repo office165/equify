@@ -48,10 +48,17 @@ export {
 } from './valuation/sub_sector_default_multiple';
 export {
   resolveProfitabilityRegime,
+  applyNormalizedEbitdaRegimeLabel,
   buildProfitabilityMethodologyNoteHe,
   type ProfitabilityRegime,
   type RegimeResolution,
 } from './valuation/profitability_regime';
+export {
+  computeNormalizedEbitda,
+  resolveNormalizedEbitdaFromInputs,
+  buildNormalizedEbitdaNoteHe,
+  type NormalizedEbitdaResult,
+} from './valuation/normalized_ebitda';
 export {
   getSectorWeights,
   resolveDisplayWeights,
@@ -325,6 +332,8 @@ export interface ValuationComputed {
   rawMultiple?: number;
   /** Profitability regime resolution — negative-EBITDA / thin-margin methodology. */
   profitabilityRegime?: import('./valuation/profitability_regime').RegimeResolution;
+  /** Big-4 normalized (maintainable) EBITDA — regime + multiple leg SSOT. */
+  normalizedEbitda?: import('./valuation/normalized_ebitda').NormalizedEbitdaResult;
 }
 
 export interface ScenarioRow {

@@ -194,6 +194,9 @@ function buildPage2ExecSummary(data: ValuationData): string {
   const methodologyNoteHtml = data.profitabilityMethodologyNote
     ? `<div class="box tint methodology-note" style="margin-top:3mm;white-space:pre-line">${escHtml(data.profitabilityMethodologyNote)}</div>`
     : '';
+  const normalizedEbitdaHtml = data.normalizedEbitdaNote
+    ? `<div class="box tint methodology-note" style="margin-top:3mm;white-space:pre-line">${escHtml(data.normalizedEbitdaNote)}</div>`
+    : '';
   const blendRows = data.modelBlend
     .map(
       (r) =>
@@ -237,6 +240,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
           <tr class="sum"><td>שווי פעילות משולב</td><td class="n"></td><td class="n">${f.pct(100, 0)}</td><td class="n">${f.money(data.enterpriseValue)}</td></tr>
         </table>
         ${methodologyNoteHtml}
+        ${normalizedEbitdaHtml}
         <p class="note">הערכה זו בוצעה ב-${escHtml(noteDate)} על בסיס נתונים שהוזנו על ידי המשתמש ותחזיות הנהלה.</p>
       </section>
     </div>

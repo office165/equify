@@ -49,6 +49,7 @@ import {
   syncFinancialsDerived,
 } from '../wizard/financial_history';
 import { buildProfitabilityMethodologyNoteHe } from '../valuation/profitability_regime';
+import { buildNormalizedEbitdaNoteHe } from '../valuation/normalized_ebitda';
 import { resolveSectorMethodologyConfig } from '../valuation/sector_methodology_resolver';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import {
@@ -226,14 +227,20 @@ function buildDcfRows(
     coercePercentNumber(computed.dcfGrowthPct) || coercePercentNumber(inputs.growth);
   const w = computed.wacc / 100;
   const regime = computed.profitabilityRegime;
+  const normalized = computed.normalizedEbitda;
+  const sectorConfig = resolveSectorMethodologyConfig(inputs.sector, inputs.subSector);
+  const recoveryAnchorMargin =
+    normalized?.isCurrentYearAnomalous &&
+    normalized.anomalyDirection === 'downside' &&
+    normalized.historicalAvgMarginPct != null
+      ? (normalized.historicalAvgMarginPct / 100) * 0.8
+      : sectorConfig.maxHistoricalMargin;
   const turnaround =
     regime &&
     (regime.regime === 'loss_making' || regime.regime === 'deep_loss')
       ? {
           currentMargin: revK > 0 ? (inputs.ebitda2026K ?? computed.ebitda) / revK : 0,
-          sectorNormalMargin:
-            resolveSectorMethodologyConfig(inputs.sector, inputs.subSector)
-              .maxHistoricalMargin,
+          sectorNormalMargin: recoveryAnchorMargin,
           turnaroundYears: regime.turnaroundYears,
         }
       : undefined;
@@ -673,6 +680,18 @@ export function mapEngineResultToValuationData(
     profitabilityMethodologyNote: fxComputed.profitabilityRegime
       ? buildProfitabilityMethodologyNoteHe(fxComputed.profitabilityRegime)
       : undefined,
+    normalizedEbitdaNote:
+      fxComputed.normalizedEbitda && fxComputed.normalizedEbitda.yearsAvailable > 1
+        ? buildNormalizedEbitdaNoteHe(
+            fxComputed.normalizedEbitda,
+            {
+              ebitda2024K: inputs.ebitda2024K,
+              ebitda2025K: inputs.ebitda2025K,
+              ebitda2026K: inputs.ebitda2026K,
+            },
+            (k) => formatCurrencyShort(k * 1000, reportingCurrency),
+          )
+        : undefined,
     multiplesIntro: getMultiplesIntroText(syncedState.profile.sector, locale),
   };
 }

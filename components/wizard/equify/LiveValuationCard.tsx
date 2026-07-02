@@ -48,9 +48,13 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
         ebitdaMultiple: computed.blendWeights.ebitda,
         revenueMultiple: computed.blendWeights.rev,
         regimeLabel:
-          computed.profitabilityRegime?.regime !== 'healthy'
+          computed.normalizedEbitda?.isCurrentYearAnomalous &&
+          (computed.normalizedEbitda.spotEbitdaK ?? 0) < 0 &&
+          (computed.normalizedEbitda.normalizedEbitdaK ?? 0) > 0
             ? computed.profitabilityRegime?.labelHe ?? null
-            : null,
+            : computed.profitabilityRegime?.regime !== 'healthy'
+              ? computed.profitabilityRegime?.labelHe ?? null
+              : null,
       };
     }
     return resolveDisplayWeights({
@@ -213,6 +217,13 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
               fmtLiveK(computed.backlogEquityUpliftK),
             )}
           </b>
+        </div>
+      ) : null}
+      {computed.normalizedEbitda &&
+      computed.normalizedEbitda.yearsAvailable > 1 &&
+      computed.normalizedEbitda.explanationHe ? (
+        <div className="cl-inflection-note mono" style={{ marginTop: 8 }}>
+          {computed.normalizedEbitda.explanationHe}
         </div>
       ) : null}
       <div className="cl-mult-override rv mb-4">

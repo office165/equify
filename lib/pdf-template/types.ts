@@ -208,6 +208,8 @@ export interface ValuationData {
   keyFindings?: string;
   /** Methodology disclosure when profitability regime ≠ healthy (negative EBITDA path). */
   profitabilityMethodologyNote?: string;
+  /** Big-4 normalized EBITDA disclosure when historical years exist. */
+  normalizedEbitdaNote?: string;
   disclaimer?: string;
 
   trajectory: TrajectoryPoint[];

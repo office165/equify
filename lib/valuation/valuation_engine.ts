@@ -35,10 +35,16 @@ import {
 import { computeCapmWacc } from './capm_wacc';
 import {
   buildProfitabilityMethodologyNoteHe,
+  applyNormalizedEbitdaRegimeLabel,
   resolveProfitabilityRegime,
   type RegimeResolution,
 } from './profitability_regime';
 import { resolveEngineBlendWeights } from './resolve_display_weights';
+import {
+  buildNormalizedEbitdaNoteHe,
+  resolveNormalizedEbitdaFromInputs,
+  type NormalizedEbitdaResult,
+} from './normalized_ebitda';
 import { resolveSubSectorRevenueMultiple } from './sub_sector_default_multiple';
 import type { TurnaroundDcfParams } from './scenario_matrix';
 
@@ -144,6 +150,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     ebitda2026K,
     revenue2026K,
     revenue2025K,
+    revenue2024K,
     ebitda2027K,
     backlogSignedK,
     projectedEbitdaK,
@@ -154,6 +161,18 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   const currentYearEbitdaK =
     ebitda2026K ??
     resolveCurrentYearEbitdaK({ ebitda2026K, rev: revK, margin });
+
+  const normalizedEbitda = resolveNormalizedEbitdaFromInputs({
+    ebitda2024K,
+    ebitda2025K,
+    ebitda2026K: currentYearEbitdaK,
+    revenue2024K,
+    revenue2025K,
+    revenue2026K: revK,
+    rev: revK,
+    margin,
+  });
+  const regimeEbitdaK = normalizedEbitda.normalizedEbitdaK;
 
   const ownerSalaryNormK = resolveNormalizedOwnerSalaryK(normalizedOwnerSalary);
   const specificRisk = computeSpecificRiskPremium({
@@ -175,6 +194,8 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
       rev,
       margin,
       revenue2026K: revK,
+      revenue2024K,
+      revenue2025K,
     },
     cappedGrowthPct: growth,
     historicalAvgMarginPct: calibration.historicalAvgMarginPct,
@@ -188,16 +209,20 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     rev: revK,
     revenue2026K: revK,
   });
-  const { weights: blendWeights, regime: profitabilityRegime } = resolveEngineBlendWeights({
+  const { weights: blendWeights, regime: rawProfitabilityRegime } = resolveEngineBlendWeights({
     sector: inputs.sector,
     subSector: inputs.subSector,
     strategy: sectorConfig.strategy,
     revenueK: revK,
-    ebitdaK: currentYearEbitdaK,
+    ebitdaK: regimeEbitdaK,
     lifecycle,
     lifecycleAdj,
     revK,
   });
+  const profitabilityRegime = applyNormalizedEbitdaRegimeLabel(
+    rawProfitabilityRegime,
+    normalizedEbitda,
+  );
 
   const baseEbitdaForMultiple = resolveEbitdaBaseForMultipleLeg(
     calibrated,
@@ -308,13 +333,20 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   });
   const automaticEffectiveMult = automaticNormalization.adjustedMultiple;
 
+  const recoveryAnchorMargin =
+    normalizedEbitda.isCurrentYearAnomalous &&
+    normalizedEbitda.anomalyDirection === 'downside' &&
+    normalizedEbitda.historicalAvgMarginPct != null
+      ? (normalizedEbitda.historicalAvgMarginPct / 100) * 0.8
+      : sectorConfig.maxHistoricalMargin;
+
   const turnaroundDcf: TurnaroundDcfParams | undefined =
     profitabilityRegime.turnaroundYears > 0 &&
     (profitabilityRegime.regime === 'loss_making' ||
       profitabilityRegime.regime === 'deep_loss')
       ? {
           currentMargin: revK > 0 ? currentYearEbitdaK / revK : 0,
-          sectorNormalMargin: sectorConfig.maxHistoricalMargin,
+          sectorNormalMargin: recoveryAnchorMargin,
           turnaroundYears: profitabilityRegime.turnaroundYears,
         }
       : undefined;
@@ -353,7 +385,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   let revLegEvK = legs.revMult;
   let revMultiplier = legs.revMultiplier;
 
-  if (blendWeights.ebitda <= 0 || currentYearEbitdaK <= 0) {
+  if (blendWeights.ebitda <= 0 || baseEbitdaForMultiple <= 0) {
     ebitdaLegEvK = 0;
   }
 
@@ -431,6 +463,12 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     }),
   );
 
+  const normalizedNote = buildNormalizedEbitdaNoteHe(
+    normalizedEbitda,
+    { ebitda2024K, ebitda2025K, ebitda2026K: currentYearEbitdaK },
+    (k) => `₪${(k / 1000).toFixed(1)}M`,
+  );
+
   const methodologyNote = buildProfitabilityMethodologyNoteHe(
     profitabilityRegime,
     profitabilityRegime.regime !== 'healthy'
@@ -477,6 +515,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     calibrationWarnings: [
       ...calibration.warnings.map((w) => w.message),
       ...ownerSalaryWarnings,
+      ...(normalizedNote ? [normalizedNote] : []),
       ...(methodologyNote ? [methodologyNote] : []),
     ],
     calibratedYears: calibration.calibratedYears,
@@ -488,6 +527,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     multipleNormalizationBreakdown: normalization.breakdown,
     rawMultiple: normalization.breakdown.rawMultiple,
     profitabilityRegime,
+    normalizedEbitda,
   };
 }
 

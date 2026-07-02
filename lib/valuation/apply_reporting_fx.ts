@@ -69,6 +69,16 @@ export function applyReportingFxToComputed(
           ),
         }
       : computed.modelBlendContributions,
+    normalizedEbitda: computed.normalizedEbitda
+      ? {
+          ...computed.normalizedEbitda,
+          normalizedEbitdaK: scaleK(
+            computed.normalizedEbitda.normalizedEbitdaK,
+            multiplier,
+          ),
+          spotEbitdaK: scaleK(computed.normalizedEbitda.spotEbitdaK, multiplier),
+        }
+      : computed.normalizedEbitda,
   };
 }
 

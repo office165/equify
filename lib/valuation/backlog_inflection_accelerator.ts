@@ -7,9 +7,9 @@ import {
   computeOrganicForwardRevenue2027K,
   computeProjectedEbitda2027FromGrowth,
   resolveCurrentYearEbitdaK,
-  resolveHistoricalThreeYearEbitdaAverage,
   type BacklogInflectionResult,
 } from './backlog_metrics';
+import { resolveNormalizedEbitdaFromInputs } from './normalized_ebitda';
 import type { SectorMethodologyConfig } from './sector_methodology_matrix';
 
 /** @deprecated Use computeBacklogWaccRiskReduction — dynamic up to −1.5pp. */
@@ -43,6 +43,8 @@ export function applyBacklogInflectionAccelerator(params: {
     | 'rev'
     | 'margin'
     | 'revenue2026K'
+    | 'revenue2024K'
+    | 'revenue2025K'
   >;
   cappedGrowthPct: number;
   /** Post-guardrail mean margin % across 2024–2026. */
@@ -59,12 +61,15 @@ export function applyBacklogInflectionAccelerator(params: {
     ebitda2025K: inputs.ebitda2025K,
     ebitda2026K: inputs.ebitda2026K,
     ebitda2027K: inputs.ebitda2027K,
+    revenue2024K: inputs.revenue2024K,
+    revenue2025K: inputs.revenue2025K,
+    revenue2026K,
     rev: revenue2026K,
     margin: inputs.margin,
   };
 
-  const historicalThreeYearEbitdaAvg =
-    resolveHistoricalThreeYearEbitdaAverage(ebitdaContext);
+  const normalizedEbitda = resolveNormalizedEbitdaFromInputs(ebitdaContext);
+  const historicalThreeYearEbitdaAvg = normalizedEbitda.normalizedEbitdaK;
 
   const currentYearEbitdaK = resolveCurrentYearEbitdaK(ebitdaContext);
   const projectedFromState =
@@ -90,7 +95,7 @@ export function applyBacklogInflectionAccelerator(params: {
   const isRevenueStrategy = sectorConfig.strategy === 'current_run_rate_revenue';
   const baseEbitdaForMultiple = isRevenueStrategy
     ? currentYearEbitdaK
-    : historicalThreeYearEbitdaAvg;
+    : normalizedEbitda.normalizedEbitdaK;
 
   return {
     inflectionIntensity: inflectionWeight,

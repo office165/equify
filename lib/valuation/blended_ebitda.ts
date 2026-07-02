@@ -25,6 +25,10 @@ function isPositiveFinite(n: unknown): n is number {
   return typeof n === 'number' && Number.isFinite(n) && n > 0;
 }
 
+function isFiniteEbitda(n: unknown): n is number {
+  return typeof n === 'number' && Number.isFinite(n);
+}
+
 function ebitdaAtRevenueK(
   revK: number,
   marginPct: number,
@@ -82,10 +86,19 @@ export function computeBlendedEbitda(
         ? currentEbitdaK * (1 + g)
         : 0;
 
-  if (isPositiveFinite(pastEbitdaK) && isPositiveFinite(currentEbitdaK)) {
+  if (
+    isFiniteEbitda(pastEbitdaK) &&
+    isFiniteEbitda(currentEbitdaK) &&
+    isPositiveFinite(inputs.revenue2025K)
+  ) {
     const past = pastEbitdaK;
     const current = currentEbitdaK;
-    const projected = projectedEbitdaK;
+    const projected =
+      typeof projectedFromState === 'number' && Number.isFinite(projectedFromState)
+        ? projectedFromState
+        : isPositiveFinite(currentEbitdaK)
+          ? currentEbitdaK * (1 + g)
+          : projectedEbitdaK;
     const { past: wPast, current: wCurrent, projected: wProjected } =
       BLENDED_EBITDA_WEIGHTS;
     const blended = wPast * past + wCurrent * current + wProjected * projected;

@@ -163,6 +163,32 @@ export function regimeWeightsToEngineBlend(
   };
 }
 
+/** Override regime label when spot year is anomalous but normalized earnings recover. */
+export function applyNormalizedEbitdaRegimeLabel(
+  regime: RegimeResolution,
+  params: {
+    yearsAvailable: number;
+    isCurrentYearAnomalous: boolean;
+    anomalyDirection: 'downside' | 'upside' | null;
+    normalizedEbitdaK: number;
+    spotEbitdaK: number;
+  },
+): RegimeResolution {
+  if (
+    params.yearsAvailable > 1 &&
+    params.isCurrentYearAnomalous &&
+    params.anomalyDirection === 'downside' &&
+    params.normalizedEbitdaK > 0 &&
+    params.spotEbitdaK < 0
+  ) {
+    return {
+      ...regime,
+      labelHe: 'שנה חריגה על רקע היסטוריה רווחית — הערכה לפי EBITDA מנורמלת',
+    };
+  }
+  return regime;
+}
+
 /**
  * Builds Hebrew methodology disclosure for loss-making / thin-margin regimes.
  * Uses composed sector weights when provided; otherwise falls back to regime targets.

@@ -19,6 +19,11 @@ import { computeBacklogInflectionWeight } from '../lib/valuation/backlog_metrics
 import { sumModelBlendContributionsK } from '../lib/valuation/compute_final_enterprise_value';
 import { computeSpecificRiskPremium } from '../lib/valuation/specific_risk_premium';
 import { resolveDisplayWeights } from '../lib/valuation/resolve_display_weights';
+import {
+  computeNormalizedEbitda,
+  resolveNormalizedEbitdaFromInputs,
+} from '../lib/valuation/normalized_ebitda';
+import { resolveProfitabilityRegime } from '../lib/valuation/profitability_regime';
 
 let passed = 0;
 let failed = 0;
@@ -592,6 +597,10 @@ function testNegativeEbitdaRegime(): void {
       margin: 1.25,
       revenue2026K: 4_000,
       ebitda2026K: 50,
+      ebitda2025K: 0,
+      ebitda2024K: 0,
+      revenue2025K: 0,
+      revenue2024K: 0,
       backlogSignedK: 0,
     }),
   );
@@ -613,13 +622,26 @@ function testNegativeEbitdaRegime(): void {
     `Case B weights must sum to 1 (got ${blendSumB})`,
   );
 
-  const equityNeg1K = equityFor(negativeEbitdaInputs(-1, { rev: 4_000, revenue2026K: 4_000 }));
+  const equityNeg1K = equityFor(
+    negativeEbitdaInputs(-1, {
+      rev: 4_000,
+      revenue2026K: 4_000,
+      ebitda2025K: 0,
+      ebitda2024K: 0,
+      revenue2025K: 0,
+      revenue2024K: 0,
+    }),
+  );
   const equityPos1K = runValuationEngine(
     baseInputs({
       rev: 4_000,
       margin: 0.025,
       revenue2026K: 4_000,
       ebitda2026K: 1,
+      ebitda2025K: 0,
+      ebitda2024K: 0,
+      revenue2025K: 0,
+      revenue2024K: 0,
       backlogSignedK: 0,
     }),
   ).computed.equity;
@@ -726,6 +748,100 @@ function testSectorWeightDynamismRestored(): void {
   );
 }
 
+function testNormalizedEbitdaHistoricalSensitivity(): void {
+  const test = 'TEST 13 — Normalized EBITDA & historical sensitivity';
+
+  const reportedBase = {
+    rev: 777.777,
+    margin: (-44.444 / 777.777) * 100,
+    revenue2026K: 777.777,
+    ebitda2026K: -44.444,
+    backlogSignedK: 600,
+    sector: 'saas' as const,
+    subSector: 'marketplace',
+    sectorMult: SECTOR_MULTIPLIERS.saas,
+  };
+
+  const equityA = equityFor(reportedBase);
+  const equityB = equityFor({
+    ...reportedBase,
+    revenue2024K: 7_777,
+    ebitda2024K: 6_000,
+    revenue2025K: 8_888,
+    ebitda2025K: 5_600,
+  });
+
+  assert(
+    test,
+    equityB > equityA * 1.5,
+    `Case B history must move equity materially: A=${equityA.toFixed(0)} B=${equityB.toFixed(0)} (need B > A×1.5)`,
+  );
+
+  const chronic = resolveNormalizedEbitdaFromInputs({
+    ebitda2024K: -2_000,
+    ebitda2025K: -1_500,
+    ebitda2026K: -1_400,
+    revenue2024K: 5_000,
+    revenue2025K: 4_500,
+    revenue2026K: 4_000,
+    rev: 4_000,
+    margin: -35,
+  });
+  const chronicRegime = resolveProfitabilityRegime({
+    ebitdaK: chronic.normalizedEbitdaK,
+    revenueK: 4_000,
+  });
+  assert(test, chronic.normalizedEbitdaK < 0, 'Case C normalized EBITDA must stay negative');
+  assert(
+    test,
+    chronicRegime.regime === 'loss_making' || chronicRegime.regime === 'deep_loss',
+    `Case C must stay loss_making (got ${chronicRegime.regime})`,
+  );
+
+  const anomalyDown = computeNormalizedEbitda({
+    currentEbitdaK: -600,
+    currentRevenueK: 10_000,
+    prior1EbitdaK: 5_200,
+    prior1RevenueK: 10_000,
+    prior2EbitdaK: 5_500,
+    prior2RevenueK: 10_000,
+  });
+  const anomalyStable = computeNormalizedEbitda({
+    currentEbitdaK: 900,
+    currentRevenueK: 10_000,
+    prior1EbitdaK: 1_000,
+    prior1RevenueK: 10_000,
+    prior2EbitdaK: 1_200,
+    prior2RevenueK: 10_000,
+  });
+  assert(test, anomalyDown.isCurrentYearAnomalous === true, 'Case D: [55%,52%,-6%] must be anomalous');
+  assert(test, anomalyStable.isCurrentYearAnomalous === false, 'Case D: [12%,10%,9%] must not be anomalous');
+
+  const equityE1 = equityFor({
+    ...reportedBase,
+    revenue2024K: 7_777,
+    ebitda2024K: 6_000,
+    revenue2025K: 8_888,
+    ebitda2025K: 5_600,
+  });
+  const equityE2 = equityFor({
+    ...reportedBase,
+    revenue2024K: 7_777,
+    ebitda2024K: 6_000,
+    revenue2025K: 8_888,
+    ebitda2025K: 6_500,
+  });
+  const sensitivityPct =
+    equityE1 > 0 ? (Math.abs(equityE2 - equityE1) / equityE1) * 100 : 0;
+  assert(
+    test,
+    sensitivityPct > 2,
+    `Case E: +1M prior EBITDA must move equity >2% (Δ=${sensitivityPct.toFixed(1)}%)`,
+  );
+
+  pass(test, `A=${equityA.toFixed(0)} B=${equityB.toFixed(0)} chronic=${chronicRegime.regime}`);
+}
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
@@ -742,6 +858,7 @@ async function main(): Promise<void> {
   testSpecificRiskPremiumInputs();
   testNegativeEbitdaRegime();
   testSectorWeightDynamismRestored();
+  testNormalizedEbitdaHistoricalSensitivity();
 
   console.log('\n' + '═'.repeat(72));
   console.log(`ALL ${passed} TESTS PASSED`);
