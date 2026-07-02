@@ -35,6 +35,14 @@ import {
   type MultipleNormalizationBreakdown,
 } from './normalize_multiple';
 import { computeCapmWacc } from './capm_wacc';
+import {
+  buildProfitabilityMethodologyNoteHe,
+  regimeWeightsToEngineBlend,
+  resolveProfitabilityRegime,
+  type RegimeResolution,
+} from './profitability_regime';
+import { resolveSubSectorRevenueMultiple } from './sub_sector_default_multiple';
+import type { TurnaroundDcfParams } from './scenario_matrix';
 
 function qualityScoreGrade(qs: number): QualityGrade {
   if (qs >= 85) return 'A';
@@ -83,6 +91,7 @@ function computeDcf(params: {
   wacc: number;
   sector?: ValuationInputs['sector'];
   subSector?: string;
+  turnaround?: TurnaroundDcfParams;
 }): number {
   return computeDcfWithGrowthDecay({
     ebitdaK: params.ebitdaK,
@@ -91,6 +100,7 @@ function computeDcf(params: {
     dcfGrowthPct: params.dcfGrowthPct,
     wacc: params.wacc,
     industry: resolveCapexIndustryKey(params.sector, params.subSector),
+    turnaround: params.turnaround,
   });
 }
 
@@ -147,6 +157,11 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     ebitda2026K ??
     resolveCurrentYearEbitdaK({ ebitda2026K, rev: revK, margin });
 
+  const profitabilityRegime = resolveProfitabilityRegime({
+    ebitdaK: currentYearEbitdaK,
+    revenueK: revK,
+  });
+
   const ownerSalaryNormK = resolveNormalizedOwnerSalaryK(normalizedOwnerSalary);
   const specificRisk = computeSpecificRiskPremium({
     topCustomerPct: topCustomer,
@@ -184,11 +199,14 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     subSectorId: inputs.subSector,
     strategy: sectorConfig.strategy,
   });
-  const blendWeights = applyScaleAdjustedBlendWeights(
-    baseBlendWeights,
-    scaleProfile,
-    sectorConfig.strategy,
-  );
+  const blendWeights =
+    profitabilityRegime.regime === 'healthy'
+      ? applyScaleAdjustedBlendWeights(
+          baseBlendWeights,
+          scaleProfile,
+          sectorConfig.strategy,
+        )
+      : regimeWeightsToEngineBlend(profitabilityRegime.blendWeights);
 
   const baseEbitdaForMultiple = resolveEbitdaBaseForMultipleLeg(
     calibrated,
@@ -235,6 +253,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     backlogAlphaReductionPp,
     scalePremiumOverlayPp: scaleProfile.waccSizePremiumOverlayPp,
     specificRiskPremiumPp: specificRisk.totalPremiumPp,
+    profitabilityLossPremiumPp: profitabilityRegime.waccPremium * 100,
     specificRiskBreakdownPp: {
       concentrationRisk: specificRisk.breakdown.concentrationRisk * 100,
       founderRisk: specificRisk.breakdown.founderRisk * 100,
@@ -253,7 +272,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     growth,
   });
   const ownerSalaryOmitted = !(normalizedOwnerSalary > 0);
-  const qs = qsRaw;
+  const qs = Math.min(qsRaw, profitabilityRegime.qualityScoreCap);
   const qsGrade = qualityScoreGrade(qs);
   const ownerSalaryWarnings: string[] = ownerSalaryOmitted
     ? ['[equify-calibration] שכר בעלים לא הוזן — נורמליזציה ל-₪250K (DCF בלבד, ללא השפעה על ציון איכות)']
@@ -298,6 +317,17 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   });
   const automaticEffectiveMult = automaticNormalization.adjustedMultiple;
 
+  const turnaroundDcf: TurnaroundDcfParams | undefined =
+    profitabilityRegime.turnaroundYears > 0 &&
+    (profitabilityRegime.regime === 'loss_making' ||
+      profitabilityRegime.regime === 'deep_loss')
+      ? {
+          currentMargin: revK > 0 ? currentYearEbitdaK / revK : 0,
+          sectorNormalMargin: sectorConfig.maxHistoricalMargin,
+          turnaroundYears: profitabilityRegime.turnaroundYears,
+        }
+      : undefined;
+
   const dcf = computeDcf({
     ebitdaK: ebitda,
     revK,
@@ -306,6 +336,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     wacc,
     sector: inputs.sector,
     subSector: inputs.subSector,
+    turnaround: turnaroundDcf,
   });
 
   const fcffAudit = computeFCFF({
@@ -327,10 +358,42 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     revenueRunRateK: revK,
   });
 
+  let ebitdaLegEvK = legs.ebtMult;
+  let revLegEvK = legs.revMult;
+  let revMultiplier = legs.revMultiplier;
+
+  if (blendWeights.ebitda <= 0 || currentYearEbitdaK <= 0) {
+    ebitdaLegEvK = 0;
+  }
+
+  if (blendWeights.rev > 0 && revLegEvK <= 0) {
+    const rawRevMultiple = resolveSubSectorRevenueMultiple({
+      sector: inputs.sector,
+      subSector: inputs.subSector,
+      sectorConfig,
+      market:
+        inputs.marketEvEbitda != null || inputs.marketEvRevenue != null
+          ? {
+              evEbitda: inputs.marketEvEbitda,
+              evRevenue: inputs.marketEvRevenue,
+            }
+          : undefined,
+    });
+    const revNormalization = normalizeMultipleForPrivateCompany({
+      rawMultiple: rawRevMultiple,
+      revenueK: revK,
+      industry: fcfIndustry,
+      lifecycleStage: lifecycle ?? 'growth',
+      isManualOverride: false,
+    });
+    revMultiplier = revNormalization.adjustedMultiple;
+    revLegEvK = Math.round(revK * revMultiplier * 100) / 100;
+  }
+
   const rawEvK =
     dcf * blendWeights.dcf +
-    legs.ebtMult * blendWeights.ebitda +
-    legs.revMult * blendWeights.rev;
+    ebitdaLegEvK * blendWeights.ebitda +
+    revLegEvK * blendWeights.rev;
   const rawEquity = rawEvK - debt;
 
   const organicForwardRevenue2027K = computeOrganicForwardRevenue2027K(revK, growth);
@@ -353,8 +416,8 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
 
   const finalEv = computeFinalEnterpriseValue({
     dcfLegEvK: dcf,
-    ebitdaLegEvK: legs.ebtMult,
-    revLegEvK: legs.revMult,
+    ebitdaLegEvK,
+    revLegEvK,
     blendWeights,
     backlogInflectionWeight: backlog.inflectionIntensity,
     equityBeforeUpliftK: cog.calibratedEquityK,
@@ -377,6 +440,8 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     }),
   );
 
+  const methodologyNote = buildProfitabilityMethodologyNoteHe(profitabilityRegime);
+
   return {
     ebitda,
     ebitdaBlend,
@@ -388,9 +453,9 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     automaticEffectiveMult: multipleResolution.automaticMultiple,
     configuredDefaultMultiple: multipleResolution.configuredDefaultMultiple,
     isManualMultiple: multipleResolution.isManual,
-    ebtMult: legs.ebtMult,
-    revMult: legs.revMult,
-    revMultiplier: legs.revMultiplier,
+    ebtMult: ebitdaLegEvK,
+    revMult: revLegEvK,
+    revMultiplier,
     dcf,
     ev: calibratedEvK,
     equity: calibratedEquityK,
@@ -412,6 +477,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     calibrationWarnings: [
       ...calibration.warnings.map((w) => w.message),
       ...ownerSalaryWarnings,
+      ...(methodologyNote ? [methodologyNote] : []),
     ],
     calibratedYears: calibration.calibratedYears,
     historicalAvgMarginPct: calibration.historicalAvgMarginPct,
@@ -421,6 +487,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     multipleConcentrationPenalty: multipleResult.concentrationPenalty,
     multipleNormalizationBreakdown: normalization.breakdown,
     rawMultiple: normalization.breakdown.rawMultiple,
+    profitabilityRegime,
   };
 }
 

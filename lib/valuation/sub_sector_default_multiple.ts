@@ -91,3 +91,45 @@ export function resolveSubSectorDefaultMultiple(params: {
   const baseMultiple = prefersRevenue ? metrics.evRevenue : metrics.evEbitda;
   return roundMultiple(baseMultiple * multAdj);
 }
+
+/**
+ * Revenue multiple (EV/Sales ×) for loss-making regime — always anchored on evRevenue.
+ * Damodaran: revenue multiples are the primary metric when EBITDA is negative.
+ */
+export function resolveSubSectorRevenueMultiple(params: {
+  sector: EquifySectorKey | undefined;
+  subSector: string | undefined;
+  sectorConfig: SectorMethodologyConfig;
+  market?: Partial<SubSectorMarketMultiples>;
+}): number {
+  const { sector, subSector, sectorConfig, market } = params;
+
+  if (sector && subSector) {
+    const valuationProfile = getSubSectorValuationProfile(sector, subSector);
+    if (valuationProfile?.primaryMultiple === 'ev_revenue' && valuationProfile.multipleRange) {
+      return roundMultiple(
+        (valuationProfile.multipleRange[0] + valuationProfile.multipleRange[1]) / 2,
+      );
+    }
+  }
+
+  const metrics = resolveMarketMultiples(sector, market);
+  const multAdj = sector && subSector ? getSubSectorMultAdj(sector, subSector) : 1;
+  const multiplesIndustry =
+    sector && subSector
+      ? resolveSubSectorMultiplesIndustry(sector, subSector)
+      : null;
+  const institutionalRanges = multiplesIndustry
+    ? ISRAEL_MULTIPLES_2026[multiplesIndustry]
+    : null;
+  const evSalesMid = institutionalRanges
+    ? (institutionalRanges.evSales[0] + institutionalRanges.evSales[1]) / 2
+    : metrics.evRevenue;
+
+  const base = metrics.evRevenue > 0 ? metrics.evRevenue : evSalesMid;
+  const fallback =
+    sectorConfig.minMultiple > 0 && sectorConfig.maxMultiple > 0
+      ? (sectorConfig.minMultiple + sectorConfig.maxMultiple) / 2 * 0.15
+      : 1.2;
+  return roundMultiple((base > 0 ? base : fallback) * multAdj);
+}

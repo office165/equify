@@ -139,6 +139,7 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
                 waccBreakdownErp: t.step2.waccBreakdownErp,
                 waccBreakdownAlpha: t.step2.waccBreakdownAlpha,
                 waccBreakdownSpecificRisk: t.step2.waccBreakdownSpecificRisk,
+                waccBreakdownProfitabilityLoss: t.step2.waccBreakdownProfitabilityLoss,
                 waccBreakdownSpecificRiskConcentration:
                   t.step2.waccBreakdownSpecificRiskConcentration,
                 waccBreakdownSpecificRiskFounder: t.step2.waccBreakdownSpecificRiskFounder,

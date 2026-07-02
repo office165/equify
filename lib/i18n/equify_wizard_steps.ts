@@ -98,6 +98,7 @@ export interface EquifyWizardStepStrings {
     waccBreakdownErp: string;
     waccBreakdownAlpha: string;
     waccBreakdownSpecificRisk: string;
+    waccBreakdownProfitabilityLoss: string;
     waccBreakdownSpecificRiskConcentration: (pct: number) => string;
     waccBreakdownSpecificRiskFounder: string;
     waccBreakdownSpecificRiskIpProtected: string;
@@ -152,6 +153,7 @@ export interface EquifyWizardStepStrings {
     liveEmptyHint: string;
     err2026Revenue: string;
     err2026Ebitda: string;
+    negativeEbitdaNote: string;
     effectiveMultiple: string;
     effectiveMultipleTip: string;
     multipleAutoBadge: string;
@@ -330,6 +332,7 @@ const HE: EquifyWizardStepStrings = {
     waccBreakdownErp: 'פרמיית סיכון שוק (ERP)',
     waccBreakdownAlpha: 'פרמיית גודל חברה (Alpha)',
     waccBreakdownSpecificRisk: 'סיכון ספציפי (SRP)',
+    waccBreakdownProfitabilityLoss: 'פרמיית הפסדיות',
     waccBreakdownSpecificRiskConcentration: (pct) => `ריכוזיות לקוחות (${pct}%):`,
     waccBreakdownSpecificRiskFounder: 'תלות במייסד:',
     waccBreakdownSpecificRiskIpProtected: 'הגנת קניין רוחני: מוגן',
@@ -387,6 +390,8 @@ const HE: EquifyWizardStepStrings = {
     liveEmptyHint: 'הזינו הכנסות ו-EBITDA לחישוב שווי חי',
     err2026Revenue: 'נא להזין הכנסות 2026',
     err2026Ebitda: 'נא להזין EBITDA 2026',
+    negativeEbitdaNote:
+      'EBITDA שלילית — ההערכה תתבסס על מכפיל הכנסות ותוואי הבראה (מתודולוגיית חברות צמיחה/הפסדיות)',
     effectiveMultiple: 'מכפיל אפקטיבי',
     effectiveMultipleTip:
       'מכפיל שוק מכויל לפי הענף. ניתן לדרוס ידנית במצב מומחה — המנוע יחשב מחדש את רגל המכפיל.',
@@ -538,6 +543,7 @@ const EN: EquifyWizardStepStrings = {
     waccBreakdownErp: 'Equity risk premium (ERP)',
     waccBreakdownAlpha: 'Size premium (Alpha)',
     waccBreakdownSpecificRisk: 'Specific risk (SRP)',
+    waccBreakdownProfitabilityLoss: 'Loss-making premium',
     waccBreakdownSpecificRiskConcentration: (pct) => `Customer concentration (${pct}%):`,
     waccBreakdownSpecificRiskFounder: 'Founder dependency:',
     waccBreakdownSpecificRiskIpProtected: 'IP protection: protected',
@@ -595,6 +601,8 @@ const EN: EquifyWizardStepStrings = {
     liveEmptyHint: 'Enter revenue and EBITDA for a live valuation',
     err2026Revenue: 'Please enter 2026 revenue',
     err2026Ebitda: 'Please enter 2026 EBITDA',
+    negativeEbitdaNote:
+      'Negative EBITDA — valuation will use revenue multiples and a turnaround DCF path (growth / loss-making company methodology)',
     effectiveMultiple: 'Effective multiple',
     effectiveMultipleTip:
       'Sector-calibrated market multiple. Override manually in expert mode — the engine recalculates the multiples leg.',

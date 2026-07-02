@@ -74,6 +74,7 @@ export interface WaccBreakdownPopoverProps {
     | 'waccBreakdownErp'
     | 'waccBreakdownAlpha'
     | 'waccBreakdownSpecificRisk'
+    | 'waccBreakdownProfitabilityLoss'
     | 'waccBreakdownSpecificRiskConcentration'
     | 'waccBreakdownSpecificRiskFounder'
     | 'waccBreakdownSpecificRiskIpProtected'
@@ -296,6 +297,14 @@ export function WaccBreakdownPopover({
       value: `+${formatPct(breakdown.specificRiskPremium)}`,
       subRows: specificRiskSubRows,
     },
+    ...(breakdown.profitabilityLossPremium > 0
+      ? [
+          {
+            label: copy.waccBreakdownProfitabilityLoss,
+            value: `+${formatPct(breakdown.profitabilityLossPremium)}`,
+          },
+        ]
+      : []),
     { label: copy.waccBreakdownKe, value: formatPct(breakdown.ke) },
   ];
 

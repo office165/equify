@@ -6,24 +6,33 @@ function safeK(value: number | undefined | null): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
-export type Step2RequiredFieldKey = 'y2026Revenue' | 'y2026Ebitda';
+export type Step2RequiredFieldKey = 'y2026Revenue';
 
-/** Field-level flags for Step 2 required 2026 revenue + EBITDA. */
+/** Field-level flags for Step 2 required 2026 revenue (EBITDA may be negative). */
 export function getStep2RequiredFieldErrors(
   financials: EquifyWizardFinancials,
 ): Record<Step2RequiredFieldKey, boolean> {
   return {
     y2026Revenue: safeK(financials.y2026?.revenueK) <= 0,
-    y2026Ebitda: safeK(financials.y2026?.ebitdaK) <= 0,
   };
 }
 
-/** True once current-year revenue and EBITDA are both entered (Step 2 gate + live panel). */
+/** Legacy alias — EBITDA is no longer a blocking gate. */
+export function getStep2EbitdaFieldError(_financials: EquifyWizardFinancials): boolean {
+  return false;
+}
+
+/** True once current-year revenue is entered (Step 2 gate + live panel). */
 export function hasMeaningfulFinancialInputs(
   financials: EquifyWizardFinancials,
 ): boolean {
   const errors = getStep2RequiredFieldErrors(financials);
-  return !errors.y2026Revenue && !errors.y2026Ebitda;
+  return !errors.y2026Revenue;
+}
+
+/** Whether 2026 EBITDA is negative — informational only, never blocks progression. */
+export function hasNegativeEbitda2026(financials: EquifyWizardFinancials): boolean {
+  return safeK(financials.y2026?.ebitdaK) < 0;
 }
 
 /** Step 2 → 3 progression guard. */

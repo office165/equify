@@ -29,7 +29,9 @@ export function computeEbitdaMultipleLegEvK(
   ebitdaBaseK: number,
   multiple: number,
 ): number {
-  if (!Number.isFinite(ebitdaBaseK) || !Number.isFinite(multiple)) return 0;
+  if (!Number.isFinite(ebitdaBaseK) || !Number.isFinite(multiple) || ebitdaBaseK <= 0) {
+    return 0;
+  }
   return Math.round(ebitdaBaseK * multiple * 100) / 100;
 }
 

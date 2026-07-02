@@ -152,6 +152,35 @@ function computeCappedTerminalValue(params: {
   );
 }
 
+export interface TurnaroundDcfParams {
+  /** Current EBITDA / revenue margin (decimal, may be negative). */
+  currentMargin: number;
+  /** Sector-normal margin anchor from maxHistoricalMargin (decimal). */
+  sectorNormalMargin: number;
+  /** Explicit years to reach 60% of sector-normal margin. */
+  turnaroundYears: number;
+}
+
+/**
+ * Turnaround margin path — linear recovery from current (possibly negative) margin
+ * toward 60% of sector-normal margin over N years (Damodaran turnaround framework).
+ * Terminal explicit years hold the conservative recovery margin.
+ */
+export function marginForTurnaroundYear(
+  yearIndex1Based: number,
+  currentMargin: number,
+  sectorNormalMargin: number,
+  turnaroundYears: number,
+): number {
+  const targetMargin = sectorNormalMargin * 0.6;
+  if (turnaroundYears <= 0) return targetMargin;
+  if (yearIndex1Based <= turnaroundYears) {
+    const t = yearIndex1Based / turnaroundYears;
+    return currentMargin + t * (targetMargin - currentMargin);
+  }
+  return targetMargin;
+}
+
 /** Projects explicit FCFF + capped terminal value (₪K EV). */
 export function projectDcfHorizon(params: {
   ebitdaK: number;
@@ -160,29 +189,75 @@ export function projectDcfHorizon(params: {
   dcfGrowthPct: number;
   wacc: number;
   industry?: string;
+  turnaround?: TurnaroundDcfParams;
 }): DcfHorizonProjection {
   const { ebitdaK, revK, dcfGrowthPct, wacc, industry = 'other' } = params;
   const capexLevelPct = parseCapexPct(params.capexLevelPct);
   const w = wacc / 100;
   const effectiveDcfGrowthPct = resolveDcfGrowthPct(dcfGrowthPct, capexLevelPct);
+  const turnaround = params.turnaround;
 
-  let fcff = computeInitialFcffK(ebitdaK, revK, capexLevelPct, dcfGrowthPct, industry);
   const fcffByYearK: number[] = [];
   const growthByYear: number[] = [];
   let explicitPvK = 0;
+  let terminalFcffK = 0;
 
-  for (let i = 1; i <= EXPLICIT_FORECAST_YEARS; i += 1) {
-    const g = explicitGrowthRateForYear(i, dcfGrowthPct, capexLevelPct);
-    fcff *= 1 + g;
-    growthByYear.push(g);
-    fcffByYearK.push(fcff);
-    explicitPvK += fcff / (1 + w) ** discountExponentForYear(i);
+  if (turnaround) {
+    let revenueK = revK;
+    for (let i = 1; i <= EXPLICIT_FORECAST_YEARS; i += 1) {
+      const g = explicitGrowthRateForYear(i, dcfGrowthPct, capexLevelPct);
+      revenueK *= 1 + g;
+      growthByYear.push(g);
+
+      const ebitdaYearK =
+        revenueK *
+        marginForTurnaroundYear(
+          i,
+          turnaround.currentMargin,
+          turnaround.sectorNormalMargin,
+          turnaround.turnaroundYears,
+        );
+
+      const fcff = computeFCFF({
+        ebitda: ebitdaYearK,
+        revenue: revenueK,
+        capexPct: capexLevelPct,
+        industry,
+        growthRate: Math.max(0, g),
+      }).fcff;
+
+      fcffByYearK.push(fcff);
+      explicitPvK += fcff / (1 + w) ** discountExponentForYear(i);
+      terminalFcffK = fcff;
+    }
+
+    if (turnaround.sectorNormalMargin > 0) {
+      const terminalRevenueK = revenueK * (1 + TERMINAL_GROWTH_RATE);
+      const terminalEbitdaK = terminalRevenueK * turnaround.sectorNormalMargin;
+      terminalFcffK = computeFCFF({
+        ebitda: terminalEbitdaK,
+        revenue: terminalRevenueK,
+        capexPct: capexLevelPct,
+        industry,
+        growthRate: TERMINAL_GROWTH_RATE,
+      }).fcff;
+    }
+  } else {
+    let fcff = computeInitialFcffK(ebitdaK, revK, capexLevelPct, dcfGrowthPct, industry);
+    for (let i = 1; i <= EXPLICIT_FORECAST_YEARS; i += 1) {
+      const g = explicitGrowthRateForYear(i, dcfGrowthPct, capexLevelPct);
+      fcff *= 1 + g;
+      growthByYear.push(g);
+      fcffByYearK.push(fcff);
+      explicitPvK += fcff / (1 + w) ** discountExponentForYear(i);
+      terminalFcffK = fcff;
+    }
   }
 
   const terminalDiscountExponent =
     EXPLICIT_FORECAST_YEARS - STUB_PERIOD_DISCOUNT_EXPONENT;
   let terminalPvK = computeCappedTerminalValue({
-    terminalFcffK: fcff,
+    terminalFcffK,
     waccPct: wacc,
     explicitPvK,
     terminalDiscountExponent,
@@ -214,6 +289,7 @@ export function computeDcfWithGrowthDecay(params: {
   dcfGrowthPct: number;
   wacc: number;
   industry?: string;
+  turnaround?: TurnaroundDcfParams;
 }): number {
   const capexPct = parseCapexPct(params.capexLevelPct);
   const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;

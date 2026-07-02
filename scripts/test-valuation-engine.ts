@@ -531,6 +531,121 @@ function testSpecificRiskPremiumInputs(): void {
   );
 }
 
+function negativeEbitdaInputs(
+  ebitda2026K: number,
+  overrides: Partial<ValuationInputs> = {},
+): ValuationInputs {
+  const revenue2026K = overrides.revenue2026K ?? overrides.rev ?? 4_000;
+  const margin = revenue2026K > 0 ? (ebitda2026K / revenue2026K) * 100 : 0;
+  return baseInputs({
+    rev: revenue2026K,
+    revenue2026K,
+    ebitda2026K,
+    margin,
+    ebitda2025K: ebitda2026K * 0.9,
+    ebitda2024K: ebitda2026K * 0.85,
+    revenue2025K: revenue2026K * 0.95,
+    revenue2024K: revenue2026K * 0.9,
+    backlogSignedK: 0,
+    ...overrides,
+  });
+}
+
+function testNegativeEbitdaRegime(): void {
+  const test = 'TEST 11 — Negative EBITDA regime';
+
+  const caseA = runValuationEngine(
+    negativeEbitdaInputs(-1_400, { rev: 4_000, revenue2026K: 4_000 }),
+  );
+  assert(test, caseA.computed.equity > 0, `Case A equity must be > 0 (got ${caseA.computed.equity})`);
+  assert(
+    test,
+    caseA.computed.profitabilityRegime?.regime === 'deep_loss' ||
+      caseA.computed.profitabilityRegime?.regime === 'loss_making',
+    `Case A must be loss-making regime (got ${caseA.computed.profitabilityRegime?.regime})`,
+  );
+  assert(
+    test,
+    caseA.computed.blendWeights.ebitda === 0,
+    `Case A ebitda blend weight must be 0 (got ${caseA.computed.blendWeights.ebitda})`,
+  );
+  const blendSumA =
+    caseA.computed.blendWeights.dcf +
+    caseA.computed.blendWeights.ebitda +
+    caseA.computed.blendWeights.rev;
+  assert(
+    test,
+    Math.abs(blendSumA - 1) < 0.001,
+    `Case A blend weights must sum to 1 (got ${blendSumA})`,
+  );
+  const contributionsA = caseA.computed.modelBlendContributions;
+  assert(test, contributionsA != null, 'Case A modelBlendContributions required');
+  const sumA = sumModelBlendContributionsK(contributionsA!);
+  const deltaA =
+    caseA.computed.ev > 0 ? (Math.abs(caseA.computed.ev - sumA) / caseA.computed.ev) * 100 : 0;
+  assert(test, deltaA < 0.01, `Case A coherence failed: EV=${caseA.computed.ev} sum=${sumA}`);
+
+  const caseB = runValuationEngine(
+    baseInputs({
+      rev: 4_000,
+      margin: 1.25,
+      revenue2026K: 4_000,
+      ebitda2026K: 50,
+      backlogSignedK: 0,
+    }),
+  );
+  assert(
+    test,
+    caseB.computed.profitabilityRegime?.regime === 'thin_margin',
+    `Case B must be thin_margin (got ${caseB.computed.profitabilityRegime?.regime})`,
+  );
+  assert(test, caseB.computed.dcf > 0, 'Case B DCF leg must be > 0');
+  assert(test, caseB.computed.ebtMult > 0, 'Case B EBITDA leg must be > 0');
+  assert(test, caseB.computed.revMult > 0, 'Case B revenue leg must be > 0');
+  const blendSumB =
+    caseB.computed.blendWeights.dcf +
+    caseB.computed.blendWeights.ebitda +
+    caseB.computed.blendWeights.rev;
+  assert(
+    test,
+    Math.abs(blendSumB - 1) < 0.001,
+    `Case B weights must sum to 1 (got ${blendSumB})`,
+  );
+
+  const equityNeg1K = equityFor(negativeEbitdaInputs(-1, { rev: 4_000, revenue2026K: 4_000 }));
+  const equityPos1K = runValuationEngine(
+    baseInputs({
+      rev: 4_000,
+      margin: 0.025,
+      revenue2026K: 4_000,
+      ebitda2026K: 1,
+      backlogSignedK: 0,
+    }),
+  ).computed.equity;
+  const continuityDelta =
+    equityPos1K > 0
+      ? (Math.abs(equityPos1K - equityNeg1K) / equityPos1K) * 100
+      : 100;
+  assert(
+    test,
+    continuityDelta < 8,
+    `Case C zero-crossing cliff: -1K=${equityNeg1K.toFixed(0)} +1K=${equityPos1K.toFixed(0)} Δ=${continuityDelta.toFixed(2)}%`,
+  );
+
+  const equityDeeperLoss = equityFor(negativeEbitdaInputs(-1_500));
+  const equityShallowerLoss = equityFor(negativeEbitdaInputs(-1_200));
+  assert(
+    test,
+    equityShallowerLoss > equityDeeperLoss,
+    `Case D monotonic: -1.2M (${equityShallowerLoss.toFixed(0)}) must exceed -1.5M (${equityDeeperLoss.toFixed(0)})`,
+  );
+
+  pass(
+    test,
+    `A equity=${caseA.computed.equity.toFixed(0)} regime=${caseA.computed.profitabilityRegime?.regime} | B thin_margin | C Δ=${continuityDelta.toFixed(1)}%`,
+  );
+}
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
@@ -545,6 +660,7 @@ async function main(): Promise<void> {
   await testExchangeRatesLive();
   testEvBlendCoherenceInvariant();
   testSpecificRiskPremiumInputs();
+  testNegativeEbitdaRegime();
 
   console.log('\n' + '═'.repeat(72));
   console.log(`ALL ${passed} TESTS PASSED`);

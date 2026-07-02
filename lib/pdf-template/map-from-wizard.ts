@@ -48,6 +48,7 @@ import {
   ebitdaMarginPctFromYear,
   syncFinancialsDerived,
 } from '../wizard/financial_history';
+import { buildProfitabilityMethodologyNoteHe } from '../valuation/profitability_regime';
 import { resolveSectorMethodologyConfig } from '../valuation/sector_methodology_resolver';
 import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import {
@@ -201,6 +202,17 @@ function buildWaccSegments(
       source: `Quality Score ${qs}`,
       subRows: buildSpecificRiskSubRows(breakdown, topCustomerPct, locale),
     },
+    ...(breakdown.profitabilityLossPremium > 0
+      ? [
+          {
+            label: locale === 'en' ? 'Loss-making premium' : 'פרמיית הפסדיות',
+            symbol: 'Distress',
+            pct: breakdown.profitabilityLossPremium,
+            color: '#B85C5C',
+            source: 'Damodaran distress',
+          },
+        ]
+      : []),
   ];
 }
 
@@ -213,6 +225,18 @@ function buildDcfRows(
   const headlineGrowthPct =
     coercePercentNumber(computed.dcfGrowthPct) || coercePercentNumber(inputs.growth);
   const w = computed.wacc / 100;
+  const regime = computed.profitabilityRegime;
+  const turnaround =
+    regime &&
+    (regime.regime === 'loss_making' || regime.regime === 'deep_loss')
+      ? {
+          currentMargin: revK > 0 ? (inputs.ebitda2026K ?? computed.ebitda) / revK : 0,
+          sectorNormalMargin:
+            resolveSectorMethodologyConfig(inputs.sector, inputs.subSector)
+              .maxHistoricalMargin,
+          turnaroundYears: regime.turnaroundYears,
+        }
+      : undefined;
   const projection = projectDcfHorizon({
     ebitdaK: computed.ebitda,
     revK,
@@ -220,6 +244,7 @@ function buildDcfRows(
     dcfGrowthPct: headlineGrowthPct,
     wacc: computed.wacc,
     industry: resolveCapexIndustryKey(inputs.sector, inputs.subSector),
+    turnaround,
   });
   const rows: DcfYearRow[] = [];
   const baseYear = new Date().getFullYear() + 1;
@@ -645,6 +670,9 @@ export function mapEngineResultToValuationData(
       reportingCurrency,
     ),
     keyFindings: `Quality ${fxComputed.qsGrade} · WACC ${fxComputed.wacc.toFixed(1)}% · EBITDA מדווח 2026 ${formatCurrencyShort(financialCore.auditedEbitda2026Abs, reportingCurrency)} · בסיס מכפיל ${formatCurrencyShort(financialCore.multipleLegEbitdaBaseAbs, reportingCurrency)} ×${fxComputed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
+    profitabilityMethodologyNote: fxComputed.profitabilityRegime
+      ? buildProfitabilityMethodologyNoteHe(fxComputed.profitabilityRegime)
+      : undefined,
     multiplesIntro: getMultiplesIntroText(syncedState.profile.sector, locale),
   };
 }

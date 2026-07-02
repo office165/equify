@@ -34,6 +34,11 @@ export interface WaccBreakdown {
   /** Company-specific risk premium (percentage points) — concentration, founder, IP, contracts. */
   specificRiskPremium: number;
   specificRiskBreakdown: SpecificRiskPremiumBreakdownPp;
+  /**
+   * Loss-making / distress premium (pp) — elevated WACC for negative-EBITDA regimes.
+   * Damodaran: distressed firms require higher discount rates; shown only when > 0.
+   */
+  profitabilityLossPremium: number;
   ke: number;
   kd: number;
 }
@@ -64,6 +69,8 @@ export interface CapmWaccParams {
   /** Idiosyncratic risk premium (pp) — added to Ke alongside lifecycle Alpha. */
   specificRiskPremiumPp?: number;
   specificRiskBreakdownPp?: SpecificRiskPremiumBreakdownPp;
+  /** Profitability-regime distress premium (pp) — loss-making / deep-loss WACC overlay. */
+  profitabilityLossPremiumPp?: number;
 }
 
 function clamp(n: number, min: number, max: number): number {
@@ -160,6 +167,7 @@ export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
       : resolveLifecycleAlphaPct(params.lifecycle, params.lifecycleAdj, 0);
   const alpha = Math.max(0, baseAlpha - backlogReduction);
   const specificRiskPremium = Math.max(0, params.specificRiskPremiumPp ?? 0);
+  const profitabilityLossPremium = Math.max(0, params.profitabilityLossPremiumPp ?? 0);
   const specificRiskBreakdown: SpecificRiskPremiumBreakdownPp =
     params.specificRiskBreakdownPp ?? {
       concentrationRisk: 0,
@@ -185,7 +193,8 @@ export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
   const unleveredBeta = resolveUnleveredBeta(params);
   const leveredBeta = computeLeveredBeta(unleveredBeta, grossDebtK, equityProxyK);
 
-  const ke = rf + leveredBeta * erp + alpha + specificRiskPremium;
+  const ke =
+    rf + leveredBeta * erp + alpha + specificRiskPremium + profitabilityLossPremium;
   const kd = (rf + CAPM_CORPORATE_SPREAD_PCT) * (1 - CAPM_CORPORATE_TAX_RATE);
 
   const debtWeightCapital = grossDebtK;
@@ -208,6 +217,7 @@ export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
       alpha,
       specificRiskPremium,
       specificRiskBreakdown,
+      profitabilityLossPremium,
       ke,
       kd,
     },

@@ -47,6 +47,13 @@ export {
   type SubSectorMarketMultiples,
 } from './valuation/sub_sector_default_multiple';
 export {
+  resolveProfitabilityRegime,
+  buildProfitabilityMethodologyNoteHe,
+  regimeWeightsToEngineBlend,
+  type ProfitabilityRegime,
+  type RegimeResolution,
+} from './valuation/profitability_regime';
+export {
   applyBacklogInflectionAccelerator,
   BACKLOG_INFLECTION_TARGETS,
 } from './valuation/backlog_inflection_accelerator';
@@ -310,6 +317,8 @@ export interface ValuationComputed {
   multipleNormalizationBreakdown?: import('./valuation/normalize_multiple').MultipleNormalizationBreakdown;
   /** Raw multiple before institutional normalization (×). */
   rawMultiple?: number;
+  /** Profitability regime resolution — negative-EBITDA / thin-margin methodology. */
+  profitabilityRegime?: import('./valuation/profitability_regime').RegimeResolution;
 }
 
 export interface ScenarioRow {

@@ -206,6 +206,8 @@ export interface ValuationData {
   executiveSummary?: string;
   netDebtNote?: string;
   keyFindings?: string;
+  /** Methodology disclosure when profitability regime ≠ healthy (negative EBITDA path). */
+  profitabilityMethodologyNote?: string;
   disclaimer?: string;
 
   trajectory: TrajectoryPoint[];

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { fmtK } from '../../../../lib/valuation';
 import { patchFinancialHistoryYear, computeProjectedEbitda2027K } from '../../../../lib/wizard/financial_history';
-import { getStep2RequiredFieldErrors, hasMeaningfulFinancialInputs } from '../../../../lib/wizard/financial_input_state';
+import { getStep2RequiredFieldErrors, hasMeaningfulFinancialInputs, hasNegativeEbitda2026 } from '../../../../lib/wizard/financial_input_state';
 import { computeNetDebtK } from '../../../../lib/wizard/map_equify_wizard';
 import { formatFinancialInputValue } from '../../../../lib/utils/financial_input_parser';
 import { getCurrencySymbol } from '../../../../lib/utils/formatCurrency';
@@ -33,7 +33,6 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
   const [auditOpen, setAuditOpen] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{
     y2026Revenue?: boolean;
-    y2026Ebitda?: boolean;
   }>({});
 
   useEffect(() => {
@@ -73,13 +72,17 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
   );
   const canProceed = hasLiveInputs;
 
+  const negativeEbitdaNote = useMemo(
+    () => hasNegativeEbitda2026(financials),
+    [financials],
+  );
+
   const validateStep2 = useCallback(() => {
     const next = getStep2RequiredFieldErrors(financials);
     setFieldErrors({
       y2026Revenue: next.y2026Revenue,
-      y2026Ebitda: next.y2026Ebitda,
     });
-    return !next.y2026Revenue && !next.y2026Ebitda;
+    return !next.y2026Revenue;
   }, [financials]);
 
   const handleNext = useCallback(() => {
@@ -142,20 +145,20 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
               currencyCode={reportingCurrency}
               density="compact"
               required
-              invalid={Boolean(fieldErrors.y2026Ebitda)}
-              errorMessage={fieldErrors.y2026Ebitda ? t.step2.err2026Ebitda : undefined}
               placeholder={t.step2.placeholderEbitdaExample}
               ariaLabel={t.step2.hist2026Ebitda}
               onChange={(v) => {
-                if (fieldErrors.y2026Ebitda && v > 0) {
-                  setFieldErrors((prev) => ({ ...prev, y2026Ebitda: false }));
-                }
                 updateFinancials(
                   patchFinancialHistoryYear(financials, 'y2026', { ebitdaK: v }),
                 );
               }}
             />
           </div>
+          {negativeEbitdaNote ? (
+            <p className="fin-negative-ebitda-note rv" role="note">
+              {t.step2.negativeEbitdaNote}
+            </p>
+          ) : null}
 
           <SmartInput
             label={t.step2.backlogSigned}
