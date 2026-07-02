@@ -8,6 +8,7 @@ import {
   formatLiveAmountEmpty,
   hasMeaningfulFinancialInputs,
 } from '../../../lib/wizard/financial_input_state';
+import { resolveDisplayWeights } from '../../../lib/valuation/resolve_display_weights';
 import { ValuationMultipleInput } from '../ui/ValuationMultipleInput';
 import { useReportingCurrency, useWizardValuation } from './WizardValuationContext';
 import { WaccBreakdownPopover } from './WaccBreakdownPopover';
@@ -24,7 +25,7 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
   const { locale, steps: t, shell } = useEquifyStrings();
   const { state, computed, scenarios, updateFinancials } = useWizardValuation();
   const { reportingCurrency, currencySymbol } = useReportingCurrency();
-  const { financials } = state;
+  const { financials, profile } = state;
   const liveCardRef = useRef<HTMLDivElement>(null);
 
   const hasLiveInputs = useMemo(
@@ -40,7 +41,39 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
     [hasLiveInputs, locale, reportingCurrency],
   );
 
-  const { blendWeights, ebitdaBlend } = computed;
+  const displayWeights = useMemo(() => {
+    if (hasLiveInputs) {
+      return {
+        dcf: computed.blendWeights.dcf,
+        ebitdaMultiple: computed.blendWeights.ebitda,
+        revenueMultiple: computed.blendWeights.rev,
+        regimeLabel:
+          computed.profitabilityRegime?.regime !== 'healthy'
+            ? computed.profitabilityRegime?.labelHe ?? null
+            : null,
+      };
+    }
+    return resolveDisplayWeights({
+      sectorKey: profile.sector,
+      subSectorKey: profile.subSector,
+      financials: null,
+    });
+  }, [
+    computed.blendWeights.dcf,
+    computed.blendWeights.ebitda,
+    computed.blendWeights.rev,
+    computed.profitabilityRegime,
+    hasLiveInputs,
+    profile.sector,
+    profile.subSector,
+  ]);
+
+  const blendWeights = {
+    dcf: displayWeights.dcf,
+    ebitda: displayWeights.ebitdaMultiple,
+    rev: displayWeights.revenueMultiple,
+  };
+  const { ebitdaBlend } = computed;
   const dcfWeightPct = Math.round(blendWeights.dcf * 100);
   const ebitdaWeightPct = Math.round(blendWeights.ebitda * 100);
   const revWeightPct = Math.round(blendWeights.rev * 100);

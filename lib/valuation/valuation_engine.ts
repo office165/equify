@@ -19,9 +19,7 @@ import { computeSpecificRiskPremium } from './specific_risk_premium';
 import { resolveCurrentYearEbitdaK } from './backlog_valuation';
 import { capGrowthPctForMethodology } from './sector_methodology_matrix';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
-import { resolveValuationBlendWeights } from './valuation_weights_registry';
 import {
-  applyScaleAdjustedBlendWeights,
   resolveScaleModifierProfile,
 } from './scale_modifier_pipeline';
 import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
@@ -37,10 +35,10 @@ import {
 import { computeCapmWacc } from './capm_wacc';
 import {
   buildProfitabilityMethodologyNoteHe,
-  regimeWeightsToEngineBlend,
   resolveProfitabilityRegime,
   type RegimeResolution,
 } from './profitability_regime';
+import { resolveEngineBlendWeights } from './resolve_display_weights';
 import { resolveSubSectorRevenueMultiple } from './sub_sector_default_multiple';
 import type { TurnaroundDcfParams } from './scenario_matrix';
 
@@ -157,11 +155,6 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     ebitda2026K ??
     resolveCurrentYearEbitdaK({ ebitda2026K, rev: revK, margin });
 
-  const profitabilityRegime = resolveProfitabilityRegime({
-    ebitdaK: currentYearEbitdaK,
-    revenueK: revK,
-  });
-
   const ownerSalaryNormK = resolveNormalizedOwnerSalaryK(normalizedOwnerSalary);
   const specificRisk = computeSpecificRiskPremium({
     topCustomerPct: topCustomer,
@@ -195,18 +188,16 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     rev: revK,
     revenue2026K: revK,
   });
-  const baseBlendWeights = resolveValuationBlendWeights({
-    subSectorId: inputs.subSector,
+  const { weights: blendWeights, regime: profitabilityRegime } = resolveEngineBlendWeights({
+    sector: inputs.sector,
+    subSector: inputs.subSector,
     strategy: sectorConfig.strategy,
+    revenueK: revK,
+    ebitdaK: currentYearEbitdaK,
+    lifecycle,
+    lifecycleAdj,
+    revK,
   });
-  const blendWeights =
-    profitabilityRegime.regime === 'healthy'
-      ? applyScaleAdjustedBlendWeights(
-          baseBlendWeights,
-          scaleProfile,
-          sectorConfig.strategy,
-        )
-      : regimeWeightsToEngineBlend(profitabilityRegime.blendWeights);
 
   const baseEbitdaForMultiple = resolveEbitdaBaseForMultipleLeg(
     calibrated,
@@ -440,7 +431,16 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     }),
   );
 
-  const methodologyNote = buildProfitabilityMethodologyNoteHe(profitabilityRegime);
+  const methodologyNote = buildProfitabilityMethodologyNoteHe(
+    profitabilityRegime,
+    profitabilityRegime.regime !== 'healthy'
+      ? {
+          dcf: blendWeights.dcf,
+          ebitdaMultiple: blendWeights.ebitda,
+          revenueMultiple: blendWeights.rev,
+        }
+      : undefined,
+  );
 
   return {
     ebitda,

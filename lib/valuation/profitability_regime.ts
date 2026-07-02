@@ -23,7 +23,12 @@ export interface RegimeBlendWeights {
 
 export interface RegimeResolution {
   regime: ProfitabilityRegime;
+  /** @deprecated Regime no longer supplies absolute weights — use composeRegimeWithSectorBase. */
   blendWeights: RegimeBlendWeights;
+  /** DCF dampening factor when composing with sector base (1 = unchanged). */
+  regimeDcfFactor: number;
+  /** Thin-margin interpolation toward sector base (0 = full loss compose, 1 = sector). */
+  thinMarginBlendT?: number;
   /** Added to WACC (pp) — loss-making companies carry elevated discount rates. */
   waccPremium: number;
   /** Maximum quality score for this regime — loss-making = higher risk. */
@@ -36,18 +41,14 @@ export interface RegimeResolution {
 
 const WEIGHT_SUM_TOLERANCE = 1e-6;
 
-/** Loss-making static blend — revenue-primary; weights held fixed for margin monotonicity. */
-const LOSS_MAKING_WEIGHTS: RegimeBlendWeights = {
-  dcf: 0.4,
-  ebitdaMultiple: 0,
-  revenueMultiple: 0.6,
-};
-
-/** Deep-loss static blend — conservative revenue-heavy. */
-const DEEP_LOSS_WEIGHTS: RegimeBlendWeights = {
-  dcf: 0.3,
-  ebitdaMultiple: 0,
-  revenueMultiple: 0.7,
+const HEALTHY_RESOLUTION: RegimeResolution = {
+  regime: 'healthy',
+  blendWeights: { dcf: 0.5, ebitdaMultiple: 0.3, revenueMultiple: 0.2 },
+  regimeDcfFactor: 1,
+  waccPremium: 0,
+  qualityScoreCap: 100,
+  turnaroundYears: 0,
+  labelHe: 'רווחיות תקינה',
 };
 
 /**
@@ -80,46 +81,36 @@ export function normalizeRegimeBlendWeights(
 
 /**
  * Resolves profitability regime from current-year EBITDA and revenue (₪K).
- * Margin = EBITDA / Revenue — the primary regime switch.
- *
- * A unified ±5% margin band linearly interpolates weights and WACC premium
- * to prevent valuation cliffs at EBITDA = 0 (Damodaran continuity principle).
- * Loss-making weights stay fixed (40/0/60) so improving margin monotonically
- * raises equity via better DCF / lower distress premium — not weight shifts.
+ * Inactive until both revenue > 0 and EBITDA has been entered (non-zero).
  */
 export function resolveProfitabilityRegime(params: {
   ebitdaK: number;
   revenueK: number;
 }): RegimeResolution {
   const { ebitdaK, revenueK } = params;
-  const margin = revenueK > 0 ? ebitdaK / revenueK : 0;
+
+  if (revenueK <= 0 || ebitdaK === 0) {
+    return HEALTHY_RESOLUTION;
+  }
+
+  const margin = ebitdaK / revenueK;
 
   if (margin >= 0.05) {
-    return {
-      regime: 'healthy',
-      blendWeights: normalizeRegimeBlendWeights({
-        dcf: 0.5,
-        ebitdaMultiple: 0.3,
-        revenueMultiple: 0.2,
-      }),
-      waccPremium: 0,
-      qualityScoreCap: 100,
-      turnaroundYears: 0,
-      labelHe: 'רווחיות תקינה',
-    };
+    return HEALTHY_RESOLUTION;
   }
 
   if (margin >= -0.05) {
     const t = (margin + 0.05) / 0.1;
-    const blendWeights = normalizeRegimeBlendWeights({
-      dcf: 0.4 + 0.1 * t,
-      ebitdaMultiple: 0.3 * t,
-      revenueMultiple: 0.6 - 0.4 * t,
-    });
     const isNegative = margin < 0;
     return {
       regime: isNegative ? 'loss_making' : 'thin_margin',
-      blendWeights,
+      blendWeights: normalizeRegimeBlendWeights({
+        dcf: 0.4 + 0.1 * t,
+        ebitdaMultiple: 0.3 * t,
+        revenueMultiple: 0.6 - 0.4 * t,
+      }),
+      regimeDcfFactor: 0.9 + 0.1 * t,
+      thinMarginBlendT: t,
       waccPremium: 0.025 * (1 - t),
       qualityScoreCap: isNegative ? 70 : 85,
       turnaroundYears: 0,
@@ -133,7 +124,12 @@ export function resolveProfitabilityRegime(params: {
     const depth = (margin + 0.25) / 0.2;
     return {
       regime: 'loss_making',
-      blendWeights: normalizeRegimeBlendWeights(LOSS_MAKING_WEIGHTS),
+      blendWeights: normalizeRegimeBlendWeights({
+        dcf: 0.4,
+        ebitdaMultiple: 0,
+        revenueMultiple: 0.6,
+      }),
+      regimeDcfFactor: 0.9 + 0.05 * depth,
       waccPremium: 0.04 - 0.015 * depth,
       qualityScoreCap: Math.round(55 + 15 * depth),
       turnaroundYears: Math.max(3, Math.round(5 - 2 * depth)),
@@ -143,7 +139,12 @@ export function resolveProfitabilityRegime(params: {
 
   return {
     regime: 'deep_loss',
-    blendWeights: normalizeRegimeBlendWeights(DEEP_LOSS_WEIGHTS),
+    blendWeights: normalizeRegimeBlendWeights({
+      dcf: 0.3,
+      ebitdaMultiple: 0,
+      revenueMultiple: 0.7,
+    }),
+    regimeDcfFactor: 0.85,
     waccPremium: 0.04,
     qualityScoreCap: 55,
     turnaroundYears: 5,
@@ -164,14 +165,16 @@ export function regimeWeightsToEngineBlend(
 
 /**
  * Builds Hebrew methodology disclosure for loss-making / thin-margin regimes.
- * Weights and turnaround horizon are taken from the active resolution.
+ * Uses composed sector weights when provided; otherwise falls back to regime targets.
  */
 export function buildProfitabilityMethodologyNoteHe(
   resolution: RegimeResolution,
+  composedWeights?: RegimeBlendWeights,
 ): string | undefined {
   if (resolution.regime === 'healthy') return undefined;
 
-  const { blendWeights, turnaroundYears, labelHe } = resolution;
+  const blendWeights = composedWeights ?? resolution.blendWeights;
+  const { turnaroundYears, labelHe } = resolution;
   const revPct = Math.round(blendWeights.revenueMultiple * 100);
   const dcfPct = Math.round(blendWeights.dcf * 100);
   const turnaroundLine =

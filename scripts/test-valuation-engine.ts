@@ -18,6 +18,7 @@ import {
 import { computeBacklogInflectionWeight } from '../lib/valuation/backlog_metrics';
 import { sumModelBlendContributionsK } from '../lib/valuation/compute_final_enterprise_value';
 import { computeSpecificRiskPremium } from '../lib/valuation/specific_risk_premium';
+import { resolveDisplayWeights } from '../lib/valuation/resolve_display_weights';
 
 let passed = 0;
 let failed = 0;
@@ -646,6 +647,85 @@ function testNegativeEbitdaRegime(): void {
   );
 }
 
+function testSectorWeightDynamismRestored(): void {
+  const test = 'TEST 12 — Sector weight dynamism restored';
+
+  const saasMarketplace = resolveDisplayWeights({
+    sectorKey: 'saas',
+    subSectorKey: 'marketplace',
+    financials: null,
+  });
+  const hotelBoutique = resolveDisplayWeights({
+    sectorKey: 'hospitality',
+    subSectorKey: 'boutique_hotel',
+    financials: null,
+  });
+
+  assert(
+    test,
+    saasMarketplace.dcf !== hotelBoutique.dcf ||
+      saasMarketplace.revenueMultiple !== hotelBoutique.revenueMultiple ||
+      saasMarketplace.ebitdaMultiple !== hotelBoutique.ebitdaMultiple,
+    `saas/marketplace must differ from hospitality/boutique (saas=${JSON.stringify(saasMarketplace)} hotel=${JSON.stringify(hotelBoutique)})`,
+  );
+
+  const saasHealthy = resolveDisplayWeights({
+    sectorKey: 'saas',
+    subSectorKey: 'marketplace',
+    financials: { revenueK: 4_000, ebitdaK: 800 },
+  });
+  assert(
+    test,
+    Math.abs(saasHealthy.dcf - saasMarketplace.dcf) < 1e-6 &&
+      Math.abs(saasHealthy.revenueMultiple - saasMarketplace.revenueMultiple) < 1e-6 &&
+      Math.abs(saasHealthy.ebitdaMultiple - saasMarketplace.ebitdaMultiple) < 1e-6,
+    'healthy saas/marketplace must match sector base weights',
+  );
+
+  const saasLoss = resolveDisplayWeights({
+    sectorKey: 'saas',
+    subSectorKey: 'marketplace',
+    financials: { revenueK: 4_000, ebitdaK: -500 },
+  });
+  const hotelLoss = resolveDisplayWeights({
+    sectorKey: 'hospitality',
+    subSectorKey: 'boutique_hotel',
+    financials: { revenueK: 4_000, ebitdaK: -500 },
+  });
+
+  assert(test, saasLoss.ebitdaMultiple === 0, 'loss-making saas must zero EBITDA leg weight');
+  assert(
+    test,
+    saasLoss.revenueMultiple > saasMarketplace.revenueMultiple,
+    'loss-making saas revenue weight must exceed healthy base',
+  );
+  assert(
+    test,
+    saasLoss.dcf !== hotelLoss.dcf || saasLoss.revenueMultiple !== hotelLoss.revenueMultiple,
+    'same negative financials must still differ by sector DNA',
+  );
+
+  const combos = [
+    resolveDisplayWeights({ sectorKey: 'saas', subSectorKey: 'marketplace', financials: null }),
+    resolveDisplayWeights({ sectorKey: 'saas', subSectorKey: 'devtools', financials: null }),
+    resolveDisplayWeights({ sectorKey: 'hospitality', subSectorKey: 'boutique_hotel', financials: null }),
+  ];
+  const signatures = combos.map(
+    (w) => `${w.dcf.toFixed(4)}|${w.ebitdaMultiple.toFixed(4)}|${w.revenueMultiple.toFixed(4)}`,
+  );
+  const unique = new Set(signatures);
+  assert(
+    test,
+    unique.size === 3,
+    `expected 3 distinct weight sets, got ${unique.size}: ${signatures.join(' ; ')}`,
+  );
+
+  pass(
+    test,
+    `marketplace=${Math.round(saasMarketplace.dcf * 100)}/${Math.round(saasMarketplace.revenueMultiple * 100)} | boutique=${Math.round(hotelBoutique.dcf * 100)}/${Math.round(hotelBoutique.ebitdaMultiple * 100)}`,
+  );
+}
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
@@ -661,6 +741,7 @@ async function main(): Promise<void> {
   testEvBlendCoherenceInvariant();
   testSpecificRiskPremiumInputs();
   testNegativeEbitdaRegime();
+  testSectorWeightDynamismRestored();
 
   console.log('\n' + '═'.repeat(72));
   console.log(`ALL ${passed} TESTS PASSED`);

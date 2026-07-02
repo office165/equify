@@ -49,10 +49,16 @@ export {
 export {
   resolveProfitabilityRegime,
   buildProfitabilityMethodologyNoteHe,
-  regimeWeightsToEngineBlend,
   type ProfitabilityRegime,
   type RegimeResolution,
 } from './valuation/profitability_regime';
+export {
+  getSectorWeights,
+  resolveDisplayWeights,
+  resolveEngineBlendWeights,
+  composeRegimeWithSectorBase,
+  type DisplayBlendWeights,
+} from './valuation/resolve_display_weights';
 export {
   applyBacklogInflectionAccelerator,
   BACKLOG_INFLECTION_TARGETS,
