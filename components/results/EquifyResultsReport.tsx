@@ -10,8 +10,8 @@ import {
   getBlendWeights,
 } from '../../lib/results/report-view-model';
 import { fmtMillionParts } from '../../lib/valuation';
-import { compactAmountNumber } from '../../lib/utils/formatCurrency';
-import { formatCurrencyShort } from '../../lib/utils/formatCurrency';
+import { formatNetDebtLine } from '../../lib/format/currency';
+import { compactAmountNumber, formatCurrencyShort, normalizeCurrencyCode } from '../../lib/utils/formatCurrency';
 import { downloadEquifyPdf } from '../../lib/results/download-equify-pdf';
 import { downloadEquifyHtml } from '../../lib/results/download-equify-html';
 import { buildExportValuationDataFromLiveSession } from '../../lib/results/build-export-valuation-data';
@@ -249,6 +249,18 @@ export function EquifyResultsReport({
     if (!vm?.ebitdaBlend) return null;
     return rs.blendedEbitdaNote(summarizeBlendedEbitda(vm.ebitdaBlend, vm.currency));
   }, [rs, vm?.currency, vm?.ebitdaBlend]);
+
+  const netDebtLine = useMemo(() => {
+    if (!base) return null;
+    const netDebtK = base.waterfall.netDebt / 1000;
+    return formatNetDebtLine(netDebtK, locale, normalizeCurrencyCode(vm?.currency ?? 'ILS'));
+  }, [base, locale, vm?.currency]);
+
+  const netDebtBarPct = useMemo(() => {
+    if (!base) return 0;
+    const ev = Math.max(base.waterfall.ev, 1);
+    return Math.min(100, (Math.abs(base.waterfall.netDebt) / ev) * 100);
+  }, [base]);
 
   const multiplesIntro = useMemo(() => {
     const stored = loadEquifyWizardState();
@@ -551,15 +563,36 @@ export function EquifyResultsReport({
               </b>
             </div>
             <div className="wf-row">
-              <span className="lbl">{rs.wfDebt}</span>
+              <span className="lbl">
+                {netDebtLine
+                  ? isHe
+                    ? netDebtLine.labelHe
+                    : netDebtLine.labelEn
+                  : rs.wfDebt}
+              </span>
               <div className="wf-track">
                 <div
-                  className="wf-fill debt"
-                  data-w={Math.round(base.waterfall.debtPct)}
+                  className={
+                    netDebtLine?.tone === 'positive'
+                      ? 'wf-fill ev'
+                      : 'wf-fill debt'
+                  }
+                  data-w={Math.round(netDebtBarPct)}
                 />
               </div>
-              <b className="num" style={{ color: 'var(--red)' }}>
-                −{formatCurrencyShort(base.waterfall.netDebt, vm.currency)}
+              <b
+                className="num"
+                style={{
+                  color:
+                    netDebtLine?.tone === 'positive'
+                      ? 'var(--turq)'
+                      : netDebtLine?.tone === 'negative'
+                        ? 'var(--red)'
+                        : undefined,
+                }}
+              >
+                {netDebtLine?.displayValue ??
+                  formatCurrencyShort(base.waterfall.netDebt, vm.currency)}
               </b>
             </div>
             <div className="wf-row total">

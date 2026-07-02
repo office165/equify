@@ -36,7 +36,7 @@ export function ResultsScreen({
     const ev = computed.ev || 1;
     return {
       ev: 100,
-      debt: Math.min(100, (netDebtK / ev) * 100),
+      debt: Math.min(100, (Math.abs(netDebtK) / ev) * 100),
       eq: Math.min(100, (computed.equity / ev) * 100),
     };
   }, [computed.equity, computed.ev, netDebtK]);

@@ -957,6 +957,91 @@ function testBidiCurrencyFormatting(): void {
   pass(test, 'FSI/PDI sign order, null dash, net-debt bridge semantics');
 }
 
+function testNetDebtLineDoubleMinusGuard(): void {
+  const test = 'TEST 16 — Net-debt double-minus guard';
+  const FSI = '\u2068';
+  const PDI = '\u2069';
+
+  for (const netDebtK of [-9000, -43300, 25000, 0] as const) {
+    const line = formatNetDebtLine(netDebtK);
+    const inner = line.displayValue.startsWith(FSI)
+      ? line.displayValue.slice(1, -1)
+      : line.displayValue;
+
+    assert(test, !inner.includes('--'), `netDebtK=${netDebtK} must not render "--" (got ${inner})`);
+
+    const signChars = (inner.match(/[+\-−]/g) ?? []).length;
+    assert(
+      test,
+      signChars <= 1,
+      `netDebtK=${netDebtK} must contain at most one sign char (got ${inner})`,
+    );
+  }
+
+  const surplus = formatNetDebtLine(-9000);
+  assert(test, surplus.labelHe === 'עודף מזומנים נטו', 'surplus label must be עודף מזומנים נטו');
+  const surplusInner = surplus.displayValue.startsWith(FSI)
+    ? surplus.displayValue.slice(1, -1)
+    : surplus.displayValue;
+  assert(test, surplusInner.includes('+9.0M'), `surplus value must be +9.0M (got ${surplusInner})`);
+  assert(test, surplus.tone === 'positive', 'surplus tone must be positive');
+
+  pass(test, 'netDebtK sweep never double-minuses; -9000 surplus parity');
+}
+
+function testBridgeRenderSiteSignGuard(): void {
+  const test = 'TEST 17 — Bridge render-site manual sign ban';
+  const { readFileSync, readdirSync, statSync } = require('node:fs') as typeof import('node:fs');
+  const { join, relative } = require('node:path') as typeof import('node:path');
+
+  const root = join(__dirname, '..');
+  const scanRoots = [
+    'components/wizard/equify',
+    'components/results',
+  ];
+  const forbidden = [
+    /−\{/,
+    /−\$\{/,
+    /\$\{\s*['"]-['"]\s*\}/,
+    />\s*−\s*\{/,
+    />\s*-\s*\{/,
+  ];
+  const allowList = new Set([
+    'lib/format/currency.ts',
+    'lib/pdf/print/print_formatters.ts',
+    'lib/utils/formatCurrency.ts',
+  ]);
+
+  const violations: string[] = [];
+
+  function walk(dir: string): void {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      const rel = relative(root, full).replace(/\\/g, '/');
+      const st = statSync(full);
+      if (st.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.tsx$/.test(entry)) continue;
+      if (allowList.has(rel)) continue;
+      const text = readFileSync(full, 'utf8');
+      for (const pattern of forbidden) {
+        if (pattern.test(text)) {
+          violations.push(`${rel}: forbidden manual sign pattern ${pattern}`);
+        }
+      }
+    }
+  }
+
+  for (const scanRoot of scanRoots) {
+    walk(join(root, scanRoot));
+  }
+
+  assert(test, violations.length === 0, violations.join('\n') || 'no violations');
+  pass(test, 'bridge render paths free of manual currency sign concatenation');
+}
+
 /** Ordered regression suites — labels skip TEST 10 (never allocated; see suite list). */
 const TEST_SUITES: Array<{ run: () => void | Promise<void> }> = [
   { run: testBacklogProportionalImpact },
@@ -973,6 +1058,8 @@ const TEST_SUITES: Array<{ run: () => void | Promise<void> }> = [
   { run: testNormalizedEbitdaHistoricalSensitivity },
   { run: testMaEbitdaPanelOwnerSalaryLeak },
   { run: testBidiCurrencyFormatting },
+  { run: testNetDebtLineDoubleMinusGuard },
+  { run: testBridgeRenderSiteSignGuard },
 ];
 
 async function main(): Promise<void> {

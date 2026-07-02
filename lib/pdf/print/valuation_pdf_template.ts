@@ -9,6 +9,7 @@ import {
   buildScenarioRangeSvg,
   buildWaccDonutSvg,
 } from './valuation_pdf_charts';
+import { formatNetDebtLine } from '../../format/currency';
 import { escHtml, equityCoverValHtml, fmtMoneyCompact } from './print_formatters';
 import { ebitdaMultipleInterpretationCopy } from '../../i18n/equify_report_copy';
 import {
@@ -25,6 +26,36 @@ import {
 } from './valuation_pdf_view_model';
 
 export type { ValuationPdfViewModel };
+
+function formatPrintNetDebtRow(vm: ValuationPdfViewModel): {
+  label: string;
+  valueHtml: string;
+  barWidthPct: number;
+  barStyle: string;
+} {
+  const netDebtK = vm.netDebt / 1000;
+  const line = formatNetDebtLine(netDebtK, 'he', 'ILS');
+  const color =
+    line.tone === 'positive'
+      ? 'var(--turq)'
+      : line.tone === 'negative'
+        ? '#C24A4A'
+        : 'var(--text)';
+  const barWidthPct = Math.min(
+    100,
+    (Math.abs(vm.netDebt) / Math.max(vm.enterpriseValue, 1)) * 100,
+  );
+  const barStyle =
+    line.tone === 'positive'
+      ? `inset-inline-start:0;width:${barWidthPct.toFixed(1)}%;background:linear-gradient(90deg,#4DD6CE,#00A89F)`
+      : `inset-inline-end:0;width:${barWidthPct.toFixed(1)}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)`;
+  return {
+    label: line.labelHe,
+    valueHtml: `<b style="color:${color}">${escHtml(line.displayValue)}</b>`,
+    barWidthPct,
+    barStyle,
+  };
+}
 
 export interface BuildValuationPdfTemplateOptions {
   matrix: ForecastMatrixWithDiagnostics;
@@ -87,6 +118,7 @@ function buildPage1Cover(vm: ValuationPdfViewModel): string {
 }
 
 function buildPage2Exec(vm: ValuationPdfViewModel): string {
+  const netDebtRow = formatPrintNetDebtRow(vm);
   const blendRows = vm.modelBlend
     .map(
       (row) => `<tr>
@@ -119,7 +151,7 @@ function buildPage2Exec(vm: ValuationPdfViewModel): string {
         <div class="box">
           <h3>מ-EV לשווי לבעלים</h3>
           <div class="wf-row"><span class="lbl">שווי פעילות</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${escHtml(fmtMoneyCompact(vm.enterpriseValue))}</b></div>
-          <div class="wf-row"><span class="lbl">חוב נטו</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${vm.debtWidthPct}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div><b style="color:#C24A4A">−${escHtml(fmtMoneyCompact(vm.netDebt))}</b></div>
+          <div class="wf-row"><span class="lbl">${netDebtRow.label}</span><div class="wf-track"><div class="wf-fill" style="${netDebtRow.barStyle}"></div></div>${netDebtRow.valueHtml}</div>
           <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:Assistant,sans-serif">שווי לבעלים</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${vm.equityWidthPct}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${escHtml(fmtMoneyCompact(vm.finalEquity))}</b></div>
         </div>
       </section>
