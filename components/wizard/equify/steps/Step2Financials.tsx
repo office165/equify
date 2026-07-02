@@ -2,12 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { fmtK } from '../../../../lib/valuation';
+import { formatNetDebtLine } from '../../../../lib/format/currency';
 import { patchFinancialHistoryYear, computeProjectedEbitda2027K } from '../../../../lib/wizard/financial_history';
 import { getStep2RequiredFieldErrors, hasMeaningfulFinancialInputs, hasNegativeEbitda2026 } from '../../../../lib/wizard/financial_input_state';
 import { computeNetDebtK } from '../../../../lib/wizard/map_equify_wizard';
-import { formatFinancialInputValue } from '../../../../lib/utils/financial_input_parser';
-import { getCurrencySymbol } from '../../../../lib/utils/formatCurrency';
 import { injectCurrencyIntoCopy } from '../../../../lib/wizard/reporting_currency';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { SmartFieldLabel } from '../../ui/SmartFieldLabel';
@@ -49,23 +47,13 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
 
   const netDebtK = useMemo(() => computeNetDebtK(financials), [financials]);
   const netBridge = useMemo(() => {
-    const isNetCash = netDebtK < 0;
-    const label = isNetCash ? t.step2.netCash : t.step2.netDebt;
-
-    if (isNetCash && netDebtK !== 0) {
-      const amount = formatFinancialInputValue(Math.abs(netDebtK), '₪K');
-      const sym = getCurrencySymbol(reportingCurrency);
-      const display =
-        reportingCurrency === 'ILS' ? `${amount} ${sym}` : `${sym}${amount}`;
-      return { isNetCash: true, label, display };
-    }
-
+    const line = formatNetDebtLine(netDebtK, locale, reportingCurrency);
     return {
-      isNetCash: false,
-      label,
-      display: fmtK(Math.max(0, netDebtK), locale, reportingCurrency),
+      isNetCash: line.tone === 'positive',
+      label: locale === 'he' ? line.labelHe : line.labelEn,
+      display: line.displayValue,
     };
-  }, [locale, netDebtK, reportingCurrency, t.step2.netCash, t.step2.netDebt]);
+  }, [locale, netDebtK, reportingCurrency]);
   const hasLiveInputs = useMemo(
     () => hasMeaningfulFinancialInputs(financials),
     [financials],

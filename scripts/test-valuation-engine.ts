@@ -24,6 +24,10 @@ import {
   resolveNormalizedEbitdaFromInputs,
 } from '../lib/valuation/normalized_ebitda';
 import { resolveProfitabilityRegime } from '../lib/valuation/profitability_regime';
+import { formatCurrencyK, formatNetDebtLine } from '../lib/format/currency';
+
+const FSI = '\u2068';
+const PDI = '\u2069';
 
 let passed = 0;
 let failed = 0;
@@ -909,6 +913,50 @@ function testMaEbitdaPanelOwnerSalaryLeak(): void {
   pass(test, `default current=${blend.current.toFixed(0)} explicit120 current=${blendExplicit.current.toFixed(0)}`);
 }
 
+function testBidiCurrencyFormatting(): void {
+  const test = 'TEST 15 — Bidi currency & net-debt line';
+
+  const negative444 = formatCurrencyK(-444, { locale: 'he' });
+  assert(test, negative444.startsWith(FSI) && negative444.endsWith(PDI), 'negative amount must be bidi-isolated');
+  const inner444 = negative444.slice(1, -1);
+  const minusIdx = inner444.indexOf('-');
+  const firstDigitIdx = inner444.search(/\d/);
+  assert(
+    test,
+    minusIdx >= 0 && firstDigitIdx >= 0 && minusIdx < firstDigitIdx,
+    'minus must precede first digit inside isolate',
+  );
+  assert(test, !inner444.includes('444-'), 'must not render trailing minus (444-)');
+
+  const nullAmount = formatCurrencyK(null, { locale: 'he' });
+  assert(test, nullAmount === '—', 'null must render em dash');
+
+  const surplus = formatNetDebtLine(-43300);
+  assert(test, surplus.labelHe === 'עודף מזומנים נטו', 'surplus label must match Hebrew copy');
+  const surplusInner = surplus.displayValue.startsWith(FSI)
+    ? surplus.displayValue.slice(1, -1)
+    : surplus.displayValue;
+  assert(
+    test,
+    (surplusInner.match(/\+/g) ?? []).length === 1,
+    'surplus value must contain exactly one plus sign',
+  );
+  assert(test, !surplusInner.includes('-'), 'surplus value must not contain minus');
+
+  const debt = formatNetDebtLine(25000);
+  const debtInner = debt.displayValue.startsWith(FSI)
+    ? debt.displayValue.slice(1, -1)
+    : debt.displayValue;
+  assert(
+    test,
+    (debtInner.match(/-/g) ?? []).length === 1,
+    'debt value must contain exactly one minus sign',
+  );
+  assert(test, !debt.displayValue.includes('--'), 'debt value must not double-minus');
+
+  pass(test, 'FSI/PDI sign order, null dash, net-debt bridge semantics');
+}
+
 /** Ordered regression suites — labels skip TEST 10 (never allocated; see suite list). */
 const TEST_SUITES: Array<{ run: () => void | Promise<void> }> = [
   { run: testBacklogProportionalImpact },
@@ -924,6 +972,7 @@ const TEST_SUITES: Array<{ run: () => void | Promise<void> }> = [
   { run: testSectorWeightDynamismRestored },
   { run: testNormalizedEbitdaHistoricalSensitivity },
   { run: testMaEbitdaPanelOwnerSalaryLeak },
+  { run: testBidiCurrencyFormatting },
 ];
 
 async function main(): Promise<void> {
@@ -945,7 +994,7 @@ async function main(): Promise<void> {
     );
   }
   console.log(
-    `ALL ${passed} / ${executed} TEST SUITES PASSED (labels TEST 1–9, 11–14)`,
+    `ALL ${passed} / ${executed} TEST SUITES PASSED (labels TEST 1–9, 11–15)`,
   );
   console.log('═'.repeat(72));
 }

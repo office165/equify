@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { formatNetDebtLine } from '../../../lib/format/currency';
 import {
   fmtEquitySidebarM,
   fmtK,
@@ -26,6 +27,10 @@ export function ResultsScreen({
   const fmtAmount = (k: number) => fmtK(k, 'he', reportingCurrency);
 
   const netDebtK = computeNetDebtK(financials);
+  const netDebtLine = useMemo(
+    () => formatNetDebtLine(netDebtK, 'he', reportingCurrency),
+    [netDebtK, reportingCurrency],
+  );
 
   const wfWidths = useMemo(() => {
     const ev = computed.ev || 1;
@@ -108,12 +113,22 @@ export function ResultsScreen({
           <b className="mono">{fmtAmount(computed.ev)}</b>
         </div>
         <div className="wf-row">
-          <span className="wl">חוב נטו</span>
+          <span className="wl">{netDebtLine.labelHe}</span>
           <div className="wf-track">
             <div className="wf-bar dt" style={{ width: `${wfWidths.debt}%` }} />
           </div>
-          <b className="mono" style={{ color: 'var(--red)' }}>
-            −{fmtAmount(netDebtK)}
+          <b
+            className="mono eq-currency-value"
+            style={{
+              color:
+                netDebtLine.tone === 'positive'
+                  ? 'var(--turq)'
+                  : netDebtLine.tone === 'negative'
+                    ? 'var(--red)'
+                    : undefined,
+            }}
+          >
+            {netDebtLine.displayValue}
           </b>
         </div>
         <div className="wf-row total">

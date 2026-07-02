@@ -1,3 +1,4 @@
+import { formatNetDebtLine } from '../format/currency';
 import {
   computeScenarios,
   computeValuation,
@@ -41,6 +42,7 @@ import { getCachedFxRates } from '../utils/fxService';
 import {
   formatCurrencyNarrativeHe,
   formatCurrencyShort,
+  normalizeCurrencyCode,
   resolveActiveCurrency,
 } from '../utils/formatCurrency';
 import {
@@ -122,10 +124,11 @@ function formatNetDebtNoteHe(
   cashK: number,
   currency: string,
 ): string {
+  const line = formatNetDebtLine(netDebtK, 'he', normalizeCurrencyCode(currency));
   const net = wizardFinancialAbsFromK(netDebtK);
   const gross = wizardFinancialAbsFromK(grossDebtK);
   const cash = wizardFinancialAbsFromK(cashK);
-  return `חוב נטו ליום ההערכה: ${formatCurrencyNarrativeHe(net, currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
+  return `${line.labelHe} ליום ההערכה: ${formatCurrencyNarrativeHe(Math.abs(net), currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
 }
 
 function buildSpecificRiskSubRows(
