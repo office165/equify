@@ -24,6 +24,10 @@ import {
   resolveNormalizedEbitdaFromInputs,
 } from '../lib/valuation/normalized_ebitda';
 import { resolveProfitabilityRegime } from '../lib/valuation/profitability_regime';
+import { formatCurrencyK, formatNetDebtLine } from '../lib/format/currency';
+
+const FSI = '\u2068';
+const PDI = '\u2069';
 
 let passed = 0;
 let failed = 0;
@@ -842,26 +846,243 @@ function testNormalizedEbitdaHistoricalSensitivity(): void {
   pass(test, `A=${equityA.toFixed(0)} B=${equityB.toFixed(0)} chronic=${chronicRegime.regime}`);
 }
 
+function testMaEbitdaPanelOwnerSalaryLeak(): void {
+  const test = 'TEST 14 — M&A EBITDA panel owner-salary leak';
+
+  const noSalary = runValuationEngine(
+    baseInputs({
+      rev: 1_000,
+      margin: 5,
+      revenue2026K: 1_000,
+      ebitda2026K: 50,
+      revenue2025K: undefined,
+      ebitda2025K: undefined,
+      revenue2024K: undefined,
+      ebitda2024K: undefined,
+      normalizedOwnerSalary: 0,
+    }),
+  );
+  const blend = noSalary.computed.ebitdaBlend;
+
+  assert(
+    test,
+    blend.past == null || !Number.isFinite(blend.past),
+    `past must be null without 2025 actuals (got ${blend.past})`,
+  );
+  assert(
+    test,
+    Math.abs(blend.current - 50) < 1,
+    `current must ≈ 50 without default 250 (got ${blend.current})`,
+  );
+  assert(
+    test,
+    Math.abs(blend.current - 250) > 1 && Math.abs(blend.current - 300) > 1,
+    `current must not be 250 or 300 (got ${blend.current})`,
+  );
+  assert(
+    test,
+    Math.abs(blend.projected - 250) > 1,
+    `projected must not equal default 250K leak (got ${blend.projected})`,
+  );
+
+  const explicit120 = runValuationEngine(
+    baseInputs({
+      rev: 1_000,
+      margin: 5,
+      revenue2026K: 1_000,
+      ebitda2026K: 50,
+      revenue2025K: undefined,
+      ebitda2025K: undefined,
+      revenue2024K: undefined,
+      ebitda2024K: undefined,
+      normalizedOwnerSalary: 120,
+    }),
+  );
+  const blendExplicit = explicit120.computed.ebitdaBlend;
+  assert(
+    test,
+    Math.abs(blendExplicit.current - 170) < 1,
+    `explicit 120 add-back → current ≈ 170 (got ${blendExplicit.current})`,
+  );
+  assert(
+    test,
+    Math.abs(blendExplicit.projected - (1_000 * 1.08 * 0.05 + 120)) < 2,
+    `explicit add-back must flow to projected (got ${blendExplicit.projected})`,
+  );
+
+  pass(test, `default current=${blend.current.toFixed(0)} explicit120 current=${blendExplicit.current.toFixed(0)}`);
+}
+
+function testBidiCurrencyFormatting(): void {
+  const test = 'TEST 15 — Bidi currency & net-debt line';
+
+  const negative444 = formatCurrencyK(-444, { locale: 'he' });
+  assert(test, negative444.startsWith(FSI) && negative444.endsWith(PDI), 'negative amount must be bidi-isolated');
+  const inner444 = negative444.slice(1, -1);
+  const minusIdx = inner444.indexOf('-');
+  const firstDigitIdx = inner444.search(/\d/);
+  assert(
+    test,
+    minusIdx >= 0 && firstDigitIdx >= 0 && minusIdx < firstDigitIdx,
+    'minus must precede first digit inside isolate',
+  );
+  assert(test, !inner444.includes('444-'), 'must not render trailing minus (444-)');
+
+  const nullAmount = formatCurrencyK(null, { locale: 'he' });
+  assert(test, nullAmount === '—', 'null must render em dash');
+
+  const surplus = formatNetDebtLine(-43300);
+  assert(test, surplus.labelHe === 'עודף מזומנים נטו', 'surplus label must match Hebrew copy');
+  const surplusInner = surplus.displayValue.startsWith(FSI)
+    ? surplus.displayValue.slice(1, -1)
+    : surplus.displayValue;
+  assert(
+    test,
+    (surplusInner.match(/\+/g) ?? []).length === 1,
+    'surplus value must contain exactly one plus sign',
+  );
+  assert(test, !surplusInner.includes('-'), 'surplus value must not contain minus');
+
+  const debt = formatNetDebtLine(25000);
+  const debtInner = debt.displayValue.startsWith(FSI)
+    ? debt.displayValue.slice(1, -1)
+    : debt.displayValue;
+  assert(
+    test,
+    (debtInner.match(/-/g) ?? []).length === 1,
+    'debt value must contain exactly one minus sign',
+  );
+  assert(test, !debt.displayValue.includes('--'), 'debt value must not double-minus');
+
+  pass(test, 'FSI/PDI sign order, null dash, net-debt bridge semantics');
+}
+
+function testNetDebtLineDoubleMinusGuard(): void {
+  const test = 'TEST 16 — Net-debt double-minus guard';
+  const FSI = '\u2068';
+  const PDI = '\u2069';
+
+  for (const netDebtK of [-9000, -43300, 25000, 0] as const) {
+    const line = formatNetDebtLine(netDebtK);
+    const inner = line.displayValue.startsWith(FSI)
+      ? line.displayValue.slice(1, -1)
+      : line.displayValue;
+
+    assert(test, !inner.includes('--'), `netDebtK=${netDebtK} must not render "--" (got ${inner})`);
+
+    const signChars = (inner.match(/[+\-−]/g) ?? []).length;
+    assert(
+      test,
+      signChars <= 1,
+      `netDebtK=${netDebtK} must contain at most one sign char (got ${inner})`,
+    );
+  }
+
+  const surplus = formatNetDebtLine(-9000);
+  assert(test, surplus.labelHe === 'עודף מזומנים נטו', 'surplus label must be עודף מזומנים נטו');
+  const surplusInner = surplus.displayValue.startsWith(FSI)
+    ? surplus.displayValue.slice(1, -1)
+    : surplus.displayValue;
+  assert(test, surplusInner.includes('+9.0M'), `surplus value must be +9.0M (got ${surplusInner})`);
+  assert(test, surplus.tone === 'positive', 'surplus tone must be positive');
+
+  pass(test, 'netDebtK sweep never double-minuses; -9000 surplus parity');
+}
+
+function testBridgeRenderSiteSignGuard(): void {
+  const test = 'TEST 17 — Bridge render-site manual sign ban';
+  const { readFileSync, readdirSync, statSync } = require('node:fs') as typeof import('node:fs');
+  const { join, relative } = require('node:path') as typeof import('node:path');
+
+  const root = join(__dirname, '..');
+  const scanRoots = [
+    'components/wizard/equify',
+    'components/results',
+  ];
+  const forbidden = [
+    /−\{/,
+    /−\$\{/,
+    /\$\{\s*['"]-['"]\s*\}/,
+    />\s*−\s*\{/,
+    />\s*-\s*\{/,
+  ];
+  const allowList = new Set([
+    'lib/format/currency.ts',
+    'lib/pdf/print/print_formatters.ts',
+    'lib/utils/formatCurrency.ts',
+  ]);
+
+  const violations: string[] = [];
+
+  function walk(dir: string): void {
+    for (const entry of readdirSync(dir)) {
+      const full = join(dir, entry);
+      const rel = relative(root, full).replace(/\\/g, '/');
+      const st = statSync(full);
+      if (st.isDirectory()) {
+        walk(full);
+        continue;
+      }
+      if (!/\.tsx$/.test(entry)) continue;
+      if (allowList.has(rel)) continue;
+      const text = readFileSync(full, 'utf8');
+      for (const pattern of forbidden) {
+        if (pattern.test(text)) {
+          violations.push(`${rel}: forbidden manual sign pattern ${pattern}`);
+        }
+      }
+    }
+  }
+
+  for (const scanRoot of scanRoots) {
+    walk(join(root, scanRoot));
+  }
+
+  assert(test, violations.length === 0, violations.join('\n') || 'no violations');
+  pass(test, 'bridge render paths free of manual currency sign concatenation');
+}
+
+/** Ordered regression suites — labels skip TEST 10 (never allocated; see suite list). */
+const TEST_SUITES: Array<{ run: () => void | Promise<void> }> = [
+  { run: testBacklogProportionalImpact },
+  { run: testCapexMonotonicDecrease },
+  { run: testIndustryMultiplesRanges },
+  { run: testOwnerSalaryZeroHandling },
+  { run: testCustomerConcentrationSmooth },
+  { run: testMultiplePathInvariance },
+  { run: testExchangeRatesLive },
+  { run: testEvBlendCoherenceInvariant },
+  { run: testSpecificRiskPremiumInputs },
+  { run: testNegativeEbitdaRegime },
+  { run: testSectorWeightDynamismRestored },
+  { run: testNormalizedEbitdaHistoricalSensitivity },
+  { run: testMaEbitdaPanelOwnerSalaryLeak },
+  { run: testBidiCurrencyFormatting },
+  { run: testNetDebtLineDoubleMinusGuard },
+  { run: testBridgeRenderSiteSignGuard },
+];
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
   console.log('═'.repeat(72));
 
-  testBacklogProportionalImpact();
-  testCapexMonotonicDecrease();
-  testIndustryMultiplesRanges();
-  testOwnerSalaryZeroHandling();
-  testCustomerConcentrationSmooth();
-  await testMultiplePathInvariance();
-  await testExchangeRatesLive();
-  testEvBlendCoherenceInvariant();
-  testSpecificRiskPremiumInputs();
-  testNegativeEbitdaRegime();
-  testSectorWeightDynamismRestored();
-  testNormalizedEbitdaHistoricalSensitivity();
+  let executed = 0;
+  for (const suite of TEST_SUITES) {
+    await suite.run();
+    executed += 1;
+  }
 
   console.log('\n' + '═'.repeat(72));
-  console.log(`ALL ${passed} TESTS PASSED`);
+  if (passed !== executed) {
+    fail(
+      'Runner',
+      `pass count (${passed}) must equal executed suites (${executed})`,
+    );
+  }
+  console.log(
+    `ALL ${passed} / ${executed} TEST SUITES PASSED (labels TEST 1–9, 11–15)`,
+  );
   console.log('═'.repeat(72));
 }
 

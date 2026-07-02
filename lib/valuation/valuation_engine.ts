@@ -65,6 +65,11 @@ function resolveNormalizedOwnerSalaryK(raw: number | undefined): number {
   return v > 0 ? v : BASELINE_OWNER_SALARY_NORM_K;
 }
 
+function resolveExplicitOwnerSalaryAddBackK(raw: number | undefined): number {
+  const v = typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+  return v > 0 ? v : 0;
+}
+
 function computeQualityScore(
   inputs: Pick<
     ValuationInputs,
@@ -174,7 +179,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   });
   const regimeEbitdaK = normalizedEbitda.normalizedEbitdaK;
 
-  const ownerSalaryNormK = resolveNormalizedOwnerSalaryK(normalizedOwnerSalary);
+  const explicitOwnerSalaryAddBackK = resolveExplicitOwnerSalaryAddBackK(normalizedOwnerSalary);
   const specificRisk = computeSpecificRiskPremium({
     topCustomerPct: topCustomer,
     founderDependency: founderDep,
@@ -238,7 +243,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     {
       rev: revK,
       margin,
-      normalizedOwnerSalary: ownerSalaryNormK,
+      ownerSalaryAddBackK: explicitOwnerSalaryAddBackK,
       ebitda2024K,
       ebitda2025K,
       ebitda2026K: currentYearEbitdaK,
@@ -250,7 +255,11 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     },
     growth,
   );
-  const ebitda = ebitdaBlend.blended;
+  const ownerSalaryOmitted = explicitOwnerSalaryAddBackK === 0;
+  const ebitda =
+    ownerSalaryOmitted && !ebitdaBlend.hasPastActual
+      ? ebitdaBlend.blended + BASELINE_OWNER_SALARY_NORM_K
+      : ebitdaBlend.blended;
 
   const waccBacklogAdjustment = backlog.waccAdjustmentPct;
   const backlogAlphaReductionPp = Math.abs(waccBacklogAdjustment);
@@ -287,7 +296,6 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     contracts,
     growth,
   });
-  const ownerSalaryOmitted = !(normalizedOwnerSalary > 0);
   const qs = Math.min(qsRaw, profitabilityRegime.qualityScoreCap);
   const qsGrade = qualityScoreGrade(qs);
   const ownerSalaryWarnings: string[] = ownerSalaryOmitted

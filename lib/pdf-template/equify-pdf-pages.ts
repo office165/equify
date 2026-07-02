@@ -15,7 +15,8 @@ import {
   resolvePdfActiveCurrency,
   resolvePdfLocale,
 } from '../pdf/print/print_formatters';
-import { formatReportEvHeader, formatReportMillionsUnitFromProfile } from '../utils/formatCurrency';
+import { formatReportEvHeader, formatReportMillionsUnitFromProfile, normalizeCurrencyCode } from '../utils/formatCurrency';
+import { formatNetDebtLine } from '../format/currency';
 import {
   buildEbitdaSensitivityTable,
   buildSensitivityMatrixTable,
@@ -170,25 +171,29 @@ function buildPage1Cover(data: ValuationData): string {
 }
 
 function formatWaterfallNetDebtRow(
-  netDebt: number,
-  f: ReturnType<typeof pdfFmt>,
+  netDebtAbs: number,
+  data: ValuationData,
 ): { label: string; valueHtml: string } {
-  if (netDebt < 0) {
-    return {
-      label: 'עודף מזומנים נטו',
-      valueHtml: `<b style="color:var(--turq)">+${f.money(Math.abs(netDebt))}</b>`,
-    };
-  }
+  const netDebtK = netDebtAbs / 1000;
+  const locale = resolvePdfLocale(data.locale);
+  const currency = normalizeCurrencyCode(data.currency ?? 'ILS');
+  const line = formatNetDebtLine(netDebtK, locale, currency);
+  const color =
+    line.tone === 'positive'
+      ? 'var(--turq)'
+      : line.tone === 'negative'
+        ? '#C24A4A'
+        : 'var(--text)';
   return {
-    label: 'חוב נטו',
-    valueHtml: `<b style="color:#C24A4A">−${f.money(netDebt)}</b>`,
+    label: locale === 'en' ? line.labelEn : line.labelHe,
+    valueHtml: `<b style="color:${color}">${escHtml(line.displayValue)}</b>`,
   };
 }
 
 function buildPage2ExecSummary(data: ValuationData): string {
   const f = pdfFmt(data);
   const wf = computeWaterfallFills(data);
-  const netDebtRow = formatWaterfallNetDebtRow(data.netDebt, f);
+  const netDebtRow = formatWaterfallNetDebtRow(data.netDebt, data);
   const summary = resolveExecutiveSummaryHtml(data, defaultExecutiveSummary);
   const moatCallout = buildMoatNotesCalloutHtml(data);
   const methodologyNoteHtml = data.profitabilityMethodologyNote

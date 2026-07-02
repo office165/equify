@@ -1,3 +1,4 @@
+import { formatNetDebtLine } from '../format/currency';
 import {
   computeScenarios,
   computeValuation,
@@ -41,6 +42,7 @@ import { getCachedFxRates } from '../utils/fxService';
 import {
   formatCurrencyNarrativeHe,
   formatCurrencyShort,
+  normalizeCurrencyCode,
   resolveActiveCurrency,
 } from '../utils/formatCurrency';
 import {
@@ -101,15 +103,19 @@ function blendedEbitdaNote(
   currency: string,
 ): string {
   const w = BLENDED_EBITDA_WEIGHTS;
+  const fmt = (k: number) => formatCurrencyShort(k * 1000, currency);
+  const fmtBlendAmount = (k: number | null | undefined): string => {
+    if (k == null || !Number.isFinite(k)) return locale === 'en' ? '—' : '—';
+    return fmt(k);
+  };
   const pctPast = Math.round(w.past * 100);
   const pctCur = Math.round(w.current * 100);
   const pctProj = Math.round(w.projected * 100);
   const growth = blend.dcfGrowthPct.toFixed(1);
-  const fmt = (k: number) => formatCurrencyShort(k * 1000, currency);
   if (locale === 'en') {
-    return `${pctPast}/${pctCur}/${pctProj} weighted · past ${fmt(blend.past)} · current ${fmt(blend.current)} · projected (+${growth}%) ${fmt(blend.projected)} · base ${fmt(blend.blended)}`;
+    return `${pctPast}/${pctCur}/${pctProj} weighted · past ${fmtBlendAmount(blend.past)} · current ${fmt(blend.current)} · projected (+${growth}%) ${fmt(blend.projected)} · base ${fmt(blend.blended)}`;
   }
-  return `שקלול ${pctPast}/${pctCur}/${pctProj} · עבר ${fmt(blend.past)} · נוכחי ${fmt(blend.current)} · תחזית (+${growth}%) ${fmt(blend.projected)} · בסיס ${fmt(blend.blended)}`;
+  return `שקלול ${pctPast}/${pctCur}/${pctProj} · עבר ${fmtBlendAmount(blend.past)} · נוכחי ${fmt(blend.current)} · תחזית (+${growth}%) ${fmt(blend.projected)} · בסיס ${fmt(blend.blended)}`;
 }
 
 function formatNetDebtNoteHe(
@@ -118,10 +124,11 @@ function formatNetDebtNoteHe(
   cashK: number,
   currency: string,
 ): string {
+  const line = formatNetDebtLine(netDebtK, 'he', normalizeCurrencyCode(currency));
   const net = wizardFinancialAbsFromK(netDebtK);
   const gross = wizardFinancialAbsFromK(grossDebtK);
   const cash = wizardFinancialAbsFromK(cashK);
-  return `חוב נטו ליום ההערכה: ${formatCurrencyNarrativeHe(net, currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
+  return `${line.labelHe} ליום ההערכה: ${formatCurrencyNarrativeHe(Math.abs(net), currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
 }
 
 function buildSpecificRiskSubRows(
@@ -595,7 +602,10 @@ export function mapEngineResultToValuationData(
     blendedEbitdaBase: financialCore.blendedEbitdaBaseAbs,
     multipleLegEbitdaBase: financialCore.multipleLegEbitdaBaseAbs,
     financialCore,
-    ebitdaPast: kToNis(fxComputed.ebitdaBlend.past),
+    ebitdaPast:
+      fxComputed.ebitdaBlend.past != null
+        ? kToNis(fxComputed.ebitdaBlend.past)
+        : undefined,
     ebitdaCurrent: kToNis(fxComputed.ebitdaBlend.current),
     ebitdaProjected: kToNis(fxComputed.ebitdaBlend.projected),
     ebitdaBlendedNote: blendedEbitdaNote(fxComputed.ebitdaBlend, locale, reportingCurrency),

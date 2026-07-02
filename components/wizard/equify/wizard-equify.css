@@ -1252,6 +1252,8 @@ body.equify-slider-dragging {
 /* Reporting currency — smooth symbol morph across wizard surfaces */
 .equify-wizard .eq-currency-symbol,
 .equify-wizard .eq-currency-value {
+  unicode-bidi: isolate;
+  direction: ltr;
   transition:
     color 0.28s var(--ease-out),
     opacity 0.28s var(--ease-out),
@@ -1553,6 +1555,12 @@ body.equify-slider-dragging {
   flex: 0 1 88px;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.equify-wizard .cl-row b,
+.equify-wizard .wf-row b.mono {
+  unicode-bidi: isolate;
+  direction: ltr;
 }
 
 .equify-wizard .cl-bar-wrap {

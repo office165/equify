@@ -14,6 +14,7 @@ import {
   MULTIPLES_VIEW_W,
   multiplesTrackLabelSvg,
 } from './equify-pdf-charts';
+import { formatNetDebtLine } from '../format/currency';
 import {
   fmtMoneyCompact,
   numHtml,
@@ -61,6 +62,18 @@ export function buildModelBlendBarSvg(rows: ModelBlendRow[], width = 380): strin
 }
 
 export function buildWaterfallSvg(ev: number, netDebt: number, equity: number): string {
+  const netDebtK = netDebt / 1000;
+  const netDebtLine = formatNetDebtLine(netDebtK, 'he', 'ILS');
+  const netDebtDisplay = netDebtLine.displayValue.replace(/[\u2068\u2069]/g, '');
+  const netDebtLabel = netDebtLine.labelHe;
+  const netDebtColor =
+    netDebtLine.tone === 'positive'
+      ? '#00A89F'
+      : netDebtLine.tone === 'negative'
+        ? '#C24A4A'
+        : '#527570';
+  const debtFill =
+    netDebtLine.tone === 'positive' ? '#00A89F' : '#C24A4A';
   const evM = toM(ev);
   const debtM = toM(Math.abs(netDebt));
   const eqM = toM(equity);
@@ -86,9 +99,9 @@ export function buildWaterfallSvg(ev: number, netDebt: number, equity: number): 
     <text x="106" y="${(evTop - 6).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#163530" font-weight="600">${fmtM(ev)}</text>
     <text x="106" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">EV</text>
     <line x1="132" x2="158" y1="${evTop.toFixed(1)}" y2="${evTop.toFixed(1)}" stroke="#D6E8E4" stroke-dasharray="2 3"/>
-    <rect x="158" y="${debtTop.toFixed(1)}" width="52" height="${debtH.toFixed(1)}" fill="#C24A4A" rx="3" opacity=".85"/>
-    <text x="184" y="${(debtTop - 5).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#C24A4A" font-weight="600">−${fmtM(Math.abs(netDebt))}</text>
-    <text x="184" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">חוב נטו</text>
+    <rect x="158" y="${debtTop.toFixed(1)}" width="52" height="${debtH.toFixed(1)}" fill="${debtFill}" rx="3" opacity=".85"/>
+    <text x="184" y="${(debtTop - 5).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="${netDebtColor}" font-weight="600">${netDebtDisplay}</text>
+    <text x="184" y="165" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#527570">${netDebtLabel}</text>
     <line x1="210" x2="234" y1="${eqTop.toFixed(1)}" y2="${eqTop.toFixed(1)}" stroke="#D6E8E4" stroke-dasharray="2 3"/>
     <rect x="234" y="${eqTop.toFixed(1)}" width="52" height="${eqH.toFixed(1)}" fill="#163530" rx="3"/>
     <rect x="234" y="${eqTop.toFixed(1)}" width="52" height="10" fill="#00C2B8" rx="3"/>

@@ -9,11 +9,13 @@ export const BLENDED_EBITDA_WEIGHTS = {
 } as const;
 
 export interface EbitdaBlendBreakdown {
-  past: number;
+  past: number | null;
   current: number;
   projected: number;
   blended: number;
   weights: typeof BLENDED_EBITDA_WEIGHTS;
+  /** True when 2025 revenue + EBITDA were user-supplied (historical path). */
+  hasPastActual: boolean;
   /** Growth % used for projected year (user slider). */
   dcfGrowthPct: number;
   revPastK: number;
@@ -52,6 +54,37 @@ export interface BlendedEbitdaInputs extends Pick<
 > {
   /** User growth slider (%) — drives 2027F when explicit projected EBITDA absent. */
   growthPct?: number;
+  /**
+   * Explicit owner-salary add-back (₪K) for M&A blend legs only.
+   * Omit default DCF normalization (250K) — pass 0 when user left field empty.
+   */
+  ownerSalaryAddBackK?: number;
+}
+
+function resolveOwnerSalaryAddBackK(inputs: BlendedEbitdaInputs): number {
+  if (typeof inputs.ownerSalaryAddBackK === 'number' && Number.isFinite(inputs.ownerSalaryAddBackK)) {
+    return Math.max(0, inputs.ownerSalaryAddBackK);
+  }
+  const legacy = inputs.normalizedOwnerSalary;
+  return typeof legacy === 'number' && legacy > 0 ? legacy : 0;
+}
+
+function hasPastYearActuals(inputs: BlendedEbitdaInputs): boolean {
+  return isPositiveFinite(inputs.revenue2025K) && isFiniteEbitda(inputs.ebitda2025K);
+}
+
+function blendWeightedAverage(
+  past: number | null,
+  current: number,
+  projected: number,
+  hasPastActual: boolean,
+): number {
+  const { past: wPast, current: wCurrent, projected: wProjected } = BLENDED_EBITDA_WEIGHTS;
+  if (hasPastActual && past != null) {
+    return wPast * past + wCurrent * current + wProjected * projected;
+  }
+  const activeSum = wCurrent + wProjected;
+  return (wCurrent / activeSum) * current + (wProjected / activeSum) * projected;
 }
 
 /**
@@ -63,7 +96,8 @@ export function computeBlendedEbitda(
   inputs: BlendedEbitdaInputs,
   dcfGrowthPct: number,
 ): EbitdaBlendBreakdown {
-  const { rev, margin, normalizedOwnerSalary = 0 } = inputs;
+  const { rev, margin } = inputs;
+  const ownerSalaryAddBackK = resolveOwnerSalaryAddBackK(inputs);
   const growthPct = inputs.growthPct ?? dcfGrowthPct;
   const g = Math.max(-0.05, growthPct / 100);
   const revCurrentK = inputs.revenue2026K ?? rev;
@@ -86,22 +120,16 @@ export function computeBlendedEbitda(
         ? currentEbitdaK * (1 + g)
         : 0;
 
-  if (
-    isFiniteEbitda(pastEbitdaK) &&
-    isFiniteEbitda(currentEbitdaK) &&
-    isPositiveFinite(inputs.revenue2025K)
-  ) {
-    const past = pastEbitdaK;
-    const current = currentEbitdaK;
+  if (hasPastYearActuals(inputs)) {
+    const past = pastEbitdaK!;
+    const current = currentEbitdaK!;
     const projected =
       typeof projectedFromState === 'number' && Number.isFinite(projectedFromState)
         ? projectedFromState
         : isPositiveFinite(currentEbitdaK)
           ? currentEbitdaK * (1 + g)
           : projectedEbitdaK;
-    const { past: wPast, current: wCurrent, projected: wProjected } =
-      BLENDED_EBITDA_WEIGHTS;
-    const blended = wPast * past + wCurrent * current + wProjected * projected;
+    const blended = blendWeightedAverage(past, current, projected, true);
 
     return {
       past,
@@ -109,6 +137,7 @@ export function computeBlendedEbitda(
       projected,
       blended,
       weights: BLENDED_EBITDA_WEIGHTS,
+      hasPastActual: true,
       dcfGrowthPct: growthPct,
       revPastK,
       revCurrentK,
@@ -116,16 +145,13 @@ export function computeBlendedEbitda(
     };
   }
 
-  const revPastDerivedK = g !== 0 ? rev / (1 + g) : rev;
-  const revProjectedDerivedK = rev * (1 + g);
+  const revPastDerivedK = g !== 0 ? revCurrentK / (1 + g) : revCurrentK;
+  const revProjectedDerivedK = revCurrentK * (1 + g);
 
-  const past = ebitdaAtRevenueK(revPastDerivedK, margin, normalizedOwnerSalary);
-  const current = ebitdaAtRevenueK(rev, margin, normalizedOwnerSalary);
-  const projected = ebitdaAtRevenueK(revProjectedDerivedK, margin, normalizedOwnerSalary);
-
-  const { past: wPast, current: wCurrent, projected: wProjected } =
-    BLENDED_EBITDA_WEIGHTS;
-  const blended = wPast * past + wCurrent * current + wProjected * projected;
+  const past = null;
+  const current = ebitdaAtRevenueK(revCurrentK, margin, ownerSalaryAddBackK);
+  const projected = ebitdaAtRevenueK(revProjectedDerivedK, margin, ownerSalaryAddBackK);
+  const blended = blendWeightedAverage(past, current, projected, false);
 
   return {
     past,
@@ -133,9 +159,10 @@ export function computeBlendedEbitda(
     projected,
     blended,
     weights: BLENDED_EBITDA_WEIGHTS,
+    hasPastActual: false,
     dcfGrowthPct: growthPct,
     revPastK: revPastDerivedK,
-    revCurrentK: rev,
+    revCurrentK: revCurrentK,
     revProjectedK: revProjectedDerivedK,
   };
 }
@@ -147,5 +174,7 @@ export function summarizeBlendedEbitda(
 ): string {
   const fmt = (k: number) =>
     formatCurrencyShort(k * 1000, currency);
-  return `30/50/20 → ${fmt(blend.blended)} (${fmt(blend.past)} · ${fmt(blend.current)} · +${blend.dcfGrowthPct.toFixed(0)}% ${fmt(blend.projected)})`;
+  const pastPart =
+    blend.past != null && Number.isFinite(blend.past) ? fmt(blend.past) : '—';
+  return `30/50/20 → ${fmt(blend.blended)} (${pastPart} · ${fmt(blend.current)} · +${blend.dcfGrowthPct.toFixed(0)}% ${fmt(blend.projected)})`;
 }

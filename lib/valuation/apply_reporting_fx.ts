@@ -25,7 +25,7 @@ export function applyReportingFxToComputed(
     ebitda: scaleK(computed.ebitda, multiplier),
     ebitdaBlend: {
       ...blend,
-      past: scaleK(blend.past, multiplier),
+      past: blend.past != null ? scaleK(blend.past, multiplier) : null,
       current: scaleK(blend.current, multiplier),
       projected: scaleK(blend.projected, multiplier),
       blended: scaleK(blend.blended, multiplier),

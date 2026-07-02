@@ -41,6 +41,18 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
     [hasLiveInputs, locale, reportingCurrency],
   );
 
+  const fmtBlendRowAmount = useCallback(
+    (k: number | null | undefined) => {
+      if (k == null || !Number.isFinite(k)) return '—';
+      return fmtLiveK(k);
+    },
+    [fmtLiveK],
+  );
+
+  const hasPastYearForBlend =
+    (financials.y2025?.revenueK ?? 0) > 0 &&
+    Number.isFinite(financials.y2025?.ebitdaK);
+
   const displayWeights = useMemo(() => {
     if (hasLiveInputs) {
       return {
@@ -78,6 +90,10 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
     rev: displayWeights.revenueMultiple,
   };
   const { ebitdaBlend } = computed;
+  const hasProjectedBlend =
+    ebitdaBlend != null &&
+    Number.isFinite(ebitdaBlend.projected) &&
+    (ebitdaBlend.projected !== 0 || (ebitdaBlend.dcfGrowthPct ?? 0) !== 0);
   const dcfWeightPct = Math.round(blendWeights.dcf * 100);
   const ebitdaWeightPct = Math.round(blendWeights.ebitda * 100);
   const revWeightPct = Math.round(blendWeights.rev * 100);
@@ -258,19 +274,23 @@ export function LiveValuationCard({ variant, companyName }: LiveValuationCardPro
         <div className="cl-ebitda-blend-row">
           {t.step2.blendedEbitdaPast(
             Math.round(wEbitda.past * 100),
-            fmtLiveK(ebitdaBlend?.past ?? 0),
+            hasPastYearForBlend
+              ? fmtBlendRowAmount(ebitdaBlend?.past ?? null)
+              : '—',
           )}
         </div>
         <div className="cl-ebitda-blend-row">
           {t.step2.blendedEbitdaCurrent(
             Math.round(wEbitda.current * 100),
-            fmtLiveK(ebitdaBlend?.current ?? 0),
+            hasLiveInputs ? fmtBlendRowAmount(ebitdaBlend?.current ?? null) : '—',
           )}
         </div>
         <div className="cl-ebitda-blend-row">
           {t.step2.blendedEbitdaProjected(
             Math.round(wEbitda.projected * 100),
-            fmtLiveK(ebitdaBlend?.projected ?? 0),
+            hasProjectedBlend
+              ? fmtBlendRowAmount(ebitdaBlend?.projected ?? null)
+              : '—',
             (ebitdaBlend?.dcfGrowthPct ?? 0).toFixed(1),
           )}
         </div>

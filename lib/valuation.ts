@@ -1,4 +1,5 @@
 import type { ValuationLocale } from '../api_client';
+import { formatCurrencyK } from './format/currency';
 import {
   formatCurrency,
   formatCurrencyHeroParts,
@@ -397,12 +398,9 @@ export function fmtK(
   locale: ValuationLocale = 'he',
   currency: ReportingCurrencyCode | ActiveCurrencyProfile = 'ILS',
 ): string {
-  if (!Number.isFinite(k)) return '—';
-  const profile =
-    typeof currency === 'string'
-      ? resolveActiveCurrency(currency, locale)
-      : currency;
-  return formatCurrencyValue(k * 1000, profile, { short: true });
+  const code =
+    typeof currency === 'string' ? normalizeCurrencyCode(currency) : currency.code;
+  return formatCurrencyK(k, { locale: locale as 'he' | 'en', currency: code });
 }
 
 /** Numeric portion for split hero displays (amount without B/M/K suffix). */
