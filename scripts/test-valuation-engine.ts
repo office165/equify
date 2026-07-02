@@ -842,6 +842,73 @@ function testNormalizedEbitdaHistoricalSensitivity(): void {
   pass(test, `A=${equityA.toFixed(0)} B=${equityB.toFixed(0)} chronic=${chronicRegime.regime}`);
 }
 
+function testMaEbitdaPanelOwnerSalaryLeak(): void {
+  const test = 'TEST 14 — M&A EBITDA panel owner-salary leak';
+
+  const noSalary = runValuationEngine(
+    baseInputs({
+      rev: 1_000,
+      margin: 5,
+      revenue2026K: 1_000,
+      ebitda2026K: 50,
+      revenue2025K: undefined,
+      ebitda2025K: undefined,
+      revenue2024K: undefined,
+      ebitda2024K: undefined,
+      normalizedOwnerSalary: 0,
+    }),
+  );
+  const blend = noSalary.computed.ebitdaBlend;
+
+  assert(
+    test,
+    blend.past == null || !Number.isFinite(blend.past),
+    `past must be null without 2025 actuals (got ${blend.past})`,
+  );
+  assert(
+    test,
+    Math.abs(blend.current - 50) < 1,
+    `current must ≈ 50 without default 250 (got ${blend.current})`,
+  );
+  assert(
+    test,
+    Math.abs(blend.current - 250) > 1 && Math.abs(blend.current - 300) > 1,
+    `current must not be 250 or 300 (got ${blend.current})`,
+  );
+  assert(
+    test,
+    Math.abs(blend.projected - 250) > 1,
+    `projected must not equal default 250K leak (got ${blend.projected})`,
+  );
+
+  const explicit120 = runValuationEngine(
+    baseInputs({
+      rev: 1_000,
+      margin: 5,
+      revenue2026K: 1_000,
+      ebitda2026K: 50,
+      revenue2025K: undefined,
+      ebitda2025K: undefined,
+      revenue2024K: undefined,
+      ebitda2024K: undefined,
+      normalizedOwnerSalary: 120,
+    }),
+  );
+  const blendExplicit = explicit120.computed.ebitdaBlend;
+  assert(
+    test,
+    Math.abs(blendExplicit.current - 170) < 1,
+    `explicit 120 add-back → current ≈ 170 (got ${blendExplicit.current})`,
+  );
+  assert(
+    test,
+    Math.abs(blendExplicit.projected - (1_000 * 1.08 * 0.05 + 120)) < 2,
+    `explicit add-back must flow to projected (got ${blendExplicit.projected})`,
+  );
+
+  pass(test, `default current=${blend.current.toFixed(0)} explicit120 current=${blendExplicit.current.toFixed(0)}`);
+}
+
 async function main(): Promise<void> {
   console.log('═'.repeat(72));
   console.log('VALUATION ENGINE REGRESSION SUITE');
@@ -859,6 +926,7 @@ async function main(): Promise<void> {
   testNegativeEbitdaRegime();
   testSectorWeightDynamismRestored();
   testNormalizedEbitdaHistoricalSensitivity();
+  testMaEbitdaPanelOwnerSalaryLeak();
 
   console.log('\n' + '═'.repeat(72));
   console.log(`ALL ${passed} TESTS PASSED`);
