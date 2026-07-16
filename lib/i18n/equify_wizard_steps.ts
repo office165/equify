@@ -85,6 +85,7 @@ export interface EquifyWizardStepStrings {
     fiscalYear: string;
     livePanel: string;
     qualityScore: string;
+    breakdownTeaserBadge: string;
     minRev: string;
     maxRev: string;
     minGrowth: string;
@@ -319,6 +320,8 @@ const HE: EquifyWizardStepStrings = {
     fiscalYear: 'שנת דיווח אחרונה',
     livePanel: 'שווי לבעלים · LIVE',
     qualityScore: 'Quality Score',
+    breakdownTeaserBadge:
+      'פירוט המודל, משקלי ההיוון וניתוח הרגישות זמינים בדוח המלא',
     minRev: '500K ₪',
     maxRev: '200M ₪',
     minGrowth: '−10%',
@@ -530,6 +533,8 @@ const EN: EquifyWizardStepStrings = {
     fiscalYear: 'Latest fiscal year',
     livePanel: 'Equity value · LIVE',
     qualityScore: 'Quality Score',
+    breakdownTeaserBadge:
+      'Model detail, discount weights, and sensitivity analysis are available in the full report',
     minRev: '₪500K',
     maxRev: '₪200M',
     minGrowth: '−10%',

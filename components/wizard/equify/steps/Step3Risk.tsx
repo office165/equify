@@ -5,6 +5,7 @@ import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { SmartFieldLabel } from '../../ui/SmartFieldLabel';
 import { SmartSlider } from '../../ui/SmartSlider';
 import { useReportingCurrency, useWizardValuation } from '../WizardValuationContext';
+import { LiveValuationCard } from '../LiveValuationCard';
 
 export interface Step3RiskProps {
   onBack: () => void;
@@ -70,8 +71,10 @@ export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
         <span className="eq-reporting-currency-pill-code">{reportingCurrency}</span>
       </div>
 
-      <div className="fgroup stagger">
-        <div className="risk-section">
+      <div className="fin-layout fin-layout--live-first">
+        <div className="fin-inputs stagger w-full min-w-0 max-w-full">
+          <div className="fgroup stagger">
+            <div className="risk-section">
           <h4>{t.step3.revenueStability}</h4>
           <div className="risk-fields">
             <SmartSlider
@@ -158,6 +161,10 @@ export function Step3Risk({ onBack, onNext }: Step3RiskProps) {
             }
           />
         </div>
+          </div>
+        </div>
+
+        <LiveValuationCard variant="panel" breakdownTeaser />
       </div>
 
       <div className="nav-row rv">

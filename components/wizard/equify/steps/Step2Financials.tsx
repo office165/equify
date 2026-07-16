@@ -379,7 +379,7 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
           </div>
         </div>
 
-        <LiveValuationCard variant="panel" />
+        <LiveValuationCard variant="panel" breakdownTeaser />
       </div>
 
       <div className="nav-row rv">

@@ -1622,6 +1622,10 @@ body.equify-slider-dragging {
   padding-top: 18px;
 }
 
+.equify-wizard .lv-breakdown-teaser {
+  min-height: 120px;
+}
+
 .equify-wizard .qs-ring {
   position: relative;
 }

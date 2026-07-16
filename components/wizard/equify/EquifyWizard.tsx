@@ -160,7 +160,7 @@ function EquifyWizardShell({
             })}
           </nav>
 
-          {step !== 2 ? (
+          {step !== 2 && step !== 3 ? (
             <LiveValuationCard variant="sidebar" companyName={displayCompanyName || undefined} />
           ) : null}
         </aside>
