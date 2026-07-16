@@ -206,6 +206,11 @@ export interface EquifyWizardStepStrings {
     termsBold: string;
     computing: string;
     generate: string;
+    promoToggle: string;
+    promoPlaceholder: string;
+    validatingVip: string;
+    redirectingPaypal: string;
+    termsRequired: string;
     disclaimer: string;
     goals: Record<
       'negotiation' | 'fundraise' | 'partner' | 'bank' | 'internal' | 'legal',
@@ -453,6 +458,11 @@ const HE: EquifyWizardStepStrings = {
     termsBold: 'אינדיקציית שווי אלגוריתמית בלבד',
     computing: 'מחשב שווי...',
     generate: 'חשב שווי מורחב',
+    promoToggle: '+ יש לך קוד הרשאה / קופון VIP?',
+    promoPlaceholder: 'הזן קוד הרשאה',
+    validatingVip: 'מאמת קוד הרשאה...',
+    redirectingPaypal: 'מעביר לתשלום מאובטח...',
+    termsRequired: 'יש לאשר את תנאי השימוש לפני המשך',
     disclaimer:
       'הערכה זו הינה אינדיקציה אלגוריתמית בלבד. אין לראות בה ייעוץ השקעות, ייעוץ פיננסי, חוות דעת חשבונאית או תחליף להערכת שווי מקצועית. © 2026 equify BY SBC.',
     goals: {
@@ -665,6 +675,11 @@ const EN: EquifyWizardStepStrings = {
     termsBold: 'algorithmic valuation indication only',
     computing: 'Computing valuation...',
     generate: 'Run full valuation',
+    promoToggle: '+ Have an authorization / VIP promo code?',
+    promoPlaceholder: 'Enter authorization code',
+    validatingVip: 'Validating authorization code...',
+    redirectingPaypal: 'Redirecting to secure checkout...',
+    termsRequired: 'Please accept the terms of use before continuing',
     disclaimer:
       'This valuation is an algorithmic indication only. It is not investment advice, financial advice, accounting opinion, or a substitute for professional valuation. © 2026 equify BY SBC.',
     goals: {

@@ -4,6 +4,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ValuationLocale } from '../../../api_client';
+import { postMondayLeadUpdate } from '../../../lib/crm/update_lead_monday_client';
+import { readLeadSession } from '../../../lib/crm/lead_session';
+import {
+  buildEquifyValuationSnapshot,
+  persistEquifyValuationState,
+} from '../../../lib/wizard/equify_valuation_persistence';
 import { saveEquifyWizardState } from '../../../lib/wizard/equify_storage';
 import {
   getEquifyWizardCopy,
@@ -24,12 +30,17 @@ import { useValuationI18n } from '../../../valuation_i18n';
 import { Step1Profile } from './steps/Step1Profile';
 import { Step2Financials } from './steps/Step2Financials';
 import { Step3Risk } from './steps/Step3Risk';
-import { Step4Goal } from './steps/Step4Goal';
+import { Step4Goal, type Step4SubmitPhase } from './steps/Step4Goal';
 import { LiveValuationCard } from './LiveValuationCard';
 import {
   useWizardValuation,
   WizardValuationProvider,
 } from './WizardValuationContext';
+import {
+  isVipPromoCode,
+  normalizePromoCode,
+  PAYPAL_CHECKOUT_URL,
+} from '../../../lib/wizard/vip_promo';
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
 import { useWizardStepMotion } from './hooks/useWizardStepMotion';
 import './wizard-equify.css';
@@ -61,6 +72,8 @@ function EquifyWizardShell({
   const paneRef = useRef<HTMLElement>(null);
   const [mounted, setMounted] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [localSubmitting, setLocalSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<Step4SubmitPhase>('idle');
   const reducedMotion = useReducedMotion();
   const { step, setStep, computed, state } = useWizardValuation();
   const { reportingCurrency } = useReportingCurrency();
@@ -95,20 +108,66 @@ function EquifyWizardShell({
     [reducedMotion, setStep, state.financials, step],
   );
 
-  const handleGenerate = useCallback(async () => {
-    const formValues = mapEquifyToWizardFormValues(state);
-    saveEquifyWizardState(state);
+  const handleGenerate = useCallback(
+    async (promoCode: string) => {
+      const normalizedPromo = normalizePromoCode(promoCode);
+      const isVipBypass = isVipPromoCode(normalizedPromo);
+      const leadSession = readLeadSession();
 
-    if (onRunValuation) {
+      const snapshot = buildEquifyValuationSnapshot(state, computed, {
+        promoCode: normalizedPromo || null,
+        paymentPath: isVipBypass ? 'vip' : 'paypal',
+        mondayStatus: isVipBypass
+          ? 'Paid - Admin VIP Bypass'
+          : 'Redirected to PayPal',
+      });
+      persistEquifyValuationState(snapshot);
+      saveEquifyWizardState(state);
+
+      setLocalSubmitting(true);
       try {
-        await onRunValuation(formValues, { locale, equifyState: state });
-      } catch {
-        return;
-      }
-    }
+        if (isVipBypass) {
+          setSubmitPhase('validating-vip');
+          await postMondayLeadUpdate({
+            status: 'Paid - Admin VIP Bypass',
+            mondayItemId: leadSession.mondayItemId,
+            leadId: leadSession.leadId,
+            sessionId: leadSession.sessionId,
+            userEmail: state.profile.userEmail,
+            aiNotes: normalizedPromo ? `VIP promo: ${normalizedPromo}` : undefined,
+          }).catch((err) => {
+            console.warn('[wizard] VIP Monday update failed', err);
+          });
 
-    router.push('/results');
-  }, [locale, onRunValuation, router, state]);
+          setSubmitPhase('computing');
+          const formValues = mapEquifyToWizardFormValues(state);
+          if (onRunValuation) {
+            await onRunValuation(formValues, { locale, equifyState: state });
+          }
+          router.push('/report');
+          return;
+        }
+
+        setSubmitPhase('redirecting-paypal');
+        await postMondayLeadUpdate({
+          status: 'Redirected to PayPal',
+          mondayItemId: leadSession.mondayItemId,
+          leadId: leadSession.leadId,
+          sessionId: leadSession.sessionId,
+          userEmail: state.profile.userEmail,
+        }).catch((err) => {
+          console.warn('[wizard] PayPal Monday update failed', err);
+        });
+
+        window.location.href = PAYPAL_CHECKOUT_URL;
+      } catch {
+        setSubmitPhase('idle');
+      } finally {
+        setLocalSubmitting(false);
+      }
+    },
+    [computed, locale, onRunValuation, router, state],
+  );
 
   return (
     <div
@@ -231,7 +290,8 @@ function EquifyWizardShell({
               <Step4Goal
                 onBack={() => goStep(3)}
                 onGenerate={handleGenerate}
-                isSubmitting={isSubmitting}
+                isSubmitting={isSubmitting || localSubmitting}
+                submitPhase={submitPhase}
                 submitError={submitError}
               />
             )}
