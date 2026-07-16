@@ -14,6 +14,7 @@ import {
 import { saveEquifyWizardState } from '../../lib/wizard/equify_storage';
 import { syncMatrixFromEquifyState } from '../../lib/valuation/sync_matrix_from_equify';
 import { refreshFxRates } from '../../lib/utils/fxService';
+import { postDeliverEquifyReport } from '../../lib/reports/deliver_report_client';
 import { computeValuation } from '../../lib/valuation';
 import { buildValuationInputsFromEquifyState } from '../../lib/wizard/build_valuation_inputs';
 
@@ -92,6 +93,24 @@ export function useReportHydration(locale: ValuationLocale): UseReportHydrationR
         }
 
         if (!cancelled) setMatrix(synced);
+
+        const shouldDeliver =
+          persisted?.paymentPath === 'paypal' &&
+          !sessionStorage.getItem(`equify.report.delivered:${persisted.savedAt}`);
+
+        if (shouldDeliver && persisted) {
+          sessionStorage.setItem(`equify.report.delivered:${persisted.savedAt}`, '1');
+          void postDeliverEquifyReport({
+            mondayItemId: persisted.mondayItemId,
+            email: persisted.userEmail,
+            valuationState: persisted,
+            triggerType: 'PAYPAL_PAID',
+            locale,
+            forecastMatrix: synced,
+          }).catch((err) => {
+            console.warn('[report] PayPal deliver failed', err);
+          });
+        }
       } catch (err) {
         if (!cancelled) {
           setMatrix(null);

@@ -36,11 +36,13 @@ import {
   useWizardValuation,
   WizardValuationProvider,
 } from './WizardValuationContext';
+import { postDeliverEquifyReport } from '../../../lib/reports/deliver_report_client';
 import {
   isVipPromoCode,
   normalizePromoCode,
   PAYPAL_CHECKOUT_URL,
 } from '../../../lib/wizard/vip_promo';
+import type { ForecastMatrixWithDiagnostics } from '../../../valuation_forecast';
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
 import { useWizardStepMotion } from './hooks/useWizardStepMotion';
 import './wizard-equify.css';
@@ -144,6 +146,28 @@ function EquifyWizardShell({
           if (onRunValuation) {
             await onRunValuation(formValues, { locale, equifyState: state });
           }
+
+          let forecastMatrix: ForecastMatrixWithDiagnostics | null = null;
+          try {
+            const rawMatrix = sessionStorage.getItem('valubot.lastValuationMatrix');
+            if (rawMatrix) {
+              forecastMatrix = JSON.parse(rawMatrix) as ForecastMatrixWithDiagnostics;
+            }
+          } catch {
+            forecastMatrix = null;
+          }
+
+          void postDeliverEquifyReport({
+            mondayItemId: leadSession.mondayItemId ?? snapshot.mondayItemId,
+            email: state.profile.userEmail,
+            valuationState: snapshot,
+            triggerType: 'VIP_BYPASS',
+            locale,
+            forecastMatrix,
+          }).catch((err) => {
+            console.warn('[wizard] VIP report deliver failed', err);
+          });
+
           router.push('/report');
           return;
         }
