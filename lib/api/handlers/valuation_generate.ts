@@ -8,6 +8,7 @@ import {
 import type { ValuationWizardFormValues } from '../../../ValuationWizard';
 import { LiveValuationError } from '../../../valuation_live';
 import { SessionTokenService } from '../../auth/session_token_service';
+import { getPaymentOrder, isPaymentOrderCompleted } from '../../payments/payment_orders';
 import { jsonError, mapThrownError, sendPagesJsonError } from '../http';
 import {
   resolvePublicAppBaseUrl,
@@ -140,6 +141,7 @@ export async function executeValuationGenerate(
     locale?: string;
     email?: string;
     phone?: string;
+    paymentReferenceId?: string;
   },
   returnPdf: boolean,
   options?: { request?: Request; contact?: ValuationExecutionContact },
@@ -149,6 +151,27 @@ export async function executeValuationGenerate(
       email: options?.contact?.email ?? body.email ?? null,
       phoneE164: options?.contact?.phoneE164 ?? body.phone ?? null,
     };
+
+    const paymentReferenceId = body.paymentReferenceId;
+    if (!paymentReferenceId) {
+      return jsonError('Payment is required before generating a valuation report.', 402, 'PAYMENT_REQUIRED');
+    }
+
+    let paymentOrder;
+    try {
+      paymentOrder = await getPaymentOrder(paymentReferenceId);
+    } catch (err) {
+      return jsonError(
+        err instanceof Error ? err.message : 'Failed to verify payment.',
+        502,
+        'PAYMENT_LOOKUP_FAILED',
+      );
+    }
+
+    if (!isPaymentOrderCompleted(paymentOrder)) {
+      return jsonError('Payment has not been completed for this order.', 402, 'PAYMENT_NOT_VERIFIED');
+    }
+
     const baseUrl = resolvePublicAppBaseUrl(options?.request);
     const execution = await runValuationExecutionPipeline({
       body,
@@ -175,10 +198,10 @@ export async function executeValuationGenerate(
         multiplesUsed: analysis?.multiplesUsed ?? null,
         payment: {
           verified: true,
-          gatewayTransactionId: `txn_mvp_${execution.valuationId.slice(0, 8)}`,
-          gatewaySaleId: `sale_mvp_${execution.valuationId.slice(0, 8)}`,
-          amount: 99,
-          currency: 'ILS',
+          gatewayTransactionId: paymentOrder!.capture_id ?? paymentOrder!.order_id ?? paymentReferenceId,
+          gatewaySaleId: paymentOrder!.order_id ?? paymentReferenceId,
+          amount: paymentOrder!.amount,
+          currency: paymentOrder!.currency,
           status: 'success',
         },
       },
