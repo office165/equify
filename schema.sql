@@ -84,6 +84,7 @@ CREATE TABLE users (
     full_name           TEXT,
     password_hash       TEXT,
     stripe_customer_id  TEXT UNIQUE,
+    role                TEXT NOT NULL DEFAULT 'member',
     is_active           BOOLEAN NOT NULL DEFAULT TRUE,
     email_verified_at   TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -92,6 +93,9 @@ CREATE TABLE users (
     CONSTRAINT users_email_unique UNIQUE (email),
     CONSTRAINT users_email_format CHECK (email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$')
 );
+
+COMMENT ON COLUMN users.role IS
+    'Platform role for admin APIs (admin | member). Distinct from organization_members.role.';
 
 CREATE TABLE organizations (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -525,6 +529,31 @@ CREATE INDEX valuations_history_email_created_idx
 CREATE INDEX valuations_history_valuation_id_idx
     ON valuations_history (valuation_id)
     WHERE valuation_id IS NOT NULL;
+
+-- -----------------------------------------------------------------------------
+-- Product funnel events (admin metrics)
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE events (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID REFERENCES users (id),
+    event_type      TEXT NOT NULL,
+    metadata        JSONB,
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX events_event_type_created_at_idx
+    ON events (event_type, created_at DESC);
+
+CREATE INDEX events_created_at_idx
+    ON events (created_at DESC);
+
+CREATE INDEX events_user_id_idx
+    ON events (user_id)
+    WHERE user_id IS NOT NULL;
+
+COMMENT ON TABLE events IS
+    'Funnel events: wizard_completed, checkout_opened, payment_succeeded, report_created, pdf_downloaded.';
 
 -- -----------------------------------------------------------------------------
 -- Audit & usage metering
