@@ -9,6 +9,7 @@ import {
   type GenerateReportBody,
 } from '../../../lib/pdf-template/resolve-pdf-request';
 import { renderHtmlToPdfBuffer } from '../../../lib/pdf/render_html_pdf';
+import { scheduleProductEvent } from '../../../lib/analytics/track_event';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -72,6 +73,15 @@ export async function POST(request: Request) {
 
   try {
     const buffer = await renderHtmlToPdfBuffer(html);
+    scheduleProductEvent({
+      eventType: 'pdf_downloaded',
+      metadata: {
+        reportId: valuationData.reportId,
+        companyName: valuationData.companyName,
+        pages,
+        source: 'api/generate-pdf',
+      },
+    });
     return pdfResponse(buffer, utf8Filename, pages, snapshotResponseHeaders(resolved));
   } catch (err) {
     console.error('[generate-pdf] Puppeteer render failed', err);

@@ -23,6 +23,7 @@ import {
   snapshotMondayFiveFields,
 } from '../../../../lib/crm/monday_lead_wire';
 import { formatILS } from '../../../../lib/utils/formatCurrency';
+import { scheduleProductEvent } from '../../../../lib/analytics/track_event';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -465,6 +466,18 @@ export async function POST(request: Request) {
     resendOk: resendResult.ok,
     whatsappOk: whatsappResult.ok,
   });
+
+  if (pdfBuffer) {
+    scheduleProductEvent({
+      eventType: 'pdf_downloaded',
+      metadata: {
+        userEmail: payload.userEmail,
+        companyName: payload.companyName,
+        bytes: pdfBuffer.byteLength,
+        source: 'api/valuation/backup-relay',
+      },
+    });
+  }
 
   const mondayLeadRegistered = mondayItemOk;
 

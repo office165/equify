@@ -17,6 +17,7 @@ import {
 
 import { VALUATION_REPORT_FILENAME } from '../../pdf/theme';
 import { CLIENT_PDF_REQUIRED_MESSAGE } from '../../pdf/valuation_report_pdf';
+import { scheduleProductEvent } from '../../analytics/track_event';
 
 export const VALUATION_PDF_FILENAME = VALUATION_REPORT_FILENAME;
 
@@ -161,6 +162,16 @@ export async function executeValuationGenerate(
     }
 
     const analysis = execution.forecast_matrix_json.multiples_analysis;
+
+    scheduleProductEvent({
+      eventType: 'report_created',
+      metadata: {
+        valuationId: execution.valuationId,
+        companyName: execution.companyName,
+        locale: execution.locale,
+        source: 'valuation/calculate',
+      },
+    });
 
     return NextResponse.json(
       {

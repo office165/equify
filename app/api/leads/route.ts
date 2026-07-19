@@ -7,6 +7,7 @@ import {
 import { getLeadsHealthConfig, isVercelRuntime } from '../../../lib/crm/leads_persistence';
 import { scheduleMondaySyncForLead } from '../../../lib/crm/schedule_monday_sync';
 import type { LeadUpsertBody } from '../../../lib/crm/leads_types';
+import { scheduleProductEvent } from '../../../lib/analytics/track_event';
 
 export const runtime = 'nodejs';
 
@@ -80,6 +81,19 @@ export async function POST(request: Request) {
     const lead = await upsertLeadToDatabase(body);
     const config = getLeadsHealthConfig();
     scheduleMondaySyncForLead(lead, body.event);
+
+    if (body.event === 'wizard_completed') {
+      scheduleProductEvent({
+        eventType: 'wizard_completed',
+        metadata: {
+          sessionId: body.sessionId ?? null,
+          companyName: body.companyName ?? null,
+          userEmail: body.userEmail ?? null,
+          source: 'api/leads',
+        },
+      });
+    }
+
     return NextResponse.json({
       ok: true,
       saved: true,

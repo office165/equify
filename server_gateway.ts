@@ -47,6 +47,7 @@ import {
   type PaymentCallbackPayload,
 } from './israeli_payment_gateway';
 import { createPostgresPool } from './valuation_live';
+import { scheduleProductEvent } from './lib/analytics/track_event';
 
 // =============================================================================
 // Domain types — no FREE tier exists in the type system
@@ -714,6 +715,16 @@ export class PaymentService {
       },
     });
 
+    scheduleProductEvent({
+      eventType: 'checkout_opened',
+      userId: user.id,
+      metadata: {
+        saleId: sale.saleId,
+        amount: ON_DEMAND_CHECKOUT_AMOUNT_ILS,
+        source: 'payments/checkout-session',
+      },
+    });
+
     return {
       sessionId: sale.saleId,
       redirect_url: sale.redirectUrl,
@@ -784,6 +795,17 @@ export class PaymentService {
         gateway_status: callback.status,
         gateway_amount: callback.amountIls,
         gateway_currency: callback.currency,
+      },
+    });
+
+    scheduleProductEvent({
+      eventType: 'payment_succeeded',
+      userId: userId,
+      metadata: {
+        saleId: callback.saleId,
+        transactionId: callback.transactionId,
+        amount: callback.amountIls,
+        source: 'payments/callback',
       },
     });
 
