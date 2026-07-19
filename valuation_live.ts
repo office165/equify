@@ -20,7 +20,7 @@ import {
 } from './lib/database/supabase_pooler';
 import { executeInMemoryValuation } from './lib/valuation/in_memory_engine';
 
-export const LIVE_ON_DEMAND_AMOUNT_ILS = 99.0;
+export const LIVE_ON_DEMAND_AMOUNT_ILS = 999.0;
 export const LIVE_ON_DEMAND_CURRENCY = 'ILS';
 export const LIVE_JWT_TRANSACTION_TYP = 'on_demand_valuation';
 export const LIVE_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 90;

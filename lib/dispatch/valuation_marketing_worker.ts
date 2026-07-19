@@ -49,7 +49,8 @@ export async function runValuationMarketingDispatch(
       forecastMatrix: job.forecastMatrix,
       email: job.email,
       phoneE164: job.phoneE164,
-      paymentVerified: true,
+      // Only paypal-webhook (verified capture) may set paymentVerified: true.
+      paymentVerified: false,
       pdfDownloadUrl: job.pdfDownloadUrl,
       pdfBuffer: job.pdfBuffer,
       recipientName: job.recipientName,

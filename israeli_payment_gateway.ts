@@ -7,7 +7,7 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'node:crypto';
 
-export type PaymentGatewayProvider = 'grow' | 'payme';
+export type PaymentGatewayProvider = 'grow' | 'payme' | 'paypal';
 
 export const PAYMENT_SUCCESS_STATUSES = ['success', 'paid', 'approved', 'completed'] as const;
 
@@ -101,10 +101,18 @@ export class IsraeliPaymentGatewayClient {
   constructor(private readonly config: ConfigService) {
     this.provider = (this.config.get<string>('PAYMENT_GATEWAY_PROVIDER', 'grow') ??
       'grow') as PaymentGatewayProvider;
-    this.baseUrl = this.config.getOrThrow<string>('PAYMENT_GATEWAY_BASE_URL');
-    this.apiKey = this.config.getOrThrow<string>('PAYMENT_GATEWAY_API_KEY');
-    this.webhookSecret = this.config.getOrThrow<string>('PAYMENT_GATEWAY_WEBHOOK_SECRET');
-    this.callbackUrl = this.config.getOrThrow<string>('PAYMENT_GATEWAY_CALLBACK_URL');
+    // PayPal uses PAYPAL_* env only — do not require Grow/PayMe gateway env.
+    if (this.provider === 'paypal') {
+      this.baseUrl = '';
+      this.apiKey = '';
+      this.webhookSecret = '';
+      this.callbackUrl = '';
+    } else {
+      this.baseUrl = this.config.getOrThrow<string>('PAYMENT_GATEWAY_BASE_URL');
+      this.apiKey = this.config.getOrThrow<string>('PAYMENT_GATEWAY_API_KEY');
+      this.webhookSecret = this.config.getOrThrow<string>('PAYMENT_GATEWAY_WEBHOOK_SECRET');
+      this.callbackUrl = this.config.getOrThrow<string>('PAYMENT_GATEWAY_CALLBACK_URL');
+    }
     this.growPageCode = this.config.get<string>('GROW_PAGE_CODE', '');
     this.growUserId = this.config.get<string>('GROW_USER_ID', '');
     this.paymeSellerId = this.config.get<string>('PAYME_SELLER_ID', '');
@@ -113,6 +121,11 @@ export class IsraeliPaymentGatewayClient {
   async createHostedSale(input: CreateHostedSaleInput): Promise<HostedSaleResult> {
     if (input.currency !== 'ILS') {
       throw new BadRequestException('Only ILS domestic processing is supported.');
+    }
+
+    if (this.provider === 'paypal') {
+      const { PayPalGateway } = await import('./lib/gateway/paypal_gateway');
+      return new PayPalGateway().createHostedSale(input);
     }
 
     if (this.provider === 'payme') {
