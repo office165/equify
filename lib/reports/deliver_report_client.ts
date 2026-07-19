@@ -16,6 +16,8 @@ export interface DeliverReportRequest {
 
 export interface DeliverReportResponse {
   ok: boolean;
+  status?: 'awaiting_payment';
+  httpStatus?: number;
   reportId?: string;
   pdfBytes?: number;
   monday?: {
@@ -48,15 +50,27 @@ export async function postDeliverEquifyReport(
       body: JSON.stringify(body),
     });
 
-    const data = (await response.json().catch(() => null)) as DeliverReportResponse | null;
+    const data = (await response.json().catch(() => null)) as
+      | (DeliverReportResponse & { status?: string })
+      | null;
+
+    if (response.status === 402 || data?.status === 'awaiting_payment') {
+      return {
+        ok: false,
+        status: 'awaiting_payment',
+        httpStatus: 402,
+      };
+    }
+
     if (!response.ok) {
       return {
         ok: false,
+        httpStatus: response.status,
         error: data?.error ?? `http_${response.status}`,
         ...data,
       };
     }
-    return data ?? { ok: true };
+    return { ...(data ?? { ok: true }), httpStatus: response.status, ok: true };
   } catch {
     return { ok: false, error: 'network' };
   }

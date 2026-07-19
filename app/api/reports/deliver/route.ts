@@ -6,6 +6,7 @@ import {
   type ReportDeliverTrigger,
 } from '../../../../lib/reports/deliver_equify_report';
 import type { EquifyValuationPersistedState } from '../../../../lib/wizard/equify_valuation_persistence';
+import { hasValidUnusedPaymentTokenForEmail } from '../../../../lib/payments/valid_payment_token';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -57,7 +58,7 @@ const deliverBodySchema = z.object({
   mondayItemId: z.string().optional().nullable(),
   email: z.string().email(),
   valuationState: valuationStateSchema,
-  triggerType: z.enum(['PAYPAL_PAID', 'VIP_BYPASS']),
+  triggerType: z.enum(['PAYPAL_PAID']),
   locale: z.enum(['he', 'en']).optional(),
   forecastMatrix: z.record(z.unknown()).optional().nullable(),
 });
@@ -76,6 +77,13 @@ export async function POST(request: Request) {
   }
 
   const body = parsed.data;
+
+  if (body.triggerType === 'PAYPAL_PAID') {
+    const paid = await hasValidUnusedPaymentTokenForEmail(body.email);
+    if (!paid) {
+      return NextResponse.json({ status: 'awaiting_payment' }, { status: 402 });
+    }
+  }
 
   try {
     const result = await deliverEquifyReport({

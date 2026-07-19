@@ -208,6 +208,8 @@ export interface EquifyWizardStepStrings {
     generate: string;
     promoToggle: string;
     promoPlaceholder: string;
+    promoInvalid: string;
+    promoApplied: string;
     validatingVip: string;
     redirectingPaypal: string;
     termsRequired: string;
@@ -458,9 +460,11 @@ const HE: EquifyWizardStepStrings = {
     termsBold: 'אינדיקציית שווי אלגוריתמית בלבד',
     computing: 'מחשב שווי...',
     generate: 'חשב שווי מורחב',
-    promoToggle: '+ יש לך קוד הרשאה / קופון VIP?',
-    promoPlaceholder: 'הזן קוד הרשאה',
-    validatingVip: 'מאמת קוד הרשאה...',
+    promoToggle: '+ יש לך קוד?',
+    promoPlaceholder: 'הזן קוד',
+    promoInvalid: 'הקוד אינו תקף',
+    promoApplied: 'קוד אושר — תועבר לתשלום מוזל',
+    validatingVip: 'מאמת קוד...',
     redirectingPaypal: 'מעביר לתשלום מאובטח...',
     termsRequired: 'יש לאשר את תנאי השימוש לפני המשך',
     disclaimer:
@@ -675,9 +679,11 @@ const EN: EquifyWizardStepStrings = {
     termsBold: 'algorithmic valuation indication only',
     computing: 'Computing valuation...',
     generate: 'Run full valuation',
-    promoToggle: '+ Have an authorization / VIP promo code?',
-    promoPlaceholder: 'Enter authorization code',
-    validatingVip: 'Validating authorization code...',
+    promoToggle: '+ Have a code?',
+    promoPlaceholder: 'Enter code',
+    promoInvalid: 'Invalid code',
+    promoApplied: 'Code accepted — redirecting to promo checkout',
+    validatingVip: 'Validating code...',
     redirectingPaypal: 'Redirecting to secure checkout...',
     termsRequired: 'Please accept the terms of use before continuing',
     disclaimer:

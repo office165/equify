@@ -16,6 +16,13 @@ import { appRouteMethodNotAllowed } from '../../../../../lib/api/http';
 /** On-demand Pro price — must match stripe_transactions CHECK (999.00 ILS). */
 const ON_DEMAND_AMOUNT = 999;
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 90;
+const PROMO_MATCH_WINDOW_MS = 48 * 60 * 60 * 1000;
+
+function resolvePaypalMinAmountIls(): number {
+  const raw = process.env.PAYPAL_MIN_AMOUNT_ILS?.trim();
+  const parsed = raw ? Number(raw) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : ON_DEMAND_AMOUNT;
+}
 
 export async function POST(request: Request) {
   const rawBody = await request.text();
@@ -68,6 +75,7 @@ export async function POST(request: Request) {
   }
 
   const amountIls = Number(parsed.amountIls) || ON_DEMAND_AMOUNT;
+  const minAmountIls = resolvePaypalMinAmountIls();
 
   if (!payerEmail) {
     await supabase.from('unmatched_payments').insert({
@@ -79,6 +87,42 @@ export async function POST(request: Request) {
       raw_event: event,
     });
     return NextResponse.json({ received: true, unmatched: true }, { status: 200 });
+  }
+
+  if (amountIls < minAmountIls) {
+    const sinceIso = new Date(Date.now() - PROMO_MATCH_WINDOW_MS).toISOString();
+    const { data: redemption } = await supabase
+      .from('promo_redemptions')
+      .select('id')
+      .eq('user_email', payerEmail)
+      .eq('payment_matched', false)
+      .gte('redeemed_at', sinceIso)
+      .order('redeemed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!redemption?.id) {
+      await supabase.from('unmatched_payments').insert({
+        payer_email: payerEmail,
+        amount: amountIls,
+        currency: 'ILS',
+        gateway_provider: 'paypal',
+        gateway_transaction_id: captureId,
+        raw_event: {
+          equify_note: 'underpayment_no_promo',
+          event,
+        },
+      });
+      return NextResponse.json(
+        { received: true, unmatched: true, reason: 'underpayment_no_promo' },
+        { status: 200 },
+      );
+    }
+
+    await supabase
+      .from('promo_redemptions')
+      .update({ payment_matched: true })
+      .eq('id', redemption.id);
   }
 
   const { data: user } = await supabase

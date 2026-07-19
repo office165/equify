@@ -36,6 +36,7 @@ export interface Step4GoalProps {
   isSubmitting?: boolean;
   submitPhase?: Step4SubmitPhase;
   submitError?: string | null;
+  promoNotice?: string | null;
 }
 
 export function Step4Goal({
@@ -44,6 +45,7 @@ export function Step4Goal({
   isSubmitting,
   submitPhase = 'idle',
   submitError,
+  promoNotice,
 }: Step4GoalProps) {
   const { shell, steps: t, isHe } = useEquifyStrings();
   const { state, setGoal, setAgreedToTerms } = useWizardValuation();
@@ -159,6 +161,19 @@ export function Step4Goal({
                 dir="ltr"
                 aria-label={t.step4.promoPlaceholder}
               />
+              {promoNotice ? (
+                <p
+                  className="promo-gate-ok"
+                  style={{
+                    marginTop: 8,
+                    fontSize: 12,
+                    color: 'rgba(0, 194, 184, 0.85)',
+                  }}
+                  role="status"
+                >
+                  {promoNotice}
+                </p>
+              ) : null}
             </div>
           )}
         </div>

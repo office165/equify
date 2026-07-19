@@ -4,7 +4,7 @@ import type { EquifyWizardState } from './map_equify_wizard';
 import { saveEquifyWizardState, loadEquifyWizardState } from './equify_storage';
 import type { MondayLeadCheckoutStatus } from './vip_promo';
 
-/** Full wizard snapshot persisted before checkout or VIP bypass. */
+/** Full wizard snapshot persisted before PayPal checkout. */
 export const EQUIFY_VALUATION_STATE_KEY = 'equify_valuation_state';
 
 export interface EquifyValuationSummary {
