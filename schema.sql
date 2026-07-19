@@ -19,7 +19,7 @@ CREATE EXTENSION IF NOT EXISTS "citext";
 -- Enumerated types
 -- -----------------------------------------------------------------------------
 
--- Strict tier set: ON_DEMAND is pay-per-valuation (99 ILS tokens); no FREE tier.
+-- Strict tier set: ON_DEMAND is pay-per-valuation (999 ILS tokens); no FREE tier.
 CREATE TYPE subscription_tier AS ENUM (
     'ON_DEMAND',
     'STARTER',
@@ -174,7 +174,7 @@ CREATE UNIQUE INDEX subscriptions_one_active_recurring_per_org
       AND tier <> 'ON_DEMAND';
 
 -- -----------------------------------------------------------------------------
--- Local ILS gateway: single-use 99 ILS on-demand transaction tokens
+-- Local ILS gateway: single-use 999 ILS on-demand transaction tokens
 -- (Table name retained for compatibility; columns store Israeli gateway IDs.)
 -- -----------------------------------------------------------------------------
 
@@ -192,13 +192,14 @@ CREATE TABLE stripe_transactions (
     used_at                 TIMESTAMPTZ,
     used_by_user_id         UUID REFERENCES users (id) ON DELETE SET NULL,
     valuation_id            UUID,
+    gateway_provider        TEXT,          -- paypal | grow | payme | israeli_gateway
     metadata                JSONB NOT NULL DEFAULT '{}',
     expires_at              TIMESTAMPTZ NOT NULL,
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT stripe_transactions_amount_positive CHECK (amount > 0),
     CONSTRAINT stripe_transactions_on_demand_99_ils CHECK (
-        amount = 99.00 AND currency = 'ILS'
+        amount = 999.00 AND currency = 'ILS'
     ),
     CONSTRAINT stripe_transactions_token_jwt_unique UNIQUE (token_jwt),
     CONSTRAINT stripe_transactions_token_jti_unique UNIQUE (token_jti),
@@ -211,17 +212,19 @@ CREATE TABLE stripe_transactions (
 );
 
 COMMENT ON TABLE stripe_transactions IS
-    'Single-use 99 ILS payment tokens for ON_DEMAND valuations (Israeli gateway). token_jwt is presented by the client; is_used prevents replay.';
+    'Single-use 999 ILS payment tokens for ON_DEMAND valuations (Israeli gateway / PayPal). token_jwt is presented by the client; is_used prevents replay.';
 COMMENT ON COLUMN stripe_transactions.token_jwt IS
     'Signed JWT issued after successful local ILS payment; invalidated logically via is_used.';
 COMMENT ON COLUMN stripe_transactions.is_used IS
     'Set TRUE atomically when the token is redeemed for one valuation run.';
+COMMENT ON COLUMN stripe_transactions.gateway_provider IS
+    'Payment provider: paypal | grow | payme | israeli_gateway. Null = legacy rows.';
 
--- Partial index: fast lookup of redeemable 99 ILS tokens (hot path for ON_DEMAND checkout).
+-- Partial index: fast lookup of redeemable 999 ILS tokens (hot path for ON_DEMAND checkout).
 CREATE INDEX stripe_transactions_unused_99_ils_tokens
     ON stripe_transactions (token_jti, expires_at)
     WHERE is_used = FALSE
-      AND amount = 99.00
+      AND amount = 999.00
       AND currency = 'ILS';
 
 CREATE INDEX stripe_transactions_purchaser_user_id
@@ -231,6 +234,21 @@ CREATE INDEX stripe_transactions_purchaser_user_id
 CREATE INDEX stripe_transactions_stripe_customer_id
     ON stripe_transactions (stripe_customer_id)
     WHERE stripe_customer_id IS NOT NULL;
+
+-- PayPal captures with no matching users.email (manual reconciliation).
+CREATE TABLE unmatched_payments (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    payer_email             TEXT,
+    amount                  NUMERIC(12, 2),
+    currency                TEXT DEFAULT 'ILS',
+    gateway_provider        TEXT NOT NULL DEFAULT 'paypal',
+    gateway_transaction_id  TEXT,
+    raw_event               JSONB NOT NULL DEFAULT '{}',
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX unmatched_payments_payer_email_idx ON unmatched_payments (payer_email);
+CREATE INDEX unmatched_payments_created_at_idx ON unmatched_payments (created_at DESC);
 
 -- -----------------------------------------------------------------------------
 -- Companies & valuations

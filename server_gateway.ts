@@ -1,7 +1,7 @@
 /**
  * Valubot server gateway — NestJS paywall, Israeli ILS payment gateway, and white-label layer.
  *
- * Strict No-Free / No-Freemium: only ON_DEMAND (99 ILS token), STARTER, PRO, ENTERPRISE.
+ * Strict No-Free / No-Freemium: only ON_DEMAND (999 ILS token), STARTER, PRO, ENTERPRISE.
  * Mount via `ServerGatewayModule` in your application root module.
  */
 
@@ -76,7 +76,7 @@ export const ACTIVE_SUBSCRIPTION_STATUSES = [
 
 export type ActiveSubscriptionStatus = (typeof ACTIVE_SUBSCRIPTION_STATUSES)[number];
 
-export const ON_DEMAND_CHECKOUT_AMOUNT_ILS = 99.0;
+export const ON_DEMAND_CHECKOUT_AMOUNT_ILS = 999.0;
 export const ON_DEMAND_CURRENCY = 'ILS';
 export const JWT_TRANSACTION_TYP = 'on_demand_valuation';
 export const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 90; // 90 days to redeem
@@ -455,7 +455,7 @@ export class SubscriptionRepository {
     }
     if (tier === 'ON_DEMAND') {
       throw new ForbiddenException(
-        'ON_DEMAND requires a single-use payment token. Purchase a 99 ILS run.',
+        'ON_DEMAND requires a single-use payment token. Purchase a 999 ILS run.',
       );
     }
   }
@@ -702,7 +702,7 @@ export class PaymentService {
     const sale = await this.gateway.createHostedSale({
       amountIls: ON_DEMAND_CHECKOUT_AMOUNT_ILS,
       currency: 'ILS',
-      description: 'Equify On-Demand Valuation (Single Run) — 99.00 ILS',
+      description: 'Equify On-Demand Valuation (Single Run) — 999.00 ILS',
       returnUrl: dto.returnUrl.trim(),
       cancelUrl: dto.cancelUrl?.trim() || this.defaultCancelUrl || undefined,
       customerEmail: user.email,
@@ -946,7 +946,7 @@ export class ValuationGuard implements CanActivate {
       }
       if (row.is_used) {
         throw new ForbiddenException(
-          'On-demand token already redeemed. Each 99 ILS payment allows exactly one valuation run.',
+          'On-demand token already redeemed. Each 999 ILS payment allows exactly one valuation run.',
         );
       }
       if (row.expires_at.getTime() <= Date.now()) {
@@ -1209,14 +1209,16 @@ export { LocalPaymentTransactionRepository as StripeTransactionRepository };
  * await app.listen(3000);
  * ```
  *
- * Required env (Israeli gateway):
- * - PAYMENT_GATEWAY_PROVIDER=grow|payme
+ * Required env (Israeli gateway / PayPal):
+ * - PAYMENT_GATEWAY_PROVIDER=grow|payme|paypal
  * - PAYMENT_GATEWAY_BASE_URL
  * - PAYMENT_GATEWAY_API_KEY
  * - PAYMENT_GATEWAY_WEBHOOK_SECRET
  * - PAYMENT_GATEWAY_CALLBACK_URL  (POST /api/v1/payments/callback)
  * - GROW_PAGE_CODE / GROW_USER_ID  (when provider=grow)
  * - PAYME_SELLER_ID                (when provider=payme)
+ * - PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET / PAYPAL_WEBHOOK_ID (when provider=paypal)
+ * - PAYPAL_MODE=live|sandbox (optional) / PAYPAL_API_BASE (optional override)
  *
  * WhatsApp OTP / dispatch:
  * - WHATSAPP_PROVIDER=twilio|green-api

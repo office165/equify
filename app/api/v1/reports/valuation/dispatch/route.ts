@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ValuationDispatchService } from '../../../../../../lib/dispatch/valuation_dispatch';
-import { SessionTokenService } from '../../../../../../lib/auth/session_token_service';
+import { PaymentDispatchTokenService } from '../../../../../../lib/auth/payment_dispatch_token_service';
 import type { ForecastMatrixWithDiagnostics } from '../../../../../../valuation_forecast';
 import type { ValuationLocale } from '../../../../../../api_client';
 import {
@@ -9,8 +9,54 @@ import {
   mapThrownError,
 } from '../../../../../../lib/api/http';
 import { getInMemoryValuation } from '../../../../../../lib/valuation/in_memory_store';
+import {
+  getSupabaseAdminClient,
+  isSupabaseAdminConfigured,
+} from '../../../../../../lib/db/supabase';
 
+/**
+ * Client-triggered report dispatch.
+ * Requires a single-use JWT minted only by paypal-webhook after CAPTURE.COMPLETED.
+ * Open `paymentVerified: true` without that proof has been removed.
+ */
 export async function POST(request: Request) {
+  const authHeader = request.headers.get('authorization');
+  const bearer = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : null;
+
+  if (!bearer) {
+    return jsonError('Payment dispatch token required', 403, 'FORBIDDEN');
+  }
+
+  let dispatchClaims;
+  try {
+    dispatchClaims = new PaymentDispatchTokenService().verifyDispatch(bearer);
+  } catch {
+    return jsonError('Invalid or expired payment dispatch token', 403, 'FORBIDDEN');
+  }
+
+  if (!isSupabaseAdminConfigured()) {
+    return jsonError('Payment verification store unavailable', 403, 'FORBIDDEN');
+  }
+
+  const supabase = getSupabaseAdminClient();
+  const { data: tx } = await supabase
+    .from('stripe_transactions')
+    .select('id, token_jti, metadata, gateway_provider')
+    .eq('id', dispatchClaims.sub)
+    .eq('token_jti', dispatchClaims.jti)
+    .maybeSingle();
+
+  if (!tx?.id || tx.gateway_provider !== 'paypal') {
+    return jsonError('Unknown payment dispatch token', 403, 'FORBIDDEN');
+  }
+
+  const meta = (tx.metadata ?? {}) as Record<string, unknown>;
+  if (meta.dispatch_token_used_at) {
+    return jsonError('Payment dispatch token already used', 403, 'FORBIDDEN');
+  }
+
   let body: {
     valuationId?: string;
     locale?: ValuationLocale;
@@ -25,12 +71,13 @@ export async function POST(request: Request) {
     return jsonError('Invalid JSON body', 400, 'INVALID_JSON');
   }
 
-  if (!body.valuationId) {
-    return jsonError('valuationId is required', 400, 'VALIDATION_ERROR');
+  const valuationId = body.valuationId ?? dispatchClaims.valuationId;
+  if (!valuationId || valuationId !== dispatchClaims.valuationId) {
+    return jsonError('valuationId mismatch', 403, 'FORBIDDEN');
   }
 
   try {
-    const cached = getInMemoryValuation(body.valuationId);
+    const cached = getInMemoryValuation(valuationId);
     const forecastMatrix =
       body.forecast_matrix_json ?? cached?.forecast_matrix_json;
 
@@ -39,32 +86,38 @@ export async function POST(request: Request) {
     }
 
     const locale: ValuationLocale = body.locale === 'he' ? 'he' : 'en';
-    let email = body.email?.trim() ?? null;
-    let phone = body.phone?.trim() ?? null;
+    const email = body.email?.trim() || dispatchClaims.email || null;
 
-    const authHeader = request.headers.get('authorization');
-    const bearer = authHeader?.startsWith('Bearer ')
-      ? authHeader.slice(7).trim()
-      : null;
-    if (bearer) {
-      try {
-        const session = new SessionTokenService().verifySession(bearer);
-        email = email ?? session.email;
-        phone = phone ?? session.phone;
-      } catch {
-        /* optional auth */
-      }
+    const usedAt = new Date().toISOString();
+    const { data: claimed, error: claimError } = await supabase
+      .from('stripe_transactions')
+      .update({
+        metadata: {
+          ...meta,
+          dispatch_token_used_at: usedAt,
+        },
+      })
+      .eq('id', tx.id)
+      .select('id, metadata')
+      .maybeSingle();
+
+    if (claimError || !claimed?.id) {
+      return jsonError('Payment dispatch token already used', 403, 'FORBIDDEN');
     }
 
+    /**
+     * paymentVerified may be true here only because paypal-webhook minted this JWT
+     * after a verified capture. This is not an open hardcoded bypass.
+     */
     const dispatcher = new ValuationDispatchService(null);
     const result = await dispatcher.dispatchAfterPaymentResolution({
-      valuationId: body.valuationId,
+      valuationId,
       companyName:
-        forecastMatrix.meta.company_name ?? cached?.companyName ?? body.valuationId,
+        forecastMatrix.meta?.company_name ?? cached?.companyName ?? valuationId,
       locale,
       forecastMatrix,
       email,
-      phoneE164: phone,
+      phoneE164: body.phone?.trim() ?? null,
       paymentVerified: true,
     });
 
