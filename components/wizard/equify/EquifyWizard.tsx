@@ -2,7 +2,6 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import type { ValuationLocale } from '../../../api_client';
 import { postMondayLeadUpdate } from '../../../lib/crm/update_lead_monday_client';
 import { readLeadSession } from '../../../lib/crm/lead_session';
@@ -36,13 +35,12 @@ import {
   useWizardValuation,
   WizardValuationProvider,
 } from './WizardValuationContext';
-import { postDeliverEquifyReport } from '../../../lib/reports/deliver_report_client';
+import { postValidatePromoCode } from '../../../lib/payments/promo_client';
 import {
-  isVipPromoCode,
-  normalizePromoCode,
-  PAYPAL_CHECKOUT_URL,
-} from '../../../lib/wizard/vip_promo';
-import type { ForecastMatrixWithDiagnostics } from '../../../valuation_forecast';
+  getPaypalCheckoutUrlFull,
+  getPaypalCheckoutUrlPromo,
+} from '../../../lib/payments/paypal_ncp_urls';
+import { normalizePromoCode } from '../../../lib/wizard/vip_promo';
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
 import { useWizardStepMotion } from './hooks/useWizardStepMotion';
 import './wizard-equify.css';
@@ -63,7 +61,6 @@ function EquifyWizardShell({
   submitError,
   locale: localeProp,
 }: EquifyWizardProps) {
-  const router = useRouter();
   const { locale: ctxLocale } = useValuationI18n();
   const locale = localeProp ?? ctxLocale;
   const isHe = locale === 'he';
@@ -76,6 +73,8 @@ function EquifyWizardShell({
   const [revealed, setRevealed] = useState(false);
   const [localSubmitting, setLocalSubmitting] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<Step4SubmitPhase>('idle');
+  const [localSubmitError, setLocalSubmitError] = useState<string | null>(null);
+  const [promoNotice, setPromoNotice] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
   const { step, setStep, computed, state } = useWizardValuation();
   const { reportingCurrency } = useReportingCurrency();
@@ -113,65 +112,43 @@ function EquifyWizardShell({
   const handleGenerate = useCallback(
     async (promoCode: string) => {
       const normalizedPromo = normalizePromoCode(promoCode);
-      const isVipBypass = isVipPromoCode(normalizedPromo);
       const leadSession = readLeadSession();
+      setLocalSubmitError(null);
+      setPromoNotice(null);
+
+      let paymentCheckout: 'paypal_full' | 'paypal_promo' = 'paypal_full';
+
+      if (normalizedPromo) {
+        setLocalSubmitting(true);
+        setSubmitPhase('validating-vip');
+        const validated = await postValidatePromoCode({
+          code: normalizedPromo,
+          email: state.profile.userEmail,
+        });
+        if (!validated.valid) {
+          setLocalSubmitError(isHe ? 'הקוד אינו תקף' : 'Invalid code');
+          setSubmitPhase('idle');
+          setLocalSubmitting(false);
+          return;
+        }
+        setPromoNotice(
+          isHe
+            ? 'קוד אושר — תועבר לתשלום מוזל'
+            : 'Code accepted — redirecting to promo checkout',
+        );
+        paymentCheckout = 'paypal_promo';
+      }
 
       const snapshot = buildEquifyValuationSnapshot(state, computed, {
         promoCode: normalizedPromo || null,
-        paymentPath: isVipBypass ? 'vip' : 'paypal',
-        mondayStatus: isVipBypass
-          ? 'Paid - Admin VIP Bypass'
-          : 'Redirected to PayPal',
+        paymentPath: 'paypal',
+        mondayStatus: 'Redirected to PayPal',
       });
       persistEquifyValuationState(snapshot);
       saveEquifyWizardState(state);
 
       setLocalSubmitting(true);
       try {
-        if (isVipBypass) {
-          setSubmitPhase('validating-vip');
-          await postMondayLeadUpdate({
-            status: 'Paid - Admin VIP Bypass',
-            mondayItemId: leadSession.mondayItemId,
-            leadId: leadSession.leadId,
-            sessionId: leadSession.sessionId,
-            userEmail: state.profile.userEmail,
-            aiNotes: normalizedPromo ? `VIP promo: ${normalizedPromo}` : undefined,
-          }).catch((err) => {
-            console.warn('[wizard] VIP Monday update failed', err);
-          });
-
-          setSubmitPhase('computing');
-          const formValues = mapEquifyToWizardFormValues(state);
-          if (onRunValuation) {
-            await onRunValuation(formValues, { locale, equifyState: state });
-          }
-
-          let forecastMatrix: ForecastMatrixWithDiagnostics | null = null;
-          try {
-            const rawMatrix = sessionStorage.getItem('valubot.lastValuationMatrix');
-            if (rawMatrix) {
-              forecastMatrix = JSON.parse(rawMatrix) as ForecastMatrixWithDiagnostics;
-            }
-          } catch {
-            forecastMatrix = null;
-          }
-
-          void postDeliverEquifyReport({
-            mondayItemId: leadSession.mondayItemId ?? snapshot.mondayItemId,
-            email: state.profile.userEmail,
-            valuationState: snapshot,
-            triggerType: 'VIP_BYPASS',
-            locale,
-            forecastMatrix,
-          }).catch((err) => {
-            console.warn('[wizard] VIP report deliver failed', err);
-          });
-
-          router.push('/report');
-          return;
-        }
-
         setSubmitPhase('redirecting-paypal');
         await postMondayLeadUpdate({
           status: 'Redirected to PayPal',
@@ -179,18 +156,26 @@ function EquifyWizardShell({
           leadId: leadSession.leadId,
           sessionId: leadSession.sessionId,
           userEmail: state.profile.userEmail,
+          aiNotes:
+            paymentCheckout === 'paypal_promo' && normalizedPromo
+              ? `Promo checkout: ${normalizedPromo}`
+              : undefined,
         }).catch((err) => {
           console.warn('[wizard] PayPal Monday update failed', err);
         });
 
-        window.location.href = PAYPAL_CHECKOUT_URL;
+        const checkoutUrl =
+          paymentCheckout === 'paypal_promo'
+            ? getPaypalCheckoutUrlPromo()
+            : getPaypalCheckoutUrlFull();
+        window.location.href = checkoutUrl;
       } catch {
         setSubmitPhase('idle');
       } finally {
         setLocalSubmitting(false);
       }
     },
-    [computed, locale, onRunValuation, router, state],
+    [computed, isHe, state],
   );
 
   return (
@@ -316,7 +301,8 @@ function EquifyWizardShell({
                 onGenerate={handleGenerate}
                 isSubmitting={isSubmitting || localSubmitting}
                 submitPhase={submitPhase}
-                submitError={submitError}
+                submitError={localSubmitError ?? submitError}
+                promoNotice={promoNotice}
               />
             )}
           </section>

@@ -574,6 +574,41 @@ COMMENT ON TABLE events IS
     'Funnel events: wizard_completed, checkout_opened, payment_succeeded, report_created, pdf_downloaded.';
 
 -- -----------------------------------------------------------------------------
+-- Promo codes (discounted PayPal NCP checkout)
+-- -----------------------------------------------------------------------------
+
+CREATE TABLE promo_codes (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    code            TEXT UNIQUE NOT NULL,
+    description     TEXT,
+    max_uses        INTEGER,
+    times_used      INTEGER NOT NULL DEFAULT 0,
+    expires_at      TIMESTAMPTZ,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE promo_redemptions (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    promo_code_id       UUID REFERENCES promo_codes (id),
+    user_email          CITEXT NOT NULL,
+    redeemed_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    payment_matched     BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX promo_codes_code_idx ON promo_codes (code);
+CREATE INDEX promo_redemptions_email_redeemed_idx
+    ON promo_redemptions (user_email, redeemed_at DESC);
+CREATE INDEX promo_redemptions_unmatched_idx
+    ON promo_redemptions (user_email, redeemed_at DESC)
+    WHERE payment_matched = FALSE;
+
+COMMENT ON TABLE promo_codes IS
+    'Checkout promo codes that unlock the discounted PayPal NCP link.';
+COMMENT ON TABLE promo_redemptions IS
+    'Promo validation ledger; payment_matched set by PayPal webhook on underpayment.';
+
+-- -----------------------------------------------------------------------------
 -- Audit & usage metering
 -- -----------------------------------------------------------------------------
 

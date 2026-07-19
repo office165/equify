@@ -15,7 +15,7 @@ import type { EquifyValuationPersistedState } from '../wizard/equify_valuation_p
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { buildExportValuationDataFromLiveSession } from '../results/build-export-valuation-data';
 
-export type ReportDeliverTrigger = 'PAYPAL_PAID' | 'VIP_BYPASS';
+export type ReportDeliverTrigger = 'PAYPAL_PAID';
 
 export interface DeliverEquifyReportInput {
   mondayItemId?: string | null;
@@ -49,16 +49,10 @@ function statusValue(label: string): { label: string } {
   return { label };
 }
 
-function resolveMondayStatuses(triggerType: ReportDeliverTrigger): {
+function resolveMondayStatuses(_triggerType: ReportDeliverTrigger): {
   leadStatus: string;
   processStage: string;
 } {
-  if (triggerType === 'VIP_BYPASS') {
-    return {
-      leadStatus: 'VIP - הופק דוח',
-      processStage: 'הופק דוח',
-    };
-  }
   return {
     leadStatus: 'שולם - הופק דוח',
     processStage: 'הופק דוח',
