@@ -24,10 +24,17 @@ const GOAL_ICONS: Record<EquifyGoalKey, string> = {
   '': '📋',
 };
 
+export type Step4SubmitPhase =
+  | 'idle'
+  | 'validating-vip'
+  | 'redirecting-paypal'
+  | 'computing';
+
 export interface Step4GoalProps {
   onBack: () => void;
-  onGenerate: () => void;
+  onGenerate: (promoCode: string) => void | Promise<void>;
   isSubmitting?: boolean;
+  submitPhase?: Step4SubmitPhase;
   submitError?: string | null;
 }
 
@@ -35,21 +42,34 @@ export function Step4Goal({
   onBack,
   onGenerate,
   isSubmitting,
+  submitPhase = 'idle',
   submitError,
 }: Step4GoalProps) {
   const { shell, steps: t, isHe } = useEquifyStrings();
   const { state, setGoal, setAgreedToTerms } = useWizardValuation();
   const [shake, setShake] = React.useState(false);
+  const [showPromoInput, setShowPromoInput] = React.useState(false);
+  const [promoCode, setPromoCode] = React.useState('');
+  const [termsError, setTermsError] = React.useState<string | null>(null);
   const backLabel = isHe ? `→ ${t.common.back}` : `← ${t.common.back}`;
 
   const handleGenerate = () => {
     if (!state.agreedToTerms) {
+      setTermsError(t.step4.termsRequired);
       setShake(true);
       window.setTimeout(() => setShake(false), 500);
       return;
     }
-    onGenerate();
+    setTermsError(null);
+    void onGenerate(promoCode);
   };
+
+  const submitLabel = (() => {
+    if (!isSubmitting) return t.step4.generate;
+    if (submitPhase === 'validating-vip') return t.step4.validatingVip;
+    if (submitPhase === 'redirecting-paypal') return t.step4.redirectingPaypal;
+    return t.step4.computing;
+  })();
 
   return (
     <>
@@ -88,7 +108,10 @@ export function Step4Goal({
               <input
                 type="checkbox"
                 checked={state.agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked);
+                  if (e.target.checked) setTermsError(null);
+                }}
               />
               <span>
                 {(() => {
@@ -106,7 +129,38 @@ export function Step4Goal({
                 })()}
               </span>
             </label>
+            {termsError ? (
+              <p className="v-msg err show promo-terms-error" role="alert">
+                {termsError}
+              </p>
+            ) : null}
           </div>
+        </div>
+
+        <div className="promo-gate rv">
+          {!showPromoInput ? (
+            <button
+              type="button"
+              className="promo-gate-toggle"
+              onClick={() => setShowPromoInput(true)}
+            >
+              {t.step4.promoToggle}
+            </button>
+          ) : (
+            <div className="promo-gate-panel">
+              <input
+                type="text"
+                className="promo-gate-input"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder={t.step4.promoPlaceholder}
+                autoComplete="off"
+                spellCheck={false}
+                dir="ltr"
+                aria-label={t.step4.promoPlaceholder}
+              />
+            </div>
+          )}
         </div>
 
         {submitError ? (
@@ -126,7 +180,7 @@ export function Step4Goal({
           onClick={handleGenerate}
           disabled={isSubmitting}
         >
-          {isSubmitting ? t.step4.computing : `${t.step4.generate} ${isHe ? '←' : '→'}`}
+          {submitLabel} {!isSubmitting && (isHe ? '←' : '→')}
         </button>
       </div>
 
