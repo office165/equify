@@ -15,12 +15,14 @@ import {
   runValuationExecutionPipeline,
 } from '../../../lib/api/valuation_execution';
 import { LiveValuationError } from '../../../valuation_live';
+import { getPaymentOrder, isPaymentOrderCompleted } from '../../../lib/payments/payment_orders';
 
 type GenerateBody = ValuationCalculateRequest & {
   locale?: string;
   returnPdf?: boolean;
   email?: string;
   phone?: string;
+  paymentReferenceId?: string;
 };
 
 function parseGenerateBody(
@@ -71,6 +73,40 @@ export default async function handler(
     const parsed = parseGenerateBody(req);
     if (!parsed.ok) {
       sendPagesJsonError(res, 400, parsed.message, 'VALIDATION_ERROR');
+      return;
+    }
+
+    const paymentReferenceId = parsed.payload.paymentReferenceId;
+    if (!paymentReferenceId) {
+      sendPagesJsonError(
+        res,
+        402,
+        'Payment is required before generating a valuation report.',
+        'PAYMENT_REQUIRED',
+      );
+      return;
+    }
+
+    let paymentOrder;
+    try {
+      paymentOrder = await getPaymentOrder(paymentReferenceId);
+    } catch (err) {
+      sendPagesJsonError(
+        res,
+        502,
+        err instanceof Error ? err.message : 'Failed to verify payment.',
+        'PAYMENT_LOOKUP_FAILED',
+      );
+      return;
+    }
+
+    if (!isPaymentOrderCompleted(paymentOrder)) {
+      sendPagesJsonError(
+        res,
+        402,
+        'Payment has not been completed for this order.',
+        'PAYMENT_NOT_VERIFIED',
+      );
       return;
     }
 
@@ -126,10 +162,10 @@ export default async function handler(
       pdfDownloadUrl: execution.pdfDownloadUrl,
       payment: {
         verified: true,
-        gatewayTransactionId: `txn_mvp_${execution.valuationId.slice(0, 8)}`,
-        gatewaySaleId: `sale_mvp_${execution.valuationId.slice(0, 8)}`,
-        amount: 99,
-        currency: 'ILS',
+        gatewayTransactionId: paymentOrder!.capture_id ?? paymentOrder!.order_id ?? paymentReferenceId,
+        gatewaySaleId: paymentOrder!.order_id ?? paymentReferenceId,
+        amount: paymentOrder!.amount,
+        currency: paymentOrder!.currency,
         status: 'success',
       },
     });
