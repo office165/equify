@@ -53,7 +53,7 @@ export function PricingCard({ remaining, total, claimedPct }: PricingCardProps) 
         <div className="text-end">
           <p className="mb-3 font-mono text-sm text-slate-500 line-through">₪1,990</p>
           <p className="font-mono text-4xl font-bold leading-none text-[#00F5A0] sm:text-5xl">
-            ₪499
+            ₪999
           </p>
           <p className="mt-2 text-sm font-medium text-slate-400">חד-פעמי</p>
         </div>

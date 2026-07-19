@@ -425,7 +425,7 @@ export function LandingPageV2() {
               <h3 className="p-name">דוח Pro מלא</h3>
               <div className="p-row">
                 <span className="p-old">₪1,990</span>
-                <span className="p-new">₪499</span>
+                <span className="p-new">₪999</span>
                 <span className="p-per">חד־פעמי</span>
               </div>
               <ul className="p-list">
