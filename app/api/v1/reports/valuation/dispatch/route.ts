@@ -41,24 +41,6 @@ export async function POST(request: Request) {
   }
 
   const supabase = getSupabaseAdminClient();
-  const { data: tx } = await supabase
-    .from('stripe_transactions')
-    .select('id, token_jti, metadata, gateway_provider')
-    .eq('id', dispatchClaims.sub)
-    .eq('token_jti', dispatchClaims.jti)
-    .maybeSingle();
-
-  if (
-    !tx?.id ||
-    (tx.gateway_provider !== 'paypal' && tx.gateway_provider !== 'promo_free')
-  ) {
-    return jsonError('Unknown payment dispatch token', 403, 'FORBIDDEN');
-  }
-
-  const meta = (tx.metadata ?? {}) as Record<string, unknown>;
-  if (meta.dispatch_token_used_at) {
-    return jsonError('Payment dispatch token already used', 403, 'FORBIDDEN');
-  }
 
   let body: {
     valuationId?: string;
@@ -92,24 +74,35 @@ export async function POST(request: Request) {
     const email = body.email?.trim() || dispatchClaims.email || null;
 
     const usedAt = new Date().toISOString();
+    // Atomic claim: one UPDATE … WHERE is_used = false … .select() (= RETURNING).
+    // Empty result / error ⇒ already used (rowCount = 0).
     const { data: claimed, error: claimError } = await supabase
       .from('stripe_transactions')
       .update({
         is_used: true,
         used_at: usedAt,
-        metadata: {
-          ...meta,
-          dispatch_token_used_at: usedAt,
-        },
       })
-      .eq('id', tx.id)
+      .eq('id', dispatchClaims.sub)
+      .eq('token_jti', dispatchClaims.jti)
       .eq('is_used', false)
+      .in('gateway_provider', ['paypal', 'promo_free'])
       .select('id, metadata')
       .maybeSingle();
 
     if (claimError || !claimed?.id) {
       return jsonError('Payment dispatch token already used', 403, 'FORBIDDEN');
     }
+
+    const priorMeta = (claimed.metadata ?? {}) as Record<string, unknown>;
+    await supabase
+      .from('stripe_transactions')
+      .update({
+        metadata: {
+          ...priorMeta,
+          dispatch_token_used_at: usedAt,
+        },
+      })
+      .eq('id', claimed.id);
 
     /**
      * paymentVerified may be true here only because paypal-webhook or promo/validate
