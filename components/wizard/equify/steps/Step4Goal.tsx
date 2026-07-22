@@ -4,6 +4,7 @@ import React from 'react';
 import type { EquifyGoalKey } from '../../../../lib/valuation';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { useWizardValuation } from '../WizardValuationContext';
+import { PayPalHostedButton } from '../../../payments/PayPalHostedButton';
 
 const GOAL_KEYS: EquifyGoalKey[] = [
   'negotiation',
@@ -28,6 +29,7 @@ export type Step4SubmitPhase =
   | 'idle'
   | 'validating-vip'
   | 'redirecting-paypal'
+  | 'checkout-ready'
   | 'computing';
 
 export interface Step4GoalProps {
@@ -37,6 +39,8 @@ export interface Step4GoalProps {
   submitPhase?: Step4SubmitPhase;
   submitError?: string | null;
   promoNotice?: string | null;
+  /** When set, replaces the CTA with the PayPal hosted button. */
+  hostedButtonId?: string | null;
 }
 
 export function Step4Goal({
@@ -46,6 +50,7 @@ export function Step4Goal({
   submitPhase = 'idle',
   submitError,
   promoNotice,
+  hostedButtonId = null,
 }: Step4GoalProps) {
   const { shell, steps: t, isHe } = useEquifyStrings();
   const { state, setGoal, setAgreedToTerms } = useWizardValuation();
@@ -54,6 +59,7 @@ export function Step4Goal({
   const [promoCode, setPromoCode] = React.useState('');
   const [termsError, setTermsError] = React.useState<string | null>(null);
   const backLabel = isHe ? `→ ${t.common.back}` : `← ${t.common.back}`;
+  const showCheckout = Boolean(hostedButtonId);
 
   const handleGenerate = () => {
     if (!state.agreedToTerms) {
@@ -91,6 +97,7 @@ export function Step4Goal({
                 type="button"
                 className={`goal-card${state.goal === key ? ' on' : ''}`}
                 onClick={() => setGoal(key)}
+                disabled={showCheckout}
               >
                 <div className="gc-check">✓</div>
                 <div className="gc-icon">{GOAL_ICONS[key]}</div>
@@ -110,6 +117,7 @@ export function Step4Goal({
               <input
                 type="checkbox"
                 checked={state.agreedToTerms}
+                disabled={showCheckout}
                 onChange={(e) => {
                   setAgreedToTerms(e.target.checked);
                   if (e.target.checked) setTermsError(null);
@@ -139,64 +147,91 @@ export function Step4Goal({
           </div>
         </div>
 
-        <div className="promo-gate rv">
-          {!showPromoInput ? (
-            <button
-              type="button"
-              className="promo-gate-toggle"
-              onClick={() => setShowPromoInput(true)}
-            >
-              {t.step4.promoToggle}
-            </button>
-          ) : (
-            <div className="promo-gate-panel">
-              <input
-                type="text"
-                className="promo-gate-input"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                placeholder={t.step4.promoPlaceholder}
-                autoComplete="off"
-                spellCheck={false}
-                dir="ltr"
-                aria-label={t.step4.promoPlaceholder}
-              />
-              {promoNotice ? (
-                <p
-                  className="promo-gate-ok"
-                  style={{
-                    marginTop: 8,
-                    fontSize: 12,
-                    color: 'rgba(0, 194, 184, 0.85)',
-                  }}
-                  role="status"
-                >
-                  {promoNotice}
-                </p>
-              ) : null}
-            </div>
-          )}
-        </div>
+        {!showCheckout ? (
+          <div className="promo-gate rv">
+            {!showPromoInput ? (
+              <button
+                type="button"
+                className="promo-gate-toggle"
+                onClick={() => setShowPromoInput(true)}
+              >
+                {t.step4.promoToggle}
+              </button>
+            ) : (
+              <div className="promo-gate-panel">
+                <input
+                  type="text"
+                  className="promo-gate-input"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                  placeholder={t.step4.promoPlaceholder}
+                  autoComplete="off"
+                  spellCheck={false}
+                  dir="ltr"
+                  aria-label={t.step4.promoPlaceholder}
+                />
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {promoNotice ? (
+          <p
+            className="promo-gate-ok"
+            style={{
+              marginTop: 12,
+              fontSize: 12,
+              color: 'rgba(0, 194, 184, 0.85)',
+            }}
+            role="status"
+          >
+            {promoNotice}
+          </p>
+        ) : null}
 
         {submitError ? (
           <p className="v-msg err show" style={{ marginTop: 12 }}>
             {submitError}
           </p>
         ) : null}
+
+        {showCheckout && hostedButtonId ? (
+          <div className="rv" style={{ marginTop: 22 }}>
+            <p
+              style={{
+                marginBottom: 12,
+                fontSize: 13,
+                color: 'rgba(148, 163, 184, 0.9)',
+              }}
+            >
+              {isHe
+                ? 'השלם את התשלום המאובטח. לאחר האישור תועבר לדוח.'
+                : 'Complete secure checkout. After payment you will reach the report.'}
+            </p>
+            <PayPalHostedButton hostedButtonId={hostedButtonId} />
+          </div>
+        ) : null}
       </div>
 
       <div className="nav-row rv">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>
-          {backLabel}
-        </button>
         <button
           type="button"
-          className="btn btn-primary"
-          onClick={handleGenerate}
+          className="btn btn-ghost btn-sm"
+          onClick={onBack}
           disabled={isSubmitting}
         >
-          {submitLabel} {!isSubmitting && (isHe ? '←' : '→')}
+          {backLabel}
         </button>
+        {!showCheckout ? (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={handleGenerate}
+            disabled={isSubmitting}
+          >
+            {submitLabel} {!isSubmitting && (isHe ? '←' : '→')}
+          </button>
+        ) : null}
       </div>
 
       <p className="disclaimer">{t.step4.disclaimer}</p>

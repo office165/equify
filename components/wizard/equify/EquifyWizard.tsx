@@ -37,9 +37,9 @@ import {
 } from './WizardValuationContext';
 import { postValidatePromoCode } from '../../../lib/payments/promo_client';
 import {
-  getPaypalCheckoutUrlFull,
-  getPaypalCheckoutUrlPromo,
-} from '../../../lib/payments/paypal_ncp_urls';
+  HOSTED_BUTTON_ID_FULL,
+  HOSTED_BUTTON_ID_PROMO,
+} from '../../../lib/payments/paypal_hosted_button_ids';
 import { normalizePromoCode } from '../../../lib/wizard/vip_promo';
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
 import { useWizardStepMotion } from './hooks/useWizardStepMotion';
@@ -75,6 +75,7 @@ function EquifyWizardShell({
   const [submitPhase, setSubmitPhase] = useState<Step4SubmitPhase>('idle');
   const [localSubmitError, setLocalSubmitError] = useState<string | null>(null);
   const [promoNotice, setPromoNotice] = useState<string | null>(null);
+  const [hostedButtonId, setHostedButtonId] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
   const { step, setStep, computed, state } = useWizardValuation();
   const { reportingCurrency } = useReportingCurrency();
@@ -115,8 +116,9 @@ function EquifyWizardShell({
       const leadSession = readLeadSession();
       setLocalSubmitError(null);
       setPromoNotice(null);
+      setHostedButtonId(null);
 
-      let paymentCheckout: 'paypal_full' | 'paypal_promo' = 'paypal_full';
+      let buttonId = HOSTED_BUTTON_ID_FULL;
 
       if (normalizedPromo) {
         setLocalSubmitting(true);
@@ -133,10 +135,10 @@ function EquifyWizardShell({
         }
         setPromoNotice(
           isHe
-            ? 'קוד אושר — תועבר לתשלום מוזל'
-            : 'Code accepted — redirecting to promo checkout',
+            ? 'קוד אושר — בחר תשלום מוזל למטה'
+            : 'Code accepted — use the promo checkout below',
         );
-        paymentCheckout = 'paypal_promo';
+        buttonId = HOSTED_BUTTON_ID_PROMO;
       }
 
       const snapshot = buildEquifyValuationSnapshot(state, computed, {
@@ -157,20 +159,18 @@ function EquifyWizardShell({
           sessionId: leadSession.sessionId,
           userEmail: state.profile.userEmail,
           aiNotes:
-            paymentCheckout === 'paypal_promo' && normalizedPromo
+            buttonId === HOSTED_BUTTON_ID_PROMO && normalizedPromo
               ? `Promo checkout: ${normalizedPromo}`
               : undefined,
         }).catch((err) => {
           console.warn('[wizard] PayPal Monday update failed', err);
         });
 
-        const checkoutUrl =
-          paymentCheckout === 'paypal_promo'
-            ? getPaypalCheckoutUrlPromo()
-            : getPaypalCheckoutUrlFull();
-        window.location.href = checkoutUrl;
+        setHostedButtonId(buttonId);
+        setSubmitPhase('checkout-ready');
       } catch {
         setSubmitPhase('idle');
+        setHostedButtonId(null);
       } finally {
         setLocalSubmitting(false);
       }
@@ -303,6 +303,7 @@ function EquifyWizardShell({
                 submitPhase={submitPhase}
                 submitError={localSubmitError ?? submitError}
                 promoNotice={promoNotice}
+                hostedButtonId={hostedButtonId}
               />
             )}
           </section>
