@@ -25,7 +25,7 @@ export interface EquifyValuationPersistedState {
   sessionId: string | null;
   userEmail: string;
   promoCode: string | null;
-  paymentPath: 'vip' | 'paypal' | null;
+  paymentPath: 'vip' | 'paypal' | 'promo_free' | null;
   mondayStatus: MondayLeadCheckoutStatus | null;
 }
 
@@ -34,7 +34,7 @@ export function buildEquifyValuationSnapshot(
   computed: ValuationComputed,
   options?: {
     promoCode?: string | null;
-    paymentPath?: 'vip' | 'paypal' | null;
+    paymentPath?: 'vip' | 'paypal' | 'promo_free' | null;
     mondayStatus?: MondayLeadCheckoutStatus | null;
   },
 ): EquifyValuationPersistedState {

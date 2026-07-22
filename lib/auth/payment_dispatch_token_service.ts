@@ -1,6 +1,6 @@
 /**
- * Single-use JWT minted only by PayPal webhook after PAYMENT.CAPTURE.COMPLETED.
- * Required by POST /api/v1/reports/valuation/dispatch.
+ * Single-use JWT minted by PayPal webhook (CAPTURE.COMPLETED) or promo/validate
+ * (free promo). Required by POST /api/v1/reports/valuation/dispatch.
  */
 
 import * as crypto from 'node:crypto';

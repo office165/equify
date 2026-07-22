@@ -6,7 +6,9 @@ import {
   type ReportDeliverTrigger,
 } from '../../../../lib/reports/deliver_equify_report';
 import type { EquifyValuationPersistedState } from '../../../../lib/wizard/equify_valuation_persistence';
-import { hasValidUnusedPaymentTokenForEmail } from '../../../../lib/payments/valid_payment_token';
+import {
+  consumeUnusedPaymentTokenForEmail,
+} from '../../../../lib/payments/valid_payment_token';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -50,7 +52,7 @@ const valuationStateSchema = z.object({
   sessionId: z.string().nullable(),
   userEmail: z.string(),
   promoCode: z.string().nullable(),
-  paymentPath: z.enum(['vip', 'paypal']).nullable(),
+  paymentPath: z.enum(['vip', 'paypal', 'promo_free']).nullable(),
   mondayStatus: z.string().nullable(),
 });
 
@@ -58,7 +60,7 @@ const deliverBodySchema = z.object({
   mondayItemId: z.string().optional().nullable(),
   email: z.string().email(),
   valuationState: valuationStateSchema,
-  triggerType: z.enum(['PAYPAL_PAID']),
+  triggerType: z.enum(['PAYPAL_PAID', 'PROMO_FREE']),
   locale: z.enum(['he', 'en']).optional(),
   forecastMatrix: z.record(z.unknown()).optional().nullable(),
 });
@@ -78,9 +80,12 @@ export async function POST(request: Request) {
 
   const body = parsed.data;
 
-  if (body.triggerType === 'PAYPAL_PAID') {
-    const paid = await hasValidUnusedPaymentTokenForEmail(body.email);
-    if (!paid) {
+  if (
+    body.triggerType === 'PAYPAL_PAID' ||
+    body.triggerType === 'PROMO_FREE'
+  ) {
+    const claimed = await consumeUnusedPaymentTokenForEmail(body.email);
+    if (!claimed) {
       return NextResponse.json({ status: 'awaiting_payment' }, { status: 402 });
     }
   }

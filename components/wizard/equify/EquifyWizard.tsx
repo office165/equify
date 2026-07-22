@@ -36,11 +36,9 @@ import {
   WizardValuationProvider,
 } from './WizardValuationContext';
 import { postValidatePromoCode } from '../../../lib/payments/promo_client';
-import {
-  HOSTED_BUTTON_ID_FULL,
-  HOSTED_BUTTON_ID_PROMO,
-} from '../../../lib/payments/paypal_hosted_button_ids';
+import { HOSTED_BUTTON_ID_FULL } from '../../../lib/payments/paypal_hosted_button_ids';
 import { normalizePromoCode } from '../../../lib/wizard/vip_promo';
+import { EQUIFY_DISPATCH_TOKEN_KEY } from '../../../lib/payments/dispatch_token_storage';
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
 import { useWizardStepMotion } from './hooks/useWizardStepMotion';
 import './wizard-equify.css';
@@ -118,7 +116,7 @@ function EquifyWizardShell({
       setPromoNotice(null);
       setHostedButtonId(null);
 
-      let buttonId = HOSTED_BUTTON_ID_FULL;
+      let freeDispatchToken: string | null = null;
 
       if (normalizedPromo) {
         setLocalSubmitting(true);
@@ -127,22 +125,62 @@ function EquifyWizardShell({
           code: normalizedPromo,
           email: state.profile.userEmail,
         });
-        if (!validated.valid) {
+        if (!validated.valid || !validated.dispatchToken) {
           setLocalSubmitError(isHe ? 'הקוד אינו תקף' : 'Invalid code');
-          setSubmitPhase('idle');
-          setLocalSubmitting(false);
-          return;
+          // Fall through to FULL PayPal — never PROMO / never free without server token.
+        } else {
+          freeDispatchToken = validated.dispatchToken;
         }
-        setPromoNotice(
-          isHe
-            ? 'קוד אושר — בחר תשלום מוזל למטה'
-            : 'Code accepted — use the promo checkout below',
-        );
-        buttonId = HOSTED_BUTTON_ID_PROMO;
+      }
+
+      if (freeDispatchToken) {
+        const snapshot = buildEquifyValuationSnapshot(state, computed, {
+          promoCode: normalizedPromo || null,
+          paymentPath: 'promo_free',
+          mondayStatus: 'Free promo redeemed',
+        });
+        persistEquifyValuationState(snapshot);
+        saveEquifyWizardState(state);
+
+        try {
+          sessionStorage.setItem(EQUIFY_DISPATCH_TOKEN_KEY, freeDispatchToken);
+        } catch {
+          // quota / private mode — deliver path still works via DB entitlement
+        }
+
+        setLocalSubmitting(true);
+        try {
+          setSubmitPhase('promo-free-ready');
+          setPromoNotice(
+            isHe
+              ? 'הקוד אומת — הדוח שלך בהכנה'
+              : 'Code verified — preparing your report',
+          );
+          await postMondayLeadUpdate({
+            status: 'Free promo redeemed',
+            mondayItemId: leadSession.mondayItemId,
+            leadId: leadSession.leadId,
+            sessionId: leadSession.sessionId,
+            userEmail: state.profile.userEmail,
+            aiNotes: normalizedPromo
+              ? `Free promo redeemed: ${normalizedPromo}`
+              : undefined,
+          }).catch((err) => {
+            console.warn('[wizard] Free promo Monday update failed', err);
+          });
+
+          window.location.assign('/results');
+        } catch {
+          setSubmitPhase('idle');
+          setHostedButtonId(null);
+        } finally {
+          setLocalSubmitting(false);
+        }
+        return;
       }
 
       const snapshot = buildEquifyValuationSnapshot(state, computed, {
-        promoCode: normalizedPromo || null,
+        promoCode: null,
         paymentPath: 'paypal',
         mondayStatus: 'Redirected to PayPal',
       });
@@ -158,15 +196,11 @@ function EquifyWizardShell({
           leadId: leadSession.leadId,
           sessionId: leadSession.sessionId,
           userEmail: state.profile.userEmail,
-          aiNotes:
-            buttonId === HOSTED_BUTTON_ID_PROMO && normalizedPromo
-              ? `Promo checkout: ${normalizedPromo}`
-              : undefined,
         }).catch((err) => {
           console.warn('[wizard] PayPal Monday update failed', err);
         });
 
-        setHostedButtonId(buttonId);
+        setHostedButtonId(HOSTED_BUTTON_ID_FULL);
         setSubmitPhase('checkout-ready');
       } catch {
         setSubmitPhase('idle');

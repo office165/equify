@@ -30,6 +30,7 @@ export type Step4SubmitPhase =
   | 'validating-vip'
   | 'redirecting-paypal'
   | 'checkout-ready'
+  | 'promo-free-ready'
   | 'computing';
 
 export interface Step4GoalProps {
@@ -60,6 +61,7 @@ export function Step4Goal({
   const [termsError, setTermsError] = React.useState<string | null>(null);
   const backLabel = isHe ? `→ ${t.common.back}` : `← ${t.common.back}`;
   const showCheckout = Boolean(hostedButtonId);
+  const promoFreeReady = submitPhase === 'promo-free-ready';
 
   const handleGenerate = () => {
     if (!state.agreedToTerms) {
@@ -76,6 +78,9 @@ export function Step4Goal({
     if (!isSubmitting) return t.step4.generate;
     if (submitPhase === 'validating-vip') return t.step4.validatingVip;
     if (submitPhase === 'redirecting-paypal') return t.step4.redirectingPaypal;
+    if (submitPhase === 'promo-free-ready') {
+      return isHe ? 'מכין דוח…' : 'Preparing report…';
+    }
     return t.step4.computing;
   })();
 
@@ -97,7 +102,7 @@ export function Step4Goal({
                 type="button"
                 className={`goal-card${state.goal === key ? ' on' : ''}`}
                 onClick={() => setGoal(key)}
-                disabled={showCheckout}
+                disabled={showCheckout || promoFreeReady}
               >
                 <div className="gc-check">✓</div>
                 <div className="gc-icon">{GOAL_ICONS[key]}</div>
@@ -117,7 +122,7 @@ export function Step4Goal({
               <input
                 type="checkbox"
                 checked={state.agreedToTerms}
-                disabled={showCheckout}
+                disabled={showCheckout || promoFreeReady}
                 onChange={(e) => {
                   setAgreedToTerms(e.target.checked);
                   if (e.target.checked) setTermsError(null);
@@ -147,7 +152,7 @@ export function Step4Goal({
           </div>
         </div>
 
-        {!showCheckout ? (
+        {!showCheckout && !promoFreeReady ? (
           <div className="promo-gate rv">
             {!showPromoInput ? (
               <button
@@ -222,7 +227,7 @@ export function Step4Goal({
         >
           {backLabel}
         </button>
-        {!showCheckout ? (
+        {!showCheckout && !promoFreeReady ? (
           <button
             type="button"
             className="btn btn-primary"

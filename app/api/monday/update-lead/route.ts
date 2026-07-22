@@ -7,7 +7,11 @@ import { VALUBOT_MONDAY_COLUMNS } from '../../../../lib/crm/valubot_monday_colum
 export const runtime = 'nodejs';
 
 const updateLeadSchema = z.object({
-  status: z.enum(['Paid - Admin VIP Bypass', 'Redirected to PayPal']),
+  status: z.enum([
+    'Paid - Admin VIP Bypass',
+    'Redirected to PayPal',
+    'Free promo redeemed',
+  ]),
   mondayItemId: z.string().optional().nullable(),
   leadId: z.string().optional().nullable(),
   sessionId: z.string().optional().nullable(),

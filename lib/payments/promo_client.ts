@@ -3,6 +3,8 @@
 export interface PromoValidateResponse {
   valid: boolean;
   rateLimited?: boolean;
+  /** Present only when valid — minted server-side; never invent on the client. */
+  dispatchToken?: string;
 }
 
 export async function postValidatePromoCode(input: {
@@ -31,7 +33,11 @@ export async function postValidatePromoCode(input: {
       return { valid: false, rateLimited: true };
     }
 
-    return { valid: Boolean(data?.valid) };
+    if (!data?.valid || typeof data.dispatchToken !== 'string' || !data.dispatchToken) {
+      return { valid: false, rateLimited: data?.rateLimited };
+    }
+
+    return { valid: true, dispatchToken: data.dispatchToken };
   } catch {
     return { valid: false };
   }

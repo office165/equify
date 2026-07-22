@@ -201,9 +201,8 @@ CREATE TABLE stripe_transactions (
     expires_at              TIMESTAMPTZ NOT NULL,
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT stripe_transactions_amount_positive CHECK (amount > 0),
     CONSTRAINT stripe_transactions_on_demand_99_ils CHECK (
-        amount = 999.00 AND currency = 'ILS'
+        currency = 'ILS' AND amount >= 0
     ),
     CONSTRAINT stripe_transactions_token_jwt_unique UNIQUE (token_jwt),
     CONSTRAINT stripe_transactions_token_jti_unique UNIQUE (token_jti),
@@ -228,7 +227,6 @@ COMMENT ON COLUMN stripe_transactions.gateway_provider IS
 CREATE INDEX stripe_transactions_unused_99_ils_tokens
     ON stripe_transactions (token_jti, expires_at)
     WHERE is_used = FALSE
-      AND amount = 999.00
       AND currency = 'ILS';
 
 CREATE INDEX stripe_transactions_purchaser_user_id

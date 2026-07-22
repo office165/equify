@@ -15,7 +15,7 @@ import type { EquifyValuationPersistedState } from '../wizard/equify_valuation_p
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { buildExportValuationDataFromLiveSession } from '../results/build-export-valuation-data';
 
-export type ReportDeliverTrigger = 'PAYPAL_PAID';
+export type ReportDeliverTrigger = 'PAYPAL_PAID' | 'PROMO_FREE';
 
 export interface DeliverEquifyReportInput {
   mondayItemId?: string | null;

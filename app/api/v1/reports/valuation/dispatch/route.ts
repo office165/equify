@@ -48,7 +48,10 @@ export async function POST(request: Request) {
     .eq('token_jti', dispatchClaims.jti)
     .maybeSingle();
 
-  if (!tx?.id || tx.gateway_provider !== 'paypal') {
+  if (
+    !tx?.id ||
+    (tx.gateway_provider !== 'paypal' && tx.gateway_provider !== 'promo_free')
+  ) {
     return jsonError('Unknown payment dispatch token', 403, 'FORBIDDEN');
   }
 
@@ -92,12 +95,15 @@ export async function POST(request: Request) {
     const { data: claimed, error: claimError } = await supabase
       .from('stripe_transactions')
       .update({
+        is_used: true,
+        used_at: usedAt,
         metadata: {
           ...meta,
           dispatch_token_used_at: usedAt,
         },
       })
       .eq('id', tx.id)
+      .eq('is_used', false)
       .select('id, metadata')
       .maybeSingle();
 
@@ -106,8 +112,8 @@ export async function POST(request: Request) {
     }
 
     /**
-     * paymentVerified may be true here only because paypal-webhook minted this JWT
-     * after a verified capture. This is not an open hardcoded bypass.
+     * paymentVerified may be true here only because paypal-webhook or promo/validate
+     * minted this JWT after server-side entitlement. Not an open client bypass.
      */
     const dispatcher = new ValuationDispatchService(null);
     const result = await dispatcher.dispatchAfterPaymentResolution({
