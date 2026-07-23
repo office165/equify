@@ -159,7 +159,7 @@ function buildPage1Cover(data: ValuationData): string {
     </div>
     <div class="cover-lower-stack">
       <div class="c-cap">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח ${f.money(data.bearEquity)} – ${f.money(data.bullEquity)}</div>
-      <div class="seal"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY</div>
+      <div class="seal"><i></i>ALGORITHMIC EQUITY INDICATION · SBC METHOD</div>
       <div class="cover-metrics c-grid c-grid--cover">
         <div><b class="hl">${f.money(data.equity)}</b><span>שווי לבעלים · בסיס</span></div>
         <div><b>${f.pct(data.waccPct)}</b><span>WACC אפקטיבי</span></div>
@@ -544,7 +544,7 @@ function buildPage8Combined(data: ValuationData): string {
     <div style="display:flex;height:13mm;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:5mm auto 0;max-width:150mm;width:100%">${blendWeightBar(data)}</div>
     <div class="c-val" style="margin:10mm 0 2mm">${equityTriCurrencyCoverHtml(data)}</div>
     <div class="c-cap">שווי לבעלים · תרחיש בסיס · טווח ${f.money(data.bearEquity)} – ${f.money(data.bullEquity)} · נכון ל-${escHtml(dateLabel)}</div>
-    <div class="seal" style="margin:9mm auto 0"><i></i>CERTIFIED ALGORITHMIC VALUATION · SBC METHODOLOGY</div>
+    <div class="seal" style="margin:9mm auto 0"><i></i>ALGORITHMIC EQUITY INDICATION · SBC METHOD</div>
     <p class="note" style="text-align:right;margin-top:8mm"><b>גילוי נאות:</b> ${escHtml(data.disclaimer ?? defaultDisclaimer())}</p>
   </div>`;
   return wrapSheet(8, '', body, data.locale);
