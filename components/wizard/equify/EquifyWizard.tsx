@@ -36,13 +36,41 @@ import {
   WizardValuationProvider,
 } from './WizardValuationContext';
 import { postValidatePromoCode } from '../../../lib/payments/promo_client';
+import type { PromoValidateResponse } from '../../../lib/payments/promo_client';
 import { postEnsureWizardUser } from '../../../lib/payments/ensure_wizard_user_client';
 import { HOSTED_BUTTON_ID_FULL } from '../../../lib/payments/paypal_hosted_button_ids';
 import { normalizePromoCode } from '../../../lib/wizard/vip_promo';
 import { EQUIFY_DISPATCH_TOKEN_KEY } from '../../../lib/payments/dispatch_token_storage';
+import {
+  clearWizardDraft,
+  useWizardDraftPersistence,
+} from '../hooks/useWizardDraftPersistence';
 import { useWizardBgCanvas } from './hooks/useWizardBgCanvas';
 import { useWizardStepMotion } from './hooks/useWizardStepMotion';
 import './wizard-equify.css';
+
+function promoDenyMessage(
+  validated: PromoValidateResponse,
+  isHe: boolean,
+): string {
+  if (validated.rateLimited) {
+    return isHe
+      ? 'יותר מדי ניסיונות, נסה שוב בעוד מספר דקות'
+      : 'Too many attempts — try again in a few minutes';
+  }
+  if (validated.reason === 'server_error') {
+    return isHe
+      ? 'שגיאה זמנית, נסה שוב או פנה אלינו'
+      : 'Temporary error — try again or contact us';
+  }
+  if (validated.reason === 'expired') {
+    return isHe ? 'תוקף הקוד פג' : 'This code has expired';
+  }
+  if (validated.reason === 'max_uses_reached') {
+    return isHe ? 'הקוד נוצל במלואו' : 'This code has been fully used';
+  }
+  return isHe ? 'הקוד אינו תקף' : 'Invalid code';
+}
 
 export interface EquifyWizardProps {
   onRunValuation?: (
@@ -76,10 +104,21 @@ function EquifyWizardShell({
   const [promoNotice, setPromoNotice] = useState<string | null>(null);
   const [hostedButtonId, setHostedButtonId] = useState<string | null>(null);
   const reducedMotion = useReducedMotion();
-  const { step, setStep, computed, state } = useWizardValuation();
+  const { step, setStep, computed, state, replaceWizardState, resetWizard } =
+    useWizardValuation();
   const { reportingCurrency } = useReportingCurrency();
   const displayCompanyName = resolveDisplayCompanyName(state.profile.companyName, locale);
   const hasLiveFinancials = hasMeaningfulFinancialInputs(state.financials);
+
+  const draftUi = useWizardDraftPersistence({
+    state,
+    onRestore: (draftState) => {
+      replaceWizardState(draftState);
+    },
+    onStartFresh: () => {
+      resetWizard();
+    },
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -127,15 +166,7 @@ function EquifyWizardShell({
           email: state.profile.userEmail,
         });
         if (!validated.valid || !validated.dispatchToken) {
-          if (validated.reason === 'server_error') {
-            setLocalSubmitError(
-              isHe
-                ? 'שגיאת שרת זמנית — נסו שוב בעוד רגע'
-                : 'Temporary server error — please try again',
-            );
-          } else {
-            setLocalSubmitError(isHe ? 'הקוד אינו תקף' : 'Invalid code');
-          }
+          setLocalSubmitError(promoDenyMessage(validated, isHe));
           // Fall through to FULL PayPal — never PROMO / never free without server token.
         } else {
           freeDispatchToken = validated.dispatchToken;
@@ -143,6 +174,7 @@ function EquifyWizardShell({
       }
 
       if (freeDispatchToken) {
+        clearWizardDraft();
         const snapshot = buildEquifyValuationSnapshot(state, computed, {
           promoCode: normalizedPromo || null,
           paymentPath: 'promo_free',
@@ -224,11 +256,85 @@ function EquifyWizardShell({
           console.warn('[wizard] PayPal Monday update failed', err);
         });
 
+        clearWizardDraft();
         setHostedButtonId(HOSTED_BUTTON_ID_FULL);
         setSubmitPhase('checkout-ready');
       } catch {
         setSubmitPhase('idle');
         setHostedButtonId(null);
+      } finally {
+        setLocalSubmitting(false);
+      }
+    },
+    [computed, isHe, state],
+  );
+
+  /** Apply promo while FULL checkout is visible — keep PayPal available on failure. */
+  const handleApplyPromo = useCallback(
+    async (promoCode: string) => {
+      const normalizedPromo = normalizePromoCode(promoCode);
+      if (!normalizedPromo) {
+        setLocalSubmitError(isHe ? 'יש להזין קוד' : 'Enter a promo code');
+        return;
+      }
+      setLocalSubmitError(null);
+      setPromoNotice(null);
+      setLocalSubmitting(true);
+      setSubmitPhase('validating-vip');
+      try {
+        const validated = await postValidatePromoCode({
+          code: normalizedPromo,
+          email: state.profile.userEmail,
+        });
+        if (!validated.valid || !validated.dispatchToken) {
+          setLocalSubmitError(promoDenyMessage(validated, isHe));
+          setSubmitPhase('checkout-ready');
+          // Keep hostedButtonId — PayPal remains available.
+          return;
+        }
+
+        clearWizardDraft();
+        const leadSession = readLeadSession();
+        const snapshot = buildEquifyValuationSnapshot(state, computed, {
+          promoCode: normalizedPromo,
+          paymentPath: 'promo_free',
+          mondayStatus: 'Free promo redeemed',
+        });
+        persistEquifyValuationState(snapshot);
+        saveEquifyWizardState(state);
+
+        try {
+          sessionStorage.setItem(
+            EQUIFY_DISPATCH_TOKEN_KEY,
+            validated.dispatchToken,
+          );
+        } catch {
+          // quota / private mode
+        }
+
+        setHostedButtonId(null);
+        setSubmitPhase('promo-free-ready');
+        setPromoNotice(
+          isHe
+            ? 'הקוד אומת — הדוח שלך בהכנה'
+            : 'Code verified — preparing your report',
+        );
+
+        await postMondayLeadUpdate({
+          status: 'Free promo redeemed',
+          mondayItemId: leadSession.mondayItemId,
+          leadId: leadSession.leadId,
+          sessionId: leadSession.sessionId,
+          userEmail: state.profile.userEmail,
+          aiNotes: `Free promo redeemed: ${normalizedPromo}`,
+        }).catch((err) => {
+          console.warn('[wizard] Free promo Monday update failed', err);
+        });
+
+        window.location.assign('/results');
+      } catch {
+        setLocalSubmitError(promoDenyMessage({ valid: false, reason: 'server_error' }, isHe));
+        setSubmitPhase('checkout-ready');
       } finally {
         setLocalSubmitting(false);
       }
@@ -314,6 +420,45 @@ function EquifyWizardShell({
             </div>
           </div>
 
+          {draftUi.restoredNotice ? (
+            <div
+              className="eqw-draft-banner"
+              role="status"
+              style={{
+                margin: '0 0 12px',
+                padding: '10px 14px',
+                borderRadius: 10,
+                background: 'rgba(0, 194, 184, 0.08)',
+                border: '1px solid rgba(0, 194, 184, 0.28)',
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                gap: 10,
+                justifyContent: 'space-between',
+                fontSize: 13,
+              }}
+            >
+              <span>
+                {isHe
+                  ? 'שחזרנו טיוטה שמורה מהפעם הקודמת.'
+                  : 'We restored your previous draft.'}
+              </span>
+              <button
+                type="button"
+                className="back-btn"
+                onClick={() => {
+                  draftUi.startFreshDraft();
+                  setHostedButtonId(null);
+                  setSubmitPhase('idle');
+                  setLocalSubmitError(null);
+                  setPromoNotice(null);
+                }}
+              >
+                {isHe ? 'התחל טיוטה חדשה' : 'Start a new draft'}
+              </button>
+            </div>
+          ) : null}
+
           <nav className="wizard-rail" aria-label={copy.stepNavLabel}>
             {steps.map((s, i) => {
               const n = i + 1;
@@ -357,6 +502,7 @@ function EquifyWizardShell({
               <Step4Goal
                 onBack={() => goStep(3)}
                 onGenerate={handleGenerate}
+                onApplyPromo={handleApplyPromo}
                 isSubmitting={isSubmitting || localSubmitting}
                 submitPhase={submitPhase}
                 submitError={localSubmitError ?? submitError}

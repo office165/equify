@@ -1,12 +1,17 @@
 'use client';
 
+import type { PromoPublicDenyReason } from './promo_public_reasons';
+
 export interface PromoValidateResponse {
   valid: boolean;
   rateLimited?: boolean;
   /** Present only when valid — minted server-side; never invent on the client. */
   dispatchToken?: string;
-  /** Server/signing failure — must not be shown as "invalid code". */
-  reason?: 'server_error';
+  /**
+   * Deny / server reason. `invalid_code` covers code_not_found + inactive
+   * (anti-enumeration). Optional for backward compatibility.
+   */
+  reason?: PromoPublicDenyReason;
 }
 
 export async function postValidatePromoCode(input: {
@@ -35,15 +40,23 @@ export async function postValidatePromoCode(input: {
       return { valid: false, rateLimited: true };
     }
 
-    if (
-      response.status >= 500 ||
-      data?.reason === 'server_error'
-    ) {
+    if (response.status >= 500 || data?.reason === 'server_error') {
       return { valid: false, reason: 'server_error' };
     }
 
     if (!data?.valid || typeof data.dispatchToken !== 'string' || !data.dispatchToken) {
-      return { valid: false, rateLimited: data?.rateLimited };
+      return {
+        valid: false,
+        rateLimited: data?.rateLimited,
+        reason:
+          data?.reason === 'expired' ||
+          data?.reason === 'max_uses_reached' ||
+          data?.reason === 'invalid_code'
+            ? data.reason
+            : data?.reason === 'server_error'
+              ? 'server_error'
+              : undefined,
+      };
     }
 
     return { valid: true, dispatchToken: data.dispatchToken };
