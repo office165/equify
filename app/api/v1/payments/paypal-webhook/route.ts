@@ -1,4 +1,3 @@
-import * as crypto from 'node:crypto';
 import { NextResponse } from 'next/server';
 import {
   PayPalGateway,
@@ -8,20 +7,64 @@ import {
   getSupabaseAdminClient,
   isSupabaseAdminConfigured,
 } from '../../../../../lib/db/supabase';
-import { PaymentDispatchTokenService } from '../../../../../lib/auth/payment_dispatch_token_service';
-import { ValuationDispatchService } from '../../../../../lib/dispatch/valuation_dispatch';
-import { getInMemoryValuation } from '../../../../../lib/valuation/in_memory_store';
+import { claimPaypalCaptureAndMint } from '../../../../../lib/payments/paypal_claim_mint';
 import { appRouteMethodNotAllowed } from '../../../../../lib/api/http';
 
-/** On-demand Pro price — must match stripe_transactions CHECK (999.00 ILS). */
 const ON_DEMAND_AMOUNT = 999;
-const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 90;
 const PROMO_MATCH_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 function resolvePaypalMinAmountIls(): number {
   const raw = process.env.PAYPAL_MIN_AMOUNT_ILS?.trim();
   const parsed = raw ? Number(raw) : NaN;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : ON_DEMAND_AMOUNT;
+}
+
+function logUnmatchedPayment(detail: {
+  captureId: string | null;
+  amount: number | null;
+  payerEmail: string | null;
+  reason: string;
+}): void {
+  console.error('[paypal-webhook] UNMATCHED_PAYMENT', {
+    level: 'error',
+    reason: detail.reason,
+    captureId: detail.captureId,
+    amount: detail.amount,
+    payerEmail: detail.payerEmail,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+async function insertUnmatched(input: {
+  payerEmail: string | null;
+  amount: number;
+  captureId: string;
+  event: Record<string, unknown>;
+  reason: string;
+}): Promise<boolean> {
+  const supabase = getSupabaseAdminClient();
+  const { error } = await supabase.from('unmatched_payments').insert({
+    payer_email: input.payerEmail,
+    amount: input.amount,
+    currency: 'ILS',
+    gateway_provider: 'paypal',
+    gateway_transaction_id: input.captureId,
+    raw_event: {
+      equify_note: input.reason,
+      event: input.event,
+    },
+  });
+  if (error) {
+    console.error('[paypal-webhook] unmatched_payments insert failed', error);
+    return false;
+  }
+  logUnmatchedPayment({
+    captureId: input.captureId,
+    amount: input.amount,
+    payerEmail: input.payerEmail,
+    reason: input.reason,
+  });
+  return true;
 }
 
 export async function POST(request: Request) {
@@ -51,47 +94,59 @@ export async function POST(request: Request) {
 
   if (!isSupabaseAdminConfigured()) {
     console.error('[paypal-webhook] Supabase admin not configured');
-    return NextResponse.json({ received: true }, { status: 200 });
+    return NextResponse.json(
+      { error: 'supabase_not_configured' },
+      { status: 503 },
+    );
   }
 
-  const supabase = getSupabaseAdminClient();
   const parsed = new PayPalGateway().parseCaptureWebhook(event);
   const payerEmail = parsed.payerEmail?.trim().toLowerCase() ?? '';
-  const captureId = parsed.transactionId;
+  const captureId = parsed.transactionId?.trim() ?? '';
+  const amountIls = Number(parsed.amountIls) || ON_DEMAND_AMOUNT;
+  const minAmountIls = resolvePaypalMinAmountIls();
 
   if (!captureId) {
     return NextResponse.json({ received: true }, { status: 200 });
   }
 
-  // Idempotency — stripe_payment_intent_id holds provider transaction id.
-  const { data: existingTx } = await supabase
+  // Soft idempotency pre-check (RPC also handles races).
+  const supabase = getSupabaseAdminClient();
+  const { data: existingTx, error: existingErr } = await supabase
     .from('stripe_transactions')
     .select('id')
     .eq('stripe_payment_intent_id', captureId)
     .maybeSingle();
 
-  if (existingTx?.id) {
-    return NextResponse.json({ received: true, duplicate: true }, { status: 200 });
+  if (existingErr) {
+    console.error('[paypal-webhook] idempotency lookup failed', existingErr);
+    return NextResponse.json({ error: 'db_error' }, { status: 500 });
   }
 
-  const amountIls = Number(parsed.amountIls) || ON_DEMAND_AMOUNT;
-  const minAmountIls = resolvePaypalMinAmountIls();
+  if (existingTx?.id) {
+    return NextResponse.json(
+      { received: true, duplicate: true },
+      { status: 200 },
+    );
+  }
 
   if (!payerEmail) {
-    await supabase.from('unmatched_payments').insert({
-      payer_email: null,
+    const wrote = await insertUnmatched({
+      payerEmail: null,
       amount: amountIls,
-      currency: 'ILS',
-      gateway_provider: 'paypal',
-      gateway_transaction_id: captureId,
-      raw_event: event,
+      captureId,
+      event,
+      reason: 'missing_payer_email',
     });
+    if (!wrote) {
+      return NextResponse.json({ error: 'unmatched_write_failed' }, { status: 500 });
+    }
     return NextResponse.json({ received: true, unmatched: true }, { status: 200 });
   }
 
   if (amountIls < minAmountIls) {
     const sinceIso = new Date(Date.now() - PROMO_MATCH_WINDOW_MS).toISOString();
-    const { data: redemption } = await supabase
+    const { data: redemption, error: promoErr } = await supabase
       .from('promo_redemptions')
       .select('id')
       .eq('user_email', payerEmail)
@@ -101,166 +156,103 @@ export async function POST(request: Request) {
       .limit(1)
       .maybeSingle();
 
+    if (promoErr) {
+      console.error('[paypal-webhook] promo redemption lookup failed', promoErr);
+      return NextResponse.json({ error: 'db_error' }, { status: 500 });
+    }
+
     if (!redemption?.id) {
-      await supabase.from('unmatched_payments').insert({
-        payer_email: payerEmail,
+      const wrote = await insertUnmatched({
+        payerEmail,
         amount: amountIls,
-        currency: 'ILS',
-        gateway_provider: 'paypal',
-        gateway_transaction_id: captureId,
-        raw_event: {
-          equify_note: 'underpayment_no_promo',
-          event,
-        },
+        captureId,
+        event,
+        reason: 'underpayment_no_promo',
       });
+      if (!wrote) {
+        return NextResponse.json(
+          { error: 'unmatched_write_failed' },
+          { status: 500 },
+        );
+      }
       return NextResponse.json(
         { received: true, unmatched: true, reason: 'underpayment_no_promo' },
         { status: 200 },
       );
     }
 
-    await supabase
+    const { error: matchErr } = await supabase
       .from('promo_redemptions')
       .update({ payment_matched: true })
       .eq('id', redemption.id);
-  }
-
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, email')
-    .eq('email', payerEmail)
-    .is('deleted_at', null)
-    .maybeSingle();
-
-  if (!user?.id) {
-    await supabase.from('unmatched_payments').insert({
-      payer_email: payerEmail,
-      amount: amountIls,
-      currency: 'ILS',
-      gateway_provider: 'paypal',
-      gateway_transaction_id: captureId,
-      raw_event: event,
-    });
-    return NextResponse.json({ received: true, unmatched: true }, { status: 200 });
-  }
-
-  const { data: draft } = await supabase
-    .from('valuations')
-    .select('id, title')
-    .eq('status', 'draft')
-    .eq('created_by_user_id', user.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const valuationId = draft?.id ?? null;
-  const transactionId = crypto.randomUUID();
-  const jti = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + TOKEN_TTL_SECONDS * 1000).toISOString();
-
-  let tokenJwt = `paypal-pending.${transactionId}`;
-  if (valuationId) {
-    const { token } = new PaymentDispatchTokenService().signDispatch({
-      sub: transactionId,
-      valuationId,
-      email: payerEmail,
-      jti,
-    });
-    tokenJwt = token;
-  }
-
-  const { data: insertedTx, error: txError } = await supabase
-    .from('stripe_transactions')
-    .insert({
-      id: transactionId,
-      stripe_payment_intent_id: captureId,
-      stripe_checkout_session_id: parsed.saleId || null,
-      stripe_customer_id: payerEmail,
-      purchaser_user_id: user.id,
-      amount: ON_DEMAND_AMOUNT,
-      currency: 'ILS',
-      is_used: false,
-      token_jwt: tokenJwt,
-      token_jti: jti,
-      expires_at: expiresAt,
-      gateway_provider: 'paypal',
-      valuation_id: valuationId,
-      metadata: {
-        provider: 'paypal',
-        gateway_provider: 'paypal',
-        gateway_status: parsed.status,
-        gateway_amount: parsed.amountIls,
-        gateway_currency: parsed.currency,
-        paypal_event_id: event.id ?? null,
-        dispatch_token_used_at: null,
-      },
-    })
-    .select('id')
-    .single();
-
-  if (txError || !insertedTx?.id) {
-    console.error('[paypal-webhook] insert stripe_transactions failed', txError);
-    return NextResponse.json({ received: true }, { status: 200 });
-  }
-
-  if (!valuationId) {
-    console.warn('[paypal-webhook] no draft valuation for user', user.id);
-    return NextResponse.json({ received: true, transactionId }, { status: 200 });
-  }
-
-  const cached = getInMemoryValuation(valuationId);
-  const enterpriseValuation =
-    cached?.forecast_matrix_json?.scenarios?.base?.enterprise_value ??
-    cached?.forecast_matrix_json?.enterprise_value ??
-    0;
-  const equityValue =
-    cached?.forecast_matrix_json?.scenarios?.base?.final_equity_value ?? 0;
-
-  const { error: updError } = await supabase
-    .from('valuations')
-    .update({
-      status: 'completed',
-      stripe_transaction_id: transactionId,
-      subscription_id: null,
-      enterprise_valuation: enterpriseValuation,
-      equity_value: equityValue,
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', valuationId)
-    .eq('status', 'draft');
-
-  if (updError) {
-    console.error('[paypal-webhook] valuation update failed', updError);
-    return NextResponse.json({ received: true, transactionId }, { status: 200 });
-  }
-
-  // Sole authorized origin for paymentVerified: true
-  if (cached?.forecast_matrix_json) {
-    try {
-      const dispatcher = new ValuationDispatchService(null);
-      await dispatcher.dispatchAfterPaymentResolution({
-        valuationId,
-        companyName: cached.companyName,
-        locale: cached.locale,
-        forecastMatrix: cached.forecast_matrix_json,
-        email: payerEmail,
-        paymentVerified: true,
-      });
-    } catch (err) {
-      console.error('[paypal-webhook] dispatch failed', err);
+    if (matchErr) {
+      console.error('[paypal-webhook] promo payment_matched update failed', matchErr);
+      return NextResponse.json({ error: 'db_error' }, { status: 500 });
     }
-  } else {
-    console.warn(
-      '[paypal-webhook] no in-memory forecast; dispatch JWT minted for /dispatch',
-      valuationId,
-    );
   }
 
-  return NextResponse.json(
-    { received: true, transactionId, valuationId },
-    { status: 200 },
-  );
+  try {
+    const claimed = await claimPaypalCaptureAndMint({
+      captureId,
+      saleId: parsed.saleId,
+      payerEmail,
+      gatewayAmountIls: parsed.amountIls,
+      gatewayStatus: parsed.status,
+      paypalEventId:
+        typeof event.id === 'string' ? event.id : null,
+    });
+
+    if (!claimed.ok) {
+      if (claimed.reason === 'user_not_found') {
+        const wrote = await insertUnmatched({
+          payerEmail,
+          amount: amountIls,
+          captureId,
+          event,
+          reason: 'user_not_found',
+        });
+        if (!wrote) {
+          return NextResponse.json(
+            { error: 'unmatched_write_failed' },
+            { status: 500 },
+          );
+        }
+        return NextResponse.json(
+          { received: true, unmatched: true, reason: 'user_not_found' },
+          { status: 200 },
+        );
+      }
+
+      if (claimed.reason === 'supabase_not_configured') {
+        return NextResponse.json(
+          { error: 'supabase_not_configured' },
+          { status: 503 },
+        );
+      }
+
+      console.error('[paypal-webhook] claim_paypal_capture_and_mint failed', claimed);
+      return NextResponse.json(
+        { error: 'mint_failed', reason: claimed.reason },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        received: true,
+        duplicate: claimed.duplicate,
+        transactionId: claimed.transactionId,
+        valuationId: claimed.valuationId,
+      },
+      { status: 200 },
+    );
+  } catch (err) {
+    console.error('[paypal-webhook] unhandled error', {
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json({ error: 'server_error' }, { status: 500 });
+  }
 }
 
 export function GET() {

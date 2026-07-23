@@ -36,6 +36,7 @@ import {
   WizardValuationProvider,
 } from './WizardValuationContext';
 import { postValidatePromoCode } from '../../../lib/payments/promo_client';
+import { postEnsureWizardUser } from '../../../lib/payments/ensure_wizard_user_client';
 import { HOSTED_BUTTON_ID_FULL } from '../../../lib/payments/paypal_hosted_button_ids';
 import { normalizePromoCode } from '../../../lib/wizard/vip_promo';
 import { EQUIFY_DISPATCH_TOKEN_KEY } from '../../../lib/payments/dispatch_token_storage';
@@ -198,6 +199,21 @@ function EquifyWizardShell({
       setLocalSubmitting(true);
       try {
         setSubmitPhase('redirecting-paypal');
+        const ensured = await postEnsureWizardUser({
+          email: state.profile.userEmail,
+          fullName: state.profile.fullName,
+        });
+        if (!ensured.ok) {
+          setLocalSubmitError(
+            isHe
+              ? 'לא ניתן להכין את התשלום. בדקו את כתובת המייל ונסו שוב.'
+              : 'Could not prepare checkout. Check your email and try again.',
+          );
+          setSubmitPhase('idle');
+          setHostedButtonId(null);
+          return;
+        }
+
         await postMondayLeadUpdate({
           status: 'Redirected to PayPal',
           mondayItemId: leadSession.mondayItemId,

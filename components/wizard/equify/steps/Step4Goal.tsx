@@ -40,7 +40,7 @@ export interface Step4GoalProps {
   submitPhase?: Step4SubmitPhase;
   submitError?: string | null;
   promoNotice?: string | null;
-  /** When set, replaces the CTA with the PayPal hosted button. */
+  /** When set, replaces the CTA with the PayPal hosted button (after email confirm). */
   hostedButtonId?: string | null;
 }
 
@@ -54,14 +54,28 @@ export function Step4Goal({
   hostedButtonId = null,
 }: Step4GoalProps) {
   const { shell, steps: t, isHe } = useEquifyStrings();
-  const { state, setGoal, setAgreedToTerms } = useWizardValuation();
+  const { state, setGoal, setAgreedToTerms, updateProfile } = useWizardValuation();
   const [shake, setShake] = React.useState(false);
   const [showPromoInput, setShowPromoInput] = React.useState(false);
   const [promoCode, setPromoCode] = React.useState('');
   const [termsError, setTermsError] = React.useState<string | null>(null);
+  const [checkoutEmail, setCheckoutEmail] = React.useState(
+    state.profile.userEmail,
+  );
+  const [emailConfirmed, setEmailConfirmed] = React.useState(false);
+  const [emailBusy, setEmailBusy] = React.useState(false);
+  const [emailError, setEmailError] = React.useState<string | null>(null);
   const backLabel = isHe ? `→ ${t.common.back}` : `← ${t.common.back}`;
   const showCheckout = Boolean(hostedButtonId);
   const promoFreeReady = submitPhase === 'promo-free-ready';
+
+  React.useEffect(() => {
+    if (showCheckout) {
+      setCheckoutEmail(state.profile.userEmail);
+      setEmailConfirmed(false);
+      setEmailError(null);
+    }
+  }, [showCheckout, state.profile.userEmail]);
 
   const handleGenerate = () => {
     if (!state.agreedToTerms) {
@@ -72,6 +86,63 @@ export function Step4Goal({
     }
     setTermsError(null);
     void onGenerate(promoCode);
+  };
+
+  const handleConfirmCheckoutEmail = async () => {
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const nextEmail = checkoutEmail.trim();
+    if (!emailRe.test(nextEmail)) {
+      setEmailError(
+        isHe ? 'כתובת מייל לא תקינה' : 'Please enter a valid email',
+      );
+      return;
+    }
+    setEmailBusy(true);
+    setEmailError(null);
+    try {
+      updateProfile({ userEmail: nextEmail });
+      const { postEnsureWizardUser } = await import(
+        '../../../../lib/payments/ensure_wizard_user_client'
+      );
+      const ensured = await postEnsureWizardUser({
+        email: nextEmail,
+        fullName: state.profile.fullName,
+      });
+      if (!ensured.ok) {
+        setEmailError(
+          isHe
+            ? 'לא ניתן לאשר את המייל. נסו שוב.'
+            : 'Could not confirm email. Please try again.',
+        );
+        return;
+      }
+      // Keep deliver poll email in sync if snapshot already saved for PayPal path.
+      try {
+        const {
+          loadEquifyValuationState,
+          persistEquifyValuationState,
+        } = await import('../../../../lib/wizard/equify_valuation_persistence');
+        const existing = loadEquifyValuationState();
+        if (existing && existing.paymentPath === 'paypal') {
+          persistEquifyValuationState({
+            ...existing,
+            userEmail: nextEmail.toLowerCase(),
+            wizard: {
+              ...existing.wizard,
+              profile: {
+                ...existing.wizard.profile,
+                userEmail: nextEmail,
+              },
+            },
+          });
+        }
+      } catch {
+        // non-blocking
+      }
+      setEmailConfirmed(true);
+    } finally {
+      setEmailBusy(false);
+    }
   };
 
   const submitLabel = (() => {
@@ -207,13 +278,75 @@ export function Step4Goal({
                 marginBottom: 12,
                 fontSize: 13,
                 color: 'rgba(148, 163, 184, 0.9)',
+                lineHeight: 1.5,
               }}
             >
               {isHe
-                ? 'השלם את התשלום המאובטח. לאחר האישור תועבר לדוח.'
-                : 'Complete secure checkout. After payment you will reach the report.'}
+                ? 'חשוב: שלמו מחשבון PayPal עם אותה כתובת מייל. אחרת לא נוכל לקשר את התשלום לדוח.'
+                : 'Important: pay from a PayPal account that uses the same email, or we cannot link payment to your report.'}
             </p>
-            <PayPalHostedButton hostedButtonId={hostedButtonId} />
+            <label
+              htmlFor="paypal-checkout-email"
+              style={{
+                display: 'block',
+                fontSize: 12,
+                color: 'rgba(148, 163, 184, 0.95)',
+                marginBottom: 6,
+              }}
+            >
+              {isHe ? 'מייל לתשלום' : 'Checkout email'}
+            </label>
+            <input
+              id="paypal-checkout-email"
+              type="email"
+              className="inp"
+              value={checkoutEmail}
+              disabled={emailConfirmed || emailBusy}
+              onChange={(e) => {
+                setCheckoutEmail(e.target.value);
+                setEmailConfirmed(false);
+              }}
+              autoComplete="email"
+              style={{ width: '100%', marginBottom: 10 }}
+            />
+            {emailError ? (
+              <p className="v-msg err show" style={{ marginBottom: 10 }}>
+                {emailError}
+              </p>
+            ) : null}
+            {!emailConfirmed ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{ width: '100%' }}
+                disabled={emailBusy || isSubmitting}
+                onClick={() => void handleConfirmCheckoutEmail()}
+              >
+                {emailBusy
+                  ? isHe
+                    ? 'מאשר…'
+                    : 'Confirming…'
+                  : isHe
+                    ? 'אשר מייל והמשך לתשלום'
+                    : 'Confirm email and continue to payment'}
+              </button>
+            ) : (
+              <>
+                <p
+                  style={{
+                    marginBottom: 12,
+                    fontSize: 13,
+                    color: 'rgba(0, 194, 184, 0.9)',
+                  }}
+                  role="status"
+                >
+                  {isHe
+                    ? 'המייל אושר. השלימו את התשלום המאובטח — לאחר האישור תועברו לדוח.'
+                    : 'Email confirmed. Complete secure checkout — you will reach the report after payment.'}
+                </p>
+                <PayPalHostedButton hostedButtonId={hostedButtonId} />
+              </>
+            )}
           </div>
         ) : null}
       </div>

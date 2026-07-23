@@ -103,8 +103,20 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
     if (!validate()) return;
     const formValues = mapEquifyToWizardFormValues(state);
     scheduleWizardProgressSave(lockLeadPayload(formValues, locale));
+    // Fire-and-forget: ensure public.users row before PayPal webhook matching.
+    void import('../../../../lib/payments/ensure_wizard_user_client').then(
+      ({ postEnsureWizardUser }) =>
+        postEnsureWizardUser({
+          email: profile.userEmail,
+          fullName: profile.fullName,
+        }).then((res) => {
+          if (!res.ok) {
+            console.warn('[wizard] ensure_wizard_user Step1 failed', res.reason);
+          }
+        }),
+    );
     onNext();
-  }, [locale, onNext, state, validate]);
+  }, [locale, onNext, profile.fullName, profile.userEmail, state, validate]);
 
   const handleLogo = useCallback(
     (file: File | null) => {

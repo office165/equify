@@ -21,6 +21,7 @@
     "test:monday-leads": "tsx scripts/test-monday-leads-e2e.ts",
     "test:monday-lead": "tsx scripts/test-monday-lead.ts",
     "test:promo-mint": "tsx scripts/test-promo-validate-mint.ts",
+    "test:paypal-path": "tsx scripts/test-paypal-payment-path.ts",
     "monday:introspect": "tsx scripts/monday-introspect.ts",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true && chmod +x .githooks/pre-commit 2>/dev/null || true"
   },
