@@ -27,32 +27,15 @@ function resolvePaypalMinAmountIls(): number {
 export async function POST(request: Request) {
   const rawBody = await request.text();
 
-  // TEMP DIAG — remove after PAYPAL_WEBHOOK_ID production verification
-  const rawWebhookId = process.env.PAYPAL_WEBHOOK_ID;
-  const webhookIdTrimmed = rawWebhookId?.trim() ?? '';
-  const envDiag = {
-    defined: webhookIdTrimmed.length > 0,
-    length: webhookIdTrimmed.length,
-    prefix4: webhookIdTrimmed.length > 0 ? webhookIdTrimmed.slice(0, 4) : null,
-    suffix4: webhookIdTrimmed.length > 0 ? webhookIdTrimmed.slice(-4) : null,
-  };
-  console.log('[paypal-webhook] TEMP_ENV_DIAG PAYPAL_WEBHOOK_ID', envDiag);
-
   let valid = false;
   try {
     valid = await verifyPayPalWebhookSignature(request.headers, rawBody);
   } catch (err) {
     console.error('[paypal-webhook] signature verify error', err);
-    return NextResponse.json(
-      { error: 'unauthorized', TEMP_ENV_DIAG: envDiag },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   if (!valid) {
-    return NextResponse.json(
-      { error: 'unauthorized', TEMP_ENV_DIAG: envDiag },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
   let event: Record<string, unknown>;
