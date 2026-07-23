@@ -28,27 +28,31 @@ export async function POST(request: Request) {
   const rawBody = await request.text();
 
   // TEMP DIAG — remove after PAYPAL_WEBHOOK_ID production verification
-  {
-    const raw = process.env.PAYPAL_WEBHOOK_ID;
-    const webhookId = raw?.trim() ?? '';
-    const defined = webhookId.length > 0;
-    console.log('[paypal-webhook] TEMP_ENV_DIAG PAYPAL_WEBHOOK_ID', {
-      defined,
-      length: webhookId.length,
-      prefix4: defined ? webhookId.slice(0, 4) : null,
-      suffix4: defined ? webhookId.slice(-4) : null,
-    });
-  }
+  const rawWebhookId = process.env.PAYPAL_WEBHOOK_ID;
+  const webhookIdTrimmed = rawWebhookId?.trim() ?? '';
+  const envDiag = {
+    defined: webhookIdTrimmed.length > 0,
+    length: webhookIdTrimmed.length,
+    prefix4: webhookIdTrimmed.length > 0 ? webhookIdTrimmed.slice(0, 4) : null,
+    suffix4: webhookIdTrimmed.length > 0 ? webhookIdTrimmed.slice(-4) : null,
+  };
+  console.log('[paypal-webhook] TEMP_ENV_DIAG PAYPAL_WEBHOOK_ID', envDiag);
 
   let valid = false;
   try {
     valid = await verifyPayPalWebhookSignature(request.headers, rawBody);
   } catch (err) {
     console.error('[paypal-webhook] signature verify error', err);
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'unauthorized', TEMP_ENV_DIAG: envDiag },
+      { status: 401 },
+    );
   }
   if (!valid) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'unauthorized', TEMP_ENV_DIAG: envDiag },
+      { status: 401 },
+    );
   }
 
   let event: Record<string, unknown>;
