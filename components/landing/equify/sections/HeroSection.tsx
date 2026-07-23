@@ -48,7 +48,7 @@ export function HeroSection({
           </div>
           <div className="h-note rv">
             <span>
-              <i />ללא כרטיס אשראי
+              <i />התחל בחינם — תשלום בהפקת הדוח
             </span>
             <span>
               <i />

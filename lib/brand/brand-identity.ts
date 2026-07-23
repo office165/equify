@@ -8,7 +8,7 @@ export const BRAND_TITLE =
   'equify BY SBC | הערכת שווי חכמה לעסקים';
 
 export const BRAND_DESCRIPTION =
-  'אינדיקציית שווי מוסמכת ומדויקת מבוססת מודלים פיננסיים מתקדמים בזמן אמת.';
+  'הערכת שווי אלגוריתמית לעסקים: DCF ומכפילי שוק מכוילים לישראל.';
 
 export const BRAND_OG_ALT = `${BRAND_NAME} — הערכת שווי חכמה לעסקים`;
 

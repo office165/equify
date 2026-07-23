@@ -48,12 +48,12 @@ function copy(locale: ValuationLocale, companyName: string, recipientName?: stri
       subject: `דוח הערכת שווי — ${companyName} | ${BRAND_NAME}`,
       preheader: `מדדי ההערכה והדוח המלא של ${companyName} מוכנים לצפייה.`,
       greeting: `שלום ${escapeHtml(name)},`,
-      intro: `השלמנו עבורך הערכת שווי מוסדית עבור <strong>${escapeHtml(companyName)}</strong>. הדוח המלא מצורף למייל, ובאפשרותך לגשת למדדי ההערכה המלאים בלחיצה אחת.`,
+      intro: `השלמנו עבורך הערכת שווי אלגוריתמית עבור <strong>${escapeHtml(companyName)}</strong>. הדוח המלא מצורף למייל, ובאפשרותך לגשת למדדי ההערכה המלאים בלחיצה אחת.`,
       metricsCta: 'לצפייה במדדי ההערכה והורדת הדוח (PDF)',
       pdfCta: 'להורדת דוח הערכת השווי המלא (PDF)',
       methodologyTitle: `איך ${BRAND_NAME_SHORT} חישב את השווי שלך?`,
       methodologyIntro:
-        'הפלטפורמה שלנו משלבת מנועי הערכה מוסדיים עם נרמול מול מכפילי ענף רלוונטיים:',
+        'הפלטפורמה שלנו משלבת מנועי הערכה אלגוריתמיים עם נרמול מול מכפילי ענף רלוונטיים:',
       dcf: 'מודל תזרים מזומנים מהוון (Corporate DCF) עם תחזית רב-שנתית ותרחישי דובי / בסיס / שורי.',
       wacc: 'אלגוריתמי WACC דינמיים המשקללים עלות הון, פרמיית סיכון ומבנה הון אופטימלי.',
       multiples:
@@ -67,7 +67,7 @@ function copy(locale: ValuationLocale, companyName: string, recipientName?: stri
         'בניית תוכנית עסקית מקיפה ומודלים פיננסיים מתקדמים למשקיעים.',
       ],
       upsellCta: 'לתיאום שיחת ייעוץ',
-      footer: `${BRAND_NAME} — פלטפורמת הערכת שווי מוסדית | סודי ומיועד לנמען בלבד`,
+      footer: `${BRAND_NAME} — אינדיקציית שווי אלגוריתמית | סודי ומיועד לנמען בלבד`,
       plainAccess: 'קישור למדדי ההערכה והורדת הדוח',
     };
   }
@@ -76,12 +76,12 @@ function copy(locale: ValuationLocale, companyName: string, recipientName?: stri
     subject: `Valuation Report — ${companyName} | ${BRAND_NAME}`,
     preheader: `Your valuation metrics and full report for ${companyName} are ready.`,
     greeting: `Hello ${escapeHtml(name)},`,
-    intro: `We completed an institutional-grade valuation for <strong>${escapeHtml(companyName)}</strong>. Your PDF is attached and your full evaluation metrics are one click away.`,
+    intro: `We completed an algorithmic valuation indication for <strong>${escapeHtml(companyName)}</strong>. Your PDF is attached and your full evaluation metrics are one click away.`,
     metricsCta: 'View Evaluation Metrics & Download PDF',
     pdfCta: 'Download Full Valuation Report (PDF)',
     methodologyTitle: `How ${BRAND_NAME_SHORT} calculated your value`,
     methodologyIntro:
-      'Our platform combines institutional valuation engines with sector-normalized benchmarks:',
+      'Our platform combines algorithmic valuation engines with sector-normalized benchmarks:',
     dcf: 'Corporate discounted cash flow (DCF) with multi-year forecasts and bear / base / bull scenarios.',
     wacc: 'Dynamic WACC algorithms weighting cost of capital, risk premia, and capital structure.',
     multiples:
@@ -96,7 +96,7 @@ function copy(locale: ValuationLocale, companyName: string, recipientName?: stri
       'Comprehensive business plans and investor-grade financial models.',
     ],
     upsellCta: 'Schedule an advisory call',
-    footer: `${BRAND_NAME} — Institutional valuation platform | Confidential`,
+    footer: `${BRAND_NAME} — Algorithmic valuation indication | Confidential`,
     plainAccess: 'Evaluation metrics & report link',
   };
 }
@@ -140,7 +140,7 @@ export function buildMarketingReportEmailHtml(
             <td style="background:${BRAND.forest};border:1px solid ${BRAND.border};border-radius:16px 16px 0 0;padding:28px 32px;text-align:center;">
               <div style="font-size:28px;font-weight:800;letter-spacing:0.08em;color:${BRAND.mint};">EQUIFY</div>
               <div style="margin-top:8px;font-size:13px;color:${BRAND.muted};letter-spacing:0.12em;text-transform:uppercase;">
-                ${params.locale === 'he' ? 'הערכת שווי מוסדית' : 'Institutional Valuation'}
+                ${params.locale === 'he' ? 'אינדיקציית שווי אלגוריתמית' : 'Algorithmic Valuation Indication'}
               </div>
             </td>
           </tr>

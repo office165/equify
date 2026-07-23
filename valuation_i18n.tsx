@@ -195,11 +195,11 @@ const EN: TranslationMap = {
     'Select the engagement context — drives control premium and DLOM treatment.',
   userIdentifiersTitle: 'Identity verification (required)',
   userIdentifiersDesc:
-    'All four fields are mandatory before running a valuation or accessing the report dashboard. Your mobile number is used for WhatsApp delivery of the verified PDF report.',
+    'All four fields are mandatory before running a valuation or accessing the report dashboard. Your mobile number is used for contact and support; the report is delivered by email.',
   userMobilePhone: 'Mobile phone',
   userMobilePhonePlaceholder: '05X-XXXXXXX',
   userMobilePhoneWhatsAppHint:
-    'Primary WhatsApp number — your valuation PDF will be delivered here after verification.',
+    'Primary mobile number for contact and support — the valuation PDF is emailed.',
   userNationalId: 'National ID (Teudat Zehut)',
   userNationalIdPlaceholder: '9 digits',
   userCorporateTaxId: 'Company number (Chevrat Parit)',
@@ -486,11 +486,11 @@ const HE: TranslationMap = {
     'הקשר העסקה — משפיע על פרמיית שליטה וטיפול בהנחת אי-נזילות.',
   userIdentifiersTitle: 'אימות זהות (חובה)',
   userIdentifiersDesc:
-    'כל ארבעת השדות חובה לפני הרצת הערכה או גישה לדוח וללוח התוצאות. מספר הנייד משמש למשלוח דוח ה-PDF המאומת ב-WhatsApp.',
+    'כל ארבעת השדות חובה לפני הרצת הערכה או גישה לדוח וללוח התוצאות. מספר הנייד משמש ליצירת קשר ותמיכה; הדוח נשלח באימייל.',
   userMobilePhone: 'טלפון נייד',
   userMobilePhonePlaceholder: '05X-XXXXXXX',
   userMobilePhoneWhatsAppHint:
-    'מספר WhatsApp ראשי — דוח ההערכה יישלח לכאן לאחר האימות.',
+    'מספר נייד ליצירת קשר ותמיכה — דוח ההערכה נשלח באימייל.',
   userNationalId: 'ת.ז',
   userNationalIdPlaceholder: '9 ספרות',
   userCorporateTaxId: 'ח.פ חברה',
