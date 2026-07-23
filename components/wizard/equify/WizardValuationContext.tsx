@@ -71,6 +71,8 @@ export interface WizardValuationContextValue {
   setAgreedToTerms: (agreed: boolean) => void;
   applySectorMarketDefaults: (sector: EquifySectorKey) => Promise<void>;
   resetWizard: () => void;
+  /** Full replace — used by draft restore only. */
+  replaceWizardState: (next: EquifyWizardState) => void;
 }
 
 const WizardValuationContext = createContext<WizardValuationContextValue | null>(
@@ -260,6 +262,18 @@ export function WizardValuationProvider({
     setStep(1);
   }, []);
 
+  const replaceWizardState = useCallback((next: EquifyWizardState) => {
+    const coerced = coerceWizardSectorSelection(
+      next.profile.sector,
+      next.profile.subSector,
+    );
+    setState({
+      ...next,
+      profile: { ...next.profile, ...coerced },
+      financials: syncFinancialsDerived(next.financials),
+    });
+  }, []);
+
   const setReportingCurrency = useCallback((currency: ReportingCurrencyCode) => {
     setState((prev) => ({
       ...prev,
@@ -290,6 +304,7 @@ export function WizardValuationProvider({
       setAgreedToTerms,
       applySectorMarketDefaults,
       resetWizard,
+      replaceWizardState,
     }),
     [
       applySectorMarketDefaults,
@@ -299,6 +314,7 @@ export function WizardValuationProvider({
       fxRates,
       reportingCurrency,
       resetWizard,
+      replaceWizardState,
       scenarios,
       sectorMarketDefaultsPending,
       setAgreedToTerms,

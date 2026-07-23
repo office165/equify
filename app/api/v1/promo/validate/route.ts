@@ -9,6 +9,7 @@ import {
   isSupabaseAdminConfigured,
 } from '../../../../../lib/db/supabase';
 import { redeemPromoAndMint } from '../../../../../lib/payments/promo_redeem_mint';
+import { toPublicPromoDenyReason } from '../../../../../lib/payments/promo_public_reasons';
 import {
   clearPromoValidateFailures,
   isPromoValidateRateLimited,
@@ -22,7 +23,13 @@ const bodySchema = z.object({
   email: z.string().email(),
 });
 
-function invalidResponse() {
+function invalidResponse(reason?: string) {
+  if (reason) {
+    return NextResponse.json(
+      { valid: false, reason: toPublicPromoDenyReason(reason) },
+      { status: 200 },
+    );
+  }
   return NextResponse.json({ valid: false }, { status: 200 });
 }
 
@@ -61,7 +68,10 @@ export async function POST(request: Request) {
       email,
     });
     recordPromoValidateFailure(email);
-    return invalidResponse();
+    return NextResponse.json(
+      { valid: false, reason: 'server_error' },
+      { status: 503 },
+    );
   }
 
   try {
@@ -101,7 +111,7 @@ export async function POST(request: Request) {
         db_error: minted.dbMessage ?? null,
       });
       recordPromoValidateFailure(email);
-      return invalidResponse();
+      return invalidResponse(minted.reason);
     }
 
     clearPromoValidateFailures(email);

@@ -36,6 +36,8 @@ export type Step4SubmitPhase =
 export interface Step4GoalProps {
   onBack: () => void;
   onGenerate: (promoCode: string) => void | Promise<void>;
+  /** Apply promo while checkout (FULL) is already showing — must not hide PayPal on failure. */
+  onApplyPromo?: (promoCode: string) => void | Promise<void>;
   isSubmitting?: boolean;
   submitPhase?: Step4SubmitPhase;
   submitError?: string | null;
@@ -47,6 +49,7 @@ export interface Step4GoalProps {
 export function Step4Goal({
   onBack,
   onGenerate,
+  onApplyPromo,
   isSubmitting,
   submitPhase = 'idle',
   submitError,
@@ -223,13 +226,14 @@ export function Step4Goal({
           </div>
         </div>
 
-        {!showCheckout && !promoFreeReady ? (
+        {!promoFreeReady ? (
           <div className="promo-gate rv">
             {!showPromoInput ? (
               <button
                 type="button"
                 className="promo-gate-toggle"
                 onClick={() => setShowPromoInput(true)}
+                disabled={isSubmitting}
               >
                 {t.step4.promoToggle}
               </button>
@@ -245,7 +249,19 @@ export function Step4Goal({
                   spellCheck={false}
                   dir="ltr"
                   aria-label={t.step4.promoPlaceholder}
+                  disabled={isSubmitting}
                 />
+                {showCheckout && onApplyPromo ? (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    style={{ marginTop: 10 }}
+                    disabled={isSubmitting || !promoCode.trim()}
+                    onClick={() => void onApplyPromo(promoCode)}
+                  >
+                    {isHe ? 'החל קוד' : 'Apply code'}
+                  </button>
+                ) : null}
               </div>
             )}
           </div>
