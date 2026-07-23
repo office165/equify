@@ -126,7 +126,15 @@ function EquifyWizardShell({
           email: state.profile.userEmail,
         });
         if (!validated.valid || !validated.dispatchToken) {
-          setLocalSubmitError(isHe ? 'הקוד אינו תקף' : 'Invalid code');
+          if (validated.reason === 'server_error') {
+            setLocalSubmitError(
+              isHe
+                ? 'שגיאת שרת זמנית — נסו שוב בעוד רגע'
+                : 'Temporary server error — please try again',
+            );
+          } else {
+            setLocalSubmitError(isHe ? 'הקוד אינו תקף' : 'Invalid code');
+          }
           // Fall through to FULL PayPal — never PROMO / never free without server token.
         } else {
           freeDispatchToken = validated.dispatchToken;

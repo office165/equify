@@ -64,56 +64,70 @@ export async function POST(request: Request) {
     return invalidResponse();
   }
 
-  const supabase = getSupabaseAdminClient();
+  try {
+    const supabase = getSupabaseAdminClient();
 
-  const { data: user } = await supabase
-    .from('users')
-    .select('id, email')
-    .eq('email', email)
-    .is('deleted_at', null)
-    .maybeSingle();
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, email')
+      .eq('email', email)
+      .is('deleted_at', null)
+      .maybeSingle();
 
-  const { data: draft } = user?.id
-    ? await supabase
-        .from('valuations')
-        .select('id')
-        .eq('status', 'draft')
-        .eq('created_by_user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-    : { data: null };
+    const { data: draft } = user?.id
+      ? await supabase
+          .from('valuations')
+          .select('id')
+          .eq('status', 'draft')
+          .eq('created_by_user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : { data: null };
 
-  const minted = await redeemPromoAndMint({
-    code,
-    email,
-    purchaserUserId: user?.id ?? null,
-    valuationId: draft?.id ?? null,
-  });
-
-  if (!minted.ok) {
-    console.log('[promo/validate] deny', {
-      reason: minted.reason,
+    const minted = await redeemPromoAndMint({
       code,
       email,
-      db_code: minted.dbCode ?? null,
-      db_error: minted.dbMessage ?? null,
+      purchaserUserId: user?.id ?? null,
+      valuationId: draft?.id ?? null,
     });
-    recordPromoValidateFailure(email);
-    return invalidResponse();
-  }
 
-  clearPromoValidateFailures(email);
-  console.log('[promo/validate] ok', {
-    code,
-    email,
-    transactionId: minted.transactionId,
-    redemptionId: minted.redemptionId,
-  });
-  return NextResponse.json(
-    { valid: true, dispatchToken: minted.dispatchToken },
-    { status: 200 },
-  );
+    if (!minted.ok) {
+      console.log('[promo/validate] deny', {
+        reason: minted.reason,
+        code,
+        email,
+        db_code: minted.dbCode ?? null,
+        db_error: minted.dbMessage ?? null,
+      });
+      recordPromoValidateFailure(email);
+      return invalidResponse();
+    }
+
+    clearPromoValidateFailures(email);
+    console.log('[promo/validate] ok', {
+      code,
+      email,
+      transactionId: minted.transactionId,
+      redemptionId: minted.redemptionId,
+    });
+    return NextResponse.json(
+      { valid: true, dispatchToken: minted.dispatchToken },
+      { status: 200 },
+    );
+  } catch (err) {
+    console.error('[promo/validate] error', {
+      reason: 'server_error',
+      code,
+      email,
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json(
+      { valid: false, reason: 'server_error' },
+      { status: 500 },
+    );
+  }
 }
 
 export function GET() {

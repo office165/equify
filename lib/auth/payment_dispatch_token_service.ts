@@ -24,19 +24,22 @@ export class PaymentDispatchTokenService {
     payload: Omit<PaymentDispatchPayload, 'typ' | 'jti'> & { jti?: string },
   ): { token: string; jti: string } {
     const jti = payload.jti ?? crypto.randomUUID();
-    const full: PaymentDispatchPayload = {
-      sub: payload.sub,
-      jti,
-      valuationId: payload.valuationId,
-      email: payload.email,
-      typ: 'paypal_payment_dispatch',
-    };
-    const token = jwt.sign(full, getJwtSecret(), {
-      jwtid: jti,
-      expiresIn: PAYMENT_DISPATCH_TTL_SECONDS,
-      issuer: PAYMENT_DISPATCH_ISSUER,
-      audience: PAYMENT_DISPATCH_AUDIENCE,
-    });
+    // jti only via options.jwtid — jsonwebtoken rejects payload.jti + jwtid together.
+    const token = jwt.sign(
+      {
+        sub: payload.sub,
+        valuationId: payload.valuationId,
+        email: payload.email,
+        typ: 'paypal_payment_dispatch' as const,
+      },
+      getJwtSecret(),
+      {
+        jwtid: jti,
+        expiresIn: PAYMENT_DISPATCH_TTL_SECONDS,
+        issuer: PAYMENT_DISPATCH_ISSUER,
+        audience: PAYMENT_DISPATCH_AUDIENCE,
+      },
+    );
     return { token, jti };
   }
 

@@ -767,14 +767,14 @@ export class PaymentService {
     const jti = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + TOKEN_TTL_SECONDS * 1000);
 
-    const jwtPayload: OnDemandJwtPayload = {
+    const jwtPayload = {
       sub: transactionId,
-      jti,
       typ: JWT_TRANSACTION_TYP,
       org: organizationId,
       uid: userId ?? '',
     };
 
+    // jti only via jwtid — Nest/jsonwebtoken rejects payload.jti + jwtid together.
     const tokenJwt = await this.jwtService.signAsync(jwtPayload, {
       jwtid: jti,
       expiresIn: TOKEN_TTL_SECONDS,

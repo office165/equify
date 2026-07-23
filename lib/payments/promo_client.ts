@@ -5,6 +5,8 @@ export interface PromoValidateResponse {
   rateLimited?: boolean;
   /** Present only when valid — minted server-side; never invent on the client. */
   dispatchToken?: string;
+  /** Server/signing failure — must not be shown as "invalid code". */
+  reason?: 'server_error';
 }
 
 export async function postValidatePromoCode(input: {
@@ -33,12 +35,19 @@ export async function postValidatePromoCode(input: {
       return { valid: false, rateLimited: true };
     }
 
+    if (
+      response.status >= 500 ||
+      data?.reason === 'server_error'
+    ) {
+      return { valid: false, reason: 'server_error' };
+    }
+
     if (!data?.valid || typeof data.dispatchToken !== 'string' || !data.dispatchToken) {
       return { valid: false, rateLimited: data?.rateLimited };
     }
 
     return { valid: true, dispatchToken: data.dispatchToken };
   } catch {
-    return { valid: false };
+    return { valid: false, reason: 'server_error' };
   }
 }

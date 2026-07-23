@@ -1,10 +1,13 @@
 /**
- * Regression: promo redeem+mint happy path + constraint failure mapping.
+ * Regression: promo redeem+mint happy path + JWT jti signing (no payload/options dup).
  * Run: npx tsx --tsconfig tsconfig.json scripts/test-promo-validate-mint.ts
  */
 
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
+import jwt from 'jsonwebtoken';
+import { PaymentDispatchTokenService } from '../lib/auth/payment_dispatch_token_service';
 import {
   buildPromoPaymentIntentId,
   mapPromoRpcError,
@@ -14,14 +17,17 @@ import {
 
 function mockDeps(
   rpc: PromoRedeemMintDeps['rpc'],
+  signDispatch?: PromoRedeemMintDeps['signDispatch'],
 ): PromoRedeemMintDeps {
   return {
     isConfigured: () => true,
     rpc,
-    signDispatch: ({ sub, jti }) => ({
-      token: `header.payload.${sub}.${jti}`,
-      jti,
-    }),
+    signDispatch:
+      signDispatch ??
+      (({ sub, jti }) => ({
+        token: `header.payload.${sub}.${jti}`,
+        jti,
+      })),
   };
 }
 
@@ -38,36 +44,98 @@ async function main() {
   }
 
   {
-    let rpcCalls = 0;
+    // Real signDispatch — production bug was payload.jti + options.jwtid.
+    const jti = crypto.randomUUID();
+    const svc = new PaymentDispatchTokenService();
+    const { token, jti: returnedJti } = svc.signDispatch({
+      sub: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      valuationId: 'dddddddd-dddd-dddd-dddd-dddddddddddd',
+      email: 'proof@example.com',
+      jti,
+    });
+    assert.equal(returnedJti, jti);
+    assert.match(token, /^eyJ/);
+    const decoded = jwt.decode(token) as {
+      jti?: string;
+      sub?: string;
+      typ?: string;
+    } | null;
+    assert.ok(decoded);
+    assert.equal(decoded!.jti, jti);
+    assert.equal(decoded!.sub, 'cccccccc-cccc-cccc-cccc-cccccccccccc');
+    assert.equal(decoded!.typ, 'paypal_payment_dispatch');
+    const verified = svc.verifyDispatch(token);
+    assert.equal(verified.jti, jti);
+    passed += 1;
+    console.log('✅ PASS [real signDispatch: token signed, decoded jti matches]', {
+      jti,
+      tokenPrefix: `${token.slice(0, 48)}…`,
+    });
+  }
+
+  {
+    // Prove the old duplicate pattern still throws (library contract).
+    const jti = crypto.randomUUID();
+    assert.throws(
+      () =>
+        jwt.sign(
+          {
+            sub: 'x',
+            jti,
+            valuationId: 'y',
+            email: 'z@example.com',
+            typ: 'paypal_payment_dispatch',
+          },
+          process.env.JWT_SECRET ?? 'valubot-dev-jwt-secret',
+          { jwtid: jti, expiresIn: 60 },
+        ),
+      /jwtid|jti/i,
+    );
+    passed += 1;
+    console.log('✅ PASS [regression: payload.jti + options.jwtid throws]');
+  }
+
+  {
+    let capturedJti: string | null = null;
+    let capturedJwt: string | null = null;
+    const svc = new PaymentDispatchTokenService();
     const result = await redeemPromoAndMint(
       { code: 'lz0707lz', email: 'User@Example.com' },
-      mockDeps(async (fn, args) => {
-        rpcCalls += 1;
-        assert.equal(fn, 'redeem_promo_and_mint');
-        assert.equal(args.p_code, 'LZ0707LZ');
-        assert.equal(args.p_email, 'user@example.com');
-        assert.match(String(args.p_stripe_payment_intent_id), /^promo-free-/);
-        assert.equal(typeof args.p_token_jwt, 'string');
-        assert.ok(String(args.p_token_jwt).length > 10);
-        return {
-          data: {
-            ok: true,
-            redemption_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-            transaction_id: args.p_transaction_id,
-            promo_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
-          },
-          error: null,
-        };
-      }),
+      mockDeps(
+        async (fn, args) => {
+          assert.equal(fn, 'redeem_promo_and_mint');
+          assert.equal(args.p_code, 'LZ0707LZ');
+          assert.equal(args.p_email, 'user@example.com');
+          assert.match(String(args.p_stripe_payment_intent_id), /^promo-free-/);
+          capturedJti = String(args.p_token_jti);
+          capturedJwt = String(args.p_token_jwt);
+          assert.match(capturedJwt, /^eyJ/);
+          const decoded = jwt.decode(capturedJwt) as { jti?: string } | null;
+          assert.equal(decoded?.jti, capturedJti);
+          return {
+            data: {
+              ok: true,
+              redemption_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+              transaction_id: args.p_transaction_id,
+              promo_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            },
+            error: null,
+          };
+        },
+        (payload) => svc.signDispatch(payload),
+      ),
     );
     assert.equal(result.ok, true);
     if (result.ok) {
-      assert.ok(result.dispatchToken.includes(result.transactionId));
+      assert.equal(typeof result.dispatchToken, 'string');
+      assert.match(result.dispatchToken, /^eyJ/);
+      const verified = svc.verifyDispatch(result.dispatchToken);
+      assert.equal(verified.jti, capturedJti);
       assert.equal(result.redemptionId, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
     }
-    assert.equal(rpcCalls, 1);
+    assert.ok(capturedJti);
     passed += 1;
-    console.log('✅ PASS [happy path: single atomic RPC → dispatchToken]');
+    console.log('✅ PASS [happy path: real signDispatch → p_token_jti === decoded jti]');
   }
 
   {
