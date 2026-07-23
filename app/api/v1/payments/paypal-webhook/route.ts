@@ -27,6 +27,19 @@ function resolvePaypalMinAmountIls(): number {
 export async function POST(request: Request) {
   const rawBody = await request.text();
 
+  // TEMP DIAG — remove after PAYPAL_WEBHOOK_ID production verification
+  {
+    const raw = process.env.PAYPAL_WEBHOOK_ID;
+    const webhookId = raw?.trim() ?? '';
+    const defined = webhookId.length > 0;
+    console.log('[paypal-webhook] TEMP_ENV_DIAG PAYPAL_WEBHOOK_ID', {
+      defined,
+      length: webhookId.length,
+      prefix4: defined ? webhookId.slice(0, 4) : null,
+      suffix4: defined ? webhookId.slice(-4) : null,
+    });
+  }
+
   let valid = false;
   try {
     valid = await verifyPayPalWebhookSignature(request.headers, rawBody);
