@@ -1,11 +1,19 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono } from 'next/font/google';
 import { LandingPage } from '../components/landing/LandingPage';
+import { HOME_DESCRIPTION, HOME_TITLE } from '../lib/brand/brand-identity';
 
 export const metadata: Metadata = {
-  title: 'equify BY SBC | שווי העסק שלך בנתונים',
-  description:
-    'דוח הערכת שווי עם DCF, מכפילי שוק מכוילים ל-12 עסקאות M&A בישראל, וציון איכות. שווי משוקלל מעשי.',
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
+  openGraph: {
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+  },
+  twitter: {
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+  },
 };
 
 const landingMono = IBM_Plex_Mono({
