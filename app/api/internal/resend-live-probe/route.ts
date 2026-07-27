@@ -24,8 +24,9 @@ function maskSecretPresent(value: string | undefined): boolean {
 }
 
 /**
- * Temporary secured probe — POST only, Bearer EMAIL_LIVE_PROBE_SECRET or CRON_SECRET.
+ * Temporary secured probe — POST or GET, Bearer EMAIL_LIVE_PROBE_SECRET or CRON_SECRET.
  * Sends exactly one email to office@sbc-il.co.il via EmailGateway.
+ * (Redeploy trigger: no runtime behavior change.)
  */
 export async function POST(request: Request) {
   return handleProbe(request);
