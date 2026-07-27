@@ -11,7 +11,7 @@ export const PRIVACY_POLICY_HE: LegalDocument = {
       heading: '1. מי אחראי לעיבוד הנתונים',
       paragraphs: [
         'בקר הנתונים: SBC — מפעילת פלטפורמת equify BY SBC.',
-        'יצירת קשר בנושא פרטיות: privacy@equify.app',
+        'יצירת קשר בנושא פרטיות: office@sbc-il.co.il',
       ],
     },
     {
@@ -75,7 +75,7 @@ export const PRIVACY_POLICY_HE: LegalDocument = {
       heading: '8. זכויות המשתמש',
       paragraphs: ['בכפוף לדין הישראלי וה-GDPR (ככל שחל), עומדות למשתמש זכויות:'],
       bullets: [
-        'עיון, תיקון, מחיקה ("הזכות להישכח") — בפנייה ל-privacy@equify.app;',
+        'עיון, תיקון, מחיקה ("הזכות להישכח") — בפנייה ל-office@sbc-il.co.il;',
         'הגבלת עיבוד או התנגדות — במקרים המתאימים;',
         'משיכת הסכמה — ללא פגיעה בלגיטימיות עיבוד קודם.',
       ],
@@ -95,7 +95,7 @@ export const PRIVACY_POLICY_HE: LegalDocument = {
     {
       heading: '11. יצירת קשר',
       paragraphs: [
-        'privacy@equify.app · hello@equify.co.il',
+        'office@sbc-il.co.il',
         'equify BY SBC · © 2026',
       ],
     },
