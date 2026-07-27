@@ -6,8 +6,19 @@ import { useCallback, useEffect } from 'react';
 
 function canNavigateBack(): boolean {
   if (typeof window === 'undefined') return false;
-  // Primary signal; document.referrer may be empty (referrer-policy) and must not block back().
-  return window.history.length > 1;
+  if (window.history.length <= 1) return false;
+
+  const referrer = document.referrer.trim();
+  // Empty referrer (privacy / referrer-policy): allow back when history exists.
+  if (!referrer) return true;
+
+  try {
+    // Referrer present and external → do not back() off-site; use push('/') instead.
+    return new URL(referrer).origin === window.location.origin;
+  } catch {
+    // Unparseable referrer — do not block; history.length already > 1.
+    return true;
+  }
 }
 
 /** Floating dismiss — returns to prior in-app route without full reload when possible. */
