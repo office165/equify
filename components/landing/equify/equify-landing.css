@@ -1433,6 +1433,15 @@ footer {
   color: var(--paper-dim);
 }
 
+/* Return visit — skip reveal animations; set by EquifyLandingPage via sessionStorage */
+.equify-landing-root.equify-landing-return .rv,
+.equify-landing-root.equify-landing-return .rv-l,
+.equify-landing-root.equify-landing-return .h-title .ln > span,
+.equify-landing-root.equify-landing-return .tick-card {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
 /* ============ REVEAL HELPERS ============ */
 .rv {
   opacity: 0;

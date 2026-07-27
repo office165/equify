@@ -5,6 +5,7 @@ import type { LandingRefs } from './useLandingRefs';
 
 export interface EquifyMotionOptions extends LandingRefs {
   reducedMotion: boolean;
+  skipIntro?: boolean;
   onPreloadComplete: () => void;
 }
 
@@ -12,6 +13,7 @@ export interface EquifyMotionOptions extends LandingRefs {
 export function useEquifyMotion(options: EquifyMotionOptions): void {
   const {
     reducedMotion,
+    skipIntro = false,
     onPreloadComplete,
     heroValRef,
     sparkLineRef,
@@ -84,6 +86,22 @@ export function useEquifyMotion(options: EquifyMotionOptions): void {
           const loader = loaderRef.current;
           const bar = loader?.querySelector('.l-bar i') as HTMLElement | null;
           const num = loader?.querySelector('.l-num') as HTMLElement | null;
+
+          const applyReturnVisitState = () => {
+            gsap.set('.h-title .ln>span', { y: 0 });
+            gsap.set('.hero .rv, .tick-card', { opacity: 1, y: 0, x: 0 });
+            const hv = heroValRef.current;
+            if (hv) hv.textContent = '20.1';
+            drawSpark();
+            const line = sparkLineRef.current;
+            if (line) line.style.strokeDashoffset = '0';
+            onPreloadComplete();
+            ScrollTrigger.refresh();
+          };
+
+          if (skipIntro) {
+            applyReturnVisitState();
+          } else {
           const o = { v: 0 };
 
           gsap.to(o, {
@@ -112,6 +130,7 @@ export function useEquifyMotion(options: EquifyMotionOptions): void {
               }
             },
           });
+          }
 
           const nav = navRef.current;
           const onScroll = () => {
@@ -296,6 +315,7 @@ export function useEquifyMotion(options: EquifyMotionOptions): void {
     };
   }, [
     reducedMotion,
+    skipIntro,
     onPreloadComplete,
     heroValRef,
     sparkLineRef,

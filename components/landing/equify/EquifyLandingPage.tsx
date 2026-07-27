@@ -1,7 +1,13 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useCallback, useState } from 'react';
+import { useCallback, useLayoutEffect, useState } from 'react';
+import {
+  PRELOADER_SHOWN_KEY,
+  readSessionFlag,
+  writeSessionFlag,
+} from '../../../lib/navigation/session_ui';
+import { useSessionScrollPersistence } from '../../shared/useSessionScrollPersistence';
 import { useReducedMotion } from '../motion/useReducedMotion';
 import { useLandingRefs } from './hooks/useLandingRefs';
 import { LandingFooter } from './shared/LandingFooter';
@@ -29,14 +35,34 @@ const EquifyTerrainBridge = dynamic(() => import('./EquifyTerrainBridge'), { ssr
 export function EquifyLandingPage() {
   const reducedMotion = useReducedMotion();
   const [loaderVisible, setLoaderVisible] = useState(true);
+  const [skipIntro, setSkipIntro] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const refs = useLandingRefs();
 
-  const onPreloadComplete = useCallback(() => setLoaderVisible(false), []);
+  // sessionStorage is client-only — read in useLayoutEffect to avoid hydration mismatch
+  // and hide the preloader before paint on return visits.
+  useLayoutEffect(() => {
+    if (readSessionFlag(PRELOADER_SHOWN_KEY)) {
+      setLoaderVisible(false);
+      setSkipIntro(true);
+    }
+  }, []);
+
+  useSessionScrollPersistence('/', skipIntro);
+
+  const onPreloadComplete = useCallback(() => {
+    setLoaderVisible(false);
+    writeSessionFlag(PRELOADER_SHOWN_KEY);
+  }, []);
 
   return (
     <div
-      className="equify-landing-root relative min-h-[100dvh] pb-safe text-right"
+      className={[
+        'equify-landing-root relative min-h-[100dvh] pb-safe text-right',
+        skipIntro ? 'equify-landing-return' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       dir="rtl"
       lang="he"
     >
@@ -73,6 +99,7 @@ export function EquifyLandingPage() {
 
       <EquifyMotionBridge
         reducedMotion={reducedMotion}
+        skipIntro={skipIntro}
         onPreloadComplete={onPreloadComplete}
         {...refs}
       />

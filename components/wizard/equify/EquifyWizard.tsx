@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ValuationLocale } from '../../../api_client';
 import { postMondayLeadUpdate } from '../../../lib/crm/update_lead_monday_client';
@@ -25,6 +25,12 @@ import { useReportingCurrency } from './WizardValuationContext';
 import { EquifyLanguageToggle } from '../../shared/EquifyLanguageToggle';
 import { EquifyLogo } from '../../brand/EquifyLogo';
 import { useReducedMotion } from '../../landing/motion/useReducedMotion';
+import { useSessionScrollPersistence } from '../../shared/useSessionScrollPersistence';
+import {
+  readSessionFlag,
+  WIZARD_ENTERED_KEY,
+  writeSessionFlag,
+} from '../../../lib/navigation/session_ui';
 import { useValuationI18n } from '../../../valuation_i18n';
 import { Step1Profile } from './steps/Step1Profile';
 import { Step2Financials } from './steps/Step2Financials';
@@ -98,6 +104,7 @@ function EquifyWizardShell({
   const paneRef = useRef<HTMLElement>(null);
   const [mounted, setMounted] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [skipEnterAnim, setSkipEnterAnim] = useState(false);
   const [localSubmitting, setLocalSubmitting] = useState(false);
   const [submitPhase, setSubmitPhase] = useState<Step4SubmitPhase>('idle');
   const [localSubmitError, setLocalSubmitError] = useState<string | null>(null);
@@ -120,16 +127,30 @@ function EquifyWizardShell({
     },
   });
 
-  useEffect(() => {
-    setMounted(true);
+  useLayoutEffect(() => {
+    if (readSessionFlag(WIZARD_ENTERED_KEY)) {
+      setSkipEnterAnim(true);
+      setMounted(true);
+      setRevealed(true);
+    }
   }, []);
+
+  useEffect(() => {
+    if (!skipEnterAnim) setMounted(true);
+  }, [skipEnterAnim]);
+
+  useSessionScrollPersistence('/wizard', skipEnterAnim);
+
+  useEffect(() => {
+    if (revealed && !skipEnterAnim) writeSessionFlag(WIZARD_ENTERED_KEY);
+  }, [revealed, skipEnterAnim]);
 
   useEffect(() => {
     setRevealed(false);
   }, [step]);
 
   useWizardBgCanvas(canvasRef, { reducedMotion });
-  useWizardStepMotion(step, reducedMotion, topbarRef, paneRef, () => {
+  useWizardStepMotion(step, reducedMotion || skipEnterAnim, topbarRef, paneRef, () => {
     setRevealed(true);
   });
 
@@ -347,7 +368,7 @@ function EquifyWizardShell({
       className={[
         'equify-wizard',
         mounted ? 'eqw-mounted' : '',
-        mounted && !reducedMotion ? 'eqw-animate' : '',
+        mounted && !reducedMotion && !skipEnterAnim ? 'eqw-animate' : '',
         revealed ? 'eqw-revealed' : '',
         step === 2 ? 'eqw-step-financials' : '',
       ]
