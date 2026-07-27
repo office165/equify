@@ -3,13 +3,7 @@
 import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
-import { APP_VISITED_STORAGE_KEY } from '../shared/AppVisitedMarker';
-
-function canNavigateBack(): boolean {
-  if (typeof window === 'undefined') return false;
-  if (window.history.length <= 1) return false;
-  return sessionStorage.getItem(APP_VISITED_STORAGE_KEY) === '1';
-}
+import { canNavigateBack } from '../../lib/legal/can_navigate_back';
 
 /** Floating dismiss — returns to prior in-app route without leaving the site. */
 export function LegalCloseButton() {
