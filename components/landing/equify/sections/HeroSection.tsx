@@ -35,8 +35,8 @@ export function HeroSection({
             </span>
           </h1>
           <p className="h-sub rv">
-            שלושה יסודות: DCF, מכפילי שוק מכוילים וציון איכות. השווי המוצג הוא ממוצע משוקלל — מעשי
-            השוק, לא אקדמי.
+            הדוח משלב DCF, מכפילי שוק מכוילים וציון איכות. השווי המוצג הוא ממוצע משוקלל שמשקף את
+            מעשי השוק, לא תיאוריה אקדמית.
           </p>
           <div className="h-cta rv">
             <Link className="btn magnetic" href="/wizard">
@@ -48,7 +48,7 @@ export function HeroSection({
           </div>
           <div className="h-note rv">
             <span>
-              <i />התחל בחינם — תשלום בהפקת הדוח
+              <i />התחל בחינם, תשלום בהפקת הדוח
             </span>
             <span>
               <i />

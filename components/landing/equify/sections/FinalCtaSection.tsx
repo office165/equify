@@ -14,7 +14,7 @@ export function FinalCtaSection() {
           <span className="hl">בנתונים.</span>
         </h2>
         <p className="f-note rv" style={{ marginTop: '1rem', maxWidth: '32rem', marginInline: 'auto' }}>
-          DCF · מכפילי שוק · ניתוח סיכון ·{' '}
+          כולל DCF, מכפילי שוק וניתוח סיכון.{' '}
           <DurationValue variant="long" />
         </p>
         <Link className="btn magnetic" href="/wizard">
