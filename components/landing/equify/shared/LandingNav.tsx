@@ -28,7 +28,7 @@ export function LandingNav({ navRef, menuOpen, onOpenMenu, onCloseMenu }: Landin
     <>
       <header className="nav" id="nav" ref={navRef}>
         <div className="wrap nav-in">
-          <Link href="/" className="logo" aria-label="equify BY SBC — דף הבית">
+          <Link href="/" className="logo" aria-label="equify BY SBC, דף הבית">
             <EquifyLogo variant="dark-bg" compact={mobile} decorative />
           </Link>
           <nav className="nav-links" aria-label="ניווט ראשי">

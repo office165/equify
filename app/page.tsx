@@ -3,9 +3,9 @@ import { IBM_Plex_Mono } from 'next/font/google';
 import { LandingPage } from '../components/landing/LandingPage';
 
 export const metadata: Metadata = {
-  title: 'equify BY SBC — שווי העסק שלך. בנתונים.',
+  title: 'equify BY SBC | שווי העסק שלך בנתונים',
   description:
-    'דוח הערכת שווי על שלושה יסודות: DCF, מכפילי שוק מכוילים ל-12 עסקאות M&A בישראל, וציון איכות. שווי משוקלל מעשי.',
+    'דוח הערכת שווי עם DCF, מכפילי שוק מכוילים ל-12 עסקאות M&A בישראל, וציון איכות. שווי משוקלל מעשי.',
 };
 
 const landingMono = IBM_Plex_Mono({
