@@ -35,7 +35,7 @@ export const ACCESSIBILITY_STATEMENT_PAGE_HE: LegalDocument = {
       heading: 'רכז/ת נגישות',
       paragraphs: [
         'רכז/ת הנגישות: צוות equify BY SBC',
-        'דוא"ל: accessibility@equify.app',
+        'דוא"ל: office@sbc-il.co.il',
         'טלפון: ניתן לפנות גם בדוא"ל לתיאום שיחה.',
         'שעות מענה: ימים א׳–ה׳, 09:00–18:00 (IST). נשתדל להשיב ולטפל בפנייה בהקדם האפשרי, ולא יאוחר מ-14 ימי עסקים.',
       ],

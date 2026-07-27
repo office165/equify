@@ -78,7 +78,7 @@ export const TERMS_OF_USE_HE: LegalDocument = {
     {
       heading: '10. יצירת קשר',
       paragraphs: [
-        'לשאלות בנושא תנאי השימוש: legal@equify.app · hello@equify.co.il',
+        'לשאלות בנושא תנאי השימוש: office@sbc-il.co.il',
         'equify BY SBC · כל הזכויות שמורות © 2026',
       ],
     },
