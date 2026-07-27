@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import {
-  BRAND_DESCRIPTION,
   BRAND_NAME,
-  BRAND_TITLE,
+  HOME_DESCRIPTION,
+  HOME_TITLE,
 } from '../lib/brand/brand-identity';
 
 function resolveSiteUrl(): URL {
@@ -19,8 +19,8 @@ function resolveSiteUrl(): URL {
 
 export const siteUrl = resolveSiteUrl();
 
-const title = BRAND_TITLE;
-const description = BRAND_DESCRIPTION;
+const title = HOME_TITLE;
+const description = HOME_DESCRIPTION;
 
 export const rootMetadata: Metadata = {
   metadataBase: siteUrl,
