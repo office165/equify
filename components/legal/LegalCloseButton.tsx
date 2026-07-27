@@ -3,19 +3,12 @@
 import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
+import { APP_VISITED_STORAGE_KEY } from '../shared/AppVisitedMarker';
 
 function canNavigateBack(): boolean {
   if (typeof window === 'undefined') return false;
   if (window.history.length <= 1) return false;
-
-  const referrer = document.referrer.trim();
-  if (!referrer) return false;
-
-  try {
-    return new URL(referrer).origin === window.location.origin;
-  } catch {
-    return false;
-  }
+  return sessionStorage.getItem(APP_VISITED_STORAGE_KEY) === '1';
 }
 
 /** Floating dismiss — returns to prior in-app route without leaving the site. */

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { AccessibilityPreferencesProvider, useAccessibilityPreferences } from '../../lib/accessibility/accessibility_preferences';
 import { AccessibilityToolbar } from '../../lib/components/AccessibilityToolbar';
 import { ValuationI18nProvider } from '../../valuation_i18n';
+import { AppVisitedMarker } from './AppVisitedMarker';
 
 /** Applies a11y preference data attributes to documentElement for global CSS hooks */
 function DocumentA11yAttributes() {
@@ -30,6 +31,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <ValuationI18nProvider>
       <AccessibilityPreferencesProvider>
         <DocumentA11yAttributes />
+        <AppVisitedMarker />
         {children}
         <AccessibilityToolbar />
       </AccessibilityPreferencesProvider>
