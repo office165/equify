@@ -28,6 +28,14 @@ function maskSecretPresent(value: string | undefined): boolean {
  * Sends exactly one email to office@sbc-il.co.il via EmailGateway.
  */
 export async function POST(request: Request) {
+  return handleProbe(request);
+}
+
+export async function GET(request: Request) {
+  return handleProbe(request);
+}
+
+async function handleProbe(request: Request) {
   if (!authorizeProbe(request)) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
@@ -99,8 +107,4 @@ export async function POST(request: Request) {
       { status: 502 },
     );
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ error: 'method_not_allowed' }, { status: 405 });
 }
