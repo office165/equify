@@ -6,9 +6,7 @@ import {
 } from '../lib/brand/brand-identity';
 
 function resolveSiteUrl(): URL {
-  const raw =
-    process.env.NEXT_PUBLIC_SITE_URL?.trim() ??
-    'https://equify.co.il';
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'https://equify.co.il';
   return new URL(raw.endsWith('/') ? raw : `${raw}/`);
 }
 
