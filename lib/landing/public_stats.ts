@@ -4,7 +4,6 @@ import {
 } from '../db/supabase';
 
 const CACHE_MS = 5 * 60 * 1000;
-const PUBLIC_MIN_DISPLAY = 25;
 
 let cached: { count: number; fetchedAt: number } | null = null;
 
