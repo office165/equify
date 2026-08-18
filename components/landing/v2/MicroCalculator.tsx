@@ -13,6 +13,28 @@ function rangeProgress(value: number, min: number, max: number): string {
   return `${p}%`;
 }
 
+const FULL_REPORT_LINES = [
+  'DCF מלא עם WACC מותאם לענף ולפרופיל הסיכון שלך',
+  'מטריצות רגישות: מה קורה לשווי אם WACC עולה ב-1%',
+  'תרחישי Bear / Base / Bull',
+  'Quality Score מפורט לפי שבעה גורמים',
+] as const;
+
+function LockIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="co-lock-icon">
+      <rect x="3" y="6" width="8" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <path
+        d="M5 6V4.5a2 2 0 0 1 4 0V6"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        fill="none"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function MicroCalculator() {
   const [revenueK, setRevenueK] = useState(8000);
   const [marginPct, setMarginPct] = useState(18);
@@ -110,23 +132,32 @@ export function MicroCalculator() {
       </div>
 
       <div className="calc-out">
-        <span className="co-label">אינדיקציית שווי לבעלים</span>
-        <div className="co-val">
-          <span id="calcVal">{result.equityM.toFixed(1)}</span>M ₪
-        </div>
-        <span className="co-label" style={{ color: 'var(--paper-dim)', letterSpacing: '.05em' }}>
-          EQUITY VALUE · INDICATIVE
-        </span>
+        <span className="co-label">הערכה גסה לפי מכפיל ענפי בלבד</span>
 
-        <div className="co-range">
+        <div className="co-range co-range-primary">
+          <div className="co-range-hero" dir="ltr">
+            <span id="crLow">₪{result.lowM.toFixed(1)}M</span>
+            <span className="co-range-sep">–</span>
+            <span id="crHigh">₪{result.highM.toFixed(1)}M</span>
+          </div>
+          <p className="co-spread" dir="rtl">
+            פער של{' '}
+            <span className="co-spread-val" dir="ltr">
+              ₪{result.spreadM.toFixed(1)}M
+            </span>{' '}
+            בין קצה לקצה
+          </p>
           <div className="cr-bar">
             <div className="cr-fill" id="crFill" style={{ left: '14%', right: '14%' }} />
             <div className="cr-dot" id="crDot" style={{ left: `${result.dotPct}%` }} />
           </div>
-          <div className="cr-ends">
-            <span id="crLow">₪{result.lowM.toFixed(1)}M</span>
-            <span id="crHigh">₪{result.highM.toFixed(1)}M</span>
-          </div>
+        </div>
+
+        <div className="co-val co-val-secondary">
+          <span className="co-val-note">אינדיקציה מרכזית (מכפיל בלבד)</span>
+          <span className="co-val-amount" dir="ltr">
+            <span id="calcVal">{result.equityM.toFixed(1)}</span>M ₪
+          </span>
         </div>
 
         <div className="co-meta">
@@ -144,9 +175,21 @@ export function MicroCalculator() {
           </div>
         </div>
 
+        <div className="co-locked">
+          <p className="co-locked-title">מה הדוח המלא מוסיף</p>
+          <ul className="co-locked-list">
+            {FULL_REPORT_LINES.map((line) => (
+              <li key={line}>
+                <LockIcon />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div className="co-cta">
           <Link className="btn magnetic" href="/wizard">
-            קבל את הדוח המלא <span className="arr">←</span>
+            צמצם את הפער: הדוח המלא <span className="arr">←</span>
           </Link>
         </div>
         <p className="co-disc">

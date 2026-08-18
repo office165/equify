@@ -23,8 +23,6 @@ export function useEquifyMotion(options: EquifyMotionOptions): void {
     beamRef,
     stepsGridRef,
     priceCardRef,
-    quotaNumRef,
-    quotaBarRef,
     marqueeRef,
     tiltCardRef,
   } = options;
@@ -194,37 +192,15 @@ export function useEquifyMotion(options: EquifyMotionOptions): void {
           }
 
           const priceCard = priceCardRef.current;
-          if (priceCard) {
-            ScrollTrigger.create({
-              trigger: priceCard,
-              start: 'top 80%',
-              once: true,
-              onEnter: () => {
-                const q = { v: 0 };
-                const qn = quotaNumRef.current;
-                const qb = quotaBarRef.current;
-                gsap.to(q, {
-                  v: 77,
-                  duration: dur(1.8),
-                  ease: 'power3.out',
-                  onUpdate: () => {
-                    if (qn) qn.textContent = String(Math.round(q.v));
-                    if (qb) qb.style.width = `${q.v}%`;
-                  },
-                });
-              },
+          if (priceCard && !reducedMotion) {
+            const ang = { a: 0 };
+            gsap.to(ang, {
+              a: 360,
+              duration: 9,
+              ease: 'none',
+              repeat: -1,
+              onUpdate: () => priceCard.style.setProperty('--ang', `${ang.a}deg`),
             });
-
-            if (!reducedMotion) {
-              const ang = { a: 0 };
-              gsap.to(ang, {
-                a: 360,
-                duration: 9,
-                ease: 'none',
-                repeat: -1,
-                onUpdate: () => priceCard.style.setProperty('--ang', `${ang.a}deg`),
-              });
-            }
           }
 
           document.querySelectorAll<HTMLDetailsElement>('.faq').forEach((d) => {
@@ -325,8 +301,6 @@ export function useEquifyMotion(options: EquifyMotionOptions): void {
     beamRef,
     stepsGridRef,
     priceCardRef,
-    quotaNumRef,
-    quotaBarRef,
     marqueeRef,
     tiltCardRef,
   ]);

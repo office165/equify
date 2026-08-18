@@ -1006,6 +1006,111 @@ html {
   margin-top: 30px;
 }
 
+.co-range-primary {
+  margin-top: 12px;
+}
+
+.co-range-hero {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 10px;
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: clamp(36px, 4.2vw, 56px);
+  color: var(--mint);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 50px rgba(0, 194, 184, 0.3);
+}
+
+.co-range-sep {
+  color: var(--paper-dim);
+  font-weight: 400;
+  font-size: 0.72em;
+}
+
+.co-spread {
+  margin: 10px 0 16px;
+  font-size: 14px;
+  color: var(--paper-dim);
+}
+
+.co-spread-val {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--mint);
+}
+
+.co-val-secondary {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.co-val-note {
+  display: block;
+  font-size: 12px;
+  color: var(--paper-dim);
+  margin-bottom: 4px;
+}
+
+.co-val-secondary .co-val-amount {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: clamp(22px, 2.4vw, 28px);
+  color: var(--paper-dim);
+  direction: ltr;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.co-locked {
+  margin-top: 28px;
+  padding: 18px 20px;
+  border: 1px solid rgba(100, 116, 139, 0.35);
+  border-radius: 16px;
+  background: transparent;
+}
+
+.co-locked-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--paper-dim);
+  margin-bottom: 12px;
+}
+
+.co-locked-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.co-locked-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--paper-dim);
+  line-height: 1.45;
+}
+
+.co-lock-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: rgba(148, 163, 184, 0.85);
+}
+
+.stats .s-early {
+  font-size: clamp(14px, 2vw, 17px);
+  line-height: 1.35;
+  color: var(--paper-dim);
+  max-width: 12rem;
+  margin-inline: auto;
+}
+
 .co-range .cr-bar {
   position: relative;
   height: 8px;

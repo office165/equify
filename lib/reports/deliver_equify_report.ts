@@ -14,6 +14,7 @@ import { refreshFxRates } from '../utils/fxService';
 import type { EquifyValuationPersistedState } from '../wizard/equify_valuation_persistence';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { buildExportValuationDataFromLiveSession } from '../results/build-export-valuation-data';
+import { scheduleProductEvent } from '../analytics/track_event';
 
 export type ReportDeliverTrigger = 'PAYPAL_PAID' | 'PROMO_FREE';
 
@@ -271,6 +272,17 @@ export async function deliverEquifyReport(
   const ok =
     pdfBuffer.byteLength > 0 &&
     (mondayResult.columnsUpdated || mondayResult.fileUploaded || emailResult.delivered);
+
+  if (ok) {
+    scheduleProductEvent({
+      eventType: 'report_created',
+      metadata: {
+        reportId,
+        source: 'reports/deliver',
+        triggerType: input.triggerType,
+      },
+    });
+  }
 
   return {
     ok,
