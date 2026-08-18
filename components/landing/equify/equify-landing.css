@@ -1538,6 +1538,74 @@ footer {
   color: var(--paper-dim);
 }
 
+.equify-landing-root .foot-feedback {
+  margin-top: 28px;
+  max-width: 28rem;
+  padding: 14px 16px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.equify-landing-root .foot-feedback-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--paper-dim);
+}
+
+.equify-landing-root .foot-feedback textarea,
+.equify-landing-root .foot-feedback input[type='email'] {
+  width: 100%;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid rgb(51 65 85 / 0.5);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.equify-landing-root .foot-feedback textarea::placeholder,
+.equify-landing-root .foot-feedback input[type='email']::placeholder {
+  color: rgb(148 163 184 / 0.55);
+}
+
+.equify-landing-root .foot-feedback button[type='submit'] {
+  align-self: flex-start;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid rgb(51 65 85 / 0.5);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.equify-landing-root .foot-feedback button[type='submit']:hover:not(:disabled) {
+  color: var(--paper);
+  border-color: rgb(71 85 105 / 0.7);
+}
+
+.equify-landing-root .foot-feedback button[type='submit']:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.equify-landing-root .foot-feedback-thanks,
+.equify-landing-root .foot-feedback-err {
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--paper-dim);
+}
+
+.equify-landing-root .foot-feedback-err {
+  margin-top: 0;
+}
+
 /* Return visit — skip reveal animations; set by EquifyLandingPage via sessionStorage */
 .equify-landing-root.equify-landing-return .rv,
 .equify-landing-root.equify-landing-return .rv-l,
