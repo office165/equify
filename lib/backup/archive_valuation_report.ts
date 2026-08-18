@@ -69,6 +69,19 @@ function buildCoreHistoryRow(
   };
 }
 
+async function removeUploadedReportObject(
+  supabase: ReturnType<typeof getSupabaseAdminClient>,
+  storagePath: string,
+): Promise<void> {
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+  if (error) {
+    console.error('[supabase-backup] failed to roll back storage object', {
+      path: storagePath,
+      message: error.message,
+    });
+  }
+}
+
 /**
  * Upload PDF to Supabase Storage and persist metadata in valuations_history.
  */
@@ -105,6 +118,7 @@ export async function archiveValuationReport(
   const storagePath = buildStorageObjectPath(userEmail);
 
   let pdfUrl: string;
+  let uploadCommitted = false;
 
   try {
     console.log('[supabase-backup] uploading to storage bucket', {
@@ -125,6 +139,7 @@ export async function archiveValuationReport(
       throw uploadError;
     }
 
+    uploadCommitted = true;
     console.log('[supabase-backup] storage upload complete', { storagePath });
 
     const { data: signed, error: signedError } = await supabase.storage
@@ -137,6 +152,9 @@ export async function archiveValuationReport(
 
     pdfUrl = signed.signedUrl;
   } catch (error) {
+    if (uploadCommitted) {
+      await removeUploadedReportObject(supabase, storagePath);
+    }
     console.error(
       'SUPABASE BACKUP FAILED DIRECT ERROR:',
       error instanceof Error ? error.message : error,
@@ -183,6 +201,7 @@ export async function archiveValuationReport(
       historyRowId: inserted?.id ?? null,
     };
   } catch (error) {
+    await removeUploadedReportObject(supabase, storagePath);
     console.error(
       'SUPABASE BACKUP FAILED DIRECT ERROR:',
       error instanceof Error ? error.message : 'history_insert_failed',
