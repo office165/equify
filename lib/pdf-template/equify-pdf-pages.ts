@@ -34,6 +34,7 @@ import { buildCoverCircleStageHtml } from './cover-circle-graphic';
 import { FINANCIAL_DATA_COPY, multiplesMethodologyCopy, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY, ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
 import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import type { ValuationData } from './types';
+import { getGoalStandardCopy } from '../wizard/equify_goal_copy';
 import {
   buildMoatNotesCalloutHtml,
   resolveExecutiveSummaryHtml,
@@ -209,6 +210,10 @@ function buildPage2ExecSummary(data: ValuationData): string {
     )
     .join('');
   const noteDate = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
+  const sov = getGoalStandardCopy(data.goal, resolvePdfLocale(data.locale));
+  const sovHtml = sov
+    ? `<p class="sov">${escHtml(sov.standardOfValue)}</p>`
+    : '';
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
@@ -217,6 +222,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
     <div class="page-intro">
       <span class="eyebrow">02 · תקציר מנהלים</span>
       <h2>תקציר מנהלים</h2>
+      ${sovHtml}
       <p class="sub">${summary}</p>
       ${moatCallout}
     </div>
@@ -503,18 +509,18 @@ function buildPage7QualitySensitivity(data: ValuationData): string {
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
-  <div class="body">
+    <div class="body page-body--quality">
     <span class="eyebrow">${en ? '07 · Quality & sensitivity' : '07 · איכות ורגישות'}</span>
     <h2>${en ? 'Quality Score & sensitivity analysis' : 'Quality Score וניתוח רגישות'}</h2>
     <p class="sub">${escHtml(qualityIntro)}</p>
-    <div style="display:grid;grid-template-columns:54mm 1fr;gap:5mm;align-items:start;margin-top:1mm">
+    <div class="quality-split">
       <div class="box" style="text-align:center;margin-top:0">${buildEquifyQualityGaugeSvg(data.qualityScore, data.qualityGrade)}</div>
       <table class="report-table report-table--quality" style="margin-top:0">
         ${reportColgroup([...QUALITY_FACTOR_WIDTHS])}
         <tr><th>${en ? 'Quality factor' : 'גורם איכות'}</th><th>${en ? 'Finding' : 'ממצא'}</th><th>${en ? 'Score' : 'ציון'}</th></tr>${factorRows}</table>
     </div>
-    ${sensGrowth ? `<p class="sub" style="margin-top:2mm;white-space:pre-line">${escHtml(sensitivityIntro)}</p><div class="box" style="margin-top:1mm"><h3>${sensHeader}</h3>${sensGrowth}</div>` : ''}
-    ${sensEbitda ? `<div class="box" style="margin-top:2mm"><h3>${ebitdaSensHeader}</h3>${sensEbitda}</div>` : ''}
+    ${sensGrowth ? `<p class="sub quality-sens-intro">${escHtml(sensitivityIntro)}</p><div class="box"><h3>${sensHeader}</h3>${sensGrowth}</div>` : ''}
+    ${sensEbitda ? `<div class="box"><h3>${ebitdaSensHeader}</h3>${sensEbitda}</div>` : ''}
   </div>`;
   return wrapSheet(7, '', body, data.locale);
 }

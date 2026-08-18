@@ -24,6 +24,16 @@ export interface EquifyWizardStepStrings {
     selectSector: string;
     selectSubSector: string;
     lifecycleGroup: string;
+    sectorSearch: string;
+    sectorSearchPlaceholder: string;
+    sectorNoResults: string;
+    unsureSector: string;
+    unsureHint: string;
+    unsurePlaceholder: string;
+    unsureSubmit: string;
+    unsureBusy: string;
+    unsureError: string;
+    unsureEmpty: string;
     uploadLogo: string;
     logoErrorType: string;
     logoErrorSize: string;
@@ -40,6 +50,7 @@ export interface EquifyWizardStepStrings {
       navMultiple: string;
       industryRange: string;
       disclaimer: string;
+      peerTraitsTitle: string;
       reDevelopment?: {
         title: string;
         subtitle: string;
@@ -241,6 +252,16 @@ const HE: EquifyWizardStepStrings = {
     selectSector: 'בחר ענף',
     selectSubSector: 'בחר תת-ענף',
     lifecycleGroup: 'שלב חיים',
+    sectorSearch: 'חיפוש ענף',
+    sectorSearchPlaceholder: 'חפשו ענף או תת-ענף…',
+    sectorNoResults: 'לא נמצאו ענפים תואמים',
+    unsureSector: 'לא בטוח מה הענף שלי?',
+    unsureHint: 'תארו בקצרה מה העסק עושה — נציע 2–3 התאמות.',
+    unsurePlaceholder: 'לדוגמה: מלון בוטיק בתל אביב, או תוכנת SaaS לניהול מלאי',
+    unsureSubmit: 'הצעת ענפים',
+    unsureBusy: 'מחפש…',
+    unsureError: 'לא ניתן להציע ענף כרגע. נסו שוב.',
+    unsureEmpty: 'לא מצאנו התאמה. נסו ניסוח אחר או בחרו מהרשימה.',
     uploadLogo: 'גרור לכאן או לחץ להעלאה · PNG/JPG',
     logoErrorType: 'יש להעלות קובץ PNG או JPG בלבד.',
     logoErrorSize: 'גודל הלוגו חייב להיות קטן מ-2MB.',
@@ -258,6 +279,7 @@ const HE: EquifyWizardStepStrings = {
       industryRange: 'טווח ענפי מקובל',
       disclaimer:
         '* נתון זה מהווה בסיס בלבד. הערכת השווי הסופית תשוקלל עם נתוני הצמיחה, הרווחיות ופרופיל הסיכון הספציפי של החברה שלך.',
+      peerTraitsTitle: 'כך נראים עסקים דומים בענף שלך',
       reDevelopment: {
         title: 'תובנת שוק: יזמות נדל"ן (מגורים ומסחרי)',
         subtitle:
@@ -500,6 +522,16 @@ const EN: EquifyWizardStepStrings = {
     selectSector: 'Select sector',
     selectSubSector: 'Select sub-sector',
     lifecycleGroup: 'Lifecycle stage',
+    sectorSearch: 'Search sector',
+    sectorSearchPlaceholder: 'Search a sector or sub-sector…',
+    sectorNoResults: 'No matching sectors',
+    unsureSector: 'Not sure which sector?',
+    unsureHint: 'Describe the business in a sentence — we will suggest 2–3 matches.',
+    unsurePlaceholder: 'e.g. boutique hotel in Tel Aviv, or inventory SaaS',
+    unsureSubmit: 'Suggest sectors',
+    unsureBusy: 'Searching…',
+    unsureError: 'Could not suggest a sector. Please try again.',
+    unsureEmpty: 'No match found. Try different wording or pick from the list.',
     uploadLogo: 'Drag here or tap to upload · PNG/JPG',
     logoErrorType: 'Please upload a PNG or JPG image.',
     logoErrorSize: 'Logo must be smaller than 2 MB.',
@@ -517,6 +549,7 @@ const EN: EquifyWizardStepStrings = {
       industryRange: 'Accepted sector range',
       disclaimer:
         '* This figure is a baseline only. Your final valuation will reflect company-specific growth, profitability, and risk profile.',
+      peerTraitsTitle: 'How similar businesses in your sector typically look',
     },
   },
   step2: {

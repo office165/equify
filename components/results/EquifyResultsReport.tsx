@@ -26,6 +26,8 @@ import type { EquifyWizardState } from '../../lib/wizard/map_equify_wizard';
 import { mapEquifyToWizardFormValues } from '../../lib/wizard/map_equify_wizard';
 import { resolveDisplayCompanyName } from '../../lib/wizard/resolve_company_display';
 import { isValidLogoDataUrl } from '../../lib/utils/logo_data_url';
+import { getGoalStandardCopy } from '../../lib/wizard/equify_goal_copy';
+import { buildWhatsAppSupportUrl } from '../../lib/wizard/whatsapp_support';
 import { EquifyLanguageToggle } from '../shared/EquifyLanguageToggle';
 import { EquifyLogo } from '../brand/EquifyLogo';
 import { useReducedMotion } from '../landing/motion/useReducedMotion';
@@ -892,6 +894,29 @@ export function EquifyResultsReport({
           <p className="final-cap rv">
             {rs.blendFooter(reportDate)}
           </p>
+
+          {(() => {
+            const sbcCopy = getGoalStandardCopy(equifyState?.goal, locale);
+            if (!sbcCopy) return null;
+            const waHref = buildWhatsAppSupportUrl(sbcCopy.waText);
+            return (
+              <div className="sbc-nudge rv">
+                <p className="sbc-nudge-kicker">SBC</p>
+                <h3>{sbcCopy.sbcHeadline}</h3>
+                <p>{sbcCopy.sbcBody}</p>
+                {waHref ? (
+                  <a
+                    className="sbc-nudge-link"
+                    href={waHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {isHe ? 'שיחה ב-WhatsApp' : 'WhatsApp chat'}
+                  </a>
+                ) : null}
+              </div>
+            );
+          })()}
 
           <div className="final-cta rv flex w-full min-w-0 max-w-full flex-col items-center gap-4 px-6 sm:gap-6 sm:px-0">
             <div className="w-full min-w-0 max-w-md sm:max-w-none">

@@ -5,6 +5,7 @@ import type { EquifyGoalKey } from '../../../../lib/valuation';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { useWizardValuation } from '../WizardValuationContext';
 import { PayPalHostedButton } from '../../../payments/PayPalHostedButton';
+import { getGoalStandardCopy } from '../../../../lib/wizard/equify_goal_copy';
 
 const GOAL_KEYS: EquifyGoalKey[] = [
   'negotiation',
@@ -56,8 +57,9 @@ export function Step4Goal({
   promoNotice,
   hostedButtonId = null,
 }: Step4GoalProps) {
-  const { shell, steps: t, isHe } = useEquifyStrings();
+  const { shell, steps: t, isHe, locale } = useEquifyStrings();
   const { state, setGoal, setAgreedToTerms, updateProfile } = useWizardValuation();
+  const goalCopy = getGoalStandardCopy(state.goal, locale);
   const [shake, setShake] = React.useState(false);
   const [showPromoInput, setShowPromoInput] = React.useState(false);
   const [promoCode, setPromoCode] = React.useState('');
@@ -186,6 +188,12 @@ export function Step4Goal({
             );
           })}
         </div>
+
+        {goalCopy ? (
+          <p className="goal-insight rv" role="note">
+            {goalCopy.insight}
+          </p>
+        ) : null}
 
         <div className="fgroup" style={{ marginTop: 28 }}>
           <div className="field">

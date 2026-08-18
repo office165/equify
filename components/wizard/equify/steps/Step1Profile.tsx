@@ -2,10 +2,19 @@
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { EquifyLifecycleKey } from '../../../../lib/valuation';
-import { SECTOR_SELECT_OPTIONS, coerceWizardSectorSelection, getSubSectorChipLabel, getSubSectorsForSector } from '../../../../lib/constants/industry_config';
+import {
+  SECTOR_SELECT_OPTIONS,
+  coerceWizardSectorSelection,
+  getSubSectorChipLabel,
+  getSubSectorsForSector,
+} from '../../../../lib/constants/industry_config';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { lockLeadPayload } from '../../../../lib/wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_wizard';
+import {
+  filterSectorsByQuery,
+  type SectorSuggestHit,
+} from '../../../../lib/wizard/sector_suggest';
 import { scheduleWizardProgressSave } from '../../../../lib/wizard/wizard_progress_queue';
 import { useWizardValuation } from '../WizardValuationContext';
 import { IndustryInsightCard } from './IndustryInsightCard';
@@ -56,8 +65,34 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
   const lifecycles = isHe ? LIFECYCLES_HE : LIFECYCLES_EN;
   const { state, updateProfile, setSector, setLifecycle } = useWizardValuation();
   const { profile } = state;
+  const [sectorQuery, setSectorQuery] = useState('');
+  const [unsureOpen, setUnsureOpen] = useState(false);
+  const [unsureText, setUnsureText] = useState('');
+  const [suggestHits, setSuggestHits] = useState<SectorSuggestHit[]>([]);
+  const [suggestBusy, setSuggestBusy] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
+
+  const sectorFilter = useMemo(
+    () => filterSectorsByQuery(sectorQuery),
+    [sectorQuery],
+  );
+  const visibleSectors = useMemo(() => {
+    if (!sectorFilter) return sectors;
+    const keys = new Set(sectorFilter.map((hit) => hit.sector));
+    if (profile.sector) keys.add(profile.sector);
+    return sectors.filter((s) => keys.has(s.key));
+  }, [profile.sector, sectorFilter, sectors]);
   const subSectors = getSubSectorsForSector(profile.sector);
+  const visibleSubSectors = useMemo(() => {
+    if (!sectorFilter || !profile.sector) return subSectors;
+    const hit = sectorFilter.find((row) => row.sector === profile.sector);
+    if (!hit) return subSectors;
+    return subSectors.filter(
+      (s) => hit.subSectorIds.includes(s.id) || s.id === profile.subSector,
+    );
+  }, [profile.sector, profile.subSector, sectorFilter, subSectors]);
   const showIndustryInsight = Boolean(profile.sector && profile.subSector);
+  const noSectorHits = Boolean(sectorFilter && sectorFilter.length === 0);
 
   const handleSectorSelect = useCallback(
     (sector: typeof profile.sector) => {
@@ -72,6 +107,43 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
     },
     [updateProfile],
   );
+
+  const applySectorSuggestion = useCallback(
+    (sector: typeof profile.sector, subSectorId: string) => {
+      setSector(sector);
+      updateProfile({ subSector: subSectorId });
+      setSectorQuery('');
+      setUnsureOpen(false);
+      setSuggestHits([]);
+    },
+    [setSector, updateProfile],
+  );
+
+  const handleUnsureSuggest = useCallback(async () => {
+    setSuggestBusy(true);
+    setSuggestError(null);
+    try {
+      const res = await fetch('/api/v1/sector/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: unsureText }),
+      });
+      if (!res.ok) {
+        setSuggestHits([]);
+        setSuggestError(t.common.unsureError);
+        return;
+      }
+      const json = (await res.json()) as { suggestions?: SectorSuggestHit[] };
+      const hits = json.suggestions ?? [];
+      setSuggestHits(hits);
+      if (hits.length === 0) setSuggestError(t.common.unsureEmpty);
+    } catch {
+      setSuggestHits([]);
+      setSuggestError(t.common.unsureError);
+    } finally {
+      setSuggestBusy(false);
+    }
+  }, [t.common.unsureEmpty, t.common.unsureError, unsureText]);
 
   React.useEffect(() => {
     const coerced = coerceWizardSectorSelection(profile.sector, profile.subSector);
@@ -274,8 +346,17 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
           <label>
             {shell.sector} <span className="req">*</span>
           </label>
+          <input
+            className="inp sector-search"
+            type="search"
+            value={sectorQuery}
+            onChange={(e) => setSectorQuery(e.target.value)}
+            placeholder={t.common.sectorSearchPlaceholder}
+            aria-label={t.common.sectorSearch}
+            autoComplete="off"
+          />
           <div className="chips" role="group" aria-label={t.common.selectSector}>
-            {sectors.map((s) => (
+            {visibleSectors.map((s) => (
               <button
                 key={s.key}
                 type="button"
@@ -285,6 +366,61 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
                 {s.label}
               </button>
             ))}
+          </div>
+          {noSectorHits && visibleSectors.length === 0 ? (
+            <span className="v-msg err show">{t.common.sectorNoResults}</span>
+          ) : null}
+          <div className="unsure-sector">
+            <button
+              type="button"
+              className="unsure-sector-toggle"
+              onClick={() => setUnsureOpen((open) => !open)}
+            >
+              {t.common.unsureSector}
+            </button>
+            {unsureOpen ? (
+              <div className="unsure-sector-panel">
+                <p className="unsure-sector-hint">{t.common.unsureHint}</p>
+                <textarea
+                  className="inp"
+                  value={unsureText}
+                  onChange={(e) => setUnsureText(e.target.value)}
+                  placeholder={t.common.unsurePlaceholder}
+                  maxLength={400}
+                  rows={3}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ marginTop: 10 }}
+                  disabled={suggestBusy || unsureText.trim().length < 5}
+                  onClick={() => void handleUnsureSuggest()}
+                >
+                  {suggestBusy ? t.common.unsureBusy : t.common.unsureSubmit}
+                </button>
+                {suggestError ? (
+                  <p className="v-msg err show" style={{ marginTop: 8 }}>
+                    {suggestError}
+                  </p>
+                ) : null}
+                {suggestHits.length > 0 ? (
+                  <div className="suggest-hits" role="list">
+                    {suggestHits.map((hit) => (
+                      <button
+                        key={`${hit.sector}-${hit.subSector}`}
+                        type="button"
+                        className="suggest-hit"
+                        onClick={() =>
+                          applySectorSuggestion(hit.sector, hit.subSector)
+                        }
+                      >
+                        {isHe ? hit.labelHe : hit.labelEn}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -299,7 +435,7 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
               aria-label={t.common.selectSubSector}
               dir={isHe ? 'rtl' : 'ltr'}
             >
-              {subSectors.map((s) => (
+              {visibleSubSectors.map((s) => (
                 <button
                   key={s.id}
                   type="button"

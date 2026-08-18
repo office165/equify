@@ -32,6 +32,9 @@ const leadUpsertSchema = z.object({
   valuationPurpose: z
     .enum(['M&A_SALE', 'CAPITAL_RAISE', 'TAX', 'INTERNAL_REPORT'])
     .optional(),
+  equifyGoal: z
+    .enum(['negotiation', 'fundraise', 'partner', 'bank', 'internal', 'legal'])
+    .optional(),
   valuationMidpoint: z.number().optional(),
   qualityScore: z.number().optional(),
   source: z.enum(['organic', 'linkedin', 'twitter', 'reddit']).optional(),
