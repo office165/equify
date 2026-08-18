@@ -8,11 +8,50 @@ import {
   getSupabaseAdminClient,
   isSupabaseAdminConfigured,
 } from '../../../../lib/db/supabase';
+import { EmailGateway } from '../../../../lib/gateway/email_gateway';
 import {
   clientIpFromRequest,
   isFeedbackRateLimited,
   recordFeedbackHit,
 } from '../../../../lib/landing/feedback_rate_limit';
+
+const FEEDBACK_NOTIFY_TO = 'office@sbc-il.co.il';
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+async function notifyFeedbackEmail(params: {
+  message: string;
+  email?: string;
+}): Promise<void> {
+  const when = new Date().toISOString();
+  const sender = params.email?.trim() || 'לא צוין';
+  const gateway = new EmailGateway();
+  await gateway.send({
+    to: FEEDBACK_NOTIFY_TO,
+    subject: 'הצעת שיפור חדשה מ-equify',
+    text: [
+      'הצעת שיפור חדשה מ-equify',
+      '',
+      params.message,
+      '',
+      `מייל שולח: ${sender}`,
+      `חותמת זמן: ${when}`,
+    ].join('\n'),
+    html: `
+      <div dir="rtl" style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.6;color:#0f172a;">
+        <p style="margin:0 0 12px;"><strong>הצעת שיפור חדשה מ-equify</strong></p>
+        <p style="margin:0 0 12px;white-space:pre-wrap;">${escapeHtml(params.message)}</p>
+        <p style="margin:0;color:#475569;font-size:14px;">מייל שולח: ${escapeHtml(sender)}<br/>חותמת זמן: ${escapeHtml(when)}</p>
+      </div>
+    `.trim(),
+  });
+}
 
 export const runtime = 'nodejs';
 
@@ -72,6 +111,16 @@ export async function POST(request: Request) {
   }
 
   recordFeedbackHit(ip);
+
+  try {
+    await notifyFeedbackEmail({
+      message: parsed.data.message,
+      email: parsed.data.email,
+    });
+  } catch (err) {
+    console.error('[feedback] notify email failed', err);
+  }
+
   return NextResponse.json({ ok: true });
 }
 
