@@ -16,6 +16,7 @@ import { loadEquifyWizardState, saveEquifyWizardState } from '../../lib/wizard/e
 import type { EquifyWizardState } from '../../lib/wizard/map_equify_wizard';
 import { resolveBaseEquityValue } from '../../lib/wizard/resolve_base_equity';
 import { toLeadUpsertBody } from '../../lib/wizard/secured_lead_dispatch';
+import { attachEquifyGoalToMatrix, isEquifyGoalId } from '../../lib/wizard/equify_goal';
 import { resumeWizardProgressQueue } from '../../lib/wizard/wizard_progress_queue';
 import { ValuationI18nProvider } from '../../valuation_i18n';
 
@@ -84,6 +85,9 @@ export default function WizardPage() {
             valuationMidpoint,
             qualityScore,
             valuationPurpose: values.valuationPurpose || undefined,
+            equifyGoal: isEquifyGoalId(equifyState?.goal)
+              ? equifyState.goal
+              : undefined,
             locale,
           },
         );
@@ -98,11 +102,14 @@ export default function WizardPage() {
         try {
           const stateForSync = equifyState ?? loadEquifyWizardState();
           const matrixJson = stateForSync
-            ? syncMatrixFromEquifyState(
-                result.forecast_matrix_json,
-                stateForSync,
-                locale,
-              ).matrix
+            ? attachEquifyGoalToMatrix(
+                syncMatrixFromEquifyState(
+                  result.forecast_matrix_json,
+                  stateForSync,
+                  locale,
+                ).matrix,
+                stateForSync.goal,
+              )
             : result.forecast_matrix_json;
           sessionStorage.setItem(
             'valubot.lastValuationMatrix',

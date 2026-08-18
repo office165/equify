@@ -2,20 +2,15 @@
 
 import { EquifyResultsReport } from '../../components/results/EquifyResultsReport';
 import { useReportHydration } from '../../components/results/useReportHydration';
+import { readWhatsAppSupportBase } from '../../lib/wizard/whatsapp_support';
 import { ValuationI18nProvider, useValuationI18n } from '../../valuation_i18n';
-
-function supportWhatsAppUrl(): string {
-  return (
-    process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT_URL?.trim() ||
-    'https://wa.me/'
-  );
-}
 
 function ResultsContent() {
   const { locale } = useValuationI18n();
   const { matrix, equifyState, loading, paymentVerifyStatus } =
     useReportHydration(locale);
   const isHe = locale === 'he';
+  const waUrl = readWhatsAppSupportBase();
 
   if (loading || paymentVerifyStatus === 'verifying') {
     return (
@@ -49,14 +44,16 @@ function ResultsContent() {
           >
             {isHe ? 'רענון' : 'Refresh'}
           </button>
-          <a
-            href={supportWhatsAppUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full bg-[#00F5A0] px-5 py-2 text-sm font-semibold text-[#020504] transition hover:opacity-90"
-          >
-            WhatsApp
-          </a>
+          {waUrl ? (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-[#00F5A0] px-5 py-2 text-sm font-semibold text-[#020504] transition hover:opacity-90"
+            >
+              WhatsApp
+            </a>
+          ) : null}
         </div>
       </div>
     );

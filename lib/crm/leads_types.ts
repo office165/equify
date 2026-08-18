@@ -1,3 +1,5 @@
+import type { EquifyGoalId } from '../wizard/equify_goal';
+
 /** Valubot lead lifecycle stages mirrored on Monday.com שלב בתהליך. */
 export type LeadProcessStage =
   | 'התחיל אשף'
@@ -29,6 +31,8 @@ export interface ValubotLeadRecord {
   sectorLabel: string | null;
   industryCode: string | null;
   valuationPurpose: ValuationPurposeCode | null;
+  /** Full EquifyGoalKey — partner/bank/internal stay distinct (not collapsed INTERNAL_REPORT). */
+  equifyGoal: EquifyGoalId | null;
   processStage: LeadProcessStage | null;
   package: LeadPackage | null;
   valuationMidpoint: number | null;
@@ -62,6 +66,7 @@ export interface LeadUpsertBody {
   sectorLabel?: string;
   industryCode?: string;
   valuationPurpose?: ValuationPurposeCode;
+  equifyGoal?: EquifyGoalId;
   valuationMidpoint?: number;
   qualityScore?: number;
   source?: LeadSource;

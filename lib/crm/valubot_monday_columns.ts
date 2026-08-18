@@ -22,4 +22,6 @@ export const VALUBOT_MONDAY_COLUMNS = {
   files: 'files',
 } as const;
 
+/** Full EquifyGoalKey is stored on valubot_leads.equify_goal. No Monday column exists yet. */
+
 export type ValubotMondayColumnKey = keyof typeof VALUBOT_MONDAY_COLUMNS;

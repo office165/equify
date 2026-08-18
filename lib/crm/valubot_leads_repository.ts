@@ -8,6 +8,8 @@ import { join } from 'path';
 import type { Pool } from 'pg';
 import { getLiveDatabasePool } from '../../valuation_live';
 import { isVercelRuntime, logEphemeralPersistenceCritical } from './leads_persistence';
+import type { EquifyGoalId } from '../wizard/equify_goal';
+import { isEquifyGoalId } from '../wizard/equify_goal';
 import type {
   LeadProcessStage,
   LeadPackage,
@@ -27,6 +29,7 @@ export interface ValubotLeadUpsertInput {
   sectorLabel?: string | null;
   industryCode?: string | null;
   valuationPurpose?: ValubotLeadRecord['valuationPurpose'];
+  equifyGoal?: EquifyGoalId | null;
   processStage?: LeadProcessStage | null;
   package?: LeadPackage | null;
   valuationMidpoint?: number | null;
@@ -68,6 +71,7 @@ CREATE INDEX IF NOT EXISTS valubot_leads_session_idx ON valubot_leads (session_i
 CREATE UNIQUE INDEX IF NOT EXISTS valubot_leads_session_unique ON valubot_leads (session_id);
 
 ALTER TABLE valubot_leads ADD COLUMN IF NOT EXISTS valuation_purpose TEXT;
+ALTER TABLE valubot_leads ADD COLUMN IF NOT EXISTS equify_goal TEXT;
 `;
 
 const FILE_STORE = join(process.cwd(), '.data', 'valubot_leads.json');
@@ -93,6 +97,7 @@ function rowToRecord(row: Record<string, unknown>): ValubotLeadRecord {
     industryCode: row.industry_code ? String(row.industry_code) : null,
     valuationPurpose:
       (row.valuation_purpose as ValubotLeadRecord['valuationPurpose']) ?? null,
+    equifyGoal: isEquifyGoalId(row.equify_goal) ? row.equify_goal : null,
     processStage: (row.process_stage as LeadProcessStage | null) ?? null,
     package: (row.package as LeadPackage | null) ?? null,
     valuationMidpoint:
@@ -158,6 +163,7 @@ function mergeLead(
       sectorLabel: input.sectorLabel ?? null,
       industryCode: input.industryCode ?? null,
       valuationPurpose: input.valuationPurpose ?? null,
+      equifyGoal: input.equifyGoal ?? null,
       processStage: input.processStage ?? null,
       package: input.package ?? null,
       valuationMidpoint: input.valuationMidpoint ?? null,
@@ -188,6 +194,10 @@ function mergeLead(
       input.valuationPurpose !== undefined
         ? input.valuationPurpose
         : existing.valuationPurpose,
+    equifyGoal:
+      input.equifyGoal !== undefined
+        ? input.equifyGoal
+        : existing.equifyGoal ?? null,
     processStage:
       input.processStage !== undefined ? input.processStage : existing.processStage,
     package: input.package !== undefined ? input.package : existing.package,
@@ -243,11 +253,11 @@ async function upsertDbLead(
     `INSERT INTO valubot_leads (
        id, session_id, full_name, company_name, user_email, user_phone,
        national_id, corporate_tax_id, sector_label, industry_code, valuation_purpose,
-       process_stage, package, valuation_midpoint, quality_score,
+       equify_goal, process_stage, package, valuation_midpoint, quality_score,
        source, ai_notes, monday_item_id, sync_status, sync_error,
        created_at, updated_at
      ) VALUES (
-       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22
+       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23
      )
      ON CONFLICT (session_id) DO UPDATE SET
        full_name = EXCLUDED.full_name,
@@ -259,6 +269,7 @@ async function upsertDbLead(
        sector_label = COALESCE(EXCLUDED.sector_label, valubot_leads.sector_label),
        industry_code = COALESCE(EXCLUDED.industry_code, valubot_leads.industry_code),
        valuation_purpose = COALESCE(EXCLUDED.valuation_purpose, valubot_leads.valuation_purpose),
+       equify_goal = COALESCE(EXCLUDED.equify_goal, valubot_leads.equify_goal),
        process_stage = COALESCE(EXCLUDED.process_stage, valubot_leads.process_stage),
        package = COALESCE(EXCLUDED.package, valubot_leads.package),
        valuation_midpoint = COALESCE(EXCLUDED.valuation_midpoint, valubot_leads.valuation_midpoint),
@@ -282,6 +293,7 @@ async function upsertDbLead(
       merged.sectorLabel,
       merged.industryCode,
       merged.valuationPurpose,
+      merged.equifyGoal,
       merged.processStage,
       merged.package,
       merged.valuationMidpoint,

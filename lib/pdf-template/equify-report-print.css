@@ -102,6 +102,18 @@ p{line-height:var(--pdf-lh-body);color:var(--ink);margin-bottom:1.5mm;font-size:
 }
 .page-intro .sub{margin-bottom:3mm}
 .page-intro .callout{margin-top:2mm;margin-bottom:0}
+.page-body--exec .page-intro{margin-bottom:4mm}
+.page-intro .sov{
+  margin:1.2mm 0 2mm;
+  padding:1.8mm 3.2mm;
+  border-inline-start:2.5px solid var(--turqB);
+  background:var(--tint);
+  border-radius:0 6px 6px 0;
+  font-size:11px;
+  line-height:1.38;
+  color:var(--dim);
+  font-weight:500;
+}
 .page-stack{
   flex:1 1 auto;
   display:flex;

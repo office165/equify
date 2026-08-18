@@ -19,6 +19,7 @@ import {
 } from '../../../../lib/wizard/sector_market_defaults';
 import type { SectorMetricsResult } from '../../../../lib/utils/financialData';
 import { useWizardValuation } from '../WizardValuationContext';
+import { getSubSectorPeerTraits } from '../../../../lib/wizard/sector_suggest';
 
 export interface IndustryInsightCardProps {
   sector: EquifySectorKey;
@@ -32,6 +33,7 @@ export interface IndustryInsightCardProps {
     navMultiple: string;
     industryRange: string;
     disclaimer: string;
+    peerTraitsTitle: string;
     reDevelopment?: {
       title: string;
       subtitle: string;
@@ -246,6 +248,7 @@ export function IndustryInsightCard({
   if (!insight) return null;
 
   const premiumMicrocopy = resolvePremiumMicrocopy(sector, subSector, isHe, copy);
+  const peerTraits = getSubSectorPeerTraits(subSector, locale).slice(0, 3);
 
   return (
     <div
@@ -294,6 +297,18 @@ export function IndustryInsightCard({
             </p>
           </>
         )}
+        {peerTraits.length > 0 ? (
+          <div className="pt-2">
+            <p className="text-xs font-semibold leading-snug tracking-normal text-teal-100/75">
+              {copy.peerTraitsTitle}
+            </p>
+            <ul className="mt-1 list-disc ps-4 text-xs leading-relaxed tracking-normal text-teal-200/55">
+              {peerTraits.map((trait) => (
+                <li key={trait}>{trait}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
     </div>
   );

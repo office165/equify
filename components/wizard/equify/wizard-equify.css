@@ -3051,3 +3051,64 @@ body.equify-slider-dragging {
 .eq-lang-btn:not(.on):hover {
   color: var(--mint);
 }
+
+.equify-wizard .sector-search {
+  margin-bottom: 10px;
+}
+
+.equify-wizard .unsure-sector {
+  margin-top: 10px;
+}
+
+.equify-wizard .unsure-sector-toggle {
+  font-size: 13px;
+  color: var(--soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.equify-wizard .unsure-sector-hint {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--dim);
+  line-height: 1.5;
+}
+
+.equify-wizard .unsure-sector-panel textarea.inp {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.equify-wizard .suggest-hits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.equify-wizard .suggest-hit {
+  text-align: start;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--pine);
+  background: rgba(15, 46, 41, 0.4);
+  color: var(--paper);
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.equify-wizard .suggest-hit:hover,
+.equify-wizard .suggest-hit:focus-visible {
+  border-color: var(--turq);
+}
+
+.equify-wizard .goal-insight {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(15, 46, 41, 0.45);
+  color: var(--dim);
+  font-size: 13.5px;
+  line-height: 1.55;
+}

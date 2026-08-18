@@ -34,6 +34,7 @@ import { buildCoverCircleStageHtml } from './cover-circle-graphic';
 import { FINANCIAL_DATA_COPY, multiplesMethodologyCopy, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY, ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
 import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import type { ValuationData } from './types';
+import { getGoalStandardCopy } from '../wizard/equify_goal_copy';
 import {
   buildMoatNotesCalloutHtml,
   resolveExecutiveSummaryHtml,
@@ -209,6 +210,10 @@ function buildPage2ExecSummary(data: ValuationData): string {
     )
     .join('');
   const noteDate = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
+  const sov = getGoalStandardCopy(data.goal, resolvePdfLocale(data.locale));
+  const sovHtml = sov
+    ? `<p class="sov">${escHtml(sov.standardOfValue)}</p>`
+    : '';
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
@@ -217,6 +222,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
     <div class="page-intro">
       <span class="eyebrow">02 · תקציר מנהלים</span>
       <h2>תקציר מנהלים</h2>
+      ${sovHtml}
       <p class="sub">${summary}</p>
       ${moatCallout}
     </div>

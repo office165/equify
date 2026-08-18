@@ -17,7 +17,8 @@ All Valubot items are created in group `group_mm43e3aq`. Dedupe by **אימיי�
 | userPhone | טלפון | `phone_mkz4zdcb` | phone | Normalized +972 |
 | userEmail | אימייל | `email_mkz4g6gm` | email | Lowercase, dedupe key |
 | nationalId / corporateTaxId | תז / חפ | `text_mkz5hrdn` | text | Combined ת.ז. / ח.פ. |
-| valuationPurpose | מה הצורך? | `color_mkz5d1mk` | status | M&A → הון / מכירת חברה / חיפוש שותף |
+| valuationPurpose | מה הצורך? | `color_mkz5d1mk` | status | M&A → הון / מכירת חברה / חיפוש שותף — **collapsed** purpose |
+| equifyGoal | — | **אין עמודה** | — | Full `EquifyGoalKey` (`negotiation` / `fundraise` / `partner` / `bank` / `internal` / `legal`). Persisted on `valubot_leads.equify_goal` and `wizard_context.equify_goal`. Add a Monday column to sync it. |
 | source | מקור ליד | `dropdown_mkz4myng` | dropdown | organic → **SBC** |
 | category | קטגוריה | `dropdown_mkz4hn5x` | dropdown | Default **עסקי** |
 | sectorLabel | ענף | `dropdown_mm46ndr1` | dropdown | Industry label (dynamic) |

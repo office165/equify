@@ -78,6 +78,7 @@ function buildUpsertFromEvent(
     sectorLabel: resolveSectorLabel(body) ?? existing?.sectorLabel ?? null,
     industryCode: body.industryCode ?? existing?.industryCode ?? null,
     valuationPurpose: body.valuationPurpose ?? existing?.valuationPurpose ?? null,
+    equifyGoal: body.equifyGoal ?? existing?.equifyGoal ?? null,
     processStage,
     package: body.package ?? existing?.package ?? null,
     valuationMidpoint:
@@ -139,6 +140,7 @@ export function buildEphemeralLeadFromBody(body: LeadUpsertBody): ValubotLeadRec
     sectorLabel: upsertInput.sectorLabel ?? null,
     industryCode: upsertInput.industryCode ?? null,
     valuationPurpose: upsertInput.valuationPurpose ?? null,
+    equifyGoal: upsertInput.equifyGoal ?? null,
     processStage: upsertInput.processStage ?? null,
     package: upsertInput.package ?? null,
     valuationMidpoint: upsertInput.valuationMidpoint ?? null,
