@@ -88,11 +88,7 @@ export function EquifyLandingPage() {
       <StepsSection stepsGridRef={refs.stepsGridRef} beamRef={refs.beamRef} />
       <CalculatorSection />
       <ModelsSection />
-      <PricingSection
-        priceCardRef={refs.priceCardRef}
-        quotaNumRef={refs.quotaNumRef}
-        quotaBarRef={refs.quotaBarRef}
-      />
+      <PricingSection priceCardRef={refs.priceCardRef} />
       <FaqSection />
       <FinalCtaSection />
       <LandingFooter />

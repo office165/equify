@@ -22,6 +22,8 @@ export interface MicroCalcResult {
   equityM: number;
   lowM: number;
   highM: number;
+  /** high − low in ₪M */
+  spreadM: number;
   /** 14–86 range position for sensitivity dot */
   dotPct: number;
 }
@@ -67,6 +69,7 @@ export function computeMicroValuation(input: MicroCalcInputs): MicroCalcResult {
     equityM: equityK / 1000,
     lowM: lowK / 1000,
     highM: highK / 1000,
+    spreadM: (highK - lowK) / 1000,
     dotPct,
   };
 }

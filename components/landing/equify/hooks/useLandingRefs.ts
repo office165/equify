@@ -16,8 +16,6 @@ export function useLandingRefs() {
     stepsGridRef: useRef<HTMLDivElement>(null),
     beamRef: useRef<HTMLElement>(null),
     priceCardRef: useRef<HTMLDivElement>(null),
-    quotaNumRef: useRef<HTMLSpanElement>(null),
-    quotaBarRef: useRef<HTMLElement>(null),
   };
 }
 
