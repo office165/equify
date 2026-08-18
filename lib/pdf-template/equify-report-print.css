@@ -69,7 +69,7 @@ html[dir=ltr] .wf-row b{text-align:right}
 .rule-grad,.rule{height:2.5px;margin:3mm 13mm 0;background:linear-gradient(90deg,var(--turqB) 0%,var(--gold) 55%,var(--turq) 100%);border-radius:2px}
 
 .body{flex:1;padding:5mm 13mm 0;line-height:var(--pdf-lh-body)}
-.foot{padding:0 13mm 6mm;margin-top:auto;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:3mm;margin-top:4mm}
+.foot{flex-shrink:0;padding:0 13mm 6mm;margin-top:auto;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:3mm}
 .foot-l,.foot>span:first-child{font-size:var(--pdf-fs-foot);color:var(--dim);font-family:'IBM Plex Mono',monospace;line-height:var(--pdf-lh-body)}
 .foot-r,.foot .pg{font-size:var(--pdf-fs-foot);color:var(--dim);font-family:'IBM Plex Mono',monospace;line-height:var(--pdf-lh-body)}
 .foot-pg b,.foot .pg b{color:var(--turq)}
@@ -154,6 +154,31 @@ p{line-height:var(--pdf-lh-body);color:var(--ink);margin-bottom:1.5mm;font-size:
 .page-body--multiples .page-section--tracks .box{margin:0;padding:5mm}
 .page-body--multiples .page-section--comps .report-table{margin:0}
 .page-body--multiples .page-section--compare .report-table{margin:0}
+
+/* Page 7 — keep quality + both sensitivity tables on-sheet with footer visible */
+.page-body--quality{
+  padding-bottom:2mm;
+}
+.page-body--quality h2{margin-bottom:1mm}
+.page-body--quality .sub{margin-bottom:1.5mm}
+.page-body--quality .quality-split{
+  display:grid;
+  grid-template-columns:50mm 1fr;
+  gap:3mm;
+  align-items:start;
+  margin-top:1mm;
+}
+.page-body--quality .quality-sens-intro{
+  margin-top:1.5mm;
+  margin-bottom:1mm;
+  white-space:pre-line;
+}
+.page-body--quality .box{margin:1mm 0;padding:3mm}
+.page-body--quality .report-table{margin:0}
+.page-body--quality .report-table th,
+.page-body--quality .report-table td{
+  padding:4px 3px;
+}
 
 /* ═══════════════ COVER — full-page institutional layout ═══════════════ */
 .page.cover,
