@@ -137,7 +137,10 @@ export async function archiveValuationReport(
 
     pdfUrl = signed.signedUrl;
   } catch (error) {
-    console.error('SUPABASE BACKUP FAILED DIRECT ERROR:', error);
+    console.error(
+      'SUPABASE BACKUP FAILED DIRECT ERROR:',
+      error instanceof Error ? error.message : error,
+    );
     throw error;
   }
 
@@ -153,7 +156,11 @@ export async function archiveValuationReport(
   );
 
   try {
-    console.log('[supabase-backup] inserting valuations_history row', insertRow);
+    console.log('[supabase-backup] inserting valuations_history row', {
+      columns: Object.keys(insertRow),
+      user_email: insertRow.user_email,
+      has_pdf_url: Boolean(insertRow.pdf_url),
+    });
 
     const { data: inserted, error: insertError } = await supabase
       .from('valuations_history')
@@ -176,7 +183,10 @@ export async function archiveValuationReport(
       historyRowId: inserted?.id ?? null,
     };
   } catch (error) {
-    console.error('SUPABASE BACKUP FAILED DIRECT ERROR:', error);
+    console.error(
+      'SUPABASE BACKUP FAILED DIRECT ERROR:',
+      error instanceof Error ? error.message : 'history_insert_failed',
+    );
     throw error;
   }
 }

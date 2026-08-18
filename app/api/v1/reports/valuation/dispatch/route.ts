@@ -9,10 +9,14 @@ import {
   mapThrownError,
 } from '../../../../../../lib/api/http';
 import { getInMemoryValuation } from '../../../../../../lib/valuation/in_memory_store';
+import type { EquifyWizardState } from '../../../../../../lib/wizard/map_equify_wizard';
 import {
   getSupabaseAdminClient,
   isSupabaseAdminConfigured,
 } from '../../../../../../lib/db/supabase';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 /**
  * Client-triggered report dispatch.
@@ -48,6 +52,7 @@ export async function POST(request: Request) {
     email?: string;
     phone?: string;
     forecast_matrix_json?: ForecastMatrixWithDiagnostics;
+    wizard?: EquifyWizardState;
   };
 
   try {
@@ -118,6 +123,7 @@ export async function POST(request: Request) {
       email,
       phoneE164: body.phone?.trim() ?? null,
       paymentVerified: true,
+      wizard: body.wizard ?? null,
     });
 
     return NextResponse.json(result, { status: 202 });

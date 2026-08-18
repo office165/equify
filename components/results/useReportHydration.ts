@@ -80,6 +80,7 @@ async function dispatchWithBearerToken(input: {
   email: string;
   phone?: string;
   forecastMatrix: ForecastMatrixWithDiagnostics;
+  wizard?: EquifyWizardState;
 }): Promise<boolean> {
   try {
     const response = await fetch(VALUATION_DISPATCH_PATH, {
@@ -94,6 +95,7 @@ async function dispatchWithBearerToken(input: {
         email: input.email,
         phone: input.phone,
         forecast_matrix_json: input.forecastMatrix,
+        wizard: input.wizard,
       }),
     });
     return response.ok || response.status === 202;
@@ -237,6 +239,7 @@ export function useReportHydration(locale: ValuationLocale): UseReportHydrationR
                 email: persisted.userEmail,
                 phone: persisted.wizard.profile.userMobilePhone,
                 forecastMatrix: synced,
+                wizard: persisted.wizard,
               });
               if (dispatched) {
                 clearStoredDispatchToken();

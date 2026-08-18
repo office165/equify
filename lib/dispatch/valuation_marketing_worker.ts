@@ -51,8 +51,6 @@ export async function runValuationMarketingDispatch(
       phoneE164: job.phoneE164,
       // Only paypal-webhook (verified capture) may set paymentVerified: true.
       paymentVerified: false,
-      pdfDownloadUrl: job.pdfDownloadUrl,
-      pdfBuffer: job.pdfBuffer,
       recipientName: job.recipientName,
     });
   } catch (err) {
