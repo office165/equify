@@ -6,15 +6,10 @@ import {
 } from '../lib/brand/brand-identity';
 
 function resolveSiteUrl(): URL {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (explicit) {
-    return new URL(explicit.endsWith('/') ? explicit : `${explicit}/`);
-  }
-  const vercel = process.env.VERCEL_URL?.trim();
-  if (vercel) {
-    return new URL(`https://${vercel.replace(/^https?:\/\//, '')}/`);
-  }
-  return new URL('http://localhost:3000/');
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ??
+    'https://equify.co.il';
+  return new URL(raw.endsWith('/') ? raw : `${raw}/`);
 }
 
 export const siteUrl = resolveSiteUrl();

@@ -291,7 +291,7 @@ export function qualityScoreIntroCopyEn(score: number, grade: string): string {
 }
 
 export const SCENARIOS_METHODOLOGY_COPY =
-  'שלוש תרחישים משקפים מסלולים עתידיים אפשריים, בלי להניח לאחד מהם אותה מידת סבירות: דב (Bear) מניח האטה בענף וירידה בשיעור EBITDA, תרחיש בסיס (Base) משקף המשך המגמה הנוכחית, ושור (Bull) משקף הרחבת קיבולת וגיוס לקוחות אסטרטגיים.' as const;
+  'שלושה תרחישים משקפים מסלולים עתידיים אפשריים, בלי להניח לאחד מהם אותה מידת סבירות: דב (Bear) מניח האטה בענף וירידה בשיעור EBITDA, תרחיש בסיס (Base) משקף המשך המגמה הנוכחית, ושור (Bull) משקף הרחבת קיבולת וגיוס לקוחות אסטרטגיים.' as const;
 
 export const SENSITIVITY_METHODOLOGY_COPY =
   'ניתוח הרגישות מראה אילו גורמים (WACC, צמיחה, מכפיל) הם הרגישים ביותר — לא להפחדה, אלא להבנה של החשיפות.' as const;
@@ -380,7 +380,7 @@ function bullEbitdaPhrase(baseMargin: number, bullMargin: number): string {
 
 /** PDF / results — scenarios narrative with live assumptions */
 export function scenariosIntroCopy(input: ScenariosIntroInput): string {
-  return `שלוש תרחישים משקפים מסלולים עתידיים אפשריים, בלי להניח לאחד מהם אותה מידת סבירות: דב (Bear) מניח האטה בענף, ${bearEbitdaPhrase(input.baseEbitdaMarginPct, input.bearEbitdaMarginPct)}, וצמיחה של ${Math.round(input.bearGrowthPct)}% בלבד. תרחיש בסיס (Base) משקף המשך המגמה הנוכחית בצמיחה של ${Math.round(input.baseGrowthPct)}%. שור (Bull) משקף הרחבת קיבולת, גיוס לקוחות אסטרטגיים, ${bullEbitdaPhrase(input.baseEbitdaMarginPct, input.bullEbitdaMarginPct)}. ${SENSITIVITY_METHODOLOGY_COPY}`;
+  return `שלושה תרחישים משקפים מסלולים עתידיים אפשריים, בלי להניח לאחד מהם אותה מידת סבירות: דב (Bear) מניח האטה בענף, ${bearEbitdaPhrase(input.baseEbitdaMarginPct, input.bearEbitdaMarginPct)}, וצמיחה של ${Math.round(input.bearGrowthPct)}% בלבד. תרחיש בסיס (Base) משקף המשך המגמה הנוכחית בצמיחה של ${Math.round(input.baseGrowthPct)}%. שור (Bull) משקף הרחבת קיבולת, גיוס לקוחות אסטרטגיים, ${bullEbitdaPhrase(input.baseEbitdaMarginPct, input.bullEbitdaMarginPct)}. ${SENSITIVITY_METHODOLOGY_COPY}`;
 }
 
 export function scenariosIntroFromRows(
