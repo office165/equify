@@ -231,10 +231,10 @@ export function useReportHydration(locale: ValuationLocale): UseReportHydrationR
               ? peekDispatchValuationId(dispatchToken)
               : null;
 
-            if (dispatchToken && valuationId) {
+            if (dispatchToken) {
               const dispatched = await dispatchWithBearerToken({
                 dispatchToken,
-                valuationId,
+                valuationId: valuationId ?? '',
                 locale,
                 email: persisted.userEmail,
                 phone: persisted.wizard.profile.userMobilePhone,

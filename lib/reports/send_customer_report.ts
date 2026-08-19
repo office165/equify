@@ -146,10 +146,34 @@ export async function packageAndSendCustomerReport(
   input: PackageAndSendCustomerReportInput,
 ): Promise<PackageAndSendCustomerReportResult> {
   const filename = VALUATION_PDF_FILENAME;
-  const pdfBuffer = await renderEquifyReportPdfBuffer(input.valuationData);
+  const tag = '[customer-report]';
+
+  console.log(`${tag} pdf_render_start`, {
+    to: input.to,
+    company: input.valuationData.companyName,
+    locale: input.locale,
+  });
+
+  let pdfBuffer: Buffer;
+  try {
+    pdfBuffer = await renderEquifyReportPdfBuffer(input.valuationData);
+    console.log(`${tag} pdf_render_ok`, { bytes: pdfBuffer.byteLength });
+  } catch (err) {
+    console.error(`${tag} pdf_render_failed`, err instanceof Error ? err.message : err);
+    throw err;
+  }
+
+  console.log(`${tag} upload_start`, { email: input.archive.userEmail });
   const pdfDownloadUrl = await tryArchiveCustomerReportPdf(pdfBuffer, input.archive);
+  if (pdfDownloadUrl) {
+    console.log(`${tag} upload_ok signed_url_ok`);
+  } else {
+    console.warn(`${tag} upload_skipped_or_failed — email will send without CTA link`);
+  }
 
   const emailTarget = input.to.trim();
+  console.log(`${tag} email_send_start`, { to: emailTarget, hasLink: Boolean(pdfDownloadUrl) });
+
   const email = emailTarget
     ? await sendCustomerReportEmail({
         to: emailTarget,
@@ -163,6 +187,12 @@ export async function packageAndSendCustomerReport(
         currency: input.currency ?? input.valuationData.currency,
       })
     : { delivered: false, messageId: null, error: 'email_missing' };
+
+  if (email.delivered) {
+    console.log(`${tag} email_sent`, { messageId: email.messageId });
+  } else {
+    console.error(`${tag} email_failed`, { error: email.error });
+  }
 
   return {
     pdfBuffer,
