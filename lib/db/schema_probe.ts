@@ -2,8 +2,9 @@
  * Runtime schema probe: verifies that every column the application writes
  * actually exists in the live database.
  *
- * Each entry lists the columns that INSERT statements send — not every column
- * the table has (id / created_at / DEFAULT columns are omitted intentionally).
+ * Method: SELECT <columns> FROM <table> LIMIT 0.
+ * PostgREST rejects the query with a clear error if any column is absent.
+ * No migration required — works against any live Supabase project.
  *
  * Called from /api/leads/health to surface missing columns before they cause
  * silent data loss in production.
@@ -80,65 +81,116 @@ export const TABLE_EXPECTATIONS: TableProbeExpectation[] = [
 export interface TableProbeResult {
   table: string;
   ok: boolean;
+  /** Column names confirmed missing, or a single 'unavailable' reason string. */
   missing: string[];
+  error?: string;
 }
+
+export type SchemaProbeStatus = 'ok' | 'missing_columns' | 'unavailable';
 
 export interface SchemaProbeResult {
   ok: boolean;
-  configured: boolean;
+  /** false when SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are absent. */
+  supabaseConfigured: boolean;
+  status: SchemaProbeStatus;
   results: TableProbeResult[];
 }
 
 /**
- * Queries information_schema.columns once per table and compares against
- * TABLE_EXPECTATIONS. Returns per-table results and a top-level ok flag.
+ * Probes each table by issuing SELECT <columns> LIMIT 0.
+ * PostgREST surfaces a column-level error when any column is absent,
+ * so we binary-search: retry each missing column individually to build
+ * the exact list.
  *
- * Never throws — failures are surfaced as ok:false so the health endpoint
- * can always respond.
+ * Never throws — all failures are surfaced as status:'unavailable' or
+ * status:'missing_columns' so the health endpoint can always respond.
  */
 export async function probeSupabaseSchema(): Promise<SchemaProbeResult> {
   if (!isSupabaseAdminConfigured()) {
-    return { ok: false, configured: false, results: [] };
-  }
-
-  const supabase = getSupabaseAdminClient();
-  const tableNames = TABLE_EXPECTATIONS.map((e) => e.table);
-
-  const { data, error } = await supabase
-    .from('information_schema.columns')
-    .select('table_name, column_name')
-    .eq('table_schema', 'public')
-    .in('table_name', tableNames);
-
-  if (error || !data) {
     return {
       ok: false,
-      configured: true,
-      results: TABLE_EXPECTATIONS.map((e) => ({
-        table: e.table,
-        ok: false,
-        missing: [`probe_error: ${error?.message ?? 'no data'}`],
-      })),
+      supabaseConfigured: false,
+      status: 'unavailable',
+      results: [],
     };
   }
 
-  const existing = new Map<string, Set<string>>();
-  for (const row of data) {
-    const tbl = row.table_name as string;
-    const col = row.column_name as string;
-    if (!existing.has(tbl)) existing.set(tbl, new Set());
-    existing.get(tbl)!.add(col);
+  const supabase = getSupabaseAdminClient();
+  const results: TableProbeResult[] = [];
+
+  for (const exp of TABLE_EXPECTATIONS) {
+    // Attempt to select all required columns with LIMIT 0.
+    // If PostgREST rejects the query, at least one column is missing.
+    const { error: bulkError } = await supabase
+      .from(exp.table)
+      .select(exp.requiredColumns.join(', '))
+      .limit(0);
+
+    if (!bulkError) {
+      results.push({ table: exp.table, ok: true, missing: [] });
+      continue;
+    }
+
+    // The bulk select failed. Probe each column individually to identify
+    // which ones are missing vs. a connectivity / permission error.
+    const missing: string[] = [];
+    let probeError: string | undefined;
+
+    for (const col of exp.requiredColumns) {
+      const { error: colError } = await supabase
+        .from(exp.table)
+        .select(col)
+        .limit(0);
+
+      if (colError) {
+        const msg = colError.message ?? '';
+        // PostgREST error for missing column contains the column name.
+        // Distinguish genuine missing-column errors from other failures.
+        if (
+          msg.includes('does not exist') ||
+          msg.includes('column') ||
+          msg.includes(col)
+        ) {
+          missing.push(col);
+        } else {
+          // Could be RLS / network / permission — treat as unavailable.
+          probeError = msg;
+        }
+      }
+    }
+
+    if (probeError && missing.length === 0) {
+      // Every individual probe failed for non-schema reasons.
+      results.push({
+        table: exp.table,
+        ok: false,
+        missing: [],
+        error: probeError,
+      });
+    } else {
+      results.push({
+        table: exp.table,
+        ok: missing.length === 0,
+        missing,
+        error: probeError,
+      });
+    }
   }
 
-  const results: TableProbeResult[] = TABLE_EXPECTATIONS.map((exp) => {
-    const cols = existing.get(exp.table) ?? new Set<string>();
-    const missing = exp.requiredColumns.filter((c) => !cols.has(c));
-    return { table: exp.table, ok: missing.length === 0, missing };
-  });
+  const anyUnavailable = results.some((r) => !r.ok && r.missing.length === 0 && r.error);
+  const anyMissing = results.some((r) => r.missing.length > 0);
+  const allOk = results.every((r) => r.ok);
+
+  const status: SchemaProbeStatus = allOk
+    ? 'ok'
+    : anyMissing
+      ? 'missing_columns'
+      : 'unavailable';
 
   return {
-    ok: results.every((r) => r.ok),
-    configured: true,
+    ok: allOk,
+    supabaseConfigured: true,
+    status,
     results,
   };
 }
