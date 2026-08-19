@@ -1,0 +1,20 @@
+export const EMAIL_THEME = {
+  outerBackground: '#f7f9fa',
+  cardBackground: '#ffffff',
+  border: '#e2e8f0',
+  headerBackground: '#184240',
+  accent: '#32b3ad',
+  bodyText: '#2d3748',
+  headingText: '#1a202c',
+  secondaryText: '#4a5568',
+  signatureText: '#718096',
+  footerText: '#a0aec0',
+  ctaBackground: '#184240',
+  ctaText: '#ffffff',
+  blockBackground: '#fdfdfd',
+  fontFamily:
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  maxWidthPx: 600,
+  logoUrl: 'https://sbc-il.co.il/wp-content/uploads/2026/08/logo26.png',
+  logoWidthPx: 220,
+} as const;

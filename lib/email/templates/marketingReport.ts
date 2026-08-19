@@ -1,6 +1,8 @@
 import type { ValuationLocale } from '../../../api_client';
 import { BRAND_NAME, BRAND_NAME_SHORT } from '../../brand/brand-identity';
 import { formatCurrencyShort } from '../../utils/formatCurrency';
+import { buildWhatsAppSupportUrl } from '../../wizard/whatsapp_support';
+import { EMAIL_THEME } from './theme';
 
 export interface MarketingReportEmailParams {
   companyName: string;
@@ -27,16 +29,6 @@ export function hasUsableReportDownloadUrl(
     return false;
   }
 }
-
-const BRAND = {
-  forest: '#0b2c24',
-  card: '#0f3d32',
-  mint: '#00bfa5',
-  mintDark: '#009e8a',
-  text: '#e8f5f0',
-  muted: '#9ec7bb',
-  border: '#1a5246',
-};
 
 function escapeHtml(value: string): string {
   return value
@@ -145,12 +137,17 @@ export function buildMarketingReportEmailHtml(
     params.locale,
     params.currency,
   );
+  const advisoryUrl = buildWhatsAppSupportUrl(
+    params.locale === 'he'
+      ? `היי, סיימתי הערכת שווי ב-equify עבור ${params.companyName} ואשמח לשיחת ייעוץ.`
+      : `Hi, I completed an Equify valuation for ${params.companyName} and would like an advisory call.`,
+  );
   const upsellRows = t.upsellItems
     .map(
       (item) => `
         <tr>
-          <td style="padding:0 0 12px 0;color:${BRAND.text};font-size:15px;line-height:1.6;font-family:Arial,Helvetica,sans-serif;">
-            <span style="color:${BRAND.mint};font-weight:bold;">✦</span>
+          <td style="padding:0 0 12px 0;color:${EMAIL_THEME.bodyText};font-size:15px;line-height:1.7;font-family:${EMAIL_THEME.fontFamily};">
+            <span style="color:${EMAIL_THEME.accent};font-weight:bold;">✦</span>
             &nbsp;${escapeHtml(item)}
           </td>
         </tr>`,
@@ -158,46 +155,48 @@ export function buildMarketingReportEmailHtml(
     .join('');
 
   return `<!DOCTYPE html>
-<html lang="${params.locale === 'he' ? 'he' : 'en'}" dir="${params.locale === 'he' ? 'rtl' : 'ltr'}">
+<html lang="${params.locale === 'he' ? 'he' : 'en'}" dir="rtl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="dark" />
   <title>${escapeHtml(t.subject)}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#061912;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background-color:${EMAIL_THEME.outerBackground};font-family:${EMAIL_THEME.fontFamily};direction:rtl;text-align:right;">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${escapeHtml(t.preheader)}</div>
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#061912;padding:24px 12px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:${EMAIL_THEME.outerBackground};margin:0;padding:24px 12px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;">
+        <table role="presentation" width="${EMAIL_THEME.maxWidthPx}" cellspacing="0" cellpadding="0" border="0" style="max-width:${EMAIL_THEME.maxWidthPx}px;width:100%;margin:0 auto;">
           <tr>
-            <td style="background:${BRAND.forest};border:1px solid ${BRAND.border};border-radius:16px 16px 0 0;padding:28px 32px;text-align:center;">
-              <div style="font-size:28px;font-weight:800;letter-spacing:0.08em;color:${BRAND.mint};">EQUIFY</div>
-              <div style="margin-top:8px;font-size:13px;color:${BRAND.muted};letter-spacing:0.12em;text-transform:uppercase;">
-                ${params.locale === 'he' ? 'אינדיקציית שווי אלגוריתמית' : 'Algorithmic Valuation Indication'}
+            <td style="background:${EMAIL_THEME.headerBackground};padding:28px 24px;text-align:center;">
+              <img src="${EMAIL_THEME.logoUrl}" alt="Solutions, Banking &amp; Capital" width="${EMAIL_THEME.logoWidthPx}" style="display:block;width:${EMAIL_THEME.logoWidthPx}px;max-width:80%;height:auto;margin:0 auto 14px auto;border:0;" />
+              <div style="margin:0;color:#ffffff;font-size:24px;line-height:1.4;font-weight:700;font-family:${EMAIL_THEME.fontFamily};">
+                equify BY SBC
+              </div>
+              <div style="margin-top:8px;color:#d7e6e5;font-size:13px;line-height:1.6;font-family:${EMAIL_THEME.fontFamily};">
+                ${params.locale === 'he' ? 'אינדיקציית שווי אלגוריתמית לעסקים בצמיחה' : 'Algorithmic valuation indication for growth companies'}
               </div>
             </td>
           </tr>
           <tr>
-            <td style="background:${BRAND.card};border-left:1px solid ${BRAND.border};border-right:1px solid ${BRAND.border};padding:32px;">
+            <td style="background:${EMAIL_THEME.cardBackground};border:1px solid ${EMAIL_THEME.border};padding:32px 28px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                 <tr>
-                  <td style="color:${BRAND.text};font-size:22px;line-height:1.4;font-weight:700;padding-bottom:12px;">
+                  <td style="color:${EMAIL_THEME.headingText};font-size:22px;line-height:1.5;font-weight:700;padding:0 0 12px 0;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
                     ${t.greeting}
                   </td>
                 </tr>
                 <tr>
-                  <td style="color:${BRAND.muted};font-size:16px;line-height:1.7;padding-bottom:24px;">
+                  <td style="color:${EMAIL_THEME.bodyText};font-size:16px;line-height:1.9;padding:0 0 24px 0;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
                     ${t.intro}
                   </td>
                 </tr>
                 ${
                   hasDownloadLink
                     ? `<tr>
-                  <td align="center" style="padding:8px 0 28px 0;">
+                  <td align="center" style="padding:4px 0 28px 0;text-align:center;">
                     <a href="${escapeHtml(params.metricsAccessUrl as string)}"
-                       style="display:inline-block;background:linear-gradient(135deg,${BRAND.mint} 0%,${BRAND.mintDark} 100%);color:#04241d;font-size:16px;font-weight:700;text-decoration:none;padding:16px 28px;border-radius:12px;box-shadow:0 8px 24px rgba(0,191,165,0.35);">
+                       style="display:inline-block;background:${EMAIL_THEME.ctaBackground};color:${EMAIL_THEME.ctaText};font-size:16px;line-height:1.2;font-weight:700;text-decoration:none;padding:14px 32px;border-radius:4px;font-family:${EMAIL_THEME.fontFamily};">
                       ${t.metricsCta}
                     </a>
                   </td>
@@ -205,66 +204,76 @@ export function buildMarketingReportEmailHtml(
                     : ''
                 }
                 <tr>
-                  <td style="background:#0a3229;border:1px solid ${BRAND.border};border-radius:12px;padding:20px 22px;">
-                    <div style="color:${BRAND.muted};font-size:12px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">
+                  <td style="background:${EMAIL_THEME.blockBackground};border:1px solid ${EMAIL_THEME.border};border-right:3px solid ${EMAIL_THEME.accent};padding:20px 22px;text-align:right;">
+                    <div style="color:${EMAIL_THEME.secondaryText};font-size:12px;line-height:1.6;font-weight:600;margin-bottom:6px;font-family:${EMAIL_THEME.fontFamily};">
                       ${t.indicativeLabel}
                     </div>
-                    <div style="color:${BRAND.mint};font-size:28px;font-weight:800;line-height:1.2;">
+                    <div style="color:${EMAIL_THEME.headingText};font-size:32px;line-height:1.2;font-weight:800;font-family:${EMAIL_THEME.fontFamily};">
                       ${escapeHtml(ev)}
                     </div>
                   </td>
                 </tr>
                 <tr><td style="height:20px;line-height:20px;">&nbsp;</td></tr>
                 <tr>
-                  <td style="color:${BRAND.text};font-size:18px;font-weight:700;padding-bottom:10px;">
+                  <td style="color:${EMAIL_THEME.headingText};font-size:18px;line-height:1.5;font-weight:700;padding:0 0 10px 0;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
                     ${t.methodologyTitle}
                   </td>
                 </tr>
                 <tr>
-                  <td style="color:${BRAND.muted};font-size:15px;line-height:1.7;padding-bottom:14px;">
+                  <td style="color:${EMAIL_THEME.bodyText};font-size:15px;line-height:1.8;padding:0 0 14px 0;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
                     ${t.methodologyIntro}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding-bottom:10px;color:${BRAND.text};font-size:14px;line-height:1.65;">
-                    <strong style="color:${BRAND.mint};">DCF</strong> — ${escapeHtml(t.dcf)}
+                  <td style="padding:0 0 10px 0;color:${EMAIL_THEME.bodyText};font-size:14px;line-height:1.75;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
+                    <strong style="color:${EMAIL_THEME.headingText};">DCF</strong> — ${escapeHtml(t.dcf)}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding-bottom:10px;color:${BRAND.text};font-size:14px;line-height:1.65;">
-                    <strong style="color:${BRAND.mint};">WACC</strong> — ${escapeHtml(t.wacc)}
+                  <td style="padding:0 0 10px 0;color:${EMAIL_THEME.bodyText};font-size:14px;line-height:1.75;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
+                    <strong style="color:${EMAIL_THEME.headingText};">WACC</strong> — ${escapeHtml(t.wacc)}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding-bottom:24px;color:${BRAND.text};font-size:14px;line-height:1.65;">
-                    <strong style="color:${BRAND.mint};">${params.locale === 'he' ? 'מכפילים' : 'Multiples'}</strong> — ${escapeHtml(t.multiples)}
+                  <td style="padding:0 0 24px 0;color:${EMAIL_THEME.bodyText};font-size:14px;line-height:1.75;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
+                    <strong style="color:${EMAIL_THEME.headingText};">${params.locale === 'he' ? 'מכפילים' : 'Multiples'}</strong> — ${escapeHtml(t.multiples)}
                   </td>
                 </tr>
                 <tr>
-                  <td style="background:${BRAND.forest};border:1px solid ${BRAND.border};border-radius:12px;padding:22px 24px;">
-                    <div style="color:${BRAND.mint};font-size:17px;font-weight:700;padding-bottom:8px;">
+                  <td style="background:${EMAIL_THEME.blockBackground};border:1px solid ${EMAIL_THEME.border};border-right:3px solid ${EMAIL_THEME.accent};padding:22px 24px;text-align:right;">
+                    <div style="color:${EMAIL_THEME.headingText};font-size:17px;line-height:1.5;font-weight:700;padding:0 0 8px 0;font-family:${EMAIL_THEME.fontFamily};">
                       ${t.upsellTitle}
                     </div>
-                    <div style="color:${BRAND.muted};font-size:14px;line-height:1.6;padding-bottom:14px;">
+                    <div style="color:${EMAIL_THEME.bodyText};font-size:14px;line-height:1.8;padding:0 0 14px 0;font-family:${EMAIL_THEME.fontFamily};">
                       ${t.upsellIntro}
                     </div>
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                       ${upsellRows}
                     </table>
-                    <div style="padding-top:8px;">
-                      <a href="mailto:advisory@equify.app?subject=${encodeURIComponent(params.companyName)}"
-                         style="color:${BRAND.mint};font-size:14px;font-weight:700;text-decoration:none;border-bottom:1px solid ${BRAND.mint};">
+                    ${
+                      advisoryUrl
+                        ? `<div style="padding-top:8px;">
+                      <a href="${escapeHtml(advisoryUrl)}"
+                         style="color:${EMAIL_THEME.headerBackground};font-size:14px;line-height:1.5;font-weight:700;text-decoration:none;border-bottom:1px solid ${EMAIL_THEME.headerBackground};font-family:${EMAIL_THEME.fontFamily};">
                         ${t.upsellCta} →
                       </a>
-                    </div>
+                    </div>`
+                        : ''
+                    }
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td style="background:${BRAND.forest};border:1px solid ${BRAND.border};border-top:none;border-radius:0 0 16px 16px;padding:20px 32px;text-align:center;color:${BRAND.muted};font-size:12px;line-height:1.6;">
-              ${t.footer}
+            <td style="padding:18px 24px 0 24px;text-align:center;">
+              <div style="color:${EMAIL_THEME.signatureText};font-size:14px;line-height:1.7;font-family:${EMAIL_THEME.fontFamily};margin-bottom:8px;">
+                צוות Equify<br />
+                מבית Solutions, Banking &amp; Capital
+              </div>
+              <div style="color:${EMAIL_THEME.footerText};font-size:12px;line-height:1.7;font-family:${EMAIL_THEME.fontFamily};">
+                © 2026 Solutions, Banking &amp; Capital. כל הזכויות שמורות.
+              </div>
             </td>
           </tr>
         </table>
