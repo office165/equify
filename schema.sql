@@ -526,9 +526,9 @@ CREATE INDEX crm_leads_email_created_idx ON crm_leads (user_email, created_at DE
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE valuations_history (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                      BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    user_email              CITEXT NOT NULL,
+    user_email              TEXT NOT NULL,
     user_phone              TEXT NOT NULL,
     valuation_midpoint      NUMERIC(18, 2) NOT NULL DEFAULT 0,
     pdf_url                 TEXT NOT NULL,
