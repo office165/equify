@@ -521,30 +521,25 @@ CREATE INDEX crm_leads_email_created_idx ON crm_leads (user_email, created_at DE
 
 -- -----------------------------------------------------------------------------
 -- Valuation PDF archive (Supabase Storage + history)
--- Bucket: valuation_reports (create in Supabase Storage dashboard)
+-- Bucket: valuation_reports (private — pdf_url holds signed URLs only)
+-- Live Supabase schema (10 columns) as of 2026-08-18.
 -- -----------------------------------------------------------------------------
 
 CREATE TABLE valuations_history (
-    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_email              CITEXT NOT NULL,
+    id                      BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    user_email              TEXT NOT NULL,
     user_phone              TEXT NOT NULL,
     valuation_midpoint      NUMERIC(18, 2) NOT NULL DEFAULT 0,
     pdf_url                 TEXT NOT NULL,
-    user_id                 TEXT,
-    user_corporate_tax_id   TEXT DEFAULT '',
-    currency                TEXT DEFAULT 'ILS',
-    valuation_id            TEXT,
-    pdf_storage_path        TEXT,
-    pdf_public_url          TEXT,
-    created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    full_name               TEXT NOT NULL DEFAULT '',
+    national_id             TEXT NOT NULL DEFAULT '',
+    corporate_tax_id        TEXT NOT NULL DEFAULT '',
+    sector                  TEXT
 );
 
 CREATE INDEX valuations_history_email_created_idx
     ON valuations_history (user_email, created_at DESC);
-
-CREATE INDEX valuations_history_valuation_id_idx
-    ON valuations_history (valuation_id)
-    WHERE valuation_id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
 -- Product funnel events (admin metrics)

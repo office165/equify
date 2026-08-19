@@ -1,20 +1,17 @@
 import type { ValuationLocale } from '../../api_client';
-import { EmailGateway } from '../gateway/email_gateway';
 import { updateMondayLeadColumnsViaGraphql } from '../crm/monday_graphql_lead';
 import { findMondayItemIdByEmail } from '../crm/valubot_monday_sync';
 import { uploadMondayColumnFile } from '../crm/monday_client';
 import { VALUBOT_MONDAY_COLUMNS } from '../crm/valubot_monday_columns';
-import { buildPdfHtml } from '../pdf-template';
 import { mapWizardToValuationData } from '../pdf-template/map-from-wizard';
-import { defaultUtf8PdfFilename } from '../pdf-template/resolve-pdf-request';
 import type { ValuationData } from '../pdf-template/types';
-import { renderHtmlToPdfBuffer } from '../pdf/render_html_pdf';
 import { getIndustryLabel } from '../constants/industries';
 import { refreshFxRates } from '../utils/fxService';
 import type { EquifyValuationPersistedState } from '../wizard/equify_valuation_persistence';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { buildExportValuationDataFromLiveSession } from '../results/build-export-valuation-data';
 import { scheduleProductEvent } from '../analytics/track_event';
+import { packageAndSendCustomerReport } from './send_customer_report';
 
 export type ReportDeliverTrigger = 'PAYPAL_PAID' | 'PROMO_FREE';
 
@@ -109,11 +106,6 @@ async function resolveValuationDataForDeliver(
   return mapWizardToValuationData(input.valuationState.wizard, reportId, locale);
 }
 
-async function generateReportPdfBuffer(valuationData: ValuationData): Promise<Buffer> {
-  const html = buildPdfHtml(valuationData);
-  return renderHtmlToPdfBuffer(html);
-}
-
 async function syncMondayDeliverable(params: {
   itemId: string;
   valuationState: EquifyValuationPersistedState;
@@ -174,62 +166,41 @@ async function syncMondayDeliverable(params: {
   };
 }
 
-async function sendDeliverReportEmail(params: {
-  to: string;
-  recipientName?: string;
-  companyName: string;
-  pdfBuffer: Buffer;
-  filename: string;
-}): Promise<{ delivered: boolean; messageId: string | null; error?: string }> {
-  const gateway = new EmailGateway();
-  const subject = 'הדו״ח הפיננסי שלך מ-equify מוכן (הערכת שווי אלגוריתמית)';
-  const greeting = params.recipientName?.trim()
-    ? `שלום ${params.recipientName.trim()},`
-    : 'שלום,';
-  const html = `
-    <div dir="rtl" style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.6;color:#0f172a;">
-      <p style="margin:0 0 12px;">${greeting}</p>
-      <p style="margin:0 0 12px;">דוח הערכת השווי האלגוריתמי עבור <strong>${params.companyName}</strong> מוכן ומצורף למייל זה.</p>
-      <p style="margin:0;color:#475569;font-size:14px;">equify BY SBC · אינדיקציית שווי אלגוריתמית בלבד · אין לראות בכך ייעוץ השקעות.</p>
-    </div>
-  `.trim();
-  const text = `${greeting}\n\nדוח הערכת השווי האלגוריתמי עבור ${params.companyName} מצורף.\n\nequify BY SBC`;
-
-  try {
-    const result = await gateway.send({
-      to: params.to,
-      subject,
-      html,
-      text,
-      attachments: [
-        {
-          filename: params.filename,
-          content: params.pdfBuffer,
-          contentType: 'application/pdf',
-        },
-      ],
-    });
-    return {
-      delivered: result.delivered,
-      messageId: result.messageId,
-      error: result.delivered ? undefined : 'email_not_delivered',
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'email_send_failed';
-    console.error('[deliver-report] Email delivery failed', err);
-    return { delivered: false, messageId: null, error: message };
-  }
-}
-
 export async function deliverEquifyReport(
   input: DeliverEquifyReportInput,
 ): Promise<DeliverEquifyReportResult> {
   const locale = input.locale ?? 'he';
   const reportId = `eq-deliver-${Date.now()}`;
   const valuationData = await resolveValuationDataForDeliver(input, reportId, locale);
-  const pdfBuffer = await generateReportPdfBuffer(valuationData);
-  const filename = defaultUtf8PdfFilename(valuationData.companyName);
   const aiNotes = buildDeliverAiNotes(input.valuationState, valuationData);
+  const emailTarget = input.email.trim() || input.valuationState.userEmail.trim();
+  const profile = input.valuationState.wizard.profile;
+
+  const packaged = await packageAndSendCustomerReport({
+    valuationData,
+    to: emailTarget,
+    locale,
+    recipientName: profile.fullName,
+    archive: {
+      userEmail: emailTarget || profile.userEmail,
+      userPhone: profile.userMobilePhone,
+      valuationMidpoint: equityMidpointNis(input.valuationState.summary.equityK),
+      displayName: profile.fullName || valuationData.companyName,
+      nationalId: profile.userNationalId,
+      corporateTaxId: profile.userCorporateTaxId,
+      sectorLabel:
+        valuationData.sectorLabel ||
+        getIndustryLabel(profile.sector, locale),
+      currency: valuationData.currency,
+      valuationId: reportId,
+    },
+    indicativeEnterpriseValue: valuationData.enterpriseValue,
+    currency: valuationData.currency,
+  });
+
+  const pdfBuffer = packaged.pdfBuffer;
+  const filename = packaged.filename;
+  const emailResult = packaged.email;
 
   let itemId =
     input.mondayItemId?.trim() ||
@@ -237,7 +208,7 @@ export async function deliverEquifyReport(
     null;
 
   if (!itemId) {
-    const email = input.email.trim() || input.valuationState.userEmail.trim();
+    const email = emailTarget;
     if (email) {
       itemId = await findMondayItemIdByEmail(email);
     }
@@ -258,19 +229,9 @@ export async function deliverEquifyReport(
         error: 'monday_item_not_found',
       };
 
-  const emailTarget = input.email.trim() || input.valuationState.userEmail.trim();
-  const emailResult = emailTarget
-    ? await sendDeliverReportEmail({
-        to: emailTarget,
-        recipientName: input.valuationState.wizard.profile.fullName,
-        companyName: valuationData.companyName,
-        pdfBuffer,
-        filename,
-      })
-    : { delivered: false, messageId: null, error: 'email_missing' };
-
+  const pdfBytes = packaged.pdfBytes;
   const ok =
-    pdfBuffer.byteLength > 0 &&
+    pdfBytes > 0 &&
     (mondayResult.columnsUpdated || mondayResult.fileUploaded || emailResult.delivered);
 
   if (ok) {
@@ -280,6 +241,7 @@ export async function deliverEquifyReport(
         reportId,
         source: 'reports/deliver',
         triggerType: input.triggerType,
+        archived: packaged.archived,
       },
     });
   }
@@ -287,7 +249,7 @@ export async function deliverEquifyReport(
   return {
     ok,
     reportId,
-    pdfBytes: pdfBuffer.byteLength,
+    pdfBytes,
     monday: {
       ok: mondayResult.columnsUpdated || mondayResult.fileUploaded,
       itemId,

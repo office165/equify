@@ -22,6 +22,7 @@ import type { BackupRelayPayload } from './backup_relay_types';
 import { buildValuationsHistoryInsertRow } from './valuations_history_row';
 
 const STORAGE_BUCKET = 'valuation_reports';
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 365;
 const RESEND_ADMIN_TO = 'smallbizclub.il@gmail.com';
 const DEFAULT_RESEND_FROM = 'equify BY SBC <system@valubot.co.il>';
 
@@ -139,22 +140,24 @@ export async function executeSupabaseStorageTask(
     throw uploadError;
   }
 
-  const { data: publicUrlData } = supabase.storage
+  const { data: signed, error: signedError } = await supabase.storage
     .from(STORAGE_BUCKET)
-    .getPublicUrl(storagePath);
+    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
 
-  let pdfUrl = publicUrlData.publicUrl;
-
-  if (!pdfUrl) {
-    const { data: signed, error: signedError } = await supabase.storage
+  if (signedError || !signed?.signedUrl) {
+    const { error: removeError } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .createSignedUrl(storagePath, 60 * 60 * 24 * 365);
-
-    if (signedError || !signed?.signedUrl) {
-      throw signedError ?? new Error('Unable to resolve PDF URL after upload.');
+      .remove([storagePath]);
+    if (removeError) {
+      console.error('[backup-relay] failed to roll back storage after signed URL failure', {
+        path: storagePath,
+        message: removeError.message,
+      });
     }
-    pdfUrl = signed.signedUrl;
+    throw signedError ?? new Error('Unable to resolve PDF URL after upload.');
   }
+
+  const pdfUrl = signed.signedUrl;
 
   return {
     storagePath,
@@ -179,12 +182,26 @@ export async function executeSupabaseArchiveTask(
   pdfBuffer: Buffer,
 ): Promise<SupabaseArchiveTaskResult> {
   const storageResult = await executeSupabaseStorageTask(payload, pdfBuffer);
-  const insertResult = await executeSupabaseInsertTask(payload, storageResult.pdfUrl);
-  return {
-    ...insertResult,
-    storagePath: storageResult.storagePath,
-    bytes: storageResult.bytes,
-  };
+  try {
+    const insertResult = await executeSupabaseInsertTask(payload, storageResult.pdfUrl);
+    return {
+      ...insertResult,
+      storagePath: storageResult.storagePath,
+      bytes: storageResult.bytes,
+    };
+  } catch (error) {
+    const supabase = requireSupabaseAdmin();
+    const { error: removeError } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .remove([storageResult.storagePath]);
+    if (removeError) {
+      console.error('[backup-relay] failed to roll back storage after insert failure', {
+        path: storageResult.storagePath,
+        message: removeError.message,
+      });
+    }
+    throw error;
+  }
 }
 
 export async function executeSupabaseInsertTask(

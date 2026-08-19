@@ -5,11 +5,27 @@ import { formatCurrencyShort } from '../../utils/formatCurrency';
 export interface MarketingReportEmailParams {
   companyName: string;
   recipientName?: string;
-  /** Direct link to PDF or live evaluation metrics dashboard */
-  metricsAccessUrl: string;
+  /**
+   * Signed HTTPS URL to the PDF. Omit/null/empty/"#" → no CTA at all.
+   * Never render a dead button.
+   */
+  metricsAccessUrl?: string | null;
   locale: ValuationLocale;
   indicativeEnterpriseValue?: number | null;
   currency?: string;
+}
+
+export function hasUsableReportDownloadUrl(
+  url: string | null | undefined,
+): boolean {
+  const raw = url?.trim() ?? '';
+  if (!raw || raw === '#') return false;
+  try {
+    const parsed = new URL(raw);
+    return parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
 }
 
 const BRAND = {
@@ -41,14 +57,23 @@ function formatValue(
   return formatCurrencyShort(value, currency);
 }
 
-function copy(locale: ValuationLocale, companyName: string, recipientName?: string) {
+function copy(
+  locale: ValuationLocale,
+  companyName: string,
+  recipientName: string | undefined,
+  hasDownloadLink: boolean,
+) {
   const name = recipientName?.trim() || companyName;
   if (locale === 'he') {
     return {
       subject: `דוח הערכת שווי — ${companyName} | ${BRAND_NAME}`,
-      preheader: `מדדי ההערכה והדוח המלא של ${companyName} מוכנים לצפייה.`,
+      preheader: hasDownloadLink
+        ? `מדדי ההערכה והדוח המלא של ${companyName} מוכנים לצפייה.`
+        : `הדוח המלא של ${companyName} מצורף למייל.`,
       greeting: `שלום ${escapeHtml(name)},`,
-      intro: `השלמנו עבורך הערכת שווי אלגוריתמית עבור <strong>${escapeHtml(companyName)}</strong>. הדוח המלא מצורף למייל, ובאפשרותך לגשת למדדי ההערכה המלאים בלחיצה אחת.`,
+      intro: hasDownloadLink
+        ? `השלמנו עבורך הערכת שווי אלגוריתמית עבור <strong>${escapeHtml(companyName)}</strong>. הדוח המלא מצורף למייל, ובאפשרותך לגשת למדדי ההערכה המלאים בלחיצה אחת.`
+        : `השלמנו עבורך הערכת שווי אלגוריתמית עבור <strong>${escapeHtml(companyName)}</strong>. הדוח מצורף למייל.`,
       metricsCta: 'לצפייה במדדי ההערכה והורדת הדוח (PDF)',
       pdfCta: 'להורדת דוח הערכת השווי המלא (PDF)',
       methodologyTitle: `איך ${BRAND_NAME_SHORT} חישב את השווי שלך?`,
@@ -74,9 +99,13 @@ function copy(locale: ValuationLocale, companyName: string, recipientName?: stri
 
   return {
     subject: `Valuation Report — ${companyName} | ${BRAND_NAME}`,
-    preheader: `Your valuation metrics and full report for ${companyName} are ready.`,
+    preheader: hasDownloadLink
+      ? `Your valuation metrics and full report for ${companyName} are ready.`
+      : `The full report for ${companyName} is attached to this email.`,
     greeting: `Hello ${escapeHtml(name)},`,
-    intro: `We completed an algorithmic valuation indication for <strong>${escapeHtml(companyName)}</strong>. Your PDF is attached and your full evaluation metrics are one click away.`,
+    intro: hasDownloadLink
+      ? `We completed an algorithmic valuation indication for <strong>${escapeHtml(companyName)}</strong>. Your PDF is attached and your full evaluation metrics are one click away.`
+      : `We completed an algorithmic valuation indication for <strong>${escapeHtml(companyName)}</strong>. The report is attached to this email.`,
     metricsCta: 'View Evaluation Metrics & Download PDF',
     pdfCta: 'Download Full Valuation Report (PDF)',
     methodologyTitle: `How ${BRAND_NAME_SHORT} calculated your value`,
@@ -104,7 +133,13 @@ function copy(locale: ValuationLocale, companyName: string, recipientName?: stri
 export function buildMarketingReportEmailHtml(
   params: MarketingReportEmailParams,
 ): string {
-  const t = copy(params.locale, params.companyName, params.recipientName);
+  const hasDownloadLink = hasUsableReportDownloadUrl(params.metricsAccessUrl);
+  const t = copy(
+    params.locale,
+    params.companyName,
+    params.recipientName,
+    hasDownloadLink,
+  );
   const ev = formatValue(
     params.indicativeEnterpriseValue,
     params.locale,
@@ -157,14 +192,18 @@ export function buildMarketingReportEmailHtml(
                     ${t.intro}
                   </td>
                 </tr>
-                <tr>
+                ${
+                  hasDownloadLink
+                    ? `<tr>
                   <td align="center" style="padding:8px 0 28px 0;">
-                    <a href="${escapeHtml(params.metricsAccessUrl)}"
+                    <a href="${escapeHtml(params.metricsAccessUrl as string)}"
                        style="display:inline-block;background:linear-gradient(135deg,${BRAND.mint} 0%,${BRAND.mintDark} 100%);color:#04241d;font-size:16px;font-weight:700;text-decoration:none;padding:16px 28px;border-radius:12px;box-shadow:0 8px 24px rgba(0,191,165,0.35);">
                       ${t.metricsCta}
                     </a>
                   </td>
-                </tr>
+                </tr>`
+                    : ''
+                }
                 <tr>
                   <td style="background:#0a3229;border:1px solid ${BRAND.border};border-radius:12px;padding:20px 22px;">
                     <div style="color:${BRAND.muted};font-size:12px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">
@@ -239,7 +278,13 @@ export function buildMarketingReportEmailHtml(
 export function buildMarketingReportEmailText(
   params: MarketingReportEmailParams,
 ): string {
-  const t = copy(params.locale, params.companyName, params.recipientName);
+  const hasDownloadLink = hasUsableReportDownloadUrl(params.metricsAccessUrl);
+  const t = copy(
+    params.locale,
+    params.companyName,
+    params.recipientName,
+    hasDownloadLink,
+  );
   const ev = formatValue(
     params.indicativeEnterpriseValue,
     params.locale,
@@ -247,12 +292,14 @@ export function buildMarketingReportEmailText(
   );
   const upsell = t.upsellItems.map((item) => `• ${item}`).join('\n');
 
+  const accessLine = hasDownloadLink
+    ? `\n${t.plainAccess}: ${params.metricsAccessUrl}\n`
+    : '';
+
   return `${t.greeting}
 
 ${t.intro.replace(/<[^>]+>/g, '')}
-
-${t.plainAccess}: ${params.metricsAccessUrl}
-
+${accessLine}
 ${t.indicativeLabel}: ${ev}
 
 ${t.methodologyTitle}
@@ -271,5 +318,10 @@ ${t.footer}`;
 export function buildMarketingReportEmailSubject(
   params: MarketingReportEmailParams,
 ): string {
-  return copy(params.locale, params.companyName, params.recipientName).subject;
+  return copy(
+    params.locale,
+    params.companyName,
+    params.recipientName,
+    hasUsableReportDownloadUrl(params.metricsAccessUrl),
+  ).subject;
 }

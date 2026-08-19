@@ -28,6 +28,10 @@
     },
     "app/api/valuation/backup-relay/route.ts": {
       "maxDuration": 60
+    },
+    "app/api/v1/reports/valuation/dispatch/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
   }
 }
