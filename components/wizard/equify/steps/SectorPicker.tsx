@@ -455,24 +455,23 @@ export function SectorPicker({
 
             {revenue && customer ? (
               <div className="sp-echo sp-q-enter">
+                <p className="sp-echo-label">
+                  {isHe ? 'לפי מה שסיפרת' : 'Based on what you shared'}
+                </p>
                 <div className="sp-echo-chips">
                   <span className="sp-echo-chip">
-                    [
                     {isHe
                       ? REVENUE_SOURCE_OPTIONS.find((o) => o.key === revenue)
                           ?.labelHe
                       : REVENUE_SOURCE_OPTIONS.find((o) => o.key === revenue)
                           ?.labelEn}
-                    ]
                   </span>
                   <span className="sp-echo-chip">
-                    [
                     {isHe
                       ? CUSTOMER_TYPE_OPTIONS.find((o) => o.key === customer)
                           ?.labelHe
                       : CUSTOMER_TYPE_OPTIONS.find((o) => o.key === customer)
                           ?.labelEn}
-                    ]
                   </span>
                 </div>
 
@@ -507,6 +506,9 @@ export function SectorPicker({
                             }
                             onClick={() => handleFastPick(hit)}
                           >
+                            {selected ? (
+                              <span className="sp-suggest-mark" aria-hidden />
+                            ) : null}
                             <span className="sp-suggest-title">
                               {sectorLabel} ·{' '}
                               {isHe ? hit.labelHe : hit.labelEn}
