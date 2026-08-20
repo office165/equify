@@ -1,4 +1,18 @@
+import { INDUSTRY_CONFIG } from '../../../../lib/constants/industry_config';
 import { BidiNumberUnit, durationUnit } from '../../shared/BidiNumberUnit';
+
+/** Unique sub-sector ids across INDUSTRY_CONFIG (read-only; no calibration edits). */
+function countUniqueSubSectorIds(): number {
+  const ids = new Set<string>();
+  for (const entry of Object.values(INDUSTRY_CONFIG)) {
+    for (const sub of entry.subSectors) {
+      ids.add(sub.id);
+    }
+  }
+  return ids.size;
+}
+
+const CALIBRATED_SUB_SECTOR_COUNT = countUniqueSubSectorIds();
 
 /**
  * פס סטטיסטיקות קבוע — עונה על התנגדויות נפוצות.
@@ -29,11 +43,9 @@ export function StatsSection() {
             <div className="s-lab">מהזנת נתונים עד דוח</div>
           </div>
           <div className="stat rv">
-            <div className="s-num">
-              <BidiNumberUnit number={0} unit={<em>₪</em>} />
-            </div>
-            <div className="s-lab">להתחלה</div>
-            <div className="s-sub">תשלום רק בהפקת הדוח</div>
+            <div className="s-num">{CALIBRATED_SUB_SECTOR_COUNT}</div>
+            <div className="s-lab">תתי-ענפים מכוילים בנפרד</div>
+            <div className="s-sub">פרופיל מכפילים לכל תת-ענף</div>
           </div>
         </div>
       </div>
