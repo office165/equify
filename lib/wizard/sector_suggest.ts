@@ -11,6 +11,8 @@ export interface SectorSuggestHit {
   labelHe: string;
   labelEn: string;
   score: number;
+  /** Optional Hebrew one-liner from LLM (or omitted on keyword fallback). */
+  reason?: string;
 }
 
 /** Fold Hebrew for lenient search: strip nikud, collapse spaces, lowercase. */
