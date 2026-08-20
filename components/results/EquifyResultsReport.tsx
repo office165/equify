@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import type { ValuationScenario } from '../../lib/valuation/canonical_valuation';
 import {
@@ -137,8 +137,10 @@ export function EquifyResultsReport({
   const [purposeLabel, setPurposeLabel] = useState('');
   const [wizardCompanyRaw, setWizardCompanyRaw] = useState('');
   const [companyLogo, setCompanyLogo] = useState('');
+  const [activeSectionId, setActiveSectionId] = useState(SCROLL_SECTIONS[0]?.id ?? 'p1');
   const orbRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
+  const sectionRatiosRef = useRef<Map<string, number>>(new Map());
 
   const equifyState = useMemo(
     () => equifyStateProp ?? loadEquifyWizardState(),
@@ -206,6 +208,70 @@ export function EquifyResultsReport({
     coverEquityAmount: coverEquityAnim,
     finalEquityAmount: coverEquityAnim,
   });
+
+  useEffect(() => {
+    if (!mounted || !vm || typeof window === 'undefined') return undefined;
+
+    const ratios = sectionRatiosRef.current;
+    ratios.clear();
+
+    const pickActive = () => {
+      let bestId = SCROLL_SECTIONS[0]?.id ?? 'p1';
+      let bestRatio = -1;
+      for (const section of SCROLL_SECTIONS) {
+        const ratio = ratios.get(section.id) ?? 0;
+        if (ratio > bestRatio) {
+          bestRatio = ratio;
+          bestId = section.id;
+        }
+      }
+      if (bestRatio > 0) {
+        setActiveSectionId(bestId);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          ratios.set(
+            entry.target.id,
+            entry.isIntersecting ? entry.intersectionRatio : 0,
+          );
+        }
+        pickActive();
+      },
+      {
+        root: null,
+        rootMargin: '-45% 0px -45% 0px',
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+      },
+    );
+
+    for (const section of SCROLL_SECTIONS) {
+      const el = document.getElementById(section.id);
+      if (el) observer.observe(el);
+    }
+
+    return () => {
+      observer.disconnect();
+      ratios.clear();
+    };
+  }, [mounted, vm]);
+
+  const handleRailNavigate = useCallback(
+    (event: MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+      event.preventDefault();
+      const el = document.getElementById(sectionId);
+      if (!el) return;
+      el.scrollIntoView({
+        behavior: reducedMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+      window.history.replaceState(null, '', `#${sectionId}`);
+      setActiveSectionId(sectionId);
+    },
+    [reducedMotion],
+  );
 
   const sectorKey = useMemo((): EquifySectorKey => {
     return equifyState?.profile?.sector ?? 'other';
@@ -448,17 +514,22 @@ export function EquifyResultsReport({
       ) : null}
 
       <nav className="rail hidden md:flex" aria-label={shell.reportPagesNav}>
-        {SCROLL_SECTIONS.map((s, i) => (
-          <a
-            key={s.id}
-            href={`#${s.id}`}
-            className={i === 0 ? 'on' : undefined}
-            aria-label={isHe ? s.labelHe : s.labelEn}
-          >
-            <span className="rail-dot" aria-hidden="true" />
-            <span className="rail-label">{isHe ? s.labelHe : s.labelEn}</span>
-          </a>
-        ))}
+        {SCROLL_SECTIONS.map((s) => {
+          const isActive = s.id === activeSectionId;
+          return (
+            <a
+              key={s.id}
+              href={`#${s.id}`}
+              className={isActive ? 'on' : undefined}
+              aria-label={isHe ? s.labelHe : s.labelEn}
+              aria-current={isActive ? 'true' : undefined}
+              onClick={(event) => handleRailNavigate(event, s.id)}
+            >
+              <span className="rail-dot" aria-hidden="true" />
+              <span className="rail-label">{isHe ? s.labelHe : s.labelEn}</span>
+            </a>
+          );
+        })}
       </nav>
 
       {/* PAGE 1 · COVER */}
@@ -497,10 +568,10 @@ export function EquifyResultsReport({
             <i />
             {rs.sealBadge}
           </div>
-        </div>
-        <div className="scroll-hint">
-          {shell.scrollHint}
-          <i />
+          <div className="scroll-hint">
+            {shell.scrollHint}
+            <i />
+          </div>
         </div>
       </section>
 
