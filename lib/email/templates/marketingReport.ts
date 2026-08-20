@@ -159,6 +159,8 @@ export function buildMarketingReportEmailHtml(
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
   <title>${escapeHtml(t.subject)}</title>
 </head>
 <body style="margin:0;padding:0;background-color:${EMAIL_THEME.outerBackground};font-family:${EMAIL_THEME.fontFamily};direction:rtl;text-align:right;">
@@ -168,9 +170,9 @@ export function buildMarketingReportEmailHtml(
       <td align="center">
         <table role="presentation" width="${EMAIL_THEME.maxWidthPx}" cellspacing="0" cellpadding="0" border="0" style="max-width:${EMAIL_THEME.maxWidthPx}px;width:100%;margin:0 auto;">
           <tr>
-            <td style="background:${EMAIL_THEME.headerBackground};padding:28px 24px;text-align:center;">
-              <img src="${EMAIL_THEME.logoUrl}" alt="Solutions, Banking &amp; Capital" width="${EMAIL_THEME.logoWidthPx}" style="display:block;width:${EMAIL_THEME.logoWidthPx}px;max-width:80%;height:auto;margin:0 auto 14px auto;border:0;" />
-              <div style="margin:0;color:#ffffff;font-size:24px;line-height:1.4;font-weight:700;font-family:${EMAIL_THEME.fontFamily};">
+            <td bgcolor="${EMAIL_THEME.headerBackground}" style="background:${EMAIL_THEME.headerBackground};padding:28px 24px;text-align:center;">
+              <img src="${EMAIL_THEME.logoUrl}" alt="equify BY SBC" width="${EMAIL_THEME.logoWidthPx}" style="width:${EMAIL_THEME.logoWidthPx}px;max-width:70%;height:auto;display:block;border:0;margin:0 auto;" />
+              <div style="margin:14px 0 0 0;color:${EMAIL_THEME.brandInk};font-size:24px;line-height:1.4;font-weight:700;font-family:${EMAIL_THEME.fontFamily};">
                 equify BY SBC
               </div>
               <div style="margin-top:8px;color:#d7e6e5;font-size:13px;line-height:1.6;font-family:${EMAIL_THEME.fontFamily};">
@@ -254,7 +256,7 @@ export function buildMarketingReportEmailHtml(
                       advisoryUrl
                         ? `<div style="padding-top:8px;">
                       <a href="${escapeHtml(advisoryUrl)}"
-                         style="color:${EMAIL_THEME.headerBackground};font-size:14px;line-height:1.5;font-weight:700;text-decoration:none;border-bottom:1px solid ${EMAIL_THEME.headerBackground};font-family:${EMAIL_THEME.fontFamily};">
+                         style="color:${EMAIL_THEME.accentText};font-size:14px;line-height:1.5;font-weight:700;text-decoration:none;border-bottom:1px solid ${EMAIL_THEME.accentText};font-family:${EMAIL_THEME.fontFamily};">
                         ${t.upsellCta} →
                       </a>
                     </div>`
@@ -268,7 +270,7 @@ export function buildMarketingReportEmailHtml(
           <tr>
             <td style="padding:18px 24px 0 24px;text-align:center;">
               <div style="color:${EMAIL_THEME.signatureText};font-size:14px;line-height:1.7;font-family:${EMAIL_THEME.fontFamily};margin-bottom:8px;">
-                צוות Equify<br />
+                צוות equify<br />
                 מבית Solutions, Banking &amp; Capital
               </div>
               <div style="color:${EMAIL_THEME.footerText};font-size:12px;line-height:1.7;font-family:${EMAIL_THEME.fontFamily};">
