@@ -35,7 +35,7 @@ const COPY = {
     dateLabel: 'תאריך',
     methodLabel: 'שיטה',
     method: 'DCF + מכפילי שוק ישראלי 2026',
-    heroLabel: 'שווי פעילות — תרחיש בסיס',
+    heroLabel: 'שווי פעילות: תרחיש בסיס',
     heroBadge: 'ממוצע DCF + מכפילים',
     revLabel: 'הכנסות שנתיות',
     revSub: 'שנה נוכחית',
@@ -52,7 +52,7 @@ const COPY = {
     disclaimer:
       `הערה משפטית: ${BRAND_NAME} מספקת אינדיקציה אלגוריתמית בלבד. אין בדוח זה ייעוץ פיננסי, השקעות או מס. כל החלטה על בסיס דוח זה הינה באחריות הבלעדית של המשתמש.`,
     pg: (n: number) => `עמוד ${n} מתוך 3`,
-    multiplesTitle: 'ניתוח מכפילי שוק — השוואה לענף 2026',
+    multiplesTitle: 'ניתוח מכפילי שוק: השוואה לענף 2026',
     multCols: ['מכפיל', 'חציון ענף', 'חברתך', 'שווי משתמע', 'סטטוס'],
     inRange: 'בטווח',
     high: 'מעל ממוצע',
@@ -62,18 +62,18 @@ const COPY = {
     scoreTitle: 'ציון בריאות עסקית',
     scoreLabel: 'ציון',
     ratiosTitle: 'פרופיל פיננסי ויחסים עיקריים',
-    dcfTitle: 'מסלול הערכת שווי — DCF תרחיש בסיס',
+    dcfTitle: 'מסלול הערכת שווי: DCF תרחיש בסיס',
     chartTitle: 'מסלול שווי פעילות (₪M)',
     leg1: 'מסלול שווי פעילות',
     leg2: 'תזרים חופשי לפירמה',
-    tableTitle: 'תרחיש בסיס — תזרים מפורש',
+    tableTitle: 'תרחיש בסיס: תזרים מפורש',
     cols: ['שנה', 'הכנסות', 'EBIT', 'תזרים חופשי', 'ערך נוכחי', 'ערך נוכחי מצטבר'],
     termRow: 'ערך נוכחי טרמינלי (שנה 5)',
-    evRow: 'שווי פעילות לפי DCF בלבד — רכיב אחד בשקלול',
+    evRow: 'שווי פעילות לפי DCF בלבד: רכיב אחד בשקלול',
     modelMethodNote:
       'המודל מיישם היוון אמצע-שנה והנחות השקעה-חוזרת סטנדרטיות (McKinsey framework).',
     multiplesSubordinate:
-      'מכפילי שוק — הקשר השוואתי בלבד; השקלול הסופי מוצג בעמוד הראשון.',
+      'מכפילי שוק: הקשר השוואתי בלבד; השקלול הסופי מוצג בעמוד הראשון.',
     weightingRow: 'שקלול שווי פעילות',
     assumTitle: 'הנחות טכניות',
     rangeWord: 'טווח:',
@@ -105,7 +105,7 @@ const COPY = {
     dateLabel: 'Date',
     methodLabel: 'Method',
     method: 'DCF + Israeli Market Multiples 2026',
-    heroLabel: 'Enterprise Value — Base Case',
+    heroLabel: 'Enterprise Value: Base Case',
     heroBadge: 'DCF + Multiples Average',
     revLabel: 'Annual Revenue',
     revSub: 'Current Year',
@@ -122,7 +122,7 @@ const COPY = {
     disclaimer:
       `Legal notice: ${BRAND_NAME} provides an algorithmic indication only. This report does not constitute financial, investment, or tax advice. All decisions based on this report are the sole responsibility of the user.`,
     pg: (n: number) => `Page ${n} of 3`,
-    multiplesTitle: 'Market Multiples Analysis — Industry Benchmark 2026',
+    multiplesTitle: 'Market Multiples Analysis: Industry Benchmark 2026',
     multCols: ['Multiple', 'Industry Median', 'Your Company', 'Implied EV', 'Status'],
     inRange: 'In range',
     high: 'Above avg',
@@ -132,18 +132,18 @@ const COPY = {
     scoreTitle: 'Business Health Score',
     scoreLabel: 'Score',
     ratiosTitle: 'Financial Profile & Key Ratios',
-    dcfTitle: 'Valuation Path — DCF Base Case',
+    dcfTitle: 'Valuation Path: DCF Base Case',
     chartTitle: 'Enterprise Value Trajectory (₪M)',
     leg1: 'Implied EV trajectory',
     leg2: 'Free Cash Flow to Firm',
-    tableTitle: 'Base Case — Explicit Forecast',
+    tableTitle: 'Base Case: Explicit Forecast',
     cols: ['Year', 'Revenue', 'EBIT', 'Free Cash Flow', 'PV of CF', 'Cumulative PV'],
     termRow: 'Terminal Value PV (Year 5)',
-    evRow: 'DCF-only enterprise value — one blend component',
+    evRow: 'DCF-only enterprise value: one blend component',
     modelMethodNote:
       'Mid-year discounting with standard reinvestment assumptions (McKinsey framework).',
     multiplesSubordinate:
-      'Market multiples — comparative context only; headline blend is on page 1.',
+      'Market multiples: comparative context only; headline blend is on page 1.',
     weightingRow: 'Enterprise value blend',
     assumTitle: 'Technical Assumptions',
     rangeWord: 'Range:',
@@ -707,7 +707,7 @@ export function buildPdfHtml(
 <html lang="${htmlLang}" dir="${dir}"${pdfMode ? ' class="pdf-mode"' : ''}>
 <head>
   <meta charset="utf-8"/>
-  <title>${esc(t.reportTitle)} — ${esc(data.companyName)}</title>
+  <title>${esc(t.reportTitle)}: ${esc(data.companyName)}</title>
   <style>${css}</style>
 </head>
 <body${pdfMode ? ' class="pdf-mode"' : ''}>

@@ -41,40 +41,40 @@ export function buildStrategicRecommendations(
 
   if (wacc >= 0.14) {
     bulletsHe.push(
-      `עלות ההון (${(wacc * 100).toFixed(1)}%) גבוהה — בצעו מיצוב מחדש של מבנה ההון: החלפת חוב יקר בחוב זול יותר, הוכחת יציבות תזרימית ל-12 חודשים, והצגת מדדי unit economics עקביים לפני גיוס או מו"מ.`,
+      `עלות ההון (${(wacc * 100).toFixed(1)}%) גבוהה. בצעו מיצוב מחדש של מבנה ההון: החלפת חוב יקר בחוב זול יותר, הוכחת יציבות תזרימית ל-12 חודשים, והצגת מדדי unit economics עקביים לפני גיוס או מו"מ.`,
     );
     bulletsEn.push(
       `With elevated WACC (${(wacc * 100).toFixed(1)}%), restructure capital: refinance expensive debt, demonstrate 12-month cash stability, and present consistent unit economics before fundraising or negotiations.`,
     );
   } else if (margin >= 0.18) {
     bulletsHe.push(
-      `שולי EBITDA של ${(margin * 100).toFixed(1)}% מצביעים על יעילות תפעולית — מומלץ להשקיע את עודפי התזרים בהרחבת שוק (Geo/Product) תוך שמירה על שוליים, מה שיכול להרחיב את טווח הביטחון מעל ${bullFmt}.`,
+      `שולי EBITDA של ${(margin * 100).toFixed(1)}% מצביעים על יעילות תפעולית. מומלץ להשקיע את עודפי התזרים בהרחבת שוק (Geo/Product) תוך שמירה על שוליים, מה שיכול להרחיב את טווח הביטחון מעל ${bullFmt}.`,
     );
     bulletsEn.push(
-      `EBITDA margins of ${(margin * 100).toFixed(1)}% signal operational efficiency — reinvest excess cash into geo/product expansion while protecting margins to widen the confidence band above ${bullFmt}.`,
+      `EBITDA margins of ${(margin * 100).toFixed(1)}% signal operational efficiency. Reinvest excess cash into geo/product expansion while protecting margins to widen the confidence band above ${bullFmt}.`,
     );
   } else {
     bulletsHe.push(
-      `שוליים מתונים מחייבים תוכנית שיפור רווחיות: ייעול COGS, אוטומציה של תהליכי מכירה, ומיקוד בסגמנטים בעלי LTV/CAC גבוה — צעדים שיכולים להעלות את תרחיש הבסיס מ-${formatMoney(base, currency, locale)}.`,
+      `שוליים מתונים מחייבים תוכנית שיפור רווחיות: ייעול COGS, אוטומציה של תהליכי מכירה, ומיקוד בסגמנטים בעלי LTV/CAC גבוה; צעדים שיכולים להעלות את תרחיש הבסיס מ-${formatMoney(base, currency, locale)}.`,
     );
     bulletsEn.push(
-      `Moderate margins require a profitability roadmap: COGS optimization, sales automation, and high LTV/CAC segment focus — actions that can lift the Base Case from ${formatMoney(base, currency, locale)}.`,
+      `Moderate margins require a profitability roadmap: COGS optimization, sales automation, and high LTV/CAC segment focus; actions that can lift the Base Case from ${formatMoney(base, currency, locale)}.`,
     );
   }
 
   if (spreadPct > 30 || growth < 0.06) {
     bulletsHe.push(
-      `פער תרחישים של ${spreadPct.toFixed(0)}% (מ-${bearFmt} ועד ${bullFmt}) משקף אי-ודאות — הגדירו אבני דרך רבעוניות מדידות (ARR, Churn, CAC Payback) כדי לצמצם את פרמיית הסיכון ולחזק את ציון הביטחון (${matrix.meta.confidence_score}%).`,
+      `פער תרחישים של ${spreadPct.toFixed(0)}% (מ-${bearFmt} ועד ${bullFmt}) משקף אי-ודאות. הגדירו אבני דרך רבעוניות מדידות (ARR, Churn, CAC Payback) כדי לצמצם את פרמיית הסיכון ולחזק את ציון הביטחון (${matrix.meta.confidence_score}%).`,
     );
     bulletsEn.push(
-      `A ${spreadPct.toFixed(0)}% scenario spread (${bearFmt}–${bullFmt}) reflects uncertainty — set measurable quarterly milestones (ARR, churn, CAC payback) to compress risk premia and strengthen the confidence score (${matrix.meta.confidence_score}%).`,
+      `A ${spreadPct.toFixed(0)}% scenario spread (${bearFmt}–${bullFmt}) reflects uncertainty. Set measurable quarterly milestones (ARR, churn, CAC payback) to compress risk premia and strengthen the confidence score (${matrix.meta.confidence_score}%).`,
     );
   } else {
     bulletsHe.push(
-      `מומנטום צמיחה של ${(growth * 100).toFixed(1)}% בשנה תומך בנרטיב הערכה חיובי — חזקו את איכות הנתונים הפיננסיים ובצעו בדיקת רגישות ל-WACC ולצמיחה לטווח ארוך לפני הפצת הדוח לגורמים חיצוניים.`,
+      `מומנטום צמיחה של ${(growth * 100).toFixed(1)}% בשנה תומך בנרטיב הערכה חיובי. חזקו את איכות הנתונים הפיננסיים ובצעו בדיקת רגישות ל-WACC ולצמיחה לטווח ארוך לפני הפצת הדוח לגורמים חיצוניים.`,
     );
     bulletsEn.push(
-      `Growth momentum of ${(growth * 100).toFixed(1)}% annually supports a positive valuation narrative — strengthen financial data quality and run WACC / terminal-growth sensitivity before external distribution.`,
+      `Growth momentum of ${(growth * 100).toFixed(1)}% annually supports a positive valuation narrative. Strengthen financial data quality and run WACC / terminal-growth sensitivity before external distribution.`,
     );
   }
 

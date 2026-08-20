@@ -86,7 +86,7 @@ export function verdictHeroHtml(opts: VerdictHeroHtmlOptions): string {
     waterfallRow(
       'שווי הפעילות',
       bridge.enterpriseValue,
-      'כמה שווה מנוע העסק עצמו — מחושב בשקלול תזרים מהוון (DCF) ומכפילים ענפיים ישראליים.',
+      'כמה שווה מנוע העסק עצמו: מחושב בשקלול תזרים מהוון (DCF) ומכפילים ענפיים ישראליים.',
     ),
     waterfallRow(
       'חוב פיננסי נטו',
@@ -148,7 +148,7 @@ export function verdictHeroHtml(opts: VerdictHeroHtmlOptions): string {
   <div style="font-size:9pt;font-weight:600;color:#334155;text-align:center;margin-bottom:8pt">${esc(valuationCopy('he', 'howWeArrived'))}</div>
   ${rows.join('')}
   <div style="font-size:7.5pt;color:#64748b;text-align:center;font-style:italic;line-height:1.5;margin-top:8pt">${esc(dlomFootnote)}</div>
-  <div style="font-size:8pt;color:#64748b;text-align:center;margin:10pt 0 6pt">שלושה תרחישים — אותו מנוע. ההבדל: הנחות הצמיחה והסיכון.</div>
+  <div style="font-size:8pt;color:#64748b;text-align:center;margin:10pt 0 6pt">שלושה תרחישים, אותו מנוע. ההבדל: הנחות הצמיחה והסיכון.</div>
   ${scenarioStrip(scenarios)}
 </div>`;
 }

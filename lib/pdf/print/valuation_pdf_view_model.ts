@@ -287,13 +287,13 @@ export function buildValuationPdfViewModel(
       detail: `WACC ${data.wacc.toFixed(1)}%`,
     },
     {
-      name: `מכפיל EBITDA — ×${ebitdaMult.toFixed(1)}`,
+      name: `מכפיל EBITDA: ×${ebitdaMult.toFixed(1)}`,
       ev: ebitdaModel,
       weightPct: BLEND_WEIGHTS.ebitda * 100,
       contribution: ebitdaModel * BLEND_WEIGHTS.ebitda,
     },
     {
-      name: `מכפיל הכנסות — ×${revenueMult.toFixed(1)}`,
+      name: `מכפיל הכנסות: ×${revenueMult.toFixed(1)}`,
       ev: revModel,
       weightPct: BLEND_WEIGHTS.revenue * 100,
       contribution: revModel * BLEND_WEIGHTS.revenue,
@@ -339,7 +339,7 @@ export function buildValuationPdfViewModel(
   const scenarios: ScenarioRow[] = [
     {
       key: 'bear',
-      label: '🐻 Bear — האטה ענפית',
+      label: '🐻 Bear: האטה ענפית',
       growthPct: baseGrowth,
       ebitdaMarginPct: baseMargin,
       waccPct: data.wacc + elasticity.waccDeltaPp,
@@ -349,7 +349,7 @@ export function buildValuationPdfViewModel(
     },
     {
       key: 'base',
-      label: '◆ Base — מגמה נוכחית',
+      label: '◆ Base: מגמה נוכחית',
       growthPct: baseGrowth,
       ebitdaMarginPct: baseMargin,
       waccPct: data.wacc,
@@ -359,7 +359,7 @@ export function buildValuationPdfViewModel(
     },
     {
       key: 'bull',
-      label: '🚀 Bull — האצת צמיחה',
+      label: '🚀 Bull: האצת צמיחה',
       growthPct: baseGrowth,
       ebitdaMarginPct: baseMargin,
       waccPct: Math.max(8, data.wacc - elasticity.waccDeltaPp),

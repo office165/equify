@@ -11,7 +11,7 @@ export function formatBlendBreakdownText(opts: {
   const { evDcf, evMultiples, dcfWeight, multWeight, dampenedLabelHe } = opts;
   if (multWeight <= 0) {
     return dampenedLabelHe
-      ? `${dampenedLabelHe} — שקלול מכפילים הופחת עקב חריגה`
+      ? `${dampenedLabelHe}: שקלול מכפילים הופחת עקב חריגה`
       : null;
   }
   const dcfPct = Math.round(dcfWeight * 100);

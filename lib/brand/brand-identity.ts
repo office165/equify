@@ -5,9 +5,9 @@ export const BRAND_NAME_SHORT = 'equify';
 export const BRAND_SUB = 'BY SBC';
 
 /** Home `/` SEO — also drives default + OG/Twitter via site-metadata. */
-export const HOME_TITLE = 'equify BY SBC | שווי עסק לקראת M&A וגיוס';
+export const HOME_TITLE = 'כמה שווה העסק שלך? הערכת שווי ב-10 דקות | equify';
 export const HOME_DESCRIPTION =
-  'דוח הערכת שווי לבעלי עסקים ומנהלים: DCF ומכפילי שוק מכוילים לישראל. לשימוש במשא ומתן, גיוס הון ותכנון.';
+  'הערכת שווי לעסק בישראל, מבוססת DCF ומכפילי עסקאות M&A מקומיות. דוח PDF מלא תוך דקות, בלי פגישות ובלי אלפי שקלים. מתחילים בחינם.';
 
 /** Aliases — keep call sites in sync with HOME_* (single source). */
 export const BRAND_TITLE = HOME_TITLE;

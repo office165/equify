@@ -79,7 +79,7 @@ export const REAL_ESTATE_SECTOR_METADATA: SectorApplicationMetadata = {
 /** SMB niches — conservative multiples, elevated WACC, multiplier-heavy blends. */
 export const SMB_SECTOR_METADATA: SectorApplicationMetadata = {
   id: 'smb-retail-fb',
-  name: 'עסקים קטנים ובינוניים — מזון וקמעונאות',
+  name: 'עסקים קטנים ובינוניים: מזון וקמעונאות',
   subSectors: [
     {
       id: 'restaurants-fb',
@@ -181,9 +181,9 @@ const SMB_SUB_RETAIL_SUPERMARKETS: SubSectorOption = {
     multipleRange: [4.0, 5.0],
     multiplesIndustry: 'retail_unified',
     disclaimerHe:
-      'סופרים שכונתיים, רשתות מזון וחנויות נוחות — פרופיל סיכון נמוך יותר; מכפיל EBITDA יציב (4.0×–5.0×).',
+      'סופרים שכונתיים, רשתות מזון וחנויות נוחות: פרופיל סיכון נמוך יותר; מכפיל EBITDA יציב (4.0×–5.0×).',
     disclaimerEn:
-      'Neighborhood grocers, food chains and convenience stores — lower-risk, recession-resilient EBITDA multiples (4.0×–5.0×).',
+      'Neighborhood grocers, food chains and convenience stores: lower-risk, recession-resilient EBITDA multiples (4.0×–5.0×).',
   },
   engine: {
     defaultMultipleType: 'EBITDA',
@@ -207,9 +207,9 @@ const SMB_SUB_RETAIL_FASHION: SubSectorOption = {
     multipleRange: [3.0, 4.0],
     multiplesIndustry: 'retail_unified',
     disclaimerHe:
-      'חנויות בגדים, הנעלה ואקססוריז — מכפיל מושפע ממלאי מת, עונתיות וצריכה דיסcretionary (3.0×–4.0×).',
+      'חנויות בגדים, הנעלה ואקססוריז: מכפיל מושפע ממלאי מת, עונתיות וצריכה דיסcretionary (3.0×–4.0×).',
     disclaimerEn:
-      'Apparel, footwear and accessories — multiples reflect dead-stock, seasonality and discretionary spend (3.0×–4.0×).',
+      'Apparel, footwear and accessories: multiples reflect dead-stock, seasonality and discretionary spend (3.0×–4.0×).',
   },
   engine: {
     defaultMultipleType: 'EBITDA',
@@ -233,9 +233,9 @@ const SMB_SUB_RESTAURANT: SubSectorOption = {
     multipleRange: [2.5, 4.0],
     multiplesIndustry: 'food_service',
     disclaimerHe:
-      'מסעדות ופיצריות — מכפיל EBITDA שמרני (2.5×–4.0×); סיכון תפעולי ותנודתיות מלאי גבוהים.',
+      'מסעדות ופיצריות: מכפיל EBITDA שמרני (2.5×–4.0×); סיכון תפעולי ותנודתיות מלאי גבוהים.',
     disclaimerEn:
-      'Restaurants & pizzerias — conservative EBITDA multiples (2.5×–4.0×); high operational risk.',
+      'Restaurants & pizzerias: conservative EBITDA multiples (2.5×–4.0×); high operational risk.',
   },
   engine: {
     defaultMultipleType: 'EBITDA',
@@ -686,9 +686,9 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
           navWeight: 1.0,
           multiplesIndustry: 'realestate',
           disclaimerHe:
-            'נדל"ן מניב מוערך לרוב בשיטת NAV (שווי נכסים) ו/או Cap Rate על תזרימי NOI — לא במכפיל EBITDA תפעולי.',
+            'נדל"ן מניב מוערך לרוב בשיטת NAV (שווי נכסים) ו/או Cap Rate על תזרימי NOI, לא במכפיל EBITDA תפעולי.',
           disclaimerEn:
-            'Income-producing assets are typically valued via NAV and/or cap rates on NOI — not operating EBITDA multiples.',
+            'Income-producing assets are typically valued via NAV and/or cap rates on NOI, not operating EBITDA multiples.',
         },
       },
       {
@@ -703,9 +703,9 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
           multipleRange: [5, 7],
           multiplesIndustry: 'construction',
           disclaimerHe:
-            'קבלני ביצוע מוערכים ב-DCF ומכפיל EV/EBITDA סטנדרטי — EBITDA מייצג תזרים תפעולי ללא מימון פרויקטלי של היזם.',
+            'קבלני ביצוע מוערכים ב-DCF ומכפיל EV/EBITDA סטנדרטי: EBITDA מייצג תזרים תפעולי ללא מימון פרויקטלי של היזם.',
           disclaimerEn:
-            'Contractors are valued with DCF and standard EV/EBITDA — EBITDA reflects operating cash conversion without developer-style project finance.',
+            'Contractors are valued with DCF and standard EV/EBITDA: EBITDA reflects operating cash conversion without developer-style project finance.',
         },
         engine: {
           defaultMultipleType: 'EBITDA',
@@ -727,9 +727,9 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
           primaryMultiple: 'ev_revenue',
           multiplesIndustry: 'professional_services',
           disclaimerHe:
-            'ניהול נכסים ו-PropTech קרובים לשירותים/טכנולוגיה — EV/Revenue או EV/EBITDA לפי שלב ורווחיות.',
+            'ניהול נכסים ו-PropTech קרובים לשירותים/טכנולוגיה: EV/Revenue או EV/EBITDA לפי שלב ורווחיות.',
           disclaimerEn:
-            'Property management and PropTech sit closer to services/tech — EV/Revenue or EV/EBITDA depending on stage and margins.',
+            'Property management and PropTech sit closer to services/tech: EV/Revenue or EV/EBITDA depending on stage and margins.',
         },
         engine: {
           defaultMultipleType: 'EBITDA',

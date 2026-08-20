@@ -145,7 +145,7 @@ export function MethodologySection() {
           מתודולוגיה מבוססת מנוע
         </h2>
         <p className="typo-body mx-auto mt-3 max-w-2xl text-sm sm:text-base">
-          כל מודל מחובר לליבת ההערכה של equify — לא שיווק, אלא חישוב אמיתי
+          כל מודל מחובר לליבת ההערכה של equify, לא שיווק אלא חישוב אמיתי
         </p>
       </FadeRise>
 

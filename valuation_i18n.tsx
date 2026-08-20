@@ -94,7 +94,7 @@ const EN: TranslationMap = {
   brand: 'Equify',
   wizardTitle: 'Valuation Wizard',
   wizardSubtitle:
-    'Executive-grade corporate valuation intake — four steps to institutional output.',
+    'Executive-grade corporate valuation intake: four steps to institutional output.',
   stepLabel: 'Step',
   stepCompanyProfile: 'Company Profile',
   stepFinancialInputs: 'Financial Inputs',
@@ -120,12 +120,12 @@ const EN: TranslationMap = {
   qualitativeDescription:
     'Competitive advantage, market position & unique assets',
   qualitativeDescriptionDesc:
-    'Describe moat, market dynamics, patents, brand equity, and other intangibles — surfaced in your PDF report.',
+    'Describe moat, market dynamics, patents, brand equity, and other intangibles, surfaced in your PDF report.',
   qualitativeDescriptionPlaceholder:
     'e.g. Proprietary AI platform, 3 patents pending, 40% recurring contracts in healthcare vertical…',
   financialInputsTitle: 'Financial Inputs',
   financialInputsDesc: 'Core operating metrics feeding the Equify valuation engine.',
-  saasModeActive: 'SaaS mode active — ARR & churn enabled.',
+  saasModeActive: 'SaaS mode active: ARR & churn enabled.',
   annualRevenue: 'Annual Revenue',
   annualRevenueActual: 'Annual Revenue (Actual)',
   revenueForecastY1: 'Y1 Revenue (DCF Forecast)',
@@ -133,7 +133,7 @@ const EN: TranslationMap = {
     'The model applies mid-year discounting and standard reinvestment assumptions (McKinsey framework).',
   blendedEnterpriseValue: 'Blended Enterprise Value',
   weightingExplainer: 'Weighted blend of DCF and Israeli sector multiples.',
-  reportBottomLine: 'The bottom line — first.',
+  reportBottomLine: 'The bottom line, first.',
   reportDcfHeadline: 'Looking ahead: DCF.',
   reportMarketHeadline: 'A sideways view: the market.',
   reportEquityValueLabel: 'Equity Value',
@@ -154,11 +154,11 @@ const EN: TranslationMap = {
     'Cash from operations minus capital expenditures and working capital changes. Primary driver of DCF-based enterprise value.',
   interestExpense: 'Annual Interest Payments',
   interestExpenseTooltip:
-    'Total interest paid on loans and credit lines — not the principal itself.',
+    'Total interest paid on loans and credit lines, not the principal itself.',
   totalDebt: 'Total Debt',
   cashEquivalents: 'Liquid Cash',
   cashEquivalentsTooltip:
-    'Cash, short-term deposits, and liquid securities — assets realizable within thirty days for net debt.',
+    'Cash, short-term deposits, and liquid securities: assets realizable within thirty days for net debt.',
   netDebt: 'Net Debt (Auto-Calculated)',
   netDebtDesc:
     'Bridges Enterprise Value to Equity Value. Auto-calculated from debt and cash if left blank.',
@@ -168,7 +168,7 @@ const EN: TranslationMap = {
   financialShorthandPlaceholder: 'e.g. 12m, 30k, 1.5b',
   rdHistoryTitle: 'R&D Expense History (5 Years)',
   rdHistoryDesc:
-    'Oldest to most recent — powers R&D capitalization in the valuation engine.',
+    'Oldest to most recent: powers R&D capitalization in the valuation engine.',
   rdYear2025: 'This year (2025)',
   rdYear2024: 'Last year (2024)',
   rdYear2023: '2023',
@@ -192,14 +192,14 @@ const EN: TranslationMap = {
   founderDependencyDesc: 'Material key-person risk on revenue or operations',
   valuationPurposeTitle: 'Valuation Purpose',
   valuationPurposeDesc:
-    'Select the engagement context — drives control premium and DLOM treatment.',
+    'Select the engagement context: drives control premium and DLOM treatment.',
   userIdentifiersTitle: 'Identity verification (required)',
   userIdentifiersDesc:
     'All four fields are mandatory before running a valuation or accessing the report dashboard. Your mobile number is used for contact and support; the report is delivered by email.',
   userMobilePhone: 'Mobile phone',
   userMobilePhonePlaceholder: '05X-XXXXXXX',
   userMobilePhoneWhatsAppHint:
-    'Primary mobile number for contact and support — the valuation PDF is emailed.',
+    'Primary mobile number for contact and support; the valuation PDF is emailed.',
   userNationalId: 'National ID (Teudat Zehut)',
   userNationalIdPlaceholder: '9 digits',
   userCorporateTaxId: 'Company number (Chevrat Parit)',
@@ -229,7 +229,7 @@ const EN: TranslationMap = {
   errTermsRequired: 'You must accept the terms and AI financial disclaimer to continue.',
   termsCheckboxAria: 'Accept terms of service and AI financial disclaimer',
   whatsappAuthTitle: 'Sign in with WhatsApp',
-  whatsappAuthDesc: 'Passwordless verification — we send a 4-digit code to your phone.',
+  whatsappAuthDesc: 'Passwordless verification: we send a 4-digit code to your phone.',
   whatsappAuthAria: 'WhatsApp phone verification',
   whatsappPhoneLabel: 'Mobile number (E.164)',
   whatsappPhonePlaceholder: '+972501234567',
@@ -289,7 +289,7 @@ const EN: TranslationMap = {
   keyFinancialMetricsTitle: 'Key Financial Metrics',
   valuationRangeTitle: 'Final Valuation Range',
   modelConfidenceTitle: 'Model Confidence',
-  downloadReportPdfDesc: 'Captures this live dashboard — exact numbers & charts',
+  downloadReportPdfDesc: 'Captures this live dashboard: exact numbers & charts',
   businessOverviewTitle: 'Business Overview & Intangibles',
   businessOverviewEmpty:
     'No qualitative narrative was provided in the wizard. Add competitive moat, market context, and intangible assets for a richer report.',
@@ -299,7 +299,7 @@ const EN: TranslationMap = {
   runAnotherValuation: 'Run Another Valuation',
   backToHome: 'Back to Home',
   customLogoUpload: 'Upload company / advisory firm logo (optional)',
-  customLogoUploadDesc: 'PNG or JPG — displayed on your PDF report cover (white-label).',
+  customLogoUploadDesc: 'PNG or JPG, displayed on your PDF report cover (white-label).',
   customLogoRemove: 'Remove logo',
   customLogoErrorType: 'Please upload a PNG or JPG image.',
   customLogoErrorSize: 'Logo must be smaller than 2 MB.',
@@ -316,12 +316,12 @@ const EN: TranslationMap = {
   valuationTrajectory: 'Valuation Trajectory',
   trajectoryDesc: 'Explicit 5-year FCFF & implied enterprise value path',
   scenarioControls: 'Scenario Controls',
-  scenarioControlsDesc: 'Adjust overlays — recalculates instantly in-browser.',
+  scenarioControlsDesc: 'Adjust overlays: recalculates instantly in-browser.',
   growthAcceleration: 'Growth Acceleration',
   profitMarginAdj: 'Profit Margin Adjustment',
   engineSync: 'Engine sync',
   aiInsights: 'AI Insights',
-  baseExplicitFcff: 'Base Case — Explicit FCFF (Live)',
+  baseExplicitFcff: 'Base Case: Explicit FCFF (Live)',
   tableYear: 'Year',
   tableRevenue: 'Revenue',
   tableEbit: 'EBIT',
@@ -331,7 +331,7 @@ const EN: TranslationMap = {
   terminalPvY5: 'Terminal PV (Y5 mid-year)',
   extendedProfileTitle: 'Extended Corporate Profile & Financial Diagnostics',
   extendedProfileDesc:
-    'Accounting ratios derived from your intake — liquidity, leverage, and operating efficiency benchmarks.',
+    'Accounting ratios derived from your intake: liquidity, leverage, and operating efficiency benchmarks.',
   liquidityMetrics: 'Liquidity Metrics',
   leverageMetrics: 'Leverage Metrics',
   operationalEfficiency: 'Operational Efficiency',
@@ -342,7 +342,7 @@ const EN: TranslationMap = {
   severityInfo: 'info',
   severityWatch: 'watch',
   severityOpportunity: 'opportunity',
-  insightArbUpTitle: 'Arbitrage Signal — Undervalued vs. Reference',
+  insightArbUpTitle: 'Arbitrage Signal: Undervalued vs. Reference',
   insightArbUpBody:
     'Live EV exceeds the reference price by {pct}%. Consider tightening growth proof points before a capital raise narrative.',
   insightArbDownTitle: 'Downside Gap vs. Market Reference',
@@ -356,7 +356,7 @@ const EN: TranslationMap = {
     'Profitability uplift of {delta}pp improves NOPAT trajectory; stress-test opex scalability and gross margin durability.',
   insightReinvestTitle: 'Elevated Steady-State Reinvestment',
   insightReinvestBody:
-    'Endogenous RR at {pct}% caps terminal FCF — Osem/Materna guard active. Long-term ROIC narrative is critical.',
+    'Endogenous RR at {pct}% caps terminal FCF; Osem/Materna guard active. Long-term ROIC narrative is critical.',
   insightStableTitle: 'Baseline Alignment',
   insightStableBody:
     'Scenario sliders are near engine defaults. Review bear case liquidity coverage before board distribution.',
@@ -367,10 +367,10 @@ const EN: TranslationMap = {
   currentRatioDesc:
     'Current assets (cash + ~2 months revenue) divided by estimated short-term obligations.',
   quickRatioDesc:
-    'Liquid assets (cash + ~80% of one month revenue) over short-term obligations — excludes inventory proxy.',
-  netDebtEbitdaDesc: 'Net debt (total debt minus cash) relative to EBITDA — leverage capacity.',
+    'Liquid assets (cash + ~80% of one month revenue) over short-term obligations, excludes inventory proxy.',
+  netDebtEbitdaDesc: 'Net debt (total debt minus cash) relative to EBITDA: leverage capacity.',
   debtEquityDesc: 'Total debt divided by estimated book equity (revenue-based proxy minus net debt).',
-  assetTurnoverDesc: 'Revenue divided by estimated total assets — capital efficiency.',
+  assetTurnoverDesc: 'Revenue divided by estimated total assets: capital efficiency.',
   netMarginDesc: 'Estimated net income (from EBITDA, tax-adjusted) as a percent of revenue.',
   proxyTotalAssets: 'Total assets (proxy)',
   proxyStObligations: 'Short-term obligations (proxy)',
@@ -387,7 +387,7 @@ const HE: TranslationMap = {
   brand: 'Equify',
   wizardTitle: 'אשף הערכת שווי',
   wizardSubtitle:
-    'קליטת נתונים ברמת דירקטוריון — ארבעה שלבים לפלט מוסדי.',
+    'קליטת נתונים ברמת דירקטוריון: ארבעה שלבים לפלט מוסדי.',
   stepLabel: 'שלב',
   stepCompanyProfile: 'פרופיל החברה',
   stepFinancialInputs: 'נתונים פיננסיים',
@@ -412,12 +412,12 @@ const HE: TranslationMap = {
   qualitativeDescription:
     'יתרון תחרותי, מצב שוק ונכסים ייחודיים',
   qualitativeDescriptionDesc:
-    'תאר חפיר תחרותי, דינמיקת שוק, פטנטים, מותג ונכסים בלתי מוחשיים — יופיעו בדוח ה-PDF.',
+    'תאר חפיר תחרותי, דינמיקת שוק, פטנטים, מותג ונכסים בלתי מוחשיים, שיופיעו בדוח ה-PDF.',
   qualitativeDescriptionPlaceholder:
     'לדוגמה: פלטפורמת AI קניינית, 3 פטנטים בתהליך, 40% חוזים חוזרים בענף הבריאות…',
   financialInputsTitle: 'נתונים פיננסיים',
   financialInputsDesc: 'מדדי תפעול מרכזיים למנוע ההערכה של Equify.',
-  saasModeActive: 'מצב SaaS פעיל — ARR ונשירה מופעלים.',
+  saasModeActive: 'מצב SaaS פעיל: ARR ונשירה מופעלים.',
   annualRevenue: 'הכנסות שנתיות',
   annualRevenueActual: 'הכנסות שנתיות (בפועל)',
   revenueForecastY1: 'הכנסות שנתית 1 (תחזית DCF)',
@@ -443,14 +443,14 @@ const HE: TranslationMap = {
   freeCashFlow: 'תזרים חופשי',
   fcfTooltipTitle: 'תזרים חופשי',
   fcfTooltip:
-    'הכסף שנשאר לאחר כל ההוצאות התפעוליות — מה שאפשר למשוך או להשקיע.',
+    'הכסף שנשאר לאחר כל ההוצאות התפעוליות: מה שאפשר למשוך או להשקיע.',
   interestExpense: 'תשלומי ריבית שנתיים',
   interestExpenseTooltip:
     'סך תשלומי הריבית על הלוואות ואשראי, לא הקרן עצמה.',
   totalDebt: 'סך חוב',
   cashEquivalents: 'כסף נזיל',
   cashEquivalentsTooltip:
-    'מזומן, פיקדונות לזמן קצר וניירות ערך נזילים — נכסים שניתן לממש תוך שלושים יום לצורך חישוב חוב נטו.',
+    'מזומן, פיקדונות לזמן קצר וניירות ערך נזילים: נכסים שניתן לממש תוך שלושים יום לצורך חישוב חוב נטו.',
   netDebt: 'חוב נטו (מחושב אוטומטית)',
   netDebtDesc:
     'מחושב אוטומטית: סך החוב פחות הכסף הנזיל שהזנת.',
@@ -460,7 +460,7 @@ const HE: TranslationMap = {
   financialShorthandPlaceholder: 'לדוגמה: 12m, 30k, 1.5b',
   rdHistoryTitle: 'היסטוריית הוצאות מו"פ (5 שנים)',
   rdHistoryDesc:
-    'מהישן לחדש — מזין היוון הוצאות מו"פ במנוע ההערכה.',
+    'מהישן לחדש: מזין היוון הוצאות מו"פ במנוע ההערכה.',
   rdYear2025: 'השנה (2025)',
   rdYear2024: 'שנה שעברה (2024)',
   rdYear2023: '2023',
@@ -468,7 +468,7 @@ const HE: TranslationMap = {
   rdYear2021: '2021',
   riskModifiersTitle: 'מאפייני סיכון ורגישות',
   riskModifiersDesc:
-    'כיול מאפייני סיכון, רגישות WACC וגורמי תלות — לדיוק אינדיקציית השווי המשוקללת.',
+    'כיול מאפייני סיכון, רגישות WACC וגורמי תלות, לדיוק אינדיקציית השווי המשוקללת.',
   recurringRevenuePct: 'כמה אחוז מהלקוחות שלך חוזרים מדי שנה?',
   recurringRevenuePctHint: '0% = כולם חדשים כל שנה | 100% = כולם מתחדשים',
   customerConcentrationOver20: 'האם לקוח בודד אחד מהווה יותר מ-20% מהכנסותיך?',
@@ -483,14 +483,14 @@ const HE: TranslationMap = {
   founderDependencyDesc: 'סיכון אדם מפתח מהותי להכנסות או לתפעול',
   valuationPurposeTitle: 'מטרת הערכה',
   valuationPurposeDesc:
-    'הקשר העסקה — משפיע על פרמיית שליטה וטיפול בהנחת אי-נזילות.',
+    'הקשר העסקה: משפיע על פרמיית שליטה וטיפול בהנחת אי-נזילות.',
   userIdentifiersTitle: 'אימות זהות (חובה)',
   userIdentifiersDesc:
     'כל ארבעת השדות חובה לפני הרצת הערכה או גישה לדוח וללוח התוצאות. מספר הנייד משמש ליצירת קשר ותמיכה; הדוח נשלח באימייל.',
   userMobilePhone: 'טלפון נייד',
   userMobilePhonePlaceholder: '05X-XXXXXXX',
   userMobilePhoneWhatsAppHint:
-    'מספר נייד ליצירת קשר ותמיכה — דוח ההערכה נשלח באימייל.',
+    'מספר נייד ליצירת קשר ותמיכה; דוח ההערכה נשלח באימייל.',
   userNationalId: 'ת.ז',
   userNationalIdPlaceholder: '9 ספרות',
   userCorporateTaxId: 'ח.פ חברה',
@@ -520,7 +520,7 @@ const HE: TranslationMap = {
   errTermsRequired: 'יש לאשר את תנאי השימוש ואת הצהרת הסיכון לפני המשך.',
   termsCheckboxAria: 'אישור תנאי שימוש והצהרת סיכון פיננסי',
   whatsappAuthTitle: 'התחברות עם WhatsApp',
-  whatsappAuthDesc: 'אימות ללא סיסמה — נשלח קוד בן 4 ספרות לנייד.',
+  whatsappAuthDesc: 'אימות ללא סיסמה: נשלח קוד בן 4 ספרות לנייד.',
   whatsappAuthAria: 'אימות טלפון ב-WhatsApp',
   whatsappPhoneLabel: 'מספר נייד (E.164)',
   whatsappPhonePlaceholder: '+972501234567',
@@ -576,7 +576,7 @@ const HE: TranslationMap = {
   keyFinancialMetricsTitle: 'מדדים פיננסיים מרכזיים',
   valuationRangeTitle: 'טווח הערכת שווי סופי',
   modelConfidenceTitle: 'רמת ביטחון במודל',
-  downloadReportPdfDesc: 'צילום מסך של לוח הבקרה החי — מספרים וגרפים מדויקים',
+  downloadReportPdfDesc: 'צילום מסך של לוח הבקרה החי: מספרים וגרפים מדויקים',
   businessOverviewTitle: 'סקירה עסקית ונכסים בלתי מוחשיים',
   businessOverviewEmpty:
     'לא סופק תיאור איכותני באשף. הוסיפו יתרון תחרותי, הקשר שוק ונכסים בלתי מוחשיים לדוח עשיר יותר.',
@@ -586,12 +586,12 @@ const HE: TranslationMap = {
   runAnotherValuation: 'בצע הערכת שווי נוספת',
   backToHome: 'חזור לדף הבית',
   customLogoUpload: 'העלה לוגו חברה / משרד ייעוץ (אופציונלי)',
-  customLogoUploadDesc: 'PNG או JPG — יוצג על עמוד השער בדוח ה-PDF (White Label).',
+  customLogoUploadDesc: 'PNG או JPG, שיוצג על עמוד השער בדוח ה-PDF (White Label).',
   customLogoRemove: 'הסר לוגו',
   customLogoErrorType: 'יש להעלות קובץ PNG או JPG בלבד.',
   customLogoErrorSize: 'גודל הלוגו חייב להיות קטן מ-2MB.',
   healthScoreTitle: 'ציון בריאות עסקית',
-  technicalAnnexTitle: 'נספח טכני — לוח DCF מפורט',
+  technicalAnnexTitle: 'נספח טכני: לוח DCF מפורט',
   downloadingReport: 'מכין את הדוח…',
   downloadReportFailed: 'הורדת הדוח נכשלה. נסו שוב.',
   liveDcfSubtitle:
@@ -603,12 +603,12 @@ const HE: TranslationMap = {
   valuationTrajectory: 'מסלול הערכת שווי',
   trajectoryDesc: 'תזרים חופשי ל-5 שנים ומסלול שווי פעילות מרומז',
   scenarioControls: 'בקרת תרחישים',
-  scenarioControlsDesc: 'התאמת מקדמים — חישוב מחדש מיידי בדפדפן.',
+  scenarioControlsDesc: 'התאמת מקדמים: חישוב מחדש מיידי בדפדפן.',
   growthAcceleration: 'האצת צמיחה',
   profitMarginAdj: 'התאמת שולי רווח',
   engineSync: 'סנכרון מנוע',
   aiInsights: 'תובנות AI',
-  baseExplicitFcff: 'תרחיש בסיס — תזרים מפורש (חי)',
+  baseExplicitFcff: 'תרחיש בסיס: תזרים מפורש (חי)',
   tableYear: 'שנה',
   tableRevenue: 'הכנסות',
   tableEbit: 'EBIT',
@@ -618,20 +618,20 @@ const HE: TranslationMap = {
   terminalPvY5: 'ערך נוכחי טרמינלי (שנה 5)',
   extendedProfileTitle: 'פרופיל תאגידי מורחב ואבחון פיננסי',
   extendedProfileDesc:
-    'יחסי חשבונאות מהקליטה שלך — נזילות, מינוף ויעילות תפעולית.',
+    'יחסי חשבונאות מהקליטה שלך: נזילות, מינוף ויעילות תפעולית.',
   liquidityMetrics: 'מדדי נזילות',
   leverageMetrics: 'מדדי מינוף',
   operationalEfficiency: 'יעילות תפעולית',
   diagnosticInterpretation: 'פרשנות',
   assetsProxyNote:
-    'סך נכסים מוערך מהכנסות, מזומנים וחוב — פרוקסי לדוחות חלקיים.',
+    'סך נכסים מוערך מהכנסות, מזומנים וחוב: פרוקסי לדוחות חלקיים.',
   stObligationsNote:
     'התחייבויות לטווח קצר מוערכות כ-~35% מהחוב בתוספת ריבית.',
   chartTooltipYear: 'שנה',
   severityInfo: 'מידע',
   severityWatch: 'מעקב',
   severityOpportunity: 'הזדמנות',
-  insightArbUpTitle: 'אות ארביטראז\' — תמחור נמוך מול אסמכתא',
+  insightArbUpTitle: 'אות ארביטראז\': תמחור נמוך מול אסמכתא',
   insightArbUpBody:
     'שווי הפעילות החי עולה על מחיר האסמכתא ב-{pct}%. מומלץ לחזק הוכחות צמיחה לפני נרטיב גיוס.',
   insightArbDownTitle: 'פער לרעה מול שווי שוק',
@@ -645,7 +645,7 @@ const HE: TranslationMap = {
     'שיפור רווחיות של {delta} נקודות משפר מסלול NOPAT; בדקו קיימות שוליים גולמיים.',
   insightReinvestTitle: 'השקעה מחדש גבוהה בטווח ארוך',
   insightReinvestBody:
-    'שיעור השקעה מחדש אנדוגני {pct}% מגביל תזרים טרמינלי — נדרש נרטיב ROIC לטווח ארוך.',
+    'שיעור השקעה מחדש אנדוגני {pct}% מגביל תזרים טרמינלי; נדרש נרטיב ROIC לטווח ארוך.',
   insightStableTitle: 'יישור לקו בסיס',
   insightStableBody:
     'מחווני התרחיש קרובים לברירת מחדל. בדקו כיסוי נזילות בתרחיש דובי לפני הפצה לדירקטוריון.',
@@ -656,10 +656,10 @@ const HE: TranslationMap = {
   currentRatioDesc:
     'נכסים שוטפים (מזומן + ~חודשיים הכנסות) חלקי התחייבויות לטווח קצר מוערכות.',
   quickRatioDesc:
-    'נכסים נזילים (מזומן + ~80% מהכנסה חודשית) על התחייבויות קצרות — ללא מלאי מוערך.',
-  netDebtEbitdaDesc: 'חוב נטו (חוב פחות מזומן) ביחס ל-EBITDA — עמידות מינוף.',
+    'נכסים נזילים (מזומן + ~80% מהכנסה חודשית) על התחייבויות קצרות, ללא מלאי מוערך.',
+  netDebtEbitdaDesc: 'חוב נטו (חוב פחות מזומן) ביחס ל-EBITDA: עמידות מינוף.',
   debtEquityDesc: 'סך חוב חלקי הון ספרים מוערך (פרוקסי מהכנסות פחות חוב נטו).',
-  assetTurnoverDesc: 'הכנסות חלקי סך נכסים מוערך — יעילות הון.',
+  assetTurnoverDesc: 'הכנסות חלקי סך נכסים מוערך: יעילות הון.',
   netMarginDesc: 'רווח נקי מוערך (מ-EBITDA, לאחר מס) כאחוז מהכנסות.',
   proxyTotalAssets: 'סך נכסים (פרוקסי)',
   proxyStObligations: 'התחייבויות לטווח קצר (פרוקסי)',

@@ -246,13 +246,13 @@ function buildModelBlend(
       contribution: mToNis(v.dcf_ev * 0.5),
     },
     {
-      name: `מכפיל EBITDA — ×${v.ebitda_multiple.toFixed(1)}`,
+      name: `מכפיל EBITDA: ×${v.ebitda_multiple.toFixed(1)}`,
       ev: mToNis(ebitdaEvM),
       weightPct: 30,
       contribution: mToNis(ebitdaEvM * 0.3),
     },
     {
-      name: `מכפיל הכנסות — ×${v.revenue_multiple.toFixed(1)}`,
+      name: `מכפיל הכנסות: ×${v.revenue_multiple.toFixed(1)}`,
       ev: mToNis(revenueEvM),
       weightPct: 20,
       contribution: mToNis(revenueEvM * 0.2),

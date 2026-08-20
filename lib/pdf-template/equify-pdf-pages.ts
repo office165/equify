@@ -499,12 +499,12 @@ function buildPage7QualitySensitivity(data: ValuationData): string {
     : qualityScoreIntroCopy(data.qualityScore, data.qualityGrade);
   const sensHeader =
     data.locale === 'en'
-      ? `Sensitivity — equity value (${f.unitLabel}) · WACC × growth`
-      : `רגישות — שווי לבעלים (${f.unitLabel}) · WACC × צמיחה`;
+      ? `Sensitivity: equity value (${f.unitLabel}) · WACC × growth`
+      : `רגישות: שווי לבעלים (${f.unitLabel}) · WACC × צמיחה`;
   const ebitdaSensHeader =
     data.locale === 'en'
-      ? `Sensitivity — EV (${f.unitLabel}) · EBITDA × multiple`
-      : `רגישות — EV (${f.unitLabel}) · EBITDA × מכפיל`;
+      ? `Sensitivity: EV (${f.unitLabel}) · EBITDA × multiple`
+      : `רגישות: EV (${f.unitLabel}) · EBITDA × מכפיל`;
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}

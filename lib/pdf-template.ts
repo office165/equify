@@ -40,8 +40,8 @@ export function buildPdfHtml(data: ValuationData): string {
   const locale = resolvePdfLocale(data.locale);
   const dir = pdfDocumentDir(locale);
   const title = locale === 'en'
-    ? `equify — Valuation Report — ${escHtml(data.companyName)}`
-    : `equify — דוח הערכת שווי — ${escHtml(data.companyName)}`;
+    ? `equify: Valuation Report: ${escHtml(data.companyName)}`
+    : `equify: דוח הערכת שווי: ${escHtml(data.companyName)}`;
   const css = buildEquifyPdfCss();
   const pages = buildEquifyPdfPages(data);
 

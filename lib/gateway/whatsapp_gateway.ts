@@ -261,7 +261,7 @@ function buildValuationWhatsAppTemplate(options: {
       '📄 קובץ ה-PDF מצורף להודעה זו.',
       link !== 'https://valubot-six.vercel.app' ? `קישור גיבוי: ${link}` : '',
       '',
-      'לשירותי ייעוץ אסטרטגי — השיבו להודעה זו.',
+      'לשירותי ייעוץ אסטרטגי, השיבו להודעה זו.',
     ]
       .filter(Boolean)
       .join('\n');

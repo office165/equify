@@ -62,12 +62,12 @@ function promoDenyMessage(
   if (validated.rateLimited) {
     return isHe
       ? 'יותר מדי ניסיונות, נסה שוב בעוד מספר דקות'
-      : 'Too many attempts — try again in a few minutes';
+      : 'Too many attempts. Try again in a few minutes';
   }
   if (validated.reason === 'server_error') {
     return isHe
       ? 'שגיאה זמנית, נסה שוב או פנה אלינו'
-      : 'Temporary error — try again or contact us';
+      : 'Temporary error. Try again or contact us';
   }
   if (validated.reason === 'expired') {
     return isHe ? 'תוקף הקוד פג' : 'This code has expired';
@@ -215,8 +215,8 @@ function EquifyWizardShell({
           setSubmitPhase('promo-free-ready');
           setPromoNotice(
             isHe
-              ? 'הקוד אומת — הדוח שלך בהכנה'
-              : 'Code verified — preparing your report',
+              ? 'הקוד אומת. הדוח שלך בהכנה'
+              : 'Code verified. Preparing your report',
           );
           await postMondayLeadUpdate({
             status: 'Free promo redeemed',
@@ -337,8 +337,8 @@ function EquifyWizardShell({
         setSubmitPhase('promo-free-ready');
         setPromoNotice(
           isHe
-            ? 'הקוד אומת — הדוח שלך בהכנה'
-            : 'Code verified — preparing your report',
+            ? 'הקוד אומת. הדוח שלך בהכנה'
+            : 'Code verified. Preparing your report',
         );
 
         await postMondayLeadUpdate({

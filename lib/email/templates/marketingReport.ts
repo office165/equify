@@ -58,7 +58,7 @@ function copy(
   const name = recipientName?.trim() || companyName;
   if (locale === 'he') {
     return {
-      subject: `דוח הערכת שווי — ${companyName} | ${BRAND_NAME}`,
+      subject: `דוח הערכת שווי: ${companyName} | ${BRAND_NAME}`,
       preheader: hasDownloadLink
         ? `מדדי ההערכה והדוח המלא של ${companyName} מוכנים לצפייה.`
         : `הדוח המלא של ${companyName} מצורף למייל.`,
@@ -74,7 +74,7 @@ function copy(
       dcf: 'מודל תזרים מזומנים מהוון (Corporate DCF) עם תחזית רב-שנתית ותרחישי דובי / בסיס / שורי.',
       wacc: 'אלגוריתמי WACC דינמיים המשקללים עלות הון, פרמיית סיכון ומבנה הון אופטימלי.',
       multiples:
-        'מסגרת מכפילים מנורמלת לפי סקטור, שלב חיים ואיכות הכנסות — לצורך אימות וריאליות התוצאה.',
+        'מסגרת מכפילים מנורמלת לפי סקטור, שלב חיים ואיכות הכנסות, לצורך אימות וריאליות התוצאה.',
       indicativeLabel: 'שווי ארגוני אינדיקטיבי (תרחיש בסיס)',
       upsellTitle: 'שירותי ייעוץ פרימיום לחברות צמיחה',
       upsellIntro: `צוות ${BRAND_NAME} מלווה יזמים, מנהלים ומשקיעים בהחלטות אסטרטגיות מורכבות:`,
@@ -84,13 +84,13 @@ function copy(
         'בניית תוכנית עסקית מקיפה ומודלים פיננסיים מתקדמים למשקיעים.',
       ],
       upsellCta: 'לתיאום שיחת ייעוץ',
-      footer: `${BRAND_NAME} — אינדיקציית שווי אלגוריתמית | סודי ומיועד לנמען בלבד`,
+      footer: `${BRAND_NAME}: אינדיקציית שווי אלגוריתמית | סודי ומיועד לנמען בלבד`,
       plainAccess: 'קישור למדדי ההערכה והורדת הדוח',
     };
   }
 
   return {
-    subject: `Valuation Report — ${companyName} | ${BRAND_NAME}`,
+    subject: `Valuation Report: ${companyName} | ${BRAND_NAME}`,
     preheader: hasDownloadLink
       ? `Your valuation metrics and full report for ${companyName} are ready.`
       : `The full report for ${companyName} is attached to this email.`,
@@ -117,7 +117,7 @@ function copy(
       'Comprehensive business plans and investor-grade financial models.',
     ],
     upsellCta: 'Schedule an advisory call',
-    footer: `${BRAND_NAME} — Algorithmic valuation indication | Confidential`,
+    footer: `${BRAND_NAME}: Algorithmic valuation indication | Confidential`,
     plainAccess: 'Evaluation metrics & report link',
   };
 }
@@ -228,17 +228,17 @@ export function buildMarketingReportEmailHtml(
                 </tr>
                 <tr>
                   <td style="padding:0 0 10px 0;color:${EMAIL_THEME.bodyText};font-size:14px;line-height:1.75;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
-                    <strong style="color:${EMAIL_THEME.headingText};">DCF</strong> — ${escapeHtml(t.dcf)}
+                    <strong style="color:${EMAIL_THEME.headingText};">DCF</strong>: ${escapeHtml(t.dcf)}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:0 0 10px 0;color:${EMAIL_THEME.bodyText};font-size:14px;line-height:1.75;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
-                    <strong style="color:${EMAIL_THEME.headingText};">WACC</strong> — ${escapeHtml(t.wacc)}
+                    <strong style="color:${EMAIL_THEME.headingText};">WACC</strong>: ${escapeHtml(t.wacc)}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:0 0 24px 0;color:${EMAIL_THEME.bodyText};font-size:14px;line-height:1.75;font-family:${EMAIL_THEME.fontFamily};text-align:right;">
-                    <strong style="color:${EMAIL_THEME.headingText};">${params.locale === 'he' ? 'מכפילים' : 'Multiples'}</strong> — ${escapeHtml(t.multiples)}
+                    <strong style="color:${EMAIL_THEME.headingText};">${params.locale === 'he' ? 'מכפילים' : 'Multiples'}</strong>: ${escapeHtml(t.multiples)}
                   </td>
                 </tr>
                 <tr>

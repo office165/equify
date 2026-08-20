@@ -204,7 +204,7 @@ export function verifyValuationReportSnapshot(
   });
 
   if (expectedHash !== snapshot.snapshotHash) {
-    return { ok: false, reason: 'Snapshot hash mismatch — payload may be stale or tampered.' };
+    return { ok: false, reason: 'Snapshot hash mismatch: payload may be stale or tampered.' };
   }
 
   return { ok: true };

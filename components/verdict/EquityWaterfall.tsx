@@ -39,8 +39,8 @@ function buildRows(
     {
       title: isHe ? 'שווי הפעילות (משוקלל)' : 'Blended enterprise value',
       body: isHe
-        ? 'שווי הפעילות המשוקלל — שקלול בין תזרים מהוון (DCF) למכפילי שוק ישראליים.'
-        : 'Weighted operating value — blend of DCF and Israeli sector multiples.',
+        ? 'שווי הפעילות המשוקלל: שקלול בין תזרים מהוון (DCF) למכפילי שוק ישראליים.'
+        : 'Weighted operating value: blend of DCF and Israeli sector multiples.',
       value: bridge.enterpriseValue,
     },
   ];

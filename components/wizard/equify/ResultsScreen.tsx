@@ -199,7 +199,7 @@ export function ResultsScreen({
           <div className="ml-row">
             <div>
               <div className="mr-name">מכפיל הכנסות</div>
-              <div className="mr-desc">Revenue Multiple — עם התאמת ענף ושלב</div>
+              <div className="mr-desc">Revenue Multiple, עם התאמת ענף ושלב</div>
             </div>
             <div style={{ textAlign: 'left' }}>
               <div className="mr-val mono">{fmtAmount(computed.revMult)}</div>

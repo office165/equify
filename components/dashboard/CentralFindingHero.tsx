@@ -52,8 +52,8 @@ export function CentralFindingHero({
         <>
           <h2 className="mt-4 text-xl font-bold leading-snug text-white sm:text-2xl">
             {isHe
-              ? `העסק שלך מוערך ב-${baseFmt} — נמוך ב-${gapPct}% מהפוטנציאל שלו בשוק`
-              : `Your business is valued at ${baseFmt} — ${gapPct}% below its market potential`}
+              ? `העסק שלך מוערך ב-${baseFmt}, נמוך ב-${gapPct}% מהפוטנציאל שלו בשוק`
+              : `Your business is valued at ${baseFmt}, ${gapPct}% below its market potential`}
           </h2>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-emerald-100/75">
             {isHe

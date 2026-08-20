@@ -41,7 +41,7 @@ export function MultiplesResultsPanel({
     >
       <header className="mb-5">
         <h2 className="text-lg font-bold text-[#00bfa5]">
-          {isHe ? 'מסגרת מכפילים — שוק ישראל 2024–2026' : 'Multiples Framework — Israel 2024–2026'}
+          {isHe ? 'מסגרת מכפילים: שוק ישראל 2024–2026' : 'Multiples Framework: Israel 2024–2026'}
         </h2>
         <p className="mt-1 text-xs leading-relaxed text-slate-400">
           {analysis.methodologyNote}
