@@ -82,7 +82,7 @@ function defaultExecutiveSummary(data: ValuationData): string {
     ebitda ? `מכפיל EBITDA (${ebitda.weightPct.toFixed(0)}%)` : null,
     rev ? `מכפיל הכנסות (${rev.weightPct.toFixed(0)}%)` : null,
   ].filter(Boolean);
-  return `שקלול ${parts.join(', ')} מניב שווי פעילות של ${reportMoney(data, data.enterpriseValue)}. בניכוי חוב נטו ${reportMoney(data, data.netDebt)} — שווי לבעלים ${reportMoney(data, data.equity)}.`;
+  return `שקלול ${parts.join(', ')} מניב שווי פעילות של ${reportMoney(data, data.enterpriseValue)}. בניכוי חוב נטו ${reportMoney(data, data.netDebt)}, שווי לבעלים ${reportMoney(data, data.equity)}.`;
 }
 
 function blendPills(data: ValuationData): string {
@@ -159,11 +159,11 @@ export function buildPage2Executive(data: ValuationData): string {
         ${buildModelBlendBarSvg(data.modelBlend)}
       </div>
       <div>
-        <div class="chart-title">waterfall — מ-EV לשווי לבעלים (${reportUnitM(data)})</div>
+        <div class="chart-title">waterfall: מ-EV לשווי לבעלים (${reportUnitM(data)})</div>
         ${buildWaterfallSvg(data.enterpriseValue, data.netDebt, data.equity)}
       </div>
     </div>
-    <div class="chart-title" style="margin-top:3mm">טווח שווי לבעלים — שלושה תרחישים (${reportUnitM(data)})</div>
+    <div class="chart-title" style="margin-top:3mm">טווח שווי לבעלים: שלושה תרחישים (${reportUnitM(data)})</div>
     ${buildScenarioRibbonSvg(data.bearEquity, data.equity, data.bullEquity)}
     ${data.keyFindings ? `<div class="callout gold"><b>עיקרי הממצאים:</b> ${escHtml(data.keyFindings)}</div>` : ''}
   </div>`;
@@ -240,14 +240,14 @@ export function buildPage4Dcf(data: ValuationData): string {
     <p class="sub">היוון תזרימי מזומנים חופשיים + ערך טרמינלי. WACC ${data.waccPct.toFixed(1)}% על בסיס CAPM + Damodaran CRP.</p>
     <div class="cols-6-4">
       <div>
-        <div class="chart-title">הרכב WACC — ${data.waccPct.toFixed(1)}%</div>
+        <div class="chart-title">הרכב WACC: ${data.waccPct.toFixed(1)}%</div>
         ${buildWaccStackedBarSvg(data.waccSegments, data.waccPct)}
         <table>
           <tr><th>רכיב WACC</th><th>סימון</th><th>ערך</th><th>מקור</th></tr>
           ${waccRows}
           <tr class="sum"><td>WACC אפקטיבי</td><td class="n"></td><td class="n">${data.waccPct.toFixed(1)}%</td><td></td></tr>
         </table>
-        <div class="chart-title" style="margin-top:3mm">תזרימי מזומנים מהוונים — DCF</div>
+        <div class="chart-title" style="margin-top:3mm">תזרימי מזומנים מהוונים: DCF</div>
         <table>
           <tr><th>${reportUnitM(data)}</th>${yearCols}<th>TV</th></tr>
           <tr><td>FCFF</td>${fcffCells}<td class="n">—</td></tr>
@@ -291,7 +291,7 @@ export function buildPage5Multiples(data: ValuationData): string {
     <div class="section-divider"><span class="section-num">05</span><h2>מכפילי שוק</h2><div class="sd-line"></div></div>
     <p class="sub">השוואה לעסקאות M&A ישראליות בענף ${escHtml(data.sectorLabel)}. הנקודה מציגה את מיקום החברה ביחס לטווח השוק.</p>
     <div class="chart-wrap">
-      <div class="chart-title">מיקום מול טווח שוק — EV/EBITDA · EV/Revenue · DCF</div>
+      <div class="chart-title">מיקום מול טווח שוק: EV/EBITDA · EV/Revenue · DCF</div>
       ${buildMultiplesTracksSvg(data.multiplesPositions)}
     </div>
     ${comps.length ? `
@@ -318,7 +318,7 @@ export function buildPage6Quality(data: ValuationData): string {
     <p class="sub">ה-Quality Score (0–100) מכייל את המכפיל ואת פרמיית הסיכון הספציפית. ציון גבוה יותר → מכפיל גבוה יותר + WACC נמוך יותר.</p>
     <div class="cols-4-6">
       <div>
-        <div class="chart-title">Quality Score — ${data.qualityScore} / 100 (${escHtml(data.qualityGrade)})</div>
+        <div class="chart-title">Quality Score: ${data.qualityScore} / 100 (${escHtml(data.qualityGrade)})</div>
         ${buildQualityArcGaugeSvg(data.qualityScore, data.qualityGrade)}
         <table style="margin-top:0">
           <tr><th>ציון</th><th>דירוג</th><th>המשמעות</th></tr>
@@ -384,12 +384,12 @@ export function buildPage7Scenarios(data: ValuationData): string {
     <div class="section-divider"><span class="section-num">07</span><h2>תרחישים וניתוח רגישות</h2><div class="sd-line"></div></div>
     <div class="cols3" style="margin-bottom:4mm">${cards}</div>
     ${sensGrowth ? `
-    <div class="section-divider" style="margin-top:3mm"><h3>ניתוח רגישות — שווי לבעלים (${reportUnitM(data)})</h3><div class="sd-line"></div></div>
+    <div class="section-divider" style="margin-top:3mm"><h3>ניתוח רגישות: שווי לבעלים (${reportUnitM(data)})</h3><div class="sd-line"></div></div>
     <p class="sub" style="margin-bottom:2mm">ציר X: WACC · ציר Y: צמיחה שנתית. תא מרכזי = תרחיש בסיס.</p>
     ${sensGrowth}` : ''}
     ${sensEbitda ? `
     <div style="margin-top:3mm">
-      <div class="chart-title">רגישות מכפיל — EV/EBITDA × שינוי EBITDA (EV ${reportUnitM(data)})</div>
+      <div class="chart-title">רגישות מכפיל: EV/EBITDA × שינוי EBITDA (EV ${reportUnitM(data)})</div>
       ${sensEbitda}
     </div>` : ''}
   </div>`;
@@ -414,7 +414,7 @@ export function buildPage8Conclusion(data: ValuationData): string {
   ${letterhead(data)}
   <div class="body" style="display:flex;flex-direction:column;justify-content:space-between">
     <div>
-      <div class="section-divider"><span class="section-num">08</span><h2>שווי משולב — Conclusion</h2><div class="sd-line"></div></div>
+      <div class="section-divider"><span class="section-num">08</span><h2>שווי משולב: Conclusion</h2><div class="sd-line"></div></div>
       <div style="display:flex;height:14mm;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:4mm 0">${blendBar}</div>
       <div style="text-align:center;margin:4mm 0">
         <div class="c-val" style="margin:10mm 0 2mm">${equityCoverValHtml(data.equity)}</div>

@@ -216,11 +216,11 @@ export const WACC_DCF_METHODOLOGY_COPY_EN =
   "Cost of capital (WACC) follows Damodaran's CAPM framework: risk-free rate (10-year government bond), historical equity risk premium, country risk premium, and size/liquidity premium. Company-specific risk (Quality Score) is calibrated in our quality module. Terminal value uses neutral 2.5% growth to avoid overvaluation." as const;
 
 export function multiplesMethodologyCopy(sector: string): string {
-  return `המכפילים מעוגנים בנתונים של 12 עסקאות M&A בישראל בתחום ${sector} (2023–2026). לכל עסקה: סכום, תאריך, שיעור EBITDA, והשוואה לחברות ציבוריות בחו״ל כאשר רלוונטי. המכפיל שלך לא נלקח מהאוויר — הוא מיקום בהתפלגות שוק אמיתית.`;
+  return `המכפילים מעוגנים בנתונים של 12 עסקאות M&A בישראל בתחום ${sector} (2023–2026). לכל עסקה: סכום, תאריך, שיעור EBITDA, והשוואה לחברות ציבוריות בחו״ל כאשר רלוונטי. המכפיל שלך לא נלקח מהאוויר: הוא מיקום בהתפלגות שוק אמיתית.`;
 }
 
 export function multiplesMethodologyCopyEn(sector: string): string {
-  return `Multiples are anchored to 12 Israeli M&A transactions in ${sector} (2023–2026). Each deal records consideration, date, EBITDA margin, and listed international peers where relevant. Your multiple is not arbitrary — it marks a position on a real market distribution.`;
+  return `Multiples are anchored to 12 Israeli M&A transactions in ${sector} (2023–2026). Each deal records consideration, date, EBITDA margin, and listed international peers where relevant. Your multiple is not arbitrary: it marks a position on a real market distribution.`;
 }
 
 export interface EbitdaMultipleInterpretationParams {
@@ -267,7 +267,7 @@ function qualityScoreInterpretationHe(grade: string): string {
   if (grade === 'B+') return 'משמעו: עסק שמעל לממוצע, עם סיכונים מחושבים אך לא קריטיים.';
   if (grade === 'B') return 'משמעו: עסק בטווח הממוצע, עם חשיפות סטנדרטיות לענף.';
   if (grade === 'B−') return 'משמעו: עסק מתחת לממוצע, עם חשיפות שמחייבות הקשר בפרשנות.';
-  return 'משמעו: סיכוני תזרים משמעותיים — דורש זהירות בקבלת החלטות.';
+  return 'משמעו: סיכוני תזרים משמעותיים, ודורש זהירות בקבלת החלטות.';
 }
 
 function qualityScoreInterpretationEn(grade: string): string {
@@ -275,8 +275,8 @@ function qualityScoreInterpretationEn(grade: string): string {
   if (grade === 'A−') return 'Interpretation: strong business with limited, well-managed risk.';
   if (grade === 'B+') return 'Interpretation: above-average business with measured, non-critical risks.';
   if (grade === 'B') return 'Interpretation: mid-range business with sector-standard exposures.';
-  if (grade === 'B−') return 'Interpretation: below-average business — context required when interpreting value.';
-  return 'Interpretation: material cash-flow risks — interpret valuation with caution.';
+  if (grade === 'B−') return 'Interpretation: below-average business; context required when interpreting value.';
+  return 'Interpretation: material cash-flow risks; interpret valuation with caution.';
 }
 
 /** PDF page 7 — Quality Score narrative with live score and grade */
@@ -294,7 +294,7 @@ export const SCENARIOS_METHODOLOGY_COPY =
   'שלושה תרחישים משקפים מסלולים עתידיים אפשריים, בלי להניח לאחד מהם אותה מידת סבירות: דב (Bear) מניח האטה בענף וירידה בשיעור EBITDA, תרחיש בסיס (Base) משקף המשך המגמה הנוכחית, ושור (Bull) משקף הרחבת קיבולת וגיוס לקוחות אסטרטגיים.' as const;
 
 export const SENSITIVITY_METHODOLOGY_COPY =
-  'ניתוח הרגישות מראה אילו גורמים (WACC, צמיחה, מכפיל) הם הרגישים ביותר — לא להפחדה, אלא להבנה של החשיפות.' as const;
+  'ניתוח הרגישות מראה אילו גורמים (WACC, צמיחה, מכפיל) הם הרגישים ביותר, לא להפחדה אלא להבנה של החשיפות.' as const;
 
 function parsePctLabel(label: string): number {
   return parseFloat(label.replace(/[+％%]/g, '')) || 0;
@@ -428,7 +428,7 @@ export const SCENARIOS_METHODOLOGY_COPY_EN =
   'Three scenarios reflect distinct future paths, without equal likelihood: Bear assumes sector slowdown and lower EBITDA margin, Base continues the current trajectory, and Bull reflects capacity expansion and strategic client wins.' as const;
 
 export const SENSITIVITY_METHODOLOGY_COPY_EN =
-  'Sensitivity analysis shows which factors (WACC, growth, multiple) are most influential — not to alarm, but to clarify exposures.' as const;
+  'Sensitivity analysis shows which factors (WACC, growth, multiple) are most influential, not to alarm but to clarify exposures.' as const;
 
 export const SCENARIOS_SENSITIVITY_METHODOLOGY_COPY_EN =
   `${SCENARIOS_METHODOLOGY_COPY_EN} ${SENSITIVITY_METHODOLOGY_COPY_EN}` as const;
