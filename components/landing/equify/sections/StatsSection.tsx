@@ -1,81 +1,51 @@
-'use client';
-
-import { useEffect, useState } from 'react';
+import { INDUSTRY_CONFIG } from '../../../../lib/constants/industry_config';
 import { BidiNumberUnit, durationUnit } from '../../shared/BidiNumberUnit';
 
-const REPORT_COUNT_MIN = 25;
+/** Unique sub-sector ids across INDUSTRY_CONFIG (read-only; no calibration edits). */
+function countUniqueSubSectorIds(): number {
+  const ids = new Set<string>();
+  for (const entry of Object.values(INDUSTRY_CONFIG)) {
+    for (const sub of entry.subSectors) {
+      ids.add(sub.id);
+    }
+  }
+  return ids.size;
+}
 
-/** פס סטטיסטיקות — מונים מונפשים ב-GSAP + ספירת דוחות אמיתית */
+const CALIBRATED_SUB_SECTOR_COUNT = countUniqueSubSectorIds();
+
+/**
+ * פס סטטיסטיקות קבוע — עונה על התנגדויות נפוצות.
+ * /api/v1/stats/public נשאר בשרת; יוחזר לכאן כשהספירה תעבור 25.
+ */
 export function StatsSection() {
-  const [reportCount, setReportCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetch('/api/v1/stats/public', { cache: 'no-store' })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { count?: number } | null) => {
-        if (cancelled) return;
-        const n = typeof data?.count === 'number' ? data.count : 0;
-        setReportCount(n);
-      })
-      .catch(() => {
-        if (!cancelled) setReportCount(0);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const showReportCount =
-    reportCount !== null && reportCount >= REPORT_COUNT_MIN;
-
   return (
     <section className="stats">
       <div className="wrap">
+        <p className="stats-kicker">למה equify</p>
         <div className="stats-grid">
           <div className="stat rv">
-            <div className="s-num">
-              {showReportCount ? (
-                <BidiNumberUnit
-                  number={
-                    <span className="count font-mono tabular-nums" data-to={reportCount}>
-                      {reportCount}
-                    </span>
-                  }
-                  unit={<em>+</em>}
-                />
-              ) : (
-                <span className="s-early">בגרסת הרצה · הקצאות מוגבלות</span>
-              )}
-            </div>
-            <div className="s-lab">הערכות שהושלמו במערכת</div>
+            <div className="s-num">8</div>
+            <div className="s-lab">עמודי דוח PDF</div>
           </div>
           <div className="stat rv">
-            <div className="s-num">
-              <span className="count bidi-num-unit__num" data-to="11">
-                0
-              </span>
-            </div>
-            <div className="s-lab">גזרי ערך במשקלול (DCF + מכפילים)</div>
+            <div className="s-num">4</div>
+            <div className="s-lab">שיטות הערכה משוקללות</div>
+            <div className="s-sub">DCF · EBITDA · הכנסות · נכסים</div>
           </div>
           <div className="stat rv">
             <div className="s-num">
               <BidiNumberUnit
-                number={
-                  <span className="count" data-to="10">
-                    0
-                  </span>
-                }
+                number={10}
                 unit={<em>{durationUnit('he', 'short')}</em>}
               />
             </div>
-            <div className="s-lab">זמן ממוצע להשלמת קלט</div>
+            <div className="s-lab">מהזנת נתונים עד דוח</div>
           </div>
           <div className="stat rv">
-            <div className="s-num">
-              <span className="font-mono tabular-nums">12</span>
-            </div>
-            <div className="s-lab">עסקאות M&A ישראל במדגם הכיול</div>
+            <div className="s-num">{CALIBRATED_SUB_SECTOR_COUNT}</div>
+            <div className="s-lab">תתי-ענפים מכוילים בנפרד</div>
+            <div className="s-sub">פרופיל מכפילים לכל תת-ענף</div>
           </div>
         </div>
       </div>
