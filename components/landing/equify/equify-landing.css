@@ -660,46 +660,63 @@ html {
   padding: clamp(70px, 9vw, 120px) 0 0;
 }
 
+.stats-kicker {
+  margin: 0 0 22px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #64748b; /* slate-500 */
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  overflow: hidden;
+  gap: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
 }
 
 .stat {
-  background: var(--ink-2);
-  padding: 34px 28px;
+  background: transparent;
+  padding: 28px 24px;
   position: relative;
   overflow: hidden;
-  transition: background 0.4s;
+  border-inline-start: 1px solid rgb(30 41 59 / 0.6); /* slate-800/60 */
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.stat:first-child {
+  border-inline-start: none;
 }
 
 .stat:hover {
-  background: var(--pine);
+  transform: translateY(-2px);
+  background: rgb(17 24 21 / 0.4); /* #111815/40 */
 }
 
+/* Numbers: accent only. Bidi isolation lives on BidiNumberUnit — do not
+   force direction/text-align/justify here (that caused "דק׳ 10" in RTL). */
 .stat .s-num {
   font-family: var(--mono);
   font-weight: 600;
-  font-size: clamp(34px, 3.6vw, 48px);
-  color: var(--paper);
-  direction: ltr;
-  text-align: right;
+  font-size: 2.25rem; /* text-4xl */
+  line-height: 1.15;
+  color: #00f5a0;
   font-variant-numeric: tabular-nums;
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: flex-end;
-  gap: 0.15em;
-  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .stat .s-num {
+    font-size: 3rem; /* md:text-5xl */
+  }
 }
 
 .stat .s-num em {
   font-style: normal;
-  color: var(--turq);
+  color: #00f5a0;
 }
 
 .bidi-num-unit {
@@ -718,24 +735,18 @@ html {
 }
 
 .stat .s-lab {
-  font-size: 14.5px;
-  color: var(--paper-dim);
+  margin-top: 8px;
+  font-size: 0.75rem; /* text-xs */
+  letter-spacing: 0.04em;
+  color: #94a3b8; /* slate-400 */
+  line-height: 1.45;
+}
+
+.stat .s-sub {
   margin-top: 6px;
-}
-
-.stat::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  inset-inline-start: 0;
-  height: 2px;
-  width: 0;
-  background: var(--turq);
-  transition: width 0.5s var(--ease-out);
-}
-
-.stat:hover::after {
-  width: 100%;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #64748b; /* slate-500 */
 }
 
 /* ============ SECTION HEADERS ============ */
@@ -1101,14 +1112,6 @@ html {
   flex-shrink: 0;
   margin-top: 2px;
   color: rgba(148, 163, 184, 0.85);
-}
-
-.stats .s-early {
-  font-size: clamp(14px, 2vw, 17px);
-  line-height: 1.35;
-  color: var(--paper-dim);
-  max-width: 12rem;
-  margin-inline: auto;
 }
 
 .co-range .cr-bar {
@@ -1657,6 +1660,14 @@ footer {
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat:nth-child(2n + 1) {
+    border-inline-start: none;
+  }
+
+  .stat:nth-child(n + 3) {
+    border-top: 1px solid rgb(30 41 59 / 0.6);
   }
 }
 
