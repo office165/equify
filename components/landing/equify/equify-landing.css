@@ -669,6 +669,15 @@ html {
   color: #64748b; /* slate-500 */
 }
 
+.stats-kicker::before {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 1px;
+  margin: 0 auto 12px;
+  background: #3fc7b9;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -697,15 +706,16 @@ html {
   background: rgb(17 24 21 / 0.4); /* #111815/40 */
 }
 
-/* Numbers: accent only. Bidi isolation lives on BidiNumberUnit — do not
-   force direction/text-align/justify here (that caused "דק׳ 10" in RTL). */
+/* Numbers stay neutral white; bidi isolation is owned by .bidi-num-unit. */
 .stat .s-num {
   font-family: var(--mono);
   font-weight: 600;
   font-size: 2.25rem; /* text-4xl */
   line-height: 1.15;
-  color: #00f5a0;
+  color: #f5f7f6;
   font-variant-numeric: tabular-nums;
+  text-shadow: none;
+  box-shadow: none;
 }
 
 @media (min-width: 768px) {
@@ -716,10 +726,20 @@ html {
 
 .stat .s-num em {
   font-style: normal;
-  color: #00f5a0;
+  color: #f5f7f6;
 }
 
+/*
+ * Critical for RTL pages: flex-direction:row follows the element's
+ * direction. Without an explicit LTR direction on the flex container,
+ * an RTL ancestor reverses DOM order and "10 דק׳" paints as "דק׳ 10".
+ */
 .bidi-num-unit {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.25em;
+  direction: ltr;
   unicode-bidi: isolate;
 }
 

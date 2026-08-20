@@ -29,9 +29,11 @@ export function StatsSection() {
             <div className="s-lab">מהזנת נתונים עד דוח</div>
           </div>
           <div className="stat rv">
-            <div className="s-num">12</div>
-            <div className="s-lab">עסקאות M&A ישראליות במדגם הכיול</div>
-            <div className="s-sub">2023-2026 · לא ממוצע גלובלי</div>
+            <div className="s-num">
+              <BidiNumberUnit number={0} unit={<em>₪</em>} />
+            </div>
+            <div className="s-lab">להתחלה</div>
+            <div className="s-sub">תשלום רק בהפקת הדוח</div>
           </div>
         </div>
       </div>

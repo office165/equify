@@ -24,11 +24,22 @@ export function BidiNumberUnit({
   unitClassName = '',
 }: BidiNumberUnitProps) {
   return (
-    <span className={`bidi-num-unit inline-flex items-center justify-center gap-1 ${className}`.trim()} dir="ltr">
+    <span
+      className={`bidi-num-unit ${className}`.trim()}
+      dir="ltr"
+      style={{
+        display: 'inline-flex',
+        flexDirection: 'row',
+        alignItems: 'baseline',
+        gap: '0.25em',
+        direction: 'ltr',
+        unicodeBidi: 'isolate',
+      }}
+    >
       {prefix != null ? <span className="bidi-num-unit__prefix">{prefix}</span> : null}
       <span className="bidi-num-unit__num">{number}</span>
       {unit != null ? (
-        <span className={`bidi-num-unit__unit ${unitClassName}`.trim()} dir="auto">
+        <span className={`bidi-num-unit__unit ${unitClassName}`.trim()}>
           {unit}
         </span>
       ) : null}
