@@ -31,7 +31,7 @@ export function QualityGauge({
     <div className={`rr-quality-gauge ${className ?? ''}`}>
       <svg viewBox="0 0 200 120" className="rr-quality-gauge__svg" role="img">
         <title>
-          {isHe ? `ציון איכות ${score} — דרגה ${grade}` : `Quality score ${score} — grade ${grade}`}
+          {isHe ? `ציון איכות ${score}, דרגה ${grade}` : `Quality score ${score}, grade ${grade}`}
         </title>
         <path
           d={arcPath(0, 180, 78)}
@@ -63,8 +63,8 @@ export function QualityGauge({
       </svg>
       <p className="rr-quality-gauge__caption">
         {isHe
-          ? 'ציון איכות הנתונים והתחזית — משפיע על פרמיית הסיכון'
-          : 'Data & forecast quality score — informs risk premium'}
+          ? 'ציון איכות הנתונים והתחזית: משפיע על פרמיית הסיכון'
+          : 'Data & forecast quality score: informs risk premium'}
       </p>
     </div>
   );

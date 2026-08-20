@@ -56,7 +56,7 @@ export function HowItWorksSection() {
           מארבעה שלבים לדוח מקצועי
         </h2>
         <p className="typo-body mx-auto mt-3 max-w-xl text-sm sm:text-base">
-          אשף מונחה שמאסף נתונים, מריץ מודלים ומפיק דוח PDF — בלי יועץ חיצוני
+          אשף מונחה שמאסף נתונים, מריץ מודלים ומפיק דוח PDF, בלי יועץ חיצוני
         </p>
       </FadeRise>
 

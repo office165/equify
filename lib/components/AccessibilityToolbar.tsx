@@ -140,8 +140,8 @@ export function AccessibilityToolbar() {
                 </h2>
                 <p className="mt-1 text-xs text-slate-400">
                   {isRtl
-                    ? 'הגדרות פעילות בזמן אמת — ללא רענון דף'
-                    : 'Live adjustments — no page reload required'}
+                    ? 'הגדרות פעילות בזמן אמת, ללא רענון דף'
+                    : 'Live adjustments, no page reload required'}
                 </p>
               </div>
               <button

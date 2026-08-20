@@ -365,8 +365,8 @@ export function Step4Goal({
                   role="status"
                 >
                   {isHe
-                    ? 'המייל אושר. השלימו את התשלום המאובטח — לאחר האישור תועברו לדוח.'
-                    : 'Email confirmed. Complete secure checkout — you will reach the report after payment.'}
+                    ? 'המייל אושר. השלימו את התשלום המאובטח. לאחר האישור תועברו לדוח.'
+                    : 'Email confirmed. Complete secure checkout. You will reach the report after payment.'}
                 </p>
                 <PayPalHostedButton hostedButtonId={hostedButtonId} />
               </>

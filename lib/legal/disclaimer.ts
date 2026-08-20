@@ -3,7 +3,7 @@ import { BRAND_NAME } from '../brand/brand-identity';
 
 /** Full legal disclaimer — Hebrew (primary). */
 export const LEGAL_DISCLAIMER_HE =
-  `הבהרה משפטית: ${BRAND_NAME} — אינדיקציית שווי אלגוריתמית אוטומטית המבוססת על מודלים כלכליים ונתוני שוק מוערכים. אין לראות בתוצרי המערכת, בדוחות המופקים או בנתונים המוצגים משום ייעוץ פיננסי, ייעוץ השקעות, חוות דעת מוסמכת או תחליף להערכת שווי מקצועית פרטנית. כל תהליך קבלת החלטות המבוסס על המערכת מבוצע על אחריותו הבלעדית של המשתמש, והחברה או מפתחיה לא יישאו בכל אחריות לנזק ישיר או עקיף.`;
+  `הבהרה משפטית: ${BRAND_NAME}: אינדיקציית שווי אלגוריתמית אוטומטית המבוססת על מודלים כלכליים ונתוני שוק מוערכים. אין לראות בתוצרי המערכת, בדוחות המופקים או בנתונים המוצגים משום ייעוץ פיננסי, ייעוץ השקעות, חוות דעת מוסמכת או תחליף להערכת שווי מקצועית פרטנית. כל תהליך קבלת החלטות המבוסס על המערכת מבוצע על אחריותו הבלעדית של המשתמש, והחברה או מפתחיה לא יישאו בכל אחריות לנזק ישיר או עקיף.`;
 
 /** Full legal disclaimer — English fallback. */
 export const LEGAL_DISCLAIMER_EN =
@@ -11,10 +11,10 @@ export const LEGAL_DISCLAIMER_EN =
 
 /** Compact stamp for PDF page footers (hardcoded Hebrew in print theme). */
 export const LEGAL_DISCLAIMER_COMPACT_HE =
-  `הבהרה משפטית: ${BRAND_NAME} — אינדיקציית שווי אלגוריתמית בלבד. אין בדוח זה ייעוץ פיננסי/השקעות מוסמך. האחריות הבלעדית על המשתמש.`;
+  `הבהרה משפטית: ${BRAND_NAME}: אינדיקציית שווי אלגוריתמית בלבד. אין בדוח זה ייעוץ פיננסי/השקעות מוסמך. האחריות הבלעדית על המשתמש.`;
 
 export const LEGAL_DISCLAIMER_COMPACT_EN =
-  `Legal Notice: ${BRAND_NAME} — algorithmic valuation indication only. Not certified financial or investment advice. User bears sole responsibility.`;
+  `Legal Notice: ${BRAND_NAME}: algorithmic valuation indication only. Not certified financial or investment advice. User bears sole responsibility.`;
 
 export type LegalDisclaimerVariant = 'full' | 'compact';
 

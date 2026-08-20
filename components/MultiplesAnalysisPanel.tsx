@@ -142,8 +142,8 @@ export function MultiplesAnalysisPanel({
         <header className="pdf-block-contain pdf-block-contain-spaced mb-6">
           <h2 className="section-header-title text-lg font-bold text-[#00bfa5]">
             {isHe
-              ? 'ניתוח מכפילי שוק — השוואה לחברות דומות'
-              : 'Market Multiples — Peer Comparison'}
+              ? 'ניתוח מכפילי שוק: השוואה לחברות דומות'
+              : 'Market Multiples: Peer Comparison'}
           </h2>
           <p className="mt-1 text-sm text-slate-400">
             {isHe

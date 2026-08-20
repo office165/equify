@@ -61,7 +61,7 @@ export function buildExecutiveSummary(
 
   if (wacc >= 0.14) {
     sentencesHe.push(
-      `עלות ההון המשוקללת (WACC ${(wacc * 100).toFixed(1)}%) גבוהה יחסית — מומלץ לצמצם פרופיל סיכון באמצעות גיוון הכנסות, חיזוק מסחריות חוזרת והפחתת ריכוזיות לקוחות.`,
+      `עלות ההון המשוקללת (WACC ${(wacc * 100).toFixed(1)}%) גבוהה יחסית. מומלץ לצמצם פרופיל סיכון באמצעות גיוון הכנסות, חיזוק מסחריות חוזרת והפחתת ריכוזיות לקוחות.`,
     );
     sentencesEn.push(
       `Elevated WACC (${(wacc * 100).toFixed(1)}%) suggests prioritizing risk mitigation via revenue diversification, recurring mix, and reduced customer concentration.`,
@@ -77,14 +77,14 @@ export function buildExecutiveSummary(
 
   if (spread > 0.35) {
     sentencesHe.push(
-      'פער רחב בין תרחיש דובי לשורי משקף אי-ודאות מהותית — מומלץ לבנות תוכנית עסקית עם אבני דרך ברורות לפני גיוס הון או מו"מ מכירה.',
+      'פער רחב בין תרחיש דובי לשורי משקף אי-ודאות מהותית. מומלץ לבנות תוכנית עסקית עם אבני דרך ברורות לפני גיוס הון או מו"מ מכירה.',
     );
     sentencesEn.push(
       'A wide bear-to-bull spread signals material uncertainty; define clear milestones before capital raises or sell-side negotiations.',
     );
   } else if (confidence >= 75 && margin >= 0.15) {
     sentencesHe.push(
-      `ציון הביטחון (${confidence}%) ושולי EBITDA תומכים בנרטיב השקעה איכותי — מומלץ להציג לדירקטוריון תרחיש בסיס עם צמיחה לטווח ארוך של ${(gTerminal * 100).toFixed(1)}%.`,
+      `ציון הביטחון (${confidence}%) ושולי EBITDA תומכים בנרטיב השקעה איכותי. מומלץ להציג לדירקטוריון תרחיש בסיס עם צמיחה לטווח ארוך של ${(gTerminal * 100).toFixed(1)}%.`,
     );
     sentencesEn.push(
       `Confidence (${confidence}%) and EBITDA margins support a quality investment narrative; present a base case anchored on ${(gTerminal * 100).toFixed(1)}% terminal growth.`,

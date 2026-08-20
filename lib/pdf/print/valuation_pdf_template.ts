@@ -135,7 +135,7 @@ function buildPage2Exec(vm: ValuationPdfViewModel): string {
   <div class="body page-body--exec page-body--distributed">
     <div class="page-intro">
       <span class="eyebrow">02 · תקציר מנהלים</span>
-      <h2>השורה התחתונה — קודם.</h2>
+      <h2>השורה התחתונה, קודם.</h2>
       <p class="sub">${escHtml(vm.executiveSummary)}</p>
     </div>
     <div class="page-stack">
@@ -252,7 +252,7 @@ function buildPage4Dcf(vm: ValuationPdfViewModel): string {
           <tr><td>שווי נוכחי</td>${pvCells}<td class="n">${vm.terminalPvM.toFixed(1)}*</td></tr>
           <tr class="sum"><td>שווי פעילות לפי DCF</td><td class="n" colspan="${vm.dcfFcffRows.length}"></td><td class="n">${escHtml(fmtMoneyCompact(vm.evDcf))}</td></tr>
         </table>
-        <p class="note">* ערך טרמינלי מהווה ${vm.terminalSharePct}% מסך השווי לפי DCF — רגישות גבוהה להנחת הצמיחה הפרמננטית.</p>
+        <p class="note">* ערך טרמינלי מהווה ${vm.terminalSharePct}% מסך השווי לפי DCF; רגישות גבוהה להנחת הצמיחה הפרמננטית.</p>
       </section>
     </div>
   </div>`;
@@ -269,7 +269,7 @@ function buildPage5Multiples(vm: ValuationPdfViewModel): string {
     <div class="page-intro">
       <span class="eyebrow">05 · מכפילי שוק</span>
       <h2>מבט הצידה: השוק.</h2>
-      <p class="sub">המכפילים מכוילים מול עסקאות M&A ישראליות בענף ${escHtml(vm.industrySector)}. הפס האפור מציג את טווח השוק; הסימון — את מיקום החברה בתוכו.</p>
+      <p class="sub">המכפילים מכוילים מול עסקאות M&A ישראליות בענף ${escHtml(vm.industrySector)}. הפס האפור מציג את טווח השוק; הסימון מציג את מיקום החברה בתוכו.</p>
     </div>
     <div class="page-stack">
       <section class="page-section page-section--tracks">
@@ -321,7 +321,7 @@ function buildPage6Scenarios(vm: ValuationPdfViewModel): string {
   ${sheetHead(vm, vm.reportId)}
   <div class="body">
     <span class="eyebrow">06 · תרחישים ואיכות</span>
-    <h2>לא רק כמה — באיזה טווח.</h2>
+    <h2>לא רק כמה, אלא באיזה טווח.</h2>
     <p class="sub">שלושה תרחישים מלאים, כל אחד עם הנחות צמיחה, רווחיות ועלות הון משלו, לצד ציון איכות המכייל את המודל.</p>
     <table>
       <tr><th>תרחיש</th><th>צמיחה</th><th>שיעור EBITDA</th><th>WACC</th><th>מכפיל</th><th>EV</th><th>שווי לבעלים</th></tr>
@@ -392,7 +392,7 @@ export function buildValuationPdfTemplateHtml(
 <head>
   <meta charset="UTF-8"/>
   <meta name="robots" content="noindex, nofollow"/>
-  <title>equify — דוח הערכת שווי (PDF) — ${escHtml(data.companyName)}</title>
+  <title>equify: דוח הערכת שווי (PDF): ${escHtml(data.companyName)}</title>
   <style>${css}</style>
 </head>
 <body>${pages}</body>

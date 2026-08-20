@@ -33,7 +33,7 @@ export const METHODOLOGY_CARDS: MethodologyCard[] = [
     title: 'מכפיל הכנסות',
     subtitle: 'EV/Sales',
     description:
-      'מתאים לחברות pre-profit או צמיחה גבוהה — השוואה לעמיתים ישראליים באותו מחזור ושלב.',
+      'מתאים לחברות pre-profit או צמיחה גבוהה: השוואה לעמיתים ישראליים באותו מחזור ושלב.',
     icon: 'revenue',
   },
   {
@@ -41,7 +41,7 @@ export const METHODOLOGY_CARDS: MethodologyCard[] = [
     title: 'מכפילים נוספים',
     subtitle: 'EV/EBITA · P/E',
     description:
-      'בחירה דינמית לפי שלב חיים: EV/EBITA לצמיחה, P/E לחברות רווחיות — חציון קבוצת השוואה.',
+      'בחירה דינמית לפי שלב חיים: EV/EBITA לצמיחה, P/E לחברות רווחיות; חציון קבוצת השוואה.',
     icon: 'multiples',
   },
   {
@@ -49,13 +49,13 @@ export const METHODOLOGY_CARDS: MethodologyCard[] = [
     title: 'שווי משולב',
     subtitle: 'ממוצע DCF + מכפילים',
     description:
-      'ממצא מרכזי: ממוצע אריתמטי של שווי DCF ושווי מכפילי בסיס — תמונה מאוזנת לעסקאות וגיוס.',
+      'ממצא מרכזי: ממוצע אריתמטי של שווי DCF ושווי מכפילי בסיס, תמונה מאוזנת לעסקאות וגיוס.',
     icon: 'composite',
   },
 ];
 
 export const HERO_SUBLINE =
-  'DCF+WACC, מכפיל EBITDA, מכפיל הכנסות, מכפילים נוספים ושווי משולב — נתוני שוק ישראלי 2026';
+  'DCF+WACC, מכפיל EBITDA, מכפיל הכנסות, מכפילים נוספים ושווי משולב; נתוני שוק ישראלי 2026';
 
 export const HERO_HEADLINE_WORDS = ['גלה', 'כמה', 'שווה', 'העסק', 'שלך'];
 
@@ -72,14 +72,14 @@ export const WIZARD_STEPS: WizardStepCard[] = [
     id: 'profile',
     number: 1,
     title: 'פרופיל וזיהוי',
-    description: 'שם, חברה, ת.ז./ח.פ., טלפון ואימייל — בסיס לדוח ולגישה מאובטחת.',
+    description: 'שם, חברה, ת.ז./ח.פ., טלפון ואימייל: בסיס לדוח ולגישה מאובטחת.',
     icon: 'profile',
   },
   {
     id: 'finance',
     number: 2,
     title: 'נתונים פיננסיים',
-    description: 'הכנסות, EBITDA, חוב נטו ותחזיות — המנוע בונה DCF ומכפילים.',
+    description: 'הכנסות, EBITDA, חוב נטו ותחזיות: המנוע בונה DCF ומכפילים.',
     icon: 'finance',
   },
   {
@@ -87,7 +87,7 @@ export const WIZARD_STEPS: WizardStepCard[] = [
     number: 3,
     title: 'מאפייני סיכון ורגישות',
     description:
-      'הכנסות חוזרות, ריכוז לקוחות, תחרות ותלות במייסד — מכוילים את עלות ההון והרגישות במודל.',
+      'הכנסות חוזרות, ריכוז לקוחות, תחרות ותלות במייסד מכוילים את עלות ההון והרגישות במודל.',
     icon: 'risk',
   },
   {

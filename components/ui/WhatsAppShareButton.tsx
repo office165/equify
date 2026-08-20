@@ -38,7 +38,7 @@ function buildShareMessage(
   reportUrl: string,
 ): string {
   return (
-    `דוח הערכת שווי — ${companyName}\n` +
+    `דוח הערכת שווי: ${companyName}\n` +
     `שווי פעילות (בסיס): ${fmtShareValue(baseEv)}\n` +
     `צפה בדוח המלא: ${reportUrl}\n` +
     `הופק על ידי ${BRAND_NAME}`

@@ -56,7 +56,7 @@ const COPY = {
     terminalG: 'Terminal Growth (g∞)',
     terminalPv: 'Terminal Value (PV)',
     impliedEv: 'Implied Enterprise Value',
-    footer: 'Confidential — Equify by SBC Institutional Valuation Platform',
+    footer: 'Confidential. Equify by SBC Institutional Valuation Platform',
     page: 'Page',
     disclaimer: 'Disclaimer',
   },
@@ -96,7 +96,7 @@ const COPY = {
     terminalG: 'צמיחה לטווח ארוך (g∞)',
     terminalPv: 'ערך סופי (PV)',
     impliedEv: 'שווי פעילות משתמע',
-    footer: 'סודי — פלטפורמת הערכת שווי מוסדית Equify by SBC',
+    footer: 'סודי. פלטפורמת הערכת שווי מוסדית Equify by SBC',
     page: 'עמוד',
     disclaimer: 'הצהרת אחריות',
   },
@@ -287,7 +287,7 @@ export function ValuationReportDocument({
 
   return (
     <Document
-      title={`Equify — ${matrix.meta.company_name}`}
+      title={`Equify: ${matrix.meta.company_name}`}
       author="Equify by SBC"
       language={locale === 'he' ? 'he-IL' : 'en-US'}
     >

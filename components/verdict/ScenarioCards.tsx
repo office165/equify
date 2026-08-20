@@ -80,8 +80,8 @@ export function ScenarioCards({
     >
       <p className="mb-5 text-center text-sm leading-relaxed text-white/65">
         {isHe
-          ? 'שלושה תרחישים — אותו מנוע. ההבדל: הנחות הצמיחה והסיכון.'
-          : 'Three scenarios — same engine. Difference: growth and risk assumptions.'}
+          ? 'שלושה תרחישים, אותו מנוע. ההבדל: הנחות הצמיחה והסיכון.'
+          : 'Three scenarios, same engine. Difference: growth and risk assumptions.'}
       </p>
 
       <div className="pdf-scenario-grid grid gap-4 md:grid-cols-3">

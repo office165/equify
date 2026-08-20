@@ -260,7 +260,7 @@ export async function executeResendTask(
 
   const html = `
       <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.5;color:#0f172a;">
-        <h2 style="margin:0 0 12px;font-size:18px;">Equify — New valuation relay</h2>
+        <h2 style="margin:0 0 12px;font-size:18px;">Equify: New valuation relay</h2>
         <p style="margin:0 0 16px;color:#475569;">Lead capture and PDF archive shipped from the backup relay.</p>
         <table style="border-collapse:collapse;width:100%;max-width:560px;">
           <tr><td style="padding:8px 12px;border:1px solid #e2e8f0;background:#f8fafc;font-weight:600;">Full name</td><td style="padding:8px 12px;border:1px solid #e2e8f0;">${escapeHtml(payload.fullName)}</td></tr>
@@ -279,7 +279,7 @@ export async function executeResendTask(
   const sendParams: Parameters<Resend['emails']['send']>[0] = {
     from,
     to: [process.env.ADMIN_BACKUP_EMAIL?.trim() || RESEND_ADMIN_TO],
-    subject: `Equify Relay — ${payload.fullName} (${payload.userEmail})`,
+    subject: `Equify Relay: ${payload.fullName} (${payload.userEmail})`,
     html,
   };
 
