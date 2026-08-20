@@ -1,3 +1,8 @@
+function resolveEmailAssetBaseUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'https://equify.co.il';
+  return raw.replace(/\/$/, '');
+}
+
 export const EMAIL_THEME = {
   outerBackground: '#f7f9fa',
   cardBackground: '#ffffff',
@@ -19,6 +24,7 @@ export const EMAIL_THEME = {
   fontFamily:
     "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
   maxWidthPx: 600,
-  logoUrl: 'https://equify.co.il/equify-logo-on-dark.png',
+  /** Absolute URL — relative paths break in email clients. Uses Preview/prod site origin. */
+  logoUrl: `${resolveEmailAssetBaseUrl()}/equify-logo-on-dark.png`,
   logoWidthPx: 220,
 } as const;
