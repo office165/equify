@@ -3109,13 +3109,13 @@ body.equify-slider-dragging {
   border-color: var(--turq);
 }
 
-/* —— SectorPicker progressive disclosure —— */
+/* SectorPicker progressive disclosure */
 .equify-wizard .sector-picker {
   margin-top: 28px;
 }
 
 .equify-wizard .sector-picker .unsure-sector-hint {
-  color: #cbd5e1; /* slate-300 — override --dim for contrast */
+  color: #cbd5e1; /* slate-300 - override --dim for contrast */
 }
 
 .equify-wizard .sp-q {
@@ -3193,7 +3193,7 @@ body.equify-slider-dragging {
 .equify-wizard .sp-kbd-hint {
   margin: 10px 0 0;
   font-size: 11px;
-  color: #94a3b8; /* slate-400 — was --dim/#7a8f88 (~slate-500) */
+  color: #94a3b8; /* slate-400 - was --dim/#7a8f88 (~slate-500) */
   text-align: start; /* RTL: visually right under the option group */
 }
 
@@ -3336,7 +3336,7 @@ body.equify-slider-dragging {
 .equify-wizard .sp-nomatch {
   margin: 0;
   font-size: 13px;
-  color: #cbd5e1; /* slate-300 — was --dim/~slate-500 */
+  color: #cbd5e1; /* slate-300 - was --dim/~slate-500 */
 }
 
 .equify-wizard .sp-alt-links {

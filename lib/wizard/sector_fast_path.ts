@@ -57,7 +57,7 @@ export interface FastPathSuggestion {
   subSector: string;
   labelHe: string;
   labelEn: string;
-  /** Static one-line reason — ties answers to the suggested combo. */
+  /** Static one-line reason - ties answers to the suggested combo. */
   reasonHe: string;
   reasonEn: string;
 }

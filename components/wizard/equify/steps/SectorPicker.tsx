@@ -647,8 +647,8 @@ export function SectorPicker({
             <div className="sp-alt-links">
               <button type="button" className="sp-link" onClick={openManual}>
                 {isHe
-                  ? 'אני יודע את הענף שלי — בחירה ידנית'
-                  : 'I know my sector — choose manually'}
+                  ? 'אני יודע את הענף שלי: בחירה ידנית'
+                  : 'I know my sector: choose manually'}
               </button>
               <button type="button" className="sp-link" onClick={openFreetext}>
                 {isHe ? 'תאר במילים שלך' : 'Describe in your own words'}
@@ -782,8 +782,8 @@ export function SectorPicker({
               onClick={openManual}
             >
               {isHe
-                ? 'אני יודע את הענף שלי — בחירה ידנית'
-                : 'I know my sector — choose manually'}
+                ? 'אני יודע את הענף שלי: בחירה ידנית'
+                : 'I know my sector: choose manually'}
             </button>
           </div>
         ) : null}
@@ -851,7 +851,7 @@ export function SectorPicker({
           ) : null}
           {rangeDecision === 'confirmed' ? (
             <p className="sp-range-ack" aria-live="polite">
-              {isHe ? 'מעולה — ממשיכים עם הטווח הזה.' : 'Great — we will use that range.'}
+              {isHe ? 'מעולה, ממשיכים עם הטווח הזה.' : 'Great, we will use that range.'}
             </p>
           ) : null}
         </>
