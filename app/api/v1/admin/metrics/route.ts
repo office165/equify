@@ -18,13 +18,9 @@ export const runtime = 'nodejs';
 type CountsByType = Record<ProductEventType, number>;
 
 function emptyCounts(): CountsByType {
-  return {
-    wizard_completed: 0,
-    checkout_opened: 0,
-    payment_succeeded: 0,
-    report_created: 0,
-    pdf_downloaded: 0,
-  };
+  return Object.fromEntries(
+    PRODUCT_EVENT_TYPES.map((type) => [type, 0]),
+  ) as CountsByType;
 }
 
 async function requireAdminUserId(request: Request): Promise<string | null> {

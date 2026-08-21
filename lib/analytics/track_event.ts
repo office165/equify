@@ -14,6 +14,15 @@ export const PRODUCT_EVENT_TYPES = [
   'payment_succeeded',
   'report_created',
   'pdf_downloaded',
+  'wizard_step1_started',
+  'sector_fast_path_used',
+  'sector_manual_used',
+  'sector_freetext_used',
+  'sector_range_confirmed',
+  'sector_range_rejected',
+  'wizard_step1_completed',
+  'sector_suggest_llm_ok',
+  'sector_suggest_llm_fallback',
 ] as const;
 
 export type ProductEventType = (typeof PRODUCT_EVENT_TYPES)[number];

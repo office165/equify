@@ -1,28 +1,20 @@
 'use client';
 
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { EquifyLifecycleKey } from '../../../../lib/valuation';
-import {
-  SECTOR_SELECT_OPTIONS,
-  coerceWizardSectorSelection,
-  getSubSectorChipLabel,
-  getSubSectorsForSector,
-} from '../../../../lib/constants/industry_config';
+import { coerceWizardSectorSelection } from '../../../../lib/constants/industry_config';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
+import { scheduleClientProductEvent } from '../../../../lib/analytics/track_event_client';
 import { lockLeadPayload } from '../../../../lib/wizard/lead_wire';
 import { mapEquifyToWizardFormValues } from '../../../../lib/wizard/map_equify_wizard';
-import {
-  filterSectorsByQuery,
-  type SectorSuggestHit,
-} from '../../../../lib/wizard/sector_suggest';
 import { scheduleWizardProgressSave } from '../../../../lib/wizard/wizard_progress_queue';
 import { useWizardValuation } from '../WizardValuationContext';
-import { IndustryInsightCard } from './IndustryInsightCard';
 import { isAcceptedLogoFile, MAX_LOGO_BYTES } from '../../../../lib/utils/logo_data_url';
 import {
   sanitizePhoneInput,
   validateStep1Phone,
 } from '../../../../lib/wizard/step1_profile_schema';
+import { SectorPicker } from './SectorPicker';
 
 const LIFECYCLES_HE: {
   key: EquifyLifecycleKey;
@@ -54,98 +46,22 @@ export interface Step1ProfileProps {
 
 export function Step1Profile({ onNext }: Step1ProfileProps) {
   const { shell, steps: t, isHe, locale } = useEquifyStrings();
-  const sectors = useMemo(
-    () =>
-      SECTOR_SELECT_OPTIONS.map((s) => ({
-        key: s.key,
-        label: isHe ? s.labelHe : s.labelEn,
-      })),
-    [isHe],
-  );
   const lifecycles = isHe ? LIFECYCLES_HE : LIFECYCLES_EN;
-  const { state, updateProfile, setSector, setLifecycle } = useWizardValuation();
+  const { state, updateProfile, setSectorSelection, setLifecycle } =
+    useWizardValuation();
   const { profile } = state;
-  const [sectorQuery, setSectorQuery] = useState('');
-  const [unsureOpen, setUnsureOpen] = useState(false);
-  const [unsureText, setUnsureText] = useState('');
-  const [suggestHits, setSuggestHits] = useState<SectorSuggestHit[]>([]);
-  const [suggestBusy, setSuggestBusy] = useState(false);
-  const [suggestError, setSuggestError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const startedRef = useRef(false);
 
-  const sectorFilter = useMemo(
-    () => filterSectorsByQuery(sectorQuery),
-    [sectorQuery],
-  );
-  const visibleSectors = useMemo(() => {
-    if (!sectorFilter) return sectors;
-    const keys = new Set(sectorFilter.map((hit) => hit.sector));
-    if (profile.sector) keys.add(profile.sector);
-    return sectors.filter((s) => keys.has(s.key));
-  }, [profile.sector, sectorFilter, sectors]);
-  const subSectors = getSubSectorsForSector(profile.sector);
-  const visibleSubSectors = useMemo(() => {
-    if (!sectorFilter || !profile.sector) return subSectors;
-    const hit = sectorFilter.find((row) => row.sector === profile.sector);
-    if (!hit) return subSectors;
-    return subSectors.filter(
-      (s) => hit.subSectorIds.includes(s.id) || s.id === profile.subSector,
-    );
-  }, [profile.sector, profile.subSector, sectorFilter, subSectors]);
-  const showIndustryInsight = Boolean(profile.sector && profile.subSector);
-  const noSectorHits = Boolean(sectorFilter && sectorFilter.length === 0);
+  useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    scheduleClientProductEvent('wizard_step1_started', { source: 'step1' });
+  }, []);
 
-  const handleSectorSelect = useCallback(
-    (sector: typeof profile.sector) => {
-      setSector(sector);
-    },
-    [setSector],
-  );
-
-  const handleSubSectorSelect = useCallback(
-    (subSectorId: string) => {
-      updateProfile({ subSector: subSectorId });
-    },
-    [updateProfile],
-  );
-
-  const applySectorSuggestion = useCallback(
-    (sector: typeof profile.sector, subSectorId: string) => {
-      setSector(sector);
-      updateProfile({ subSector: subSectorId });
-      setSectorQuery('');
-      setUnsureOpen(false);
-      setSuggestHits([]);
-    },
-    [setSector, updateProfile],
-  );
-
-  const handleUnsureSuggest = useCallback(async () => {
-    setSuggestBusy(true);
-    setSuggestError(null);
-    try {
-      const res = await fetch('/api/v1/sector/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: unsureText }),
-      });
-      if (!res.ok) {
-        setSuggestHits([]);
-        setSuggestError(t.common.unsureError);
-        return;
-      }
-      const json = (await res.json()) as { suggestions?: SectorSuggestHit[] };
-      const hits = json.suggestions ?? [];
-      setSuggestHits(hits);
-      if (hits.length === 0) setSuggestError(t.common.unsureEmpty);
-    } catch {
-      setSuggestHits([]);
-      setSuggestError(t.common.unsureError);
-    } finally {
-      setSuggestBusy(false);
-    }
-  }, [t.common.unsureEmpty, t.common.unsureError, unsureText]);
-
-  React.useEffect(() => {
+  useEffect(() => {
     const coerced = coerceWizardSectorSelection(profile.sector, profile.subSector);
     if (
       coerced.sector !== profile.sector ||
@@ -154,9 +70,17 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
       updateProfile(coerced);
     }
   }, [profile.sector, profile.subSector, updateProfile]);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [errors, setErrors] = useState<Record<string, boolean>>({});
-  const [logoError, setLogoError] = useState<string | null>(null);
+
+  const handleSectorPick = useCallback(
+    (next: {
+      sector: typeof profile.sector;
+      subSector: string;
+      path: 'fast' | 'manual' | 'freetext';
+    }) => {
+      setSectorSelection(next.sector, next.subSector);
+    },
+    [setSectorSelection],
+  );
 
   const validate = useCallback(() => {
     const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -173,6 +97,10 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
 
   const handleNext = useCallback(() => {
     if (!validate()) return;
+    scheduleClientProductEvent('wizard_step1_completed', {
+      sector: profile.sector,
+      subSector: profile.subSector,
+    });
     const formValues = mapEquifyToWizardFormValues(state);
     scheduleWizardProgressSave(lockLeadPayload(formValues, locale));
     // Fire-and-forget: ensure public.users row before PayPal webhook matching.
@@ -188,7 +116,16 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
         }),
     );
     onNext();
-  }, [locale, onNext, profile.fullName, profile.userEmail, state, validate]);
+  }, [
+    locale,
+    onNext,
+    profile.fullName,
+    profile.sector,
+    profile.subSector,
+    profile.userEmail,
+    state,
+    validate,
+  ]);
 
   const handleLogo = useCallback(
     (file: File | null) => {
@@ -341,125 +278,31 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
         </div>
       </div>
 
+      <SectorPicker
+        sector={profile.sector}
+        subSector={profile.subSector}
+        locale={locale}
+        isHe={isHe}
+        sectorError={Boolean(errors.sector)}
+        industryInsightCopy={t.step1.industryInsight}
+        strings={{
+          sector: shell.sector,
+          sectorSearch: t.common.sectorSearch,
+          sectorSearchPlaceholder: t.common.sectorSearchPlaceholder,
+          sectorNoResults: t.common.sectorNoResults,
+          selectSector: t.common.selectSector,
+          selectSubSector: t.common.selectSubSector,
+          subSector: t.common.subSector,
+          unsureHint: t.common.unsureHint,
+          unsurePlaceholder: t.common.unsurePlaceholder,
+          unsureSubmit: t.common.unsureSubmit,
+          unsureEmpty: t.common.unsureEmpty,
+          unsureError: t.common.unsureError,
+        }}
+        onSelect={handleSectorPick}
+      />
+
       <div className="fgroup stagger" style={{ marginTop: 28 }}>
-        <div className="field">
-          <label>
-            {shell.sector} <span className="req">*</span>
-          </label>
-          <input
-            className="inp sector-search"
-            type="search"
-            value={sectorQuery}
-            onChange={(e) => setSectorQuery(e.target.value)}
-            placeholder={t.common.sectorSearchPlaceholder}
-            aria-label={t.common.sectorSearch}
-            autoComplete="off"
-          />
-          <div className="chips" role="group" aria-label={t.common.selectSector}>
-            {visibleSectors.map((s) => (
-              <button
-                key={s.key}
-                type="button"
-                className={`chip${profile.sector === s.key ? ' on' : ''}`}
-                onClick={() => handleSectorSelect(s.key)}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-          {noSectorHits && visibleSectors.length === 0 ? (
-            <span className="v-msg err show">{t.common.sectorNoResults}</span>
-          ) : null}
-          <div className="unsure-sector">
-            <button
-              type="button"
-              className="unsure-sector-toggle"
-              onClick={() => setUnsureOpen((open) => !open)}
-            >
-              {t.common.unsureSector}
-            </button>
-            {unsureOpen ? (
-              <div className="unsure-sector-panel">
-                <p className="unsure-sector-hint">{t.common.unsureHint}</p>
-                <textarea
-                  className="inp"
-                  value={unsureText}
-                  onChange={(e) => setUnsureText(e.target.value)}
-                  placeholder={t.common.unsurePlaceholder}
-                  maxLength={400}
-                  rows={3}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  style={{ marginTop: 10 }}
-                  disabled={suggestBusy || unsureText.trim().length < 5}
-                  onClick={() => void handleUnsureSuggest()}
-                >
-                  {suggestBusy ? t.common.unsureBusy : t.common.unsureSubmit}
-                </button>
-                {suggestError ? (
-                  <p className="v-msg err show" style={{ marginTop: 8 }}>
-                    {suggestError}
-                  </p>
-                ) : null}
-                {suggestHits.length > 0 ? (
-                  <div className="suggest-hits" role="list">
-                    {suggestHits.map((hit) => (
-                      <button
-                        key={`${hit.sector}-${hit.subSector}`}
-                        type="button"
-                        className="suggest-hit"
-                        onClick={() =>
-                          applySectorSuggestion(hit.sector, hit.subSector)
-                        }
-                      >
-                        {isHe ? hit.labelHe : hit.labelEn}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {subSectors.length > 0 ? (
-          <div className="field">
-            <label>
-              {t.common.subSector} <span className="req">*</span>
-            </label>
-            <div
-              className="chips chips-sub-sectors"
-              role="group"
-              aria-label={t.common.selectSubSector}
-              dir={isHe ? 'rtl' : 'ltr'}
-            >
-              {visibleSubSectors.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className={`chip${profile.subSector === s.id ? ' on' : ''}`}
-                  onClick={() => handleSubSectorSelect(s.id)}
-                  dir={isHe ? 'rtl' : 'ltr'}
-                  lang={isHe ? 'he' : 'en'}
-                >
-                  {getSubSectorChipLabel(profile.sector, s, locale)}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {showIndustryInsight ? (
-          <IndustryInsightCard
-            sector={profile.sector}
-            subSector={profile.subSector}
-            locale={locale}
-            copy={t.step1.industryInsight}
-          />
-        ) : null}
-
         <div className="field">
           <label>
             {shell.lifecycle} <span className="req">*</span>

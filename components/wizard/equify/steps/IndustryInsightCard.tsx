@@ -256,7 +256,7 @@ export function IndustryInsightCard({
       role="note"
       aria-live="polite"
       dir={isHe ? 'rtl' : undefined}
-      className="mt-6 p-4 rounded-xl bg-teal-900/10 border border-teal-800/30 flex items-start gap-4 animate-in fade-in slide-in-from-top-4 eqw-industry-insight"
+      className="mt-6 p-4 rounded-xl bg-teal-900/10 border border-teal-800/30 flex items-start gap-4 eqw-industry-insight"
     >
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-300/90"

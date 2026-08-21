@@ -66,6 +66,8 @@ export interface WizardValuationContextValue {
   updateRisk: (patch: Partial<EquifyWizardRisk>) => void;
   setReportingCurrency: (currency: ReportingCurrencyCode) => void;
   setSector: (sector: EquifySectorKey) => void;
+  /** Atomic sector + sub-sector update (avoids firstSub flash between setState calls). */
+  setSectorSelection: (sector: EquifySectorKey, subSector: string) => void;
   setLifecycle: (lifecycle: EquifyLifecycleKey) => void;
   setGoal: (goal: EquifyGoalKey) => void;
   setAgreedToTerms: (agreed: boolean) => void;
@@ -215,32 +217,43 @@ export function WizardValuationProvider({
     }
   }, []);
 
-  const setSector = useCallback(
-    (sector: EquifySectorKey) => {
+  const setSectorSelection = useCallback(
+    (sector: EquifySectorKey, subSector: string) => {
+      const coerced = coerceWizardSectorSelection(sector, subSector);
       setState((prev) => {
-        const subs = getIndustryConfig(sector).subSectors;
-        const firstSub = subs[0]?.id ?? '';
+        const sectorChanged = prev.profile.sector !== coerced.sector;
+        const subChanged = prev.profile.subSector !== coerced.subSector;
+        if (!sectorChanged && !subChanged) return prev;
         return {
           ...prev,
           profile: {
             ...prev.profile,
-            sector,
-            subSector: firstSub,
+            sector: coerced.sector,
+            subSector: coerced.subSector,
           },
           financials: {
             ...prev.financials,
-            sectorDefaultsFor:
-              prev.financials.sectorDefaultsFor === sector
-                ? sector
-                : undefined,
+            sectorDefaultsFor: sectorChanged
+              ? undefined
+              : prev.financials.sectorDefaultsFor === coerced.sector
+                ? coerced.sector
+                : prev.financials.sectorDefaultsFor,
             customMultiple: null,
             isManualMultiple: false,
           },
         };
       });
-      void applySectorMarketDefaults(sector);
+      void applySectorMarketDefaults(coerced.sector);
     },
     [applySectorMarketDefaults],
+  );
+
+  const setSector = useCallback(
+    (sector: EquifySectorKey) => {
+      const firstSub = getIndustryConfig(sector).subSectors[0]?.id ?? '';
+      setSectorSelection(sector, firstSub);
+    },
+    [setSectorSelection],
   );
 
   const setLifecycle = useCallback((lifecycle: EquifyLifecycleKey) => {
@@ -299,6 +312,7 @@ export function WizardValuationProvider({
       updateRisk,
       setReportingCurrency,
       setSector,
+      setSectorSelection,
       setLifecycle,
       setGoal,
       setAgreedToTerms,
@@ -322,6 +336,7 @@ export function WizardValuationProvider({
       setLifecycle,
       setReportingCurrency,
       setSector,
+      setSectorSelection,
       state,
       step,
       updateFinancials,

@@ -2430,6 +2430,13 @@ body.equify-slider-dragging {
 .equify-wizard .eqw-industry-insight {
   pointer-events: none;
   user-select: none;
+  animation: sp-insight-fade 150ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .equify-wizard .eqw-industry-insight {
+    animation: none;
+  }
 }
 
 .equify-wizard.eqw-step-financials .sidebar {
@@ -3100,6 +3107,401 @@ body.equify-slider-dragging {
 .equify-wizard .suggest-hit:hover,
 .equify-wizard .suggest-hit:focus-visible {
   border-color: var(--turq);
+}
+
+/* SectorPicker progressive disclosure */
+.equify-wizard .sector-picker {
+  margin-top: 28px;
+}
+
+.equify-wizard .sector-picker .unsure-sector-hint {
+  color: #cbd5e1; /* slate-300 - override --dim for contrast */
+}
+
+.equify-wizard .sp-q {
+  margin-bottom: 18px;
+}
+
+.equify-wizard .sp-q-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #f5f7f6;
+}
+
+.equify-wizard .sp-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.equify-wizard .sp-options-3 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .equify-wizard .sp-options-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.equify-wizard .sp-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 14px;
+  text-align: start;
+  border-radius: 16px;
+  border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700/50 */
+  background: transparent;
+  color: #f5f7f6;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.35;
+  transition: border-color 0.2s ease-out, background 0.2s ease-out,
+    font-weight 0.2s ease-out;
+}
+
+.equify-wizard .sp-option:focus-visible {
+  outline: 2px solid #3fc7b9;
+  outline-offset: 2px;
+}
+
+.equify-wizard .sp-option.on {
+  border-color: #3fc7b9;
+  background: #111815;
+  color: #f5f7f6;
+  font-weight: 600;
+}
+
+.equify-wizard .sp-option-index {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: #94a3b8; /* slate-400 */
+}
+
+.equify-wizard .sp-kbd-hint {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: #94a3b8; /* slate-400 - was --dim/#7a8f88 (~slate-500) */
+  text-align: start; /* RTL: visually right under the option group */
+}
+
+.equify-wizard .sp-echo-label {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #94a3b8; /* slate-400 */
+}
+
+.equify-wizard .sp-echo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.equify-wizard .sp-echo-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(63, 199, 185, 0.25);
+  background: rgba(63, 199, 185, 0.08);
+  font-size: 12px;
+  color: #f5f7f6;
+  font-family: inherit;
+}
+
+.equify-wizard .sp-suggest-heading {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f7f6;
+}
+
+.equify-wizard .sp-suggest-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equify-wizard .sp-suggest-card,
+.equify-wizard .sp-freetext-hit {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: start;
+  padding: 16px 18px;
+  border-radius: 16px; /* rounded-2xl */
+  border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700/50 */
+  background: transparent;
+  color: inherit;
+  transition:
+    border-color 180ms ease-out,
+    background 180ms ease-out,
+    opacity 180ms ease-out,
+    transform 180ms ease-out;
+}
+
+.equify-wizard .sp-freetext-hit {
+  animation: sp-fade-slide 200ms ease-out both;
+  background: #111815;
+}
+
+.equify-wizard .sp-suggest-card.dim {
+  opacity: 0.55;
+}
+
+.equify-wizard .sp-suggest-card.dim:hover {
+  opacity: 1;
+  border-color: #475569; /* slate-600 */
+}
+
+.equify-wizard .sp-suggest-card:not(.on):not(.dim):hover {
+  border-color: #475569; /* slate-600 */
+}
+
+.equify-wizard .sp-suggest-card.on {
+  border: 1px solid #3fc7b9;
+  background: #111815;
+  padding-inline-start: 36px;
+  opacity: 1;
+}
+
+.equify-wizard .sp-suggest-card.on .sp-suggest-title {
+  font-weight: 700;
+}
+
+.equify-wizard .sector-picker:not(.sp-reduced) .sp-suggest-card.pulse {
+  animation: sp-card-pulse 180ms ease-out;
+}
+
+.equify-wizard .sp-suggest-check {
+  position: absolute;
+  inset-inline-start: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.equify-wizard .sp-suggest-card:focus-visible,
+.equify-wizard .sp-freetext-hit:focus-visible {
+  outline: 2px solid #3fc7b9;
+  outline-offset: 2px;
+}
+
+.equify-wizard .sp-suggest-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f5f7f6;
+}
+
+.equify-wizard .sp-suggest-reason {
+  font-size: 13px;
+  color: #cbd5e1; /* slate-300 */
+  line-height: 1.4;
+}
+
+.equify-wizard .sp-selected-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #cbd5e1; /* slate-300 */
+  line-height: 1.4;
+}
+
+.equify-wizard .sp-selected-confirm-check {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.equify-wizard .sp-nomatch {
+  margin: 0;
+  font-size: 13px;
+  color: #cbd5e1; /* slate-300 - was --dim/~slate-500 */
+}
+
+.equify-wizard .sp-alt-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.equify-wizard .sp-link {
+  font-size: 13px;
+  color: #cbd5e1; /* slate-300 */
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 200ms ease-out;
+}
+
+.equify-wizard .sp-link:hover {
+  color: #3fc7b9;
+}
+
+.equify-wizard .sp-link:focus-visible {
+  outline: 2px solid #3fc7b9;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.equify-wizard .sp-back {
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.equify-wizard .sp-wait {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #cbd5e1; /* slate-300 */
+}
+
+.equify-wizard .sp-dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-inline-start: 2px;
+}
+
+.equify-wizard .sp-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #94a3b8; /* slate-400 */
+  opacity: 0.35;
+  animation: sp-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.equify-wizard .sp-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.equify-wizard .sp-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.equify-wizard .sp-freetext-hits {
+  opacity: 0;
+}
+
+.equify-wizard .sp-freetext-hits.show {
+  opacity: 1;
+}
+
+.equify-wizard .sp-range-confirm {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(63, 199, 185, 0.2);
+  background: #111815;
+}
+
+.equify-wizard .sp-range-text {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #cbd5e1; /* slate-300 */
+}
+
+.equify-wizard .sp-range-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.equify-wizard .sp-range-ack {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #94a3b8; /* slate-400 */
+}
+
+@keyframes sp-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sp-card-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes sp-insight-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sp-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.equify-wizard .sp-q-enter {
+  animation: sp-fade-slide 220ms ease-out both;
+}
+
+.equify-wizard .sector-picker.sp-reduced .sp-q-enter,
+.equify-wizard .sector-picker.sp-reduced .sp-suggest-card,
+.equify-wizard .sector-picker.sp-reduced .sp-freetext-hit,
+.equify-wizard .sector-picker.sp-reduced .sp-dots span {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .equify-wizard .sp-q-enter,
+  .equify-wizard .sp-suggest-card,
+  .equify-wizard .sp-freetext-hit,
+  .equify-wizard .sp-dots span {
+    animation: none !important;
+  }
 }
 
 .equify-wizard .goal-insight {
