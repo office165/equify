@@ -2430,6 +2430,13 @@ body.equify-slider-dragging {
 .equify-wizard .eqw-industry-insight {
   pointer-events: none;
   user-select: none;
+  animation: sp-insight-fade 150ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .equify-wizard .eqw-industry-insight {
+    animation: none;
+  }
 }
 
 .equify-wizard.eqw-step-financials .sidebar {
@@ -3239,31 +3246,58 @@ body.equify-slider-dragging {
   padding: 16px 18px;
   border-radius: 16px; /* rounded-2xl */
   border: 1px solid rgba(51, 65, 85, 0.5); /* slate-700/50 */
-  background: #111815;
+  background: transparent;
   color: inherit;
-  transition: border-color 200ms ease-out;
-  animation: sp-fade-slide 200ms ease-out both;
+  transition:
+    border-color 180ms ease-out,
+    background 180ms ease-out,
+    opacity 180ms ease-out,
+    transform 180ms ease-out;
 }
 
-.equify-wizard .sp-suggest-card:not(.on):hover {
+.equify-wizard .sp-freetext-hit {
+  animation: sp-fade-slide 200ms ease-out both;
+  background: #111815;
+}
+
+.equify-wizard .sp-suggest-card.dim {
+  opacity: 0.55;
+}
+
+.equify-wizard .sp-suggest-card.dim:hover {
+  opacity: 1;
+  border-color: #475569; /* slate-600 */
+}
+
+.equify-wizard .sp-suggest-card:not(.on):not(.dim):hover {
   border-color: #475569; /* slate-600 */
 }
 
 .equify-wizard .sp-suggest-card.on {
   border: 1px solid #3fc7b9;
   background: #111815;
-  padding-inline-start: 28px;
+  padding-inline-start: 36px;
+  opacity: 1;
 }
 
-.equify-wizard .sp-suggest-mark {
+.equify-wizard .sp-suggest-card.on .sp-suggest-title {
+  font-weight: 700;
+}
+
+.equify-wizard .sector-picker:not(.sp-reduced) .sp-suggest-card.pulse {
+  animation: sp-card-pulse 180ms ease-out;
+}
+
+.equify-wizard .sp-suggest-check {
   position: absolute;
   inset-inline-start: 12px;
   top: 50%;
-  width: 6px;
-  height: 6px;
-  margin-top: -3px;
-  border-radius: 50%;
-  background: #3fc7b9;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .equify-wizard .sp-suggest-card:focus-visible,
@@ -3280,8 +3314,23 @@ body.equify-slider-dragging {
 
 .equify-wizard .sp-suggest-reason {
   font-size: 13px;
-  color: #cbd5e1; /* slate-300 — was slate-400 */
+  color: #cbd5e1; /* slate-300 */
   line-height: 1.4;
+}
+
+.equify-wizard .sp-selected-confirm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #cbd5e1; /* slate-300 */
+  line-height: 1.4;
+}
+
+.equify-wizard .sp-selected-confirm-check {
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .equify-wizard .sp-nomatch {
@@ -3401,6 +3450,27 @@ body.equify-slider-dragging {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes sp-card-pulse {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes sp-insight-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 

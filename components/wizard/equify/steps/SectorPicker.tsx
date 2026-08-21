@@ -111,6 +111,9 @@ export function SectorPicker({
   const [suggestReveal, setSuggestReveal] = useState(false);
   const suggestTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoAppliedComboRef = useRef<string | null>(null);
+  const pulseClearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pulseKey, setPulseKey] = useState<string | null>(null);
+  const suggestListRef = useRef<HTMLDivElement | null>(null);
 
   const sectors = useMemo(
     () =>
@@ -150,8 +153,36 @@ export function SectorPicker({
     return resolveFastPathSuggestions(revenue, customer);
   }, [revenue, customer]);
 
+  /** Prefer parent match; fall back to first suggestion so auto-select is visible on first paint. */
+  const activeFastHit = useMemo(() => {
+    if (fastSuggestions.length === 0) return null;
+    const matched = fastSuggestions.find(
+      (h) => h.sector === sector && h.subSector === subSector,
+    );
+    return matched ?? fastSuggestions[0];
+  }, [fastSuggestions, sector, subSector]);
+
   const fastNoMatch =
     Boolean(revenue && customer) && fastSuggestions.length === 0;
+
+  const triggerPulse = useCallback(
+    (key: string) => {
+      if (pulseClearRef.current) clearTimeout(pulseClearRef.current);
+      setPulseKey(key);
+      if (reducedMotion) {
+        pulseClearRef.current = setTimeout(() => setPulseKey(null), 180);
+        return;
+      }
+      pulseClearRef.current = setTimeout(() => setPulseKey(null), 220);
+    },
+    [reducedMotion],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (pulseClearRef.current) clearTimeout(pulseClearRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (fastNoMatch && mode === 'fast') {
@@ -241,6 +272,8 @@ export function SectorPicker({
 
   const handleFastPick = useCallback(
     (hit: (typeof fastSuggestions)[number]) => {
+      const key = `${hit.sector}-${hit.subSector}`;
+      triggerPulse(key);
       applySelection(hit.sector, hit.subSector, 'fast');
       scheduleClientProductEvent('sector_fast_path_used', {
         revenue,
@@ -250,7 +283,36 @@ export function SectorPicker({
         picked: true,
       });
     },
-    [applySelection, customer, revenue],
+    [applySelection, customer, revenue, triggerPulse],
+  );
+
+  const handleSuggestKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (fastSuggestions.length === 0) return;
+      const keys = ['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'];
+      if (!keys.includes(e.key)) return;
+      e.preventDefault();
+      const currentIdx = Math.max(
+        0,
+        fastSuggestions.findIndex(
+          (h) =>
+            activeFastHit &&
+            h.sector === activeFastHit.sector &&
+            h.subSector === activeFastHit.subSector,
+        ),
+      );
+      const delta =
+        e.key === 'ArrowDown' || e.key === 'ArrowLeft' ? 1 : -1;
+      const nextIdx =
+        (currentIdx + delta + fastSuggestions.length) % fastSuggestions.length;
+      const next = fastSuggestions[nextIdx];
+      handleFastPick(next);
+      const buttons = suggestListRef.current?.querySelectorAll<HTMLButtonElement>(
+        '[role="radio"]',
+      );
+      buttons?.[nextIdx]?.focus();
+    },
+    [activeFastHit, fastSuggestions, handleFastPick],
   );
 
   const handleUnsureSuggest = useCallback(async () => {
@@ -483,31 +545,61 @@ export function SectorPicker({
                   </p>
                 ) : (
                   <>
-                    <p className="sp-suggest-heading">
+                    <p className="sp-suggest-heading" id="sp-suggest-heading">
                       {isHe ? 'זה נראה כמו:' : 'This looks like:'}
                     </p>
-                    <div className="sp-suggest-cards" role="list">
-                      {fastSuggestions.map((hit, idx) => {
-                        const selected =
-                          sector === hit.sector && subSector === hit.subSector;
+                    <div
+                      ref={suggestListRef}
+                      className="sp-suggest-cards"
+                      role="radiogroup"
+                      aria-labelledby="sp-suggest-heading"
+                      onKeyDown={handleSuggestKeyDown}
+                    >
+                      {fastSuggestions.map((hit) => {
+                        const selected = Boolean(
+                          activeFastHit &&
+                            hit.sector === activeFastHit.sector &&
+                            hit.subSector === activeFastHit.subSector,
+                        );
+                        const cardKey = `${hit.sector}-${hit.subSector}`;
                         const sectorLabel = isHe
                           ? INDUSTRY_CONFIG[hit.sector].chipLabelHe
                           : INDUSTRY_CONFIG[hit.sector].chipLabelEn;
+                        const dimOthers = Boolean(activeFastHit) && !selected;
                         return (
                           <button
-                            key={`${hit.sector}-${hit.subSector}`}
+                            key={cardKey}
                             type="button"
-                            role="listitem"
-                            className={`sp-suggest-card${selected ? ' on' : ''}`}
-                            style={
-                              reducedMotion
-                                ? undefined
-                                : { animationDelay: `${idx * 60}ms` }
-                            }
+                            role="radio"
+                            aria-checked={selected}
+                            className={[
+                              'sp-suggest-card',
+                              selected ? 'on' : '',
+                              dimOthers ? 'dim' : '',
+                              pulseKey === cardKey ? 'pulse' : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
                             onClick={() => handleFastPick(hit)}
                           >
                             {selected ? (
-                              <span className="sp-suggest-mark" aria-hidden />
+                              <span className="sp-suggest-check" aria-hidden>
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 16 16"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M3.5 8.5L6.5 11.5L12.5 4.5"
+                                    stroke="#3FC7B9"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </span>
                             ) : null}
                             <span className="sp-suggest-title">
                               {sectorLabel} ·{' '}
@@ -520,6 +612,33 @@ export function SectorPicker({
                         );
                       })}
                     </div>
+                    {activeFastHit ? (
+                      <p className="sp-selected-confirm" aria-live="polite">
+                        <span className="sp-selected-confirm-check" aria-hidden>
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M3.5 8.5L6.5 11.5L12.5 4.5"
+                              stroke="#3FC7B9"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        {isHe ? 'נבחר: ' : 'Selected: '}
+                        {isHe
+                          ? INDUSTRY_CONFIG[activeFastHit.sector].chipLabelHe
+                          : INDUSTRY_CONFIG[activeFastHit.sector].chipLabelEn}
+                        {' · '}
+                        {isHe ? activeFastHit.labelHe : activeFastHit.labelEn}
+                      </p>
+                    ) : null}
                   </>
                 )}
               </div>

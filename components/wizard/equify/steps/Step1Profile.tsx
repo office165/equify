@@ -47,7 +47,8 @@ export interface Step1ProfileProps {
 export function Step1Profile({ onNext }: Step1ProfileProps) {
   const { shell, steps: t, isHe, locale } = useEquifyStrings();
   const lifecycles = isHe ? LIFECYCLES_HE : LIFECYCLES_EN;
-  const { state, updateProfile, setSector, setLifecycle } = useWizardValuation();
+  const { state, updateProfile, setSectorSelection, setLifecycle } =
+    useWizardValuation();
   const { profile } = state;
   const fileRef = useRef<HTMLInputElement>(null);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
@@ -76,12 +77,9 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
       subSector: string;
       path: 'fast' | 'manual' | 'freetext';
     }) => {
-      if (next.sector !== profile.sector) {
-        setSector(next.sector);
-      }
-      updateProfile({ subSector: next.subSector });
+      setSectorSelection(next.sector, next.subSector);
     },
-    [profile.sector, setSector, updateProfile],
+    [setSectorSelection],
   );
 
   const validate = useCallback(() => {
