@@ -2,6 +2,8 @@
  * Lead persistence diagnostics — safe for /api/leads/health (no secrets).
  */
 
+import { isPostgresConnectionConfigured } from '../database/supabase_pooler';
+
 export type LeadPersistenceMode = 'postgres' | 'file_store';
 
 export function isVercelRuntime(): boolean {
@@ -9,7 +11,7 @@ export function isVercelRuntime(): boolean {
 }
 
 export function isDatabaseUrlConfigured(): boolean {
-  return Boolean(process.env.DATABASE_URL?.trim());
+  return isPostgresConnectionConfigured();
 }
 
 export function getLeadPersistenceMode(): LeadPersistenceMode {

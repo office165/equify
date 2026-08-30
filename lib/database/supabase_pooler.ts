@@ -11,11 +11,24 @@ export interface PostgresUrlParts {
   database: string;
 }
 
+export type ConnectionStringSource =
+  | 'POSTGRES_URL'
+  | 'DATABASE_POOLER_URL'
+  | 'SUPABASE_DATABASE_URL'
+  | 'DATABASE_URL';
+
 export const DEFAULT_POOLER_REGION = 'eu-central-1';
 export const DEFAULT_POOLER_SHARD = 'aws-0';
 const DEFAULT_POOLER_PORT = '6543';
 
 const POOLER_HOST_RE = /aws-(\d+)-([a-z0-9-]+)\.pooler\.supabase\.com/i;
+
+/** True when POSTGRES_URL or DATABASE_URL is set (never POSTGRES_URL_NON_POOLING). */
+export function isPostgresConnectionConfigured(): boolean {
+  return Boolean(
+    process.env.POSTGRES_URL?.trim() || process.env.DATABASE_URL?.trim(),
+  );
+}
 
 /**
  * Ensures SUPABASE_POOLER_REGION is always set before pooler URL resolution.
@@ -54,7 +67,8 @@ export function extractSupabaseProjectRef(): string | null {
     }
   }
 
-  const databaseUrl = process.env.DATABASE_URL?.trim();
+  const databaseUrl =
+    process.env.POSTGRES_URL?.trim() || process.env.DATABASE_URL?.trim();
   if (databaseUrl) {
     const parts = safeParsePostgresUrl(databaseUrl);
     if (parts?.user.includes('.')) {
@@ -139,31 +153,120 @@ function rebuildPostgresUrl(parts: PostgresUrlParts): string {
   return `postgresql://${encodedUser}:${encodedPassword}@${parts.host}${port}/${parts.database}`;
 }
 
+/** TEMP: diagnostic logging — remove after Vercel log review. */
+function logResolveDatabaseConnectionDebug(options: {
+  route: 'poolerOverride' | 'passthrough' | 'rebuild';
+  source: ConnectionStringSource;
+  host: string;
+  user: string;
+  port: string;
+  supabaseDbPasswordSet: boolean;
+  databasePasswordSet: boolean;
+  postgresPasswordSet: boolean;
+  rebuildReason?: string;
+}): void {
+  console.log('[resolveDatabaseConnectionString]', {
+    route: options.route,
+    source: options.source,
+    host: options.host,
+    user: options.user,
+    port: options.port,
+    SUPABASE_DB_PASSWORD: options.supabaseDbPasswordSet,
+    DATABASE_PASSWORD: options.databasePasswordSet,
+    POSTGRES_PASSWORD: options.postgresPasswordSet,
+    ...(options.rebuildReason ? { rebuildReason: options.rebuildReason } : {}),
+  });
+}
+
+function passwordEnvFlags(): {
+  supabaseDbPasswordSet: boolean;
+  databasePasswordSet: boolean;
+  postgresPasswordSet: boolean;
+} {
+  return {
+    supabaseDbPasswordSet: Boolean(process.env.SUPABASE_DB_PASSWORD?.trim()),
+    databasePasswordSet: Boolean(process.env.DATABASE_PASSWORD?.trim()),
+    postgresPasswordSet: Boolean(process.env.POSTGRES_PASSWORD),
+  };
+}
+
+function connectionMetaFromString(connectionString: string): {
+  host: string;
+  user: string;
+  port: string;
+} {
+  const parsed = safeParsePostgresUrl(connectionString);
+  if (parsed) {
+    return { host: parsed.host, user: parsed.user, port: parsed.port };
+  }
+  return { host: '(unparsed)', user: '(unparsed)', port: '(unparsed)' };
+}
+
 /**
  * Resolves the live Postgres connection string for Supabase pooling (6543).
- * Priority: DATABASE_POOLER_URL → normalized DATABASE_URL → built from parts.
+ * Priority: POSTGRES_URL (verbatim) → DATABASE_POOLER_URL → DATABASE_URL → built from parts.
+ * Never uses POSTGRES_URL_NON_POOLING (IPv6 direct host; fails on Vercel).
  */
 export function resolveDatabaseConnectionString(): string {
   ensureSupabasePoolerRegion();
+  const envFlags = passwordEnvFlags();
 
-  const poolerOverride =
-    process.env.DATABASE_POOLER_URL?.trim() ||
-    process.env.SUPABASE_DATABASE_URL?.trim();
+  const postgresUrl = process.env.POSTGRES_URL?.trim();
+  if (postgresUrl) {
+    logResolveDatabaseConnectionDebug({
+      route: 'passthrough',
+      source: 'POSTGRES_URL',
+      ...connectionMetaFromString(postgresUrl),
+      ...envFlags,
+    });
+    return postgresUrl;
+  }
+
+  const poolerOverrideUrl = process.env.DATABASE_POOLER_URL?.trim();
+  const supabaseDatabaseUrl = process.env.SUPABASE_DATABASE_URL?.trim();
+  const poolerOverride = poolerOverrideUrl || supabaseDatabaseUrl;
   if (poolerOverride) {
-    return ensureTransactionPoolerUrl(poolerOverride);
+    const source: ConnectionStringSource = poolerOverrideUrl
+      ? 'DATABASE_POOLER_URL'
+      : 'SUPABASE_DATABASE_URL';
+    const resolved = ensureTransactionPoolerUrl(poolerOverride);
+    logResolveDatabaseConnectionDebug({
+      route: 'poolerOverride',
+      source,
+      ...connectionMetaFromString(resolved),
+      ...envFlags,
+    });
+    return resolved;
   }
 
   const raw = process.env.DATABASE_URL?.trim();
   if (!raw) {
-    throw new Error('DATABASE_URL is not configured.');
+    throw new Error('POSTGRES_URL or DATABASE_URL is not configured.');
   }
 
   const parsed = safeParsePostgresUrl(raw);
   if (!parsed) {
+    logResolveDatabaseConnectionDebug({
+      route: 'rebuild',
+      source: 'DATABASE_URL',
+      host: '(unparsed)',
+      user: '(unparsed)',
+      port: '(unparsed)',
+      ...envFlags,
+      rebuildReason: 'database_url_unparsed',
+    });
     return raw;
   }
 
   if (isCompletePoolerConnectionString(parsed)) {
+    logResolveDatabaseConnectionDebug({
+      route: 'passthrough',
+      source: 'DATABASE_URL',
+      host: parsed.host,
+      user: parsed.user,
+      port: parsed.port,
+      ...envFlags,
+    });
     return raw;
   }
 
@@ -187,7 +290,7 @@ export function resolveDatabaseConnectionString(): string {
       parsed.port !== DEFAULT_POOLER_PORT ||
       !parsed.user.startsWith('postgres.')
     ) {
-      return buildSupabasePoolerUrl({
+      const resolved = buildSupabasePoolerUrl({
         projectRef,
         password,
         region,
@@ -195,15 +298,39 @@ export function resolveDatabaseConnectionString(): string {
         port: DEFAULT_POOLER_PORT,
         database: parsed.database || 'postgres',
       });
+      logResolveDatabaseConnectionDebug({
+        route: 'rebuild',
+        source: 'DATABASE_URL',
+        ...connectionMetaFromString(resolved),
+        ...envFlags,
+        rebuildReason: 'pooler_host_normalize',
+      });
+      return resolved;
     }
-    return rebuildPostgresUrl(parsed);
+    const resolved = rebuildPostgresUrl(parsed);
+    logResolveDatabaseConnectionDebug({
+      route: 'rebuild',
+      source: 'DATABASE_URL',
+      ...connectionMetaFromString(resolved),
+      ...envFlags,
+      rebuildReason: 'pooler_reencode',
+    });
+    return resolved;
   }
 
   if (!projectRef || !password) {
-    return rebuildPostgresUrl(parsed);
+    const resolved = rebuildPostgresUrl(parsed);
+    logResolveDatabaseConnectionDebug({
+      route: 'rebuild',
+      source: 'DATABASE_URL',
+      ...connectionMetaFromString(resolved),
+      ...envFlags,
+      rebuildReason: 'missing_project_ref_or_password',
+    });
+    return resolved;
   }
 
-  return buildSupabasePoolerUrl({
+  const resolved = buildSupabasePoolerUrl({
     projectRef,
     password,
     region,
@@ -211,6 +338,14 @@ export function resolveDatabaseConnectionString(): string {
     port: DEFAULT_POOLER_PORT,
     database: parsed.database || 'postgres',
   });
+  logResolveDatabaseConnectionDebug({
+    route: 'rebuild',
+    source: 'DATABASE_URL',
+    ...connectionMetaFromString(resolved),
+    ...envFlags,
+    rebuildReason: 'build_from_parts',
+  });
+  return resolved;
 }
 
 function ensureTransactionPoolerUrl(connectionString: string): string {
