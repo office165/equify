@@ -7,6 +7,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { Pool } from 'pg';
 import { getLiveDatabasePool } from '../../valuation_live';
+import { isPostgresConnectionConfigured } from '../database/supabase_pooler';
 import { isVercelRuntime, logEphemeralPersistenceCritical } from './leads_persistence';
 import type { EquifyGoalId } from '../wizard/equify_goal';
 import { isEquifyGoalId } from '../wizard/equify_goal';
@@ -324,7 +325,7 @@ async function getDbLeadBySession(
 }
 
 function dbAvailable(): boolean {
-  return Boolean(process.env.DATABASE_URL?.trim());
+  return isPostgresConnectionConfigured();
 }
 
 export async function upsertValubotLead(
@@ -346,7 +347,7 @@ export async function upsertValubotLead(
     logEphemeralPersistenceCritical('upsertValubotLead_no_db_on_vercel', {
       sessionId: input.sessionId,
     });
-    throw new Error('lead_persistence_unavailable: DATABASE_URL required on Vercel');
+    throw new Error('lead_persistence_unavailable: POSTGRES_URL or DATABASE_URL required on Vercel');
   }
 
   return upsertFileLead(input);
@@ -357,7 +358,7 @@ export async function probeLeadDatabaseReachable(): Promise<{
   error?: string;
 }> {
   if (!dbAvailable()) {
-    return { reachable: false, error: 'DATABASE_URL not configured' };
+    return { reachable: false, error: 'POSTGRES_URL or DATABASE_URL not configured' };
   }
   try {
     const pool = getLiveDatabasePool();

@@ -63,7 +63,7 @@ export function getLiveDatabasePool(): Pool {
   try {
     connectionString = resolveDatabaseConnectionString();
   } catch {
-    throw new LiveValuationError('DATABASE_URL is not configured.', 500);
+    throw new LiveValuationError('POSTGRES_URL or DATABASE_URL is not configured.', 500);
   }
   if (!livePoolSingleton) {
     livePoolSingleton = createPostgresPool(connectionString, 10);

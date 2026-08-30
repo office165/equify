@@ -47,6 +47,7 @@ import {
   type PaymentCallbackPayload,
 } from './israeli_payment_gateway';
 import { createPostgresPool } from './valuation_live';
+import { resolveDatabaseConnectionString } from './lib/database/supabase_pooler';
 import { scheduleProductEvent } from './lib/analytics/track_event';
 
 // =============================================================================
@@ -198,12 +199,12 @@ export class DatabaseService {
   private readonly pool: Pool;
 
   constructor(private readonly config: ConfigService) {
-    const connectionString = this.config.getOrThrow<string>('DATABASE_URL');
+    const connectionString = resolveDatabaseConnectionString();
     this.pool = createPostgresPool(
       connectionString,
       this.config.get<number>('PG_POOL_MAX', 20),
     );
-    this.logger.log('PostgreSQL pool connected (DATABASE_URL configured).');
+    this.logger.log('PostgreSQL pool connected (POSTGRES_URL or DATABASE_URL configured).');
   }
 
   async onModuleDestroy(): Promise<void> {
