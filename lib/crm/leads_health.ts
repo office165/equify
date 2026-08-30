@@ -3,7 +3,7 @@ import { getLastSuccessfulLeadSyncAt } from './valubot_leads_repository';
 
 const STALE_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
-/** Supabase free-tier auto-pause: DNS tenant-not-found on pooler host. */
+/** Supavisor pooler host/shard mismatch (tenant-not-found on wrong aws-N shard). */
 export function inferProbableDbCause(dbError?: string): string | undefined {
   if (!dbError) return undefined;
   const lower = dbError.toLowerCase();
@@ -11,10 +11,10 @@ export function inferProbableDbCause(dbError?: string): string | undefined {
     lower.includes('enotfound') &&
     (lower.includes('tenant') || lower.includes('not found'))
   ) {
-    return 'supabase_paused';
+    return 'pooler_tenant_mismatch';
   }
   if (lower.includes('tenant') && lower.includes('not found')) {
-    return 'supabase_paused';
+    return 'pooler_tenant_mismatch';
   }
   return undefined;
 }

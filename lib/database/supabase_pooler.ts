@@ -12,7 +12,10 @@ export interface PostgresUrlParts {
 }
 
 export const DEFAULT_POOLER_REGION = 'eu-central-1';
+export const DEFAULT_POOLER_SHARD = 'aws-0';
 const DEFAULT_POOLER_PORT = '6543';
+
+const POOLER_HOST_RE = /aws-(\d+)-([a-z0-9-]+)\.pooler\.supabase\.com/i;
 
 /**
  * Ensures SUPABASE_POOLER_REGION is always set before pooler URL resolution.
@@ -23,6 +26,19 @@ export function ensureSupabasePoolerRegion(): string {
   if (!current) {
     process.env.SUPABASE_POOLER_REGION = DEFAULT_POOLER_REGION;
     return DEFAULT_POOLER_REGION;
+  }
+  return current;
+}
+
+/**
+ * Ensures SUPABASE_POOLER_SHARD is always set before pooler URL resolution.
+ * Mutates process.env when missing so serverless runtimes inherit the fallback.
+ */
+export function ensureSupabasePoolerShard(): string {
+  const current = process.env.SUPABASE_POOLER_SHARD?.trim();
+  if (!current) {
+    process.env.SUPABASE_POOLER_SHARD = DEFAULT_POOLER_SHARD;
+    return DEFAULT_POOLER_SHARD;
   }
   return current;
 }
@@ -74,24 +90,46 @@ export function safeParsePostgresUrl(connectionString: string): PostgresUrlParts
   }
 }
 
-function extractRegionFromPoolerHost(host: string): string | null {
-  const match = host.match(/aws-0-([a-z0-9-]+)\.pooler\.supabase\.com/i);
-  return match?.[1] ?? null;
+function extractPoolerHostParts(host: string): { shard: string; region: string } | null {
+  const match = host.match(POOLER_HOST_RE);
+  if (!match?.[1] || !match?.[2]) {
+    return null;
+  }
+  return { shard: `aws-${match[1]}`, region: match[2] };
+}
+
+/** Pooler host + postgres.<ref> user + transaction port — safe to use as-is. */
+export function isCompletePoolerConnectionString(parts: PostgresUrlParts): boolean {
+  if (!parts.host.includes('pooler.supabase.com')) {
+    return false;
+  }
+  if (!extractPoolerHostParts(parts.host)) {
+    return false;
+  }
+  if (parts.port !== DEFAULT_POOLER_PORT) {
+    return false;
+  }
+  if (!parts.user.startsWith('postgres.')) {
+    return false;
+  }
+  return true;
 }
 
 export function buildSupabasePoolerUrl(options: {
   projectRef: string;
   password: string;
   region?: string;
+  shard?: string;
   port?: string;
   database?: string;
 }): string {
   const region = options.region?.trim() || ensureSupabasePoolerRegion();
+  const shard = options.shard?.trim() || ensureSupabasePoolerShard();
   const port = options.port?.trim() || DEFAULT_POOLER_PORT;
   const database = options.database?.trim() || 'postgres';
   const user = `postgres.${options.projectRef}`;
   const encodedPassword = encodeURIComponent(options.password);
-  return `postgresql://${user}:${encodedPassword}@aws-0-${region}.pooler.supabase.com:${port}/${database}`;
+  return `postgresql://${user}:${encodedPassword}@${shard}-${region}.pooler.supabase.com:${port}/${database}`;
 }
 
 function rebuildPostgresUrl(parts: PostgresUrlParts): string {
@@ -125,6 +163,10 @@ export function resolveDatabaseConnectionString(): string {
     return raw;
   }
 
+  if (isCompletePoolerConnectionString(parsed)) {
+    return raw;
+  }
+
   const projectRefFromUser = parsed.user.includes('.')
     ? parsed.user.split('.').slice(1).join('.')
     : null;
@@ -134,11 +176,14 @@ export function resolveDatabaseConnectionString(): string {
     parsed.password ||
     process.env.DATABASE_PASSWORD?.trim();
   const region = ensureSupabasePoolerRegion();
+  const shard = ensureSupabasePoolerShard();
 
   if (parsed.host.includes('pooler.supabase.com') && projectRef && password) {
-    const hostRegion = extractRegionFromPoolerHost(parsed.host);
+    const hostParts = extractPoolerHostParts(parsed.host);
     if (
-      hostRegion !== region ||
+      !hostParts ||
+      hostParts.region !== region ||
+      hostParts.shard !== shard ||
       parsed.port !== DEFAULT_POOLER_PORT ||
       !parsed.user.startsWith('postgres.')
     ) {
@@ -146,6 +191,7 @@ export function resolveDatabaseConnectionString(): string {
         projectRef,
         password,
         region,
+        shard,
         port: DEFAULT_POOLER_PORT,
         database: parsed.database || 'postgres',
       });
@@ -161,6 +207,7 @@ export function resolveDatabaseConnectionString(): string {
     projectRef,
     password,
     region,
+    shard,
     port: DEFAULT_POOLER_PORT,
     database: parsed.database || 'postgres',
   });
@@ -168,9 +215,14 @@ export function resolveDatabaseConnectionString(): string {
 
 function ensureTransactionPoolerUrl(connectionString: string): string {
   ensureSupabasePoolerRegion();
-  const parsed = safeParsePostgresUrl(connectionString);
+  const trimmed = connectionString.trim();
+  const parsed = safeParsePostgresUrl(trimmed);
   if (!parsed) {
-    return connectionString;
+    return trimmed;
+  }
+
+  if (isCompletePoolerConnectionString(parsed)) {
+    return trimmed;
   }
 
   const projectRef =
@@ -183,10 +235,12 @@ function ensureTransactionPoolerUrl(connectionString: string): string {
     parsed.port !== DEFAULT_POOLER_PORT
   ) {
     const region = ensureSupabasePoolerRegion();
+    const shard = ensureSupabasePoolerShard();
     return buildSupabasePoolerUrl({
       projectRef,
       password: parsed.password,
       region,
+      shard,
       port: DEFAULT_POOLER_PORT,
       database: parsed.database,
     });
