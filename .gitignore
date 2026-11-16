@@ -11,3 +11,5 @@ dist/
 .node-local/
 .vercel-cli-bootstrap/
 tmp/
+
+sbc_sync/
