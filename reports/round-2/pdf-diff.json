@@ -293,7 +293,7 @@
  {
   "pair": "anchor-5-young-factory",
   "page": 4,
-  "changedPct": 6.21,
+  "changedPct": 6.31,
   "rows": [
    15,
    91
@@ -359,7 +359,7 @@
  {
   "pair": "anchor-6-loss-factory",
   "page": 4,
-  "changedPct": 5.91,
+  "changedPct": 5.9,
   "rows": [
    15,
    91
@@ -425,10 +425,10 @@
  {
   "pair": "anchor-7-thin-factory",
   "page": 4,
-  "changedPct": 3.36,
+  "changedPct": 6.3,
   "rows": [
    15,
-   90
+   91
   ]
  },
  {
@@ -1019,7 +1019,7 @@
  {
   "pair": "anchor-5-young-factory-v2",
   "page": 4,
-  "changedPct": 5.91,
+  "changedPct": 6.01,
   "rows": [
    27,
    96

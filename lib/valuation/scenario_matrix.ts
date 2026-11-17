@@ -380,6 +380,11 @@ export interface DcfWithGuard {
   projection: DcfHorizonProjection;
   /** evK / projection.totalEvK (1 when the guard does not bind). */
   guardFactor: number;
+  /**
+   * True when the projection at the case CAPEX is zero and the guard floor (from the zero-CAPEX
+   * projection) is the whole DCF leg. `projection` is then the zero-CAPEX one (finding 28).
+   */
+  fromZeroCapexBase?: boolean;
 }
 
 /**
@@ -404,7 +409,8 @@ export function computeDcfWithGrowthDecayDetailed(params: {
     const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
     return { evK: projection.totalEvK, projection, guardFactor: 1 };
   }
-  const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;
+  const baseProjection = projectDcfHorizon({ ...params, capexLevelPct: 0 });
+  const baseEv = baseProjection.totalEvK;
   const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
   const evK = enforceCapexMonotonicity({
     equityValue: projection.totalEvK,
@@ -412,6 +418,10 @@ export function computeDcfWithGrowthDecayDetailed(params: {
     baseEquityValue: baseEv,
     industry: params.industry ?? 'other',
   });
+  if (!(projection.totalEvK > 0) && evK > 0 && baseEv > 0) {
+    // The guard floor is the whole leg: show the projection it comes from.
+    return { evK, projection: baseProjection, guardFactor: evK / baseEv, fromZeroCapexBase: true };
+  }
   const guardFactor = projection.totalEvK > 0 ? evK / projection.totalEvK : 1;
   return { evK, projection, guardFactor };
 }

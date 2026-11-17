@@ -321,6 +321,7 @@ function scaleDcfDetail(d: NonNullable<ValuationComputed['dcfDetail']>, m: numbe
   return {
     evK: d.evK * m,
     guardFactor: d.guardFactor,
+    fromZeroCapexBase: d.fromZeroCapexBase,
     projection: {
       ...p,
       fcffByYearK: p.fcffByYearK.map((v) => v * m),
@@ -380,10 +381,11 @@ function buildDcfRows(
         }
       : undefined;
   const v2 = computed.methodVersion === 'v2' ? computed.v2?.components : undefined;
-  // Methodology 2: the table is the projection the engine valued (scaled to the reporting
-  // currency), so it always adds up to the DCF leg. Methodology 1 recomputes it (finding 28).
-  const engineDcf = v2 && computed.dcfDetail ? scaleDcfDetail(computed.dcfDetail, fxMultiplier) : undefined;
-  const { projection, guardFactor } = engineDcf ?? computeDcfWithGrowthDecayDetailed({
+  // Finding 28: the table is the projection the engine valued (scaled to the reporting currency),
+  // so it always adds up to the DCF leg. The recomputation below is only a fallback for results
+  // without dcfDetail (older stored results).
+  const engineDcf = computed.dcfDetail ? scaleDcfDetail(computed.dcfDetail, fxMultiplier) : undefined;
+  const { projection, guardFactor, fromZeroCapexBase } = engineDcf ?? computeDcfWithGrowthDecayDetailed({
     ebitdaK: computed.ebitda,
     revK,
     capexLevelPct,
@@ -429,7 +431,11 @@ function buildDcfRows(
   } else {
     notes.push(`הערך הטרמינלי מוגבל ל ${Math.round(TERMINAL_TO_EXPLICIT_PV_MAX * 100)}% מערך התקופה המפורשת.`);
   }
-  if (Math.abs(guardFactor - 1) > 0.0005) {
+  if (fromZeroCapexBase) {
+    notes.push(
+      `ברמת ה CAPEX של החברה התזרים החופשי בתחזית הוא 0. שווי ה DCF נגזר מהתחזית בלי CAPEX, מוקטן ב ${Math.abs((guardFactor - 1) * 100).toFixed(1)}% לפי רמת ה CAPEX, והטבלה מציגה אותה.`,
+    );
+  } else if (Math.abs(guardFactor - 1) > 0.0005) {
     const pct = Math.abs((guardFactor - 1) * 100).toFixed(1);
     notes.push(
       guardFactor < 1

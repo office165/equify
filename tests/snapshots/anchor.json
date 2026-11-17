@@ -127,13 +127,13 @@
   "effectiveMult": 4.56,
   "revenueMultiple": 2,
   "fcffM": [
-   0.7,
-   0.73,
-   0.76,
-   0.79,
-   0.81
+   0.36,
+   0.37,
+   0.38,
+   0.38,
+   0.4
   ],
-  "terminalPvM": 1.27,
+  "terminalPvM": 0.64,
   "terminalSharePct": 29.58,
   "netDebt": 2500000,
   "keyFindings": "Quality B · WACC 9.4% · EBITDA מדווח 2026 200K ₪ · בסיס מכפיל -55K ₪ ×4.6 · TV 30% מ-DCF.",
@@ -155,13 +155,13 @@
   "effectiveMult": 4.56,
   "revenueMultiple": 2,
   "fcffM": [
-   0.53,
-   0.55,
-   0.57,
-   0.58,
-   0.6
+   0.27,
+   0.28,
+   0.29,
+   0.29,
+   0.3
   ],
-  "terminalPvM": 0.83,
+  "terminalPvM": 0.41,
   "terminalSharePct": 29.58,
   "netDebt": 800000,
   "keyFindings": "Quality C+ · WACC 16.5% · EBITDA מדווח 2026 -200K ₪ · בסיס מכפיל -290K ₪ ×4.6 · TV 30% מ-DCF.",
@@ -183,16 +183,16 @@
   "effectiveMult": 4.58,
   "revenueMultiple": 2,
   "fcffM": [
-   0,
-   0,
-   0,
-   0,
-   0
+   0.37,
+   0.38,
+   0.39,
+   0.39,
+   0.41
   ],
-  "terminalPvM": 0,
-  "terminalSharePct": 0,
+  "terminalPvM": 0.66,
+  "terminalSharePct": 29.58,
   "netDebt": 2500000,
-  "keyFindings": "Quality B− · WACC 9.2% · EBITDA מדווח 2026 200K ₪ · בסיס מכפיל 245K ₪ ×4.6 · TV 0% מ-DCF.",
+  "keyFindings": "Quality B− · WACC 9.2% · EBITDA מדווח 2026 200K ₪ · בסיס מכפיל 245K ₪ ×4.6 · TV 30% מ-DCF.",
   "ebitdaBlendedNote": "שקלול 30/50/20 · עבר 250K ₪ · נוכחי 200K ₪ · תחזית (+5.0%) 210K ₪ · בסיס 217K ₪"
  }
 }

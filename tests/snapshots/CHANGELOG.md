@@ -226,3 +226,57 @@ edge-usd                       | fcffM[3]    | 1.05   | 0.99   | -5.71%
 ... and 1028 more rows
 ```
 
+## 2026-11-17
+
+סיבה: סבב 2ב, ממצא 28: טבלת ה DCF בעמוד 4 היא התחזית שהמנוע העריך (בהמרת מטבע), ולכן מסתכמת לרגל ה DCF בכל 385 התיקים. השתנו רק שדות תצוגה ב 7 תיקים; השווי, ה EV, הרגליים וה WACC לא זזו (value-lock עובר)
+
+תיקים חדשים: 0. שדות שהשתנו: 43. מפת מתודולוגיה השתנתה: לא.
+
+```
+case                   | field            | before                                                       | after                                                        | diff   
+-----------------------|------------------|--------------------------------------------------------------|--------------------------------------------------------------|--------
+anchor-5-young-factory | fcffM[0]         | 0.7                                                          | 0.36                                                         | -48.57%
+anchor-5-young-factory | fcffM[1]         | 0.73                                                         | 0.37                                                         | -49.32%
+anchor-5-young-factory | fcffM[2]         | 0.76                                                         | 0.38                                                         | -50.00%
+anchor-5-young-factory | fcffM[3]         | 0.79                                                         | 0.38                                                         | -51.90%
+anchor-5-young-factory | fcffM[4]         | 0.81                                                         | 0.4                                                          | -50.62%
+anchor-5-young-factory | terminalPvM      | 1.27                                                         | 0.64                                                         | -49.61%
+anchor-6-loss-factory  | fcffM[0]         | 0.53                                                         | 0.27                                                         | -49.06%
+anchor-6-loss-factory  | fcffM[1]         | 0.55                                                         | 0.28                                                         | -49.09%
+anchor-6-loss-factory  | fcffM[2]         | 0.57                                                         | 0.29                                                         | -49.12%
+anchor-6-loss-factory  | fcffM[3]         | 0.58                                                         | 0.29                                                         | -50.00%
+anchor-6-loss-factory  | fcffM[4]         | 0.6                                                          | 0.3                                                          | -50.00%
+anchor-6-loss-factory  | terminalPvM      | 0.83                                                         | 0.41                                                         | -50.60%
+anchor-7-thin-factory  | fcffM[0]         | 0                                                            | 0.37                                                         | inf    
+anchor-7-thin-factory  | fcffM[1]         | 0                                                            | 0.38                                                         | inf    
+anchor-7-thin-factory  | fcffM[2]         | 0                                                            | 0.39                                                         | inf    
+anchor-7-thin-factory  | fcffM[3]         | 0                                                            | 0.39                                                         | inf    
+anchor-7-thin-factory  | fcffM[4]         | 0                                                            | 0.41                                                         | inf    
+anchor-7-thin-factory  | terminalPvM      | 0                                                            | 0.66                                                         | inf    
+anchor-7-thin-factory  | terminalSharePct | 0                                                            | 29.58                                                        | inf    
+anchor-7-thin-factory  | keyFindings      | Quality B− · WACC 9.2% · EBITDA מדווח 2026 200K ₪ · בסיס ... | Quality B− · WACC 9.2% · EBITDA מדווח 2026 200K ₪ · בסיס ... | text   
+edge-loss-all-years    | fcffM[0]         | 1.45                                                         | 0.73                                                         | -49.66%
+edge-loss-all-years    | fcffM[1]         | 1.5                                                          | 0.76                                                         | -49.33%
+edge-loss-all-years    | fcffM[2]         | 1.55                                                         | 0.78                                                         | -49.68%
+edge-loss-all-years    | fcffM[3]         | 1.58                                                         | 0.8                                                          | -49.37%
+edge-loss-all-years    | fcffM[4]         | 1.63                                                         | 0.82                                                         | -49.69%
+edge-loss-all-years    | terminalPvM      | 2.25                                                         | 1.14                                                         | -49.33%
+edge-neg-to-pos        | fcffM[0]         | 2.34                                                         | 0.45                                                         | -80.77%
+edge-neg-to-pos        | fcffM[1]         | 2.41                                                         | 0.47                                                         | -80.50%
+edge-neg-to-pos        | fcffM[2]         | 2.47                                                         | 0.48                                                         | -80.57%
+edge-neg-to-pos        | fcffM[3]         | 2.51                                                         | 0.49                                                         | -80.48%
+edge-neg-to-pos        | fcffM[4]         | 2.59                                                         | 0.5                                                          | -80.69%
+edge-neg-to-pos        | terminalPvM      | 3.5                                                          | 0.68                                                         | -80.57%
+edge-usd               | fcffM[0]         | 0.92                                                         | 0.91                                                         | -1.09% 
+edge-usd               | fcffM[1]         | 0.95                                                         | 0.94                                                         | -1.05% 
+edge-usd               | fcffM[3]         | 0.99                                                         | 0.98                                                         | -1.01% 
+edge-eur               | fcffM[0]         | 0                                                            | 0.61                                                         | inf    
+edge-eur               | fcffM[1]         | 0                                                            | 0.64                                                         | inf    
+edge-eur               | fcffM[2]         | 0                                                            | 0.66                                                         | inf    
+edge-eur               | fcffM[3]         | 0                                                            | 0.67                                                         | inf    
+edge-eur               | fcffM[4]         | 0                                                            | 0.69                                                         | inf    
+edge-eur               | terminalPvM      | 0                                                            | 1.01                                                         | inf    
+edge-eur               | terminalSharePct | 0                                                            | 29.58                                                        | inf    
+edge-eur               | keyFindings      | Quality B · WACC 13.6% · EBITDA מדווח 2026 €1.1M · בסיס מ... | Quality B · WACC 13.6% · EBITDA מדווח 2026 €1.1M · בסיס מ... | text   
+```
+

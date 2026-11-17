@@ -117,8 +117,9 @@ export function run(): SuiteResult {
   }
   suite.check('terminal-value-pct-removed', 'code', offenders.length === 0, offenders.join(', '));
 
-  // Finding 28 (round 2ב): the page 4 DCF table adds up to the DCF leg, in every case.
-  // Methodology 1 recomputes the table and misses in 7 cases (recovery path condition, currency).
+  // Finding 28 (round 2ב): the page 4 DCF table adds up to the DCF leg, in every case. The table
+  // used to be recomputed and missed in 7 cases (recovery path condition, currency); it is now the
+  // engine projection in both methodologies.
   for (const spec of buildAllCases()) {
     const d = runCase(spec);
     const sum = (d.dcfRows.reduce((acc, r) => acc + r.pvM, 0) + d.terminalPvM) * 1e6;
