@@ -1,0 +1,3852 @@
+{
+ "anchor-1-restaurant": {
+  "equity": 1158290,
+  "enterpriseValue": 1758290,
+  "bearEquity": 846941.65,
+  "bullEquity": 1469638.35,
+  "dcfEv": 2412178.2,
+  "ebitdaEv": 1406190,
+  "revenueEv": 0,
+  "waccPct": 13.58
+ },
+ "anchor-2-saas": {
+  "equity": 46314370,
+  "enterpriseValue": 43314370,
+  "bearEquity": 43535507.8,
+  "bullEquity": 49093232.2,
+  "dcfEv": 8121555.63,
+  "ebitdaEv": 0,
+  "revenueEv": 58397000,
+  "waccPct": 15.61
+ },
+ "anchor-3-contractor": {
+  "equity": 4801240,
+  "enterpriseValue": 9301240,
+  "bearEquity": 4136399.2,
+  "bullEquity": 5466080.8,
+  "dcfEv": 8376073.34,
+  "ebitdaEv": 8946000,
+  "revenueEv": 0,
+  "waccPct": 10.65
+ },
+ "anchor-4-accounting": {
+  "equity": 2786090,
+  "enterpriseValue": 2486090,
+  "bearEquity": 2396037.4,
+  "bullEquity": 3176142.6,
+  "dcfEv": 2048025.12,
+  "ebitdaEv": 2632110,
+  "revenueEv": 0,
+  "waccPct": 15.71
+ },
+ "anchor-5-young-factory": {
+  "equity": 5455280,
+  "enterpriseValue": 7955280,
+  "bearEquity": 4691540.8,
+  "bullEquity": 6219019.2,
+  "dcfEv": 2160545.83,
+  "ebitdaEv": 0,
+  "revenueEv": 24000000,
+  "waccPct": 9.4
+ },
+ "anchor-6-loss-factory": {
+  "equity": 6826130,
+  "enterpriseValue": 7626130,
+  "bearEquity": 5204406.99,
+  "bullEquity": 8447853.01,
+  "dcfEv": 1400103.08,
+  "ebitdaEv": 0,
+  "revenueEv": 14000000,
+  "waccPct": 16.53
+ },
+ "anchor-7-thin-factory": {
+  "equity": 2654450,
+  "enterpriseValue": 5154450,
+  "bearEquity": 2102646.15,
+  "bullEquity": 3206253.85,
+  "dcfEv": 2227918.66,
+  "ebitdaEv": 1122100,
+  "revenueEv": 24000000,
+  "waccPct": 9.17
+ },
+ "edge-big-backlog": {
+  "equity": 42723050,
+  "enterpriseValue": 47723050,
+  "bearEquity": 36741823,
+  "bullEquity": 48704277,
+  "dcfEv": 26683321.18,
+  "ebitdaEv": 55244050,
+  "revenueEv": 0,
+  "waccPct": 11.18
+ },
+ "edge-debt-over-ev": {
+  "equity": 0,
+  "enterpriseValue": 9097860,
+  "bearEquity": 0,
+  "bullEquity": 0,
+  "dcfEv": 6637896.49,
+  "ebitdaEv": 10916100,
+  "revenueEv": 0,
+  "waccPct": 6
+ },
+ "edge-eur": {
+  "equity": 2754973.68,
+  "enterpriseValue": 4354973.68,
+  "bearEquity": 2369277.37,
+  "bullEquity": 3140670,
+  "dcfEv": 3406558.71,
+  "ebitdaEv": 5048187.13,
+  "revenueEv": 0,
+  "waccPct": 13.57
+ },
+ "edge-loss-all-years": {
+  "equity": 18890050,
+  "enterpriseValue": 20790050,
+  "bearEquity": 16245443,
+  "bullEquity": 21534657,
+  "dcfEv": 3847092.57,
+  "ebitdaEv": 0,
+  "revenueEv": 38000000,
+  "waccPct": 16.29
+ },
+ "edge-manual-multiple": {
+  "equity": 16726680,
+  "enterpriseValue": 16926680,
+  "bearEquity": 14384944.8,
+  "bullEquity": 19068415.2,
+  "dcfEv": 12520506.67,
+  "ebitdaEv": 18395400,
+  "revenueEv": 0,
+  "waccPct": 14.62
+ },
+ "edge-neg-to-pos": {
+  "equity": 58725270,
+  "enterpriseValue": 53725270,
+  "bearEquity": 49756319.67,
+  "bullEquity": 67694220.33,
+  "dcfEv": 2290714.23,
+  "ebitdaEv": 0,
+  "revenueEv": 79485000,
+  "waccPct": 17.82
+ },
+ "edge-net-cash": {
+  "equity": 207050950,
+  "enterpriseValue": 182050950,
+  "bearEquity": 176482700.65,
+  "bullEquity": 237619199.35,
+  "dcfEv": 18396715.28,
+  "ebitdaEv": 0,
+  "revenueEv": 247597000,
+  "waccPct": 15.64
+ },
+ "edge-no-owner-no-history": {
+  "equity": 4477060,
+  "enterpriseValue": 4777060,
+  "bearEquity": 3732511.36,
+  "bullEquity": 5221608.64,
+  "dcfEv": 4254911.73,
+  "ebitdaEv": 5299200,
+  "revenueEv": 0,
+  "waccPct": 15.53
+ },
+ "edge-thin-margin": {
+  "equity": 16501390,
+  "enterpriseValue": 19501390,
+  "bearEquity": 14191195.4,
+  "bullEquity": 18811584.6,
+  "dcfEv": 4548696.81,
+  "ebitdaEv": 1960600,
+  "revenueEv": 68000000,
+  "waccPct": 11.22
+ },
+ "edge-usd": {
+  "equity": 28644446.67,
+  "enterpriseValue": 26644446.67,
+  "bearEquity": 24852963.54,
+  "bullEquity": 32435929.79,
+  "dcfEv": 4786282.65,
+  "ebitdaEv": 0,
+  "revenueEv": 36033200,
+  "waccPct": 16.1
+ },
+ "goal-cyber-bank": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "goal-cyber-fundraise": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "goal-cyber-internal": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "goal-cyber-negotiation": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "goal-cyber-partner": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "goal-defense_aerospace-bank": {
+  "equity": 1245659060,
+  "enterpriseValue": 1407659060,
+  "bearEquity": 1065982177.41,
+  "bullEquity": 1425335942.59,
+  "dcfEv": 960743483.52,
+  "ebitdaEv": 2000082030,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "goal-defense_aerospace-fundraise": {
+  "equity": 1245659060,
+  "enterpriseValue": 1407659060,
+  "bearEquity": 1065982177.41,
+  "bullEquity": 1425335942.59,
+  "dcfEv": 960743483.52,
+  "ebitdaEv": 2000082030,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "goal-defense_aerospace-internal": {
+  "equity": 1245659060,
+  "enterpriseValue": 1407659060,
+  "bearEquity": 1065982177.41,
+  "bullEquity": 1425335942.59,
+  "dcfEv": 960743483.52,
+  "ebitdaEv": 2000082030,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "goal-defense_aerospace-negotiation": {
+  "equity": 1245659060,
+  "enterpriseValue": 1407659060,
+  "bearEquity": 1065982177.41,
+  "bullEquity": 1425335942.59,
+  "dcfEv": 960743483.52,
+  "ebitdaEv": 2000082030,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "goal-defense_aerospace-partner": {
+  "equity": 1245659060,
+  "enterpriseValue": 1407659060,
+  "bearEquity": 1065982177.41,
+  "bullEquity": 1425335942.59,
+  "dcfEv": 960743483.52,
+  "ebitdaEv": 2000082030,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "goal-energy-bank": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "goal-energy-fundraise": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "goal-energy-internal": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "goal-energy-negotiation": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "goal-energy-partner": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "goal-fintech-bank": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "goal-fintech-fundraise": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "goal-fintech-internal": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "goal-fintech-negotiation": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "goal-fintech-partner": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "goal-food_service-bank": {
+  "equity": 71385370,
+  "enterpriseValue": 88485370,
+  "bearEquity": 56267246.55,
+  "bullEquity": 86503493.45,
+  "dcfEv": 109476320.42,
+  "ebitdaEv": 72650090,
+  "revenueEv": 0,
+  "waccPct": 10.98
+ },
+ "goal-food_service-fundraise": {
+  "equity": 71385370,
+  "enterpriseValue": 88485370,
+  "bearEquity": 56267246.55,
+  "bullEquity": 86503493.45,
+  "dcfEv": 109476320.42,
+  "ebitdaEv": 72650090,
+  "revenueEv": 0,
+  "waccPct": 10.98
+ },
+ "goal-food_service-internal": {
+  "equity": 71385370,
+  "enterpriseValue": 88485370,
+  "bearEquity": 56267246.55,
+  "bullEquity": 86503493.45,
+  "dcfEv": 109476320.42,
+  "ebitdaEv": 72650090,
+  "revenueEv": 0,
+  "waccPct": 10.98
+ },
+ "goal-food_service-negotiation": {
+  "equity": 71385370,
+  "enterpriseValue": 88485370,
+  "bearEquity": 56267246.55,
+  "bullEquity": 86503493.45,
+  "dcfEv": 109476320.42,
+  "ebitdaEv": 72650090,
+  "revenueEv": 0,
+  "waccPct": 10.98
+ },
+ "goal-food_service-partner": {
+  "equity": 71385370,
+  "enterpriseValue": 88485370,
+  "bearEquity": 56267246.55,
+  "bullEquity": 86503493.45,
+  "dcfEv": 109476320.42,
+  "ebitdaEv": 72650090,
+  "revenueEv": 0,
+  "waccPct": 10.98
+ },
+ "goal-health-bank": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "goal-health-fundraise": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "goal-health-internal": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "goal-health-negotiation": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "goal-health-partner": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "goal-hospitality-bank": {
+  "equity": 6349980,
+  "enterpriseValue": 6889980,
+  "bearEquity": 4720690.59,
+  "bullEquity": 7979269.41,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8612790,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "goal-hospitality-fundraise": {
+  "equity": 6349980,
+  "enterpriseValue": 6889980,
+  "bearEquity": 4720690.59,
+  "bullEquity": 7979269.41,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8612790,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "goal-hospitality-internal": {
+  "equity": 6349980,
+  "enterpriseValue": 6889980,
+  "bearEquity": 4720690.59,
+  "bullEquity": 7979269.41,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8612790,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "goal-hospitality-negotiation": {
+  "equity": 6349980,
+  "enterpriseValue": 6889980,
+  "bearEquity": 4720690.59,
+  "bullEquity": 7979269.41,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8612790,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "goal-hospitality-partner": {
+  "equity": 6349980,
+  "enterpriseValue": 6889980,
+  "bearEquity": 4720690.59,
+  "bullEquity": 7979269.41,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8612790,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "goal-industry-bank": {
+  "equity": 872261600,
+  "enterpriseValue": 1097261600,
+  "bearEquity": 698337923.39,
+  "bullEquity": 1046185276.61,
+  "dcfEv": 845122938.23,
+  "ebitdaEv": 1545508110,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "goal-industry-fundraise": {
+  "equity": 872261600,
+  "enterpriseValue": 1097261600,
+  "bearEquity": 698337923.39,
+  "bullEquity": 1046185276.61,
+  "dcfEv": 845122938.23,
+  "ebitdaEv": 1545508110,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "goal-industry-internal": {
+  "equity": 872261600,
+  "enterpriseValue": 1097261600,
+  "bearEquity": 698337923.39,
+  "bullEquity": 1046185276.61,
+  "dcfEv": 845122938.23,
+  "ebitdaEv": 1545508110,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "goal-industry-negotiation": {
+  "equity": 872261600,
+  "enterpriseValue": 1097261600,
+  "bearEquity": 698337923.39,
+  "bullEquity": 1046185276.61,
+  "dcfEv": 845122938.23,
+  "ebitdaEv": 1545508110,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "goal-industry-partner": {
+  "equity": 872261600,
+  "enterpriseValue": 1097261600,
+  "bearEquity": 698337923.39,
+  "bullEquity": 1046185276.61,
+  "dcfEv": 845122938.23,
+  "ebitdaEv": 1545508110,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "goal-other-bank": {
+  "equity": 28612260,
+  "enterpriseValue": 33562260,
+  "bearEquity": 23465521.35,
+  "bullEquity": 33758998.65,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 42505560,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "goal-other-fundraise": {
+  "equity": 28612260,
+  "enterpriseValue": 33562260,
+  "bearEquity": 23465521.35,
+  "bullEquity": 33758998.65,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 42505560,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "goal-other-internal": {
+  "equity": 28612260,
+  "enterpriseValue": 33562260,
+  "bearEquity": 23465521.35,
+  "bullEquity": 33758998.65,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 42505560,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "goal-other-negotiation": {
+  "equity": 28612260,
+  "enterpriseValue": 33562260,
+  "bearEquity": 23465521.35,
+  "bullEquity": 33758998.65,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 42505560,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "goal-other-partner": {
+  "equity": 28612260,
+  "enterpriseValue": 33562260,
+  "bearEquity": 23465521.35,
+  "bullEquity": 33758998.65,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 42505560,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "goal-real_estate-bank": {
+  "equity": 5247900,
+  "enterpriseValue": 6057900,
+  "bearEquity": 4513194,
+  "bullEquity": 5982606,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7143530,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "goal-real_estate-fundraise": {
+  "equity": 5247900,
+  "enterpriseValue": 6057900,
+  "bearEquity": 4513194,
+  "bullEquity": 5982606,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7143530,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "goal-real_estate-internal": {
+  "equity": 5247900,
+  "enterpriseValue": 6057900,
+  "bearEquity": 4513194,
+  "bullEquity": 5982606,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7143530,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "goal-real_estate-negotiation": {
+  "equity": 5247900,
+  "enterpriseValue": 6057900,
+  "bearEquity": 4513194,
+  "bullEquity": 5982606,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7143530,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "goal-real_estate-partner": {
+  "equity": 5247900,
+  "enterpriseValue": 6057900,
+  "bearEquity": 4513194,
+  "bullEquity": 5982606,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7143530,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "goal-retail_unified-bank": {
+  "equity": 1068608490,
+  "enterpriseValue": 1518608490,
+  "bearEquity": 841208603.33,
+  "bullEquity": 1296008376.67,
+  "dcfEv": 1586167536.91,
+  "ebitdaEv": 1467642890,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "goal-retail_unified-fundraise": {
+  "equity": 1068608490,
+  "enterpriseValue": 1518608490,
+  "bearEquity": 841208603.33,
+  "bullEquity": 1296008376.67,
+  "dcfEv": 1586167536.91,
+  "ebitdaEv": 1467642890,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "goal-retail_unified-internal": {
+  "equity": 1068608490,
+  "enterpriseValue": 1518608490,
+  "bearEquity": 841208603.33,
+  "bullEquity": 1296008376.67,
+  "dcfEv": 1586167536.91,
+  "ebitdaEv": 1467642890,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "goal-retail_unified-negotiation": {
+  "equity": 1068608490,
+  "enterpriseValue": 1518608490,
+  "bearEquity": 841208603.33,
+  "bullEquity": 1296008376.67,
+  "dcfEv": 1586167536.91,
+  "ebitdaEv": 1467642890,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "goal-retail_unified-partner": {
+  "equity": 1068608490,
+  "enterpriseValue": 1518608490,
+  "bearEquity": 841208603.33,
+  "bullEquity": 1296008376.67,
+  "dcfEv": 1586167536.91,
+  "ebitdaEv": 1467642890,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "goal-saas-bank": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "goal-saas-fundraise": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "goal-saas-internal": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "goal-saas-negotiation": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "goal-saas-partner": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "goal-services-bank": {
+  "equity": 8655290,
+  "enterpriseValue": 9735290,
+  "bearEquity": 7443549.4,
+  "bullEquity": 9867030.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10429480,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "goal-services-fundraise": {
+  "equity": 8655290,
+  "enterpriseValue": 9735290,
+  "bearEquity": 7443549.4,
+  "bullEquity": 9867030.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10429480,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "goal-services-internal": {
+  "equity": 8655290,
+  "enterpriseValue": 9735290,
+  "bearEquity": 7443549.4,
+  "bullEquity": 9867030.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10429480,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "goal-services-negotiation": {
+  "equity": 8655290,
+  "enterpriseValue": 9735290,
+  "bearEquity": 7443549.4,
+  "bullEquity": 9867030.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10429480,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "goal-services-partner": {
+  "equity": 8655290,
+  "enterpriseValue": 9735290,
+  "bearEquity": 7443549.4,
+  "bullEquity": 9867030.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10429480,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "golden-b2b-saas": {
+  "equity": 123884740,
+  "enterpriseValue": 115884740,
+  "bearEquity": 116451655.6,
+  "bullEquity": 131317824.4,
+  "dcfEv": 20526153,
+  "ebitdaEv": 0,
+  "revenueEv": 158970000,
+  "waccPct": 15.29
+ },
+ "golden-boutique-hotel": {
+  "equity": 15364450,
+  "enterpriseValue": 22864450,
+  "bearEquity": 11276202.65,
+  "bullEquity": 19452697.35,
+  "dcfEv": 15147399.46,
+  "ebitdaEv": 28568360,
+  "revenueEv": 0,
+  "waccPct": 13.73
+ },
+ "golden-consulting": {
+  "equity": 22369110,
+  "enterpriseValue": 21369110,
+  "bearEquity": 19237434.6,
+  "bullEquity": 25500785.4,
+  "dcfEv": 16082097.31,
+  "ebitdaEv": 23166170,
+  "revenueEv": 0,
+  "waccPct": 14.46
+ },
+ "golden-defense": {
+  "equity": 37235690,
+  "enterpriseValue": 38235690,
+  "bearEquity": 32022693.4,
+  "bullEquity": 42448686.6,
+  "dcfEv": 22699182.77,
+  "ebitdaEv": 50330270,
+  "revenueEv": 0,
+  "waccPct": 12.6
+ },
+ "golden-enterprise-cyber": {
+  "equity": 150357250,
+  "enterpriseValue": 144357250,
+  "bearEquity": 141335815,
+  "bullEquity": 159378685,
+  "dcfEv": 14870958.31,
+  "ebitdaEv": 0,
+  "revenueEv": 201682000,
+  "waccPct": 15.31
+ },
+ "golden-income-re": {
+  "equity": 13239680,
+  "enterpriseValue": 21239680,
+  "bearEquity": 11386124.8,
+  "bullEquity": 15093235.2,
+  "dcfEv": 24051823.16,
+  "ebitdaEv": 20743420,
+  "revenueEv": 0,
+  "waccPct": 6.41
+ },
+ "golden-large-industrial": {
+  "equity": 337182200,
+  "enterpriseValue": 497182200,
+  "bearEquity": 289976692,
+  "bullEquity": 384387708,
+  "dcfEv": 399043377.57,
+  "ebitdaEv": 671651210,
+  "revenueEv": 0,
+  "waccPct": 10.8
+ },
+ "golden-manufacturing": {
+  "equity": 18056210,
+  "enterpriseValue": 27056210,
+  "bearEquity": 15528340.6,
+  "bullEquity": 20584079.4,
+  "dcfEv": 21411352.76,
+  "ebitdaEv": 34983430,
+  "revenueEv": 0,
+  "waccPct": 12.6
+ },
+ "golden-medtech": {
+  "equity": 21962780,
+  "enterpriseValue": 22462780,
+  "bearEquity": 18887990.8,
+  "bullEquity": 25037569.2,
+  "dcfEv": 12970348.91,
+  "ebitdaEv": 28791070,
+  "revenueEv": 0,
+  "waccPct": 13.95
+ },
+ "golden-other": {
+  "equity": 17603310,
+  "enterpriseValue": 19603310,
+  "bearEquity": 14436847.93,
+  "bullEquity": 20769772.07,
+  "dcfEv": 15216882.9,
+  "ebitdaEv": 24560020,
+  "revenueEv": 0,
+  "waccPct": 14.36
+ },
+ "golden-payments": {
+  "equity": 104974870,
+  "enterpriseValue": 102974870,
+  "bearEquity": 96958607.2,
+  "bullEquity": 112991132.8,
+  "dcfEv": 17008220.91,
+  "ebitdaEv": 0,
+  "revenueEv": 140228000,
+  "waccPct": 14.78
+ },
+ "golden-restaurant": {
+  "equity": 8099830,
+  "enterpriseValue": 10899830,
+  "bearEquity": 6384433.28,
+  "bullEquity": 9815226.72,
+  "dcfEv": 14143437.77,
+  "ebitdaEv": 9067840,
+  "revenueEv": 0,
+  "waccPct": 13.41
+ },
+ "golden-retail": {
+  "equity": 15370040,
+  "enterpriseValue": 21870040,
+  "bearEquity": 12099295.49,
+  "bullEquity": 18640784.51,
+  "dcfEv": 24062530.94,
+  "ebitdaEv": 20271290,
+  "revenueEv": 0,
+  "waccPct": 12.23
+ },
+ "golden-solar": {
+  "equity": 10399250,
+  "enterpriseValue": 20899250,
+  "bearEquity": 8943355,
+  "bullEquity": 11855145,
+  "dcfEv": 10140135.4,
+  "ebitdaEv": 34049290,
+  "revenueEv": 0,
+  "waccPct": 11.82
+ },
+ "ladder-industry-10000": {
+  "equity": 4584190,
+  "enterpriseValue": 5084190,
+  "bearEquity": 3689578.38,
+  "bullEquity": 5478801.62,
+  "dcfEv": 3833035.08,
+  "ebitdaEv": 6335350,
+  "revenueEv": 0,
+  "waccPct": 14.92
+ },
+ "ladder-industry-1000000": {
+  "equity": 490654130,
+  "enterpriseValue": 540654130,
+  "bearEquity": 394902233.12,
+  "bullEquity": 586406026.88,
+  "dcfEv": 410313828.56,
+  "ebitdaEv": 772370210,
+  "revenueEv": 0,
+  "waccPct": 11.55
+ },
+ "ladder-industry-118800": {
+  "equity": 54465830,
+  "enterpriseValue": 60405830,
+  "bearEquity": 43836740.75,
+  "bullEquity": 65094919.25,
+  "dcfEv": 48708875.17,
+  "ebitdaEv": 81200420,
+  "revenueEv": 0,
+  "waccPct": 11.59
+ },
+ "ladder-industry-121200": {
+  "equity": 56858210,
+  "enterpriseValue": 62918210,
+  "bearEquity": 45762244.17,
+  "bullEquity": 67954175.83,
+  "dcfEv": 49729998.09,
+  "ebitdaEv": 86363930,
+  "revenueEv": 0,
+  "waccPct": 11.55
+ },
+ "ladder-industry-19800": {
+  "equity": 9095950,
+  "enterpriseValue": 10085950,
+  "bearEquity": 7320861.58,
+  "bullEquity": 10871038.42,
+  "dcfEv": 7589449.44,
+  "ebitdaEv": 12582460,
+  "revenueEv": 0,
+  "waccPct": 14.92
+ },
+ "ladder-industry-2000": {
+  "equity": 887930,
+  "enterpriseValue": 987930,
+  "bearEquity": 714649.12,
+  "bullEquity": 1061210.88,
+  "dcfEv": 766620.8,
+  "ebitdaEv": 1209240,
+  "revenueEv": 0,
+  "waccPct": 14.92
+ },
+ "ladder-industry-200000": {
+  "equity": 95041340,
+  "enterpriseValue": 105041340,
+  "bearEquity": 76493878.5,
+  "bullEquity": 113588801.5,
+  "dcfEv": 82062765.71,
+  "ebitdaEv": 145892150,
+  "revenueEv": 0,
+  "waccPct": 11.55
+ },
+ "ladder-industry-20200": {
+  "equity": 9558720,
+  "enterpriseValue": 10568720,
+  "bearEquity": 7693321.31,
+  "bullEquity": 11424118.69,
+  "dcfEv": 7743644.76,
+  "ebitdaEv": 13398580,
+  "revenueEv": 0,
+  "waccPct": 14.91
+ },
+ "ladder-industry-300": {
+  "equity": 133100,
+  "enterpriseValue": 148100,
+  "bearEquity": 107125.33,
+  "bullEquity": 159074.67,
+  "dcfEv": 114965.55,
+  "ebitdaEv": 181230,
+  "revenueEv": 0,
+  "waccPct": 14.92
+ },
+ "ladder-industry-4950": {
+  "equity": 2198950,
+  "enterpriseValue": 2446450,
+  "bearEquity": 1769821.58,
+  "bullEquity": 2628078.42,
+  "dcfEv": 1897345.13,
+  "ebitdaEv": 2995560,
+  "revenueEv": 0,
+  "waccPct": 14.92
+ },
+ "ladder-industry-50000": {
+  "equity": 23166270,
+  "enterpriseValue": 25666270,
+  "bearEquity": 18645337.31,
+  "bullEquity": 27687202.69,
+  "dcfEv": 19498993.52,
+  "ebitdaEv": 33469380,
+  "revenueEv": 0,
+  "waccPct": 14.05
+ },
+ "ladder-industry-5000000": {
+  "equity": 2453270410,
+  "enterpriseValue": 2703270410,
+  "bearEquity": 1974510972.41,
+  "bullEquity": 2932029847.59,
+  "dcfEv": 2051568994.06,
+  "ebitdaEv": 3861850710,
+  "revenueEv": 0,
+  "waccPct": 11.55
+ },
+ "ladder-industry-5050": {
+  "equity": 2312560,
+  "enterpriseValue": 2565060,
+  "bearEquity": 1861260.41,
+  "bullEquity": 2763859.59,
+  "dcfEv": 1935689.95,
+  "ebitdaEv": 3194430,
+  "revenueEv": 0,
+  "waccPct": 14.92
+ },
+ "ladder-saas-10000": {
+  "equity": 36912210,
+  "enterpriseValue": 37412210,
+  "bearEquity": 31744500.6,
+  "bullEquity": 42079919.4,
+  "dcfEv": 5847366.34,
+  "ebitdaEv": 0,
+  "revenueEv": 50940000,
+  "waccPct": 15.43
+ },
+ "ladder-saas-1000000": {
+  "equity": 4149540260,
+  "enterpriseValue": 4199540260,
+  "bearEquity": 3515792293.02,
+  "bullEquity": 4783288226.98,
+  "dcfEv": 625389620.15,
+  "ebitdaEv": 0,
+  "revenueEv": 6210000000,
+  "waccPct": 12.08
+ },
+ "ladder-saas-118800": {
+  "equity": 438658820,
+  "enterpriseValue": 444598820,
+  "bearEquity": 371663654.76,
+  "bullEquity": 505653985.24,
+  "dcfEv": 74241520.6,
+  "ebitdaEv": 0,
+  "revenueEv": 652924800,
+  "waccPct": 12.12
+ },
+ "ladder-saas-121200": {
+  "equity": 465614050,
+  "enterpriseValue": 471674050,
+  "bearEquity": 394502086,
+  "bullEquity": 536726014,
+  "dcfEv": 75797159.63,
+  "ebitdaEv": 0,
+  "revenueEv": 694354800,
+  "waccPct": 12.08
+ },
+ "ladder-saas-19800": {
+  "equity": 73307960,
+  "enterpriseValue": 74297960,
+  "bearEquity": 62111835.2,
+  "bullEquity": 84504084.8,
+  "dcfEv": 11577851.14,
+  "ebitdaEv": 0,
+  "revenueEv": 101178000,
+  "waccPct": 15.43
+ },
+ "ladder-saas-2000": {
+  "equity": 7056250,
+  "enterpriseValue": 7156250,
+  "bearEquity": 6068375,
+  "bullEquity": 8044125,
+  "dcfEv": 1169495.95,
+  "ebitdaEv": 0,
+  "revenueEv": 9722000,
+  "waccPct": 15.43
+ },
+ "ladder-saas-200000": {
+  "equity": 785748050,
+  "enterpriseValue": 795748050,
+  "bearEquity": 665742893.27,
+  "bullEquity": 905753206.73,
+  "dcfEv": 125077924.03,
+  "ebitdaEv": 0,
+  "revenueEv": 1173000000,
+  "waccPct": 12.08
+ },
+ "ladder-saas-20200": {
+  "equity": 77919990,
+  "enterpriseValue": 78929990,
+  "bearEquity": 66019482.44,
+  "bullEquity": 89820497.56,
+  "dcfEv": 11813060.44,
+  "ebitdaEv": 0,
+  "revenueEv": 107726600,
+  "waccPct": 15.43
+ },
+ "ladder-saas-300": {
+  "equity": 1057790,
+  "enterpriseValue": 1072790,
+  "bearEquity": 909699.4,
+  "bullEquity": 1205880.6,
+  "dcfEv": 175379.02,
+  "ebitdaEv": 0,
+  "revenueEv": 1457400,
+  "waccPct": 15.43
+ },
+ "ladder-saas-4950": {
+  "equity": 17478060,
+  "enterpriseValue": 17725560,
+  "bearEquity": 15031131.6,
+  "bullEquity": 19924988.4,
+  "dcfEv": 2894434.43,
+  "ebitdaEv": 0,
+  "revenueEv": 24081750,
+  "waccPct": 15.43
+ },
+ "ladder-saas-50000": {
+  "equity": 187536500,
+  "enterpriseValue": 190036500,
+  "bearEquity": 158894561.82,
+  "bullEquity": 216178438.18,
+  "dcfEv": 29739514.81,
+  "ebitdaEv": 0,
+  "revenueEv": 269100000,
+  "waccPct": 14.56
+ },
+ "ladder-saas-5000000": {
+  "equity": 20747701230,
+  "enterpriseValue": 20997701230,
+  "bearEquity": 17578961405.78,
+  "bullEquity": 23916441054.22,
+  "dcfEv": 3126947856.33,
+  "ebitdaEv": 0,
+  "revenueEv": 31050000000,
+  "waccPct": 12.08
+ },
+ "ladder-saas-5050": {
+  "equity": 18612390,
+  "enterpriseValue": 18864890,
+  "bearEquity": 16006655.4,
+  "bullEquity": 21218124.6,
+  "dcfEv": 2952931.91,
+  "ebitdaEv": 0,
+  "revenueEv": 25684300,
+  "waccPct": 15.43
+ },
+ "ladder-services-10000": {
+  "equity": 7597790,
+  "enterpriseValue": 8097790,
+  "bearEquity": 6534099.4,
+  "bullEquity": 8661480.6,
+  "dcfEv": 6329990.23,
+  "ebitdaEv": 8687050,
+  "revenueEv": 0,
+  "waccPct": 14.24
+ },
+ "ladder-services-1000000": {
+  "equity": 898099910,
+  "enterpriseValue": 948099910,
+  "bearEquity": 785320333.42,
+  "bullEquity": 1010879486.58,
+  "dcfEv": 676843837.94,
+  "ebitdaEv": 1058894640,
+  "revenueEv": 0,
+  "waccPct": 10.96
+ },
+ "ladder-services-118800": {
+  "equity": 96402830,
+  "enterpriseValue": 102342830,
+  "bearEquity": 84296971.59,
+  "bullEquity": 108508688.41,
+  "dcfEv": 80350012.67,
+  "ebitdaEv": 111325810,
+  "revenueEv": 0,
+  "waccPct": 11
+ },
+ "ladder-services-121200": {
+  "equity": 101798300,
+  "enterpriseValue": 107858300,
+  "bearEquity": 89014901.36,
+  "bullEquity": 114581698.64,
+  "dcfEv": 82033405.73,
+  "ebitdaEv": 118406490,
+  "revenueEv": 0,
+  "waccPct": 10.96
+ },
+ "ladder-services-19800": {
+  "equity": 15082800,
+  "enterpriseValue": 16072800,
+  "bearEquity": 12971208,
+  "bullEquity": 17194392,
+  "dcfEv": 12533451.74,
+  "ebitdaEv": 17252580,
+  "revenueEv": 0,
+  "waccPct": 14.24
+ },
+ "ladder-services-2000": {
+  "equity": 1459800,
+  "enterpriseValue": 1559800,
+  "bearEquity": 1255428,
+  "bullEquity": 1664172,
+  "dcfEv": 1266022.56,
+  "ebitdaEv": 1657720,
+  "revenueEv": 0,
+  "waccPct": 14.24
+ },
+ "ladder-services-200000": {
+  "equity": 171266480,
+  "enterpriseValue": 181266480,
+  "bearEquity": 149759562.03,
+  "bullEquity": 192773397.97,
+  "dcfEv": 135368767.59,
+  "ebitdaEv": 200013430,
+  "revenueEv": 0,
+  "waccPct": 10.96
+ },
+ "ladder-services-20200": {
+  "equity": 15961310,
+  "enterpriseValue": 16971310,
+  "bearEquity": 13726726.6,
+  "bullEquity": 18195893.4,
+  "dcfEv": 12788069.95,
+  "ebitdaEv": 18367120,
+  "revenueEv": 0,
+  "waccPct": 14.23
+ },
+ "ladder-services-300": {
+  "equity": 218840,
+  "enterpriseValue": 233840,
+  "bearEquity": 188202.4,
+  "bullEquity": 249477.6,
+  "dcfEv": 189854.36,
+  "ebitdaEv": 248500,
+  "revenueEv": 0,
+  "waccPct": 14.24
+ },
+ "ladder-services-4950": {
+  "equity": 3615500,
+  "enterpriseValue": 3863000,
+  "bearEquity": 3109330,
+  "bullEquity": 4121670,
+  "dcfEv": 3133332.3,
+  "ebitdaEv": 4106220,
+  "revenueEv": 0,
+  "waccPct": 14.24
+ },
+ "ladder-services-50000": {
+  "equity": 39643750,
+  "enterpriseValue": 42143750,
+  "bearEquity": 34093625,
+  "bullEquity": 45193875,
+  "dcfEv": 32192320.47,
+  "ebitdaEv": 45885430,
+  "revenueEv": 0,
+  "waccPct": 13.39
+ },
+ "ladder-services-5000000": {
+  "equity": 4490499130,
+  "enterpriseValue": 4740499130,
+  "bearEquity": 3926601299.86,
+  "bullEquity": 5054396960.14,
+  "dcfEv": 3384218925.29,
+  "ebitdaEv": 5294472740,
+  "revenueEv": 0,
+  "waccPct": 10.96
+ },
+ "ladder-services-5050": {
+  "equity": 3831610,
+  "enterpriseValue": 4084110,
+  "bearEquity": 3295184.6,
+  "bullEquity": 4368035.4,
+  "dcfEv": 3196657.93,
+  "ebitdaEv": 4379930,
+  "revenueEv": 0,
+  "waccPct": 14.24
+ },
+ "lc-cyber-cloud-early": {
+  "equity": 551657270,
+  "enterpriseValue": 560657270,
+  "bearEquity": 517956025.87,
+  "bullEquity": 585358514.13,
+  "dcfEv": 64619560.49,
+  "ebitdaEv": 0,
+  "revenueEv": 798700000,
+  "waccPct": 12.43
+ },
+ "lc-cyber-cloud-growth": {
+  "equity": 551657270,
+  "enterpriseValue": 560657270,
+  "bearEquity": 517956025.87,
+  "bullEquity": 585358514.13,
+  "dcfEv": 64619560.49,
+  "ebitdaEv": 0,
+  "revenueEv": 798700000,
+  "waccPct": 12.43
+ },
+ "lc-cyber-cloud-mature": {
+  "equity": 568692800,
+  "enterpriseValue": 577692800,
+  "bearEquity": 533950839.85,
+  "bullEquity": 603434760.15,
+  "dcfEv": 65058590.05,
+  "ebitdaEv": 0,
+  "revenueEv": 823700000,
+  "waccPct": 12.1
+ },
+ "lc-cyber-cloud-seed": {
+  "equity": 551126760,
+  "enterpriseValue": 560126760,
+  "bearEquity": 517457925.21,
+  "bullEquity": 584795594.79,
+  "dcfEv": 64569883.74,
+  "ebitdaEv": 0,
+  "revenueEv": 798700000,
+  "waccPct": 12.46
+ },
+ "lc-cyber-enterprise-early": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "lc-cyber-enterprise-growth": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "lc-cyber-enterprise-mature": {
+  "equity": 122009690,
+  "enterpriseValue": 123989690,
+  "bearEquity": 114556007.12,
+  "bullEquity": 129463372.88,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 171820000,
+  "waccPct": 14.57
+ },
+ "lc-cyber-enterprise-seed": {
+  "equity": 121109910,
+  "enterpriseValue": 123089910,
+  "bearEquity": 113711195.5,
+  "bullEquity": 128508624.5,
+  "dcfEv": 13448795.4,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 15.19
+ },
+ "lc-cyber-ot-early": {
+  "equity": 26591780,
+  "enterpriseValue": 27131780,
+  "bearEquity": 24967263.99,
+  "bullEquity": 28216296.01,
+  "dcfEv": 3709079.68,
+  "ebitdaEv": 0,
+  "revenueEv": 39744000,
+  "waccPct": 14.63
+ },
+ "lc-cyber-ot-growth": {
+  "equity": 26591780,
+  "enterpriseValue": 27131780,
+  "bearEquity": 24967263.99,
+  "bullEquity": 28216296.01,
+  "dcfEv": 3709079.68,
+  "ebitdaEv": 0,
+  "revenueEv": 39744000,
+  "waccPct": 14.63
+ },
+ "lc-cyber-ot-mature": {
+  "equity": 26638580,
+  "enterpriseValue": 27178580,
+  "bearEquity": 25011204.93,
+  "bullEquity": 28265955.07,
+  "dcfEv": 3709079.68,
+  "ebitdaEv": 0,
+  "revenueEv": 39816000,
+  "waccPct": 14.63
+ },
+ "lc-cyber-ot-seed": {
+  "equity": 26755990,
+  "enterpriseValue": 27295990,
+  "bearEquity": 25121442.25,
+  "bullEquity": 28390537.75,
+  "dcfEv": 3662826.07,
+  "ebitdaEv": 0,
+  "revenueEv": 39744000,
+  "waccPct": 15.26
+ },
+ "lc-cyber-services_cyber-early": {
+  "equity": 15187360,
+  "enterpriseValue": 15502360,
+  "bearEquity": 13061129.6,
+  "bullEquity": 17313590.4,
+  "dcfEv": 2138456.46,
+  "ebitdaEv": 0,
+  "revenueEv": 19957000,
+  "waccPct": 15.22
+ },
+ "lc-cyber-services_cyber-growth": {
+  "equity": 15187360,
+  "enterpriseValue": 15502360,
+  "bearEquity": 13061129.6,
+  "bullEquity": 17313590.4,
+  "dcfEv": 2138456.46,
+  "ebitdaEv": 0,
+  "revenueEv": 19957000,
+  "waccPct": 15.22
+ },
+ "lc-cyber-services_cyber-mature": {
+  "equity": 15205740,
+  "enterpriseValue": 15520740,
+  "bearEquity": 13076936.4,
+  "bullEquity": 17334543.6,
+  "dcfEv": 2138456.46,
+  "ebitdaEv": 0,
+  "revenueEv": 19981500,
+  "waccPct": 15.22
+ },
+ "lc-cyber-services_cyber-seed": {
+  "equity": 15091540,
+  "enterpriseValue": 15406540,
+  "bearEquity": 12978724.4,
+  "bullEquity": 17204355.6,
+  "dcfEv": 2112043.86,
+  "ebitdaEv": 0,
+  "revenueEv": 19957000,
+  "waccPct": 15.86
+ },
+ "lc-defense_aerospace-aviation_space-early": {
+  "equity": 21777230,
+  "enterpriseValue": 24477230,
+  "bearEquity": 18728417.8,
+  "bullEquity": 24826042.2,
+  "dcfEv": 15073507.81,
+  "ebitdaEv": 31928880,
+  "revenueEv": 0,
+  "waccPct": 12.8
+ },
+ "lc-defense_aerospace-aviation_space-growth": {
+  "equity": 21777230,
+  "enterpriseValue": 24477230,
+  "bearEquity": 18728417.8,
+  "bullEquity": 24826042.2,
+  "dcfEv": 15073507.81,
+  "ebitdaEv": 31928880,
+  "revenueEv": 0,
+  "waccPct": 12.8
+ },
+ "lc-defense_aerospace-aviation_space-mature": {
+  "equity": 21943810,
+  "enterpriseValue": 24643810,
+  "bearEquity": 18871676.6,
+  "bullEquity": 25015943.4,
+  "dcfEv": 15073507.81,
+  "ebitdaEv": 32227460,
+  "revenueEv": 0,
+  "waccPct": 12.8
+ },
+ "lc-defense_aerospace-aviation_space-seed": {
+  "equity": 21872170,
+  "enterpriseValue": 24572170,
+  "bearEquity": 18810066.2,
+  "bullEquity": 24934273.8,
+  "dcfEv": 14903475.03,
+  "ebitdaEv": 31928880,
+  "revenueEv": 0,
+  "waccPct": 13.35
+ },
+ "lc-defense_aerospace-defense_manufacturing-early": {
+  "equity": 1140366890,
+  "enterpriseValue": 1302366890,
+  "bearEquity": 975877605.26,
+  "bullEquity": 1304856174.74,
+  "dcfEv": 943668581.98,
+  "ebitdaEv": 1777850690,
+  "revenueEv": 0,
+  "waccPct": 10.76
+ },
+ "lc-defense_aerospace-defense_manufacturing-growth": {
+  "equity": 1140366890,
+  "enterpriseValue": 1302366890,
+  "bearEquity": 975877605.26,
+  "bullEquity": 1304856174.74,
+  "dcfEv": 943668581.98,
+  "ebitdaEv": 1777850690,
+  "revenueEv": 0,
+  "waccPct": 10.76
+ },
+ "lc-defense_aerospace-defense_manufacturing-mature": {
+  "equity": 1245659060,
+  "enterpriseValue": 1407659060,
+  "bearEquity": 1065982177.41,
+  "bullEquity": 1425335942.59,
+  "dcfEv": 960743483.52,
+  "ebitdaEv": 2000082030,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "lc-defense_aerospace-defense_manufacturing-seed": {
+  "equity": 1140366890,
+  "enterpriseValue": 1302366890,
+  "bearEquity": 975877605.26,
+  "bullEquity": 1304856174.74,
+  "dcfEv": 943668581.98,
+  "ebitdaEv": 1777850690,
+  "revenueEv": 0,
+  "waccPct": 10.76
+ },
+ "lc-defense_aerospace-defense_tech-early": {
+  "equity": 104524730,
+  "enterpriseValue": 117124730,
+  "bearEquity": 89447829.55,
+  "bullEquity": 119601630.45,
+  "dcfEv": 73396376.29,
+  "ebitdaEv": 160853090,
+  "revenueEv": 0,
+  "waccPct": 10.76
+ },
+ "lc-defense_aerospace-defense_tech-growth": {
+  "equity": 104524730,
+  "enterpriseValue": 117124730,
+  "bearEquity": 89447829.55,
+  "bullEquity": 119601630.45,
+  "dcfEv": 73396376.29,
+  "ebitdaEv": 160853090,
+  "revenueEv": 0,
+  "waccPct": 10.76
+ },
+ "lc-defense_aerospace-defense_tech-mature": {
+  "equity": 108707420,
+  "enterpriseValue": 121307420,
+  "bearEquity": 93027198.21,
+  "bullEquity": 124387641.79,
+  "dcfEv": 74724422.75,
+  "ebitdaEv": 167890410,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "lc-defense_aerospace-defense_tech-seed": {
+  "equity": 104524730,
+  "enterpriseValue": 117124730,
+  "bearEquity": 89447829.55,
+  "bullEquity": 119601630.45,
+  "dcfEv": 73396376.29,
+  "ebitdaEv": 160853090,
+  "revenueEv": 0,
+  "waccPct": 10.76
+ },
+ "lc-energy-services_energy-early": {
+  "equity": 139088390,
+  "enterpriseValue": 148088390,
+  "bearEquity": 119616015.4,
+  "bullEquity": 158560764.6,
+  "dcfEv": 78293309.85,
+  "ebitdaEv": 216866940,
+  "revenueEv": 0,
+  "waccPct": 11.8
+ },
+ "lc-energy-services_energy-growth": {
+  "equity": 139088390,
+  "enterpriseValue": 148088390,
+  "bearEquity": 119616015.4,
+  "bullEquity": 158560764.6,
+  "dcfEv": 78293309.85,
+  "ebitdaEv": 216866940,
+  "revenueEv": 0,
+  "waccPct": 11.8
+ },
+ "lc-energy-services_energy-mature": {
+  "equity": 142797790,
+  "enterpriseValue": 151797790,
+  "bearEquity": 122806099.4,
+  "bullEquity": 162789480.6,
+  "dcfEv": 78879884.51,
+  "ebitdaEv": 223653680,
+  "revenueEv": 0,
+  "waccPct": 11.45
+ },
+ "lc-energy-services_energy-seed": {
+  "equity": 139060260,
+  "enterpriseValue": 148060260,
+  "bearEquity": 119591823.6,
+  "bullEquity": 158528696.4,
+  "dcfEv": 78226978.8,
+  "ebitdaEv": 216866940,
+  "revenueEv": 0,
+  "waccPct": 11.84
+ },
+ "lc-energy-solar-early": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "lc-energy-solar-growth": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "lc-energy-solar-mature": {
+  "equity": 96687100,
+  "enterpriseValue": 103437100,
+  "bearEquity": 83150906,
+  "bullEquity": 110223294,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 193048140,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "lc-energy-solar-seed": {
+  "equity": 95857770,
+  "enterpriseValue": 102607770,
+  "bearEquity": 82437682.2,
+  "bullEquity": 109277857.8,
+  "dcfEv": 57530478.04,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.79
+ },
+ "lc-energy-storage-early": {
+  "equity": 419028920,
+  "enterpriseValue": 446028920,
+  "bearEquity": 360364871.2,
+  "bullEquity": 477692968.8,
+  "dcfEv": 235612197.78,
+  "ebitdaEv": 820103080,
+  "revenueEv": 0,
+  "waccPct": 11.65
+ },
+ "lc-energy-storage-growth": {
+  "equity": 419028920,
+  "enterpriseValue": 446028920,
+  "bearEquity": 360364871.2,
+  "bullEquity": 477692968.8,
+  "dcfEv": 235612197.78,
+  "ebitdaEv": 820103080,
+  "revenueEv": 0,
+  "waccPct": 11.65
+ },
+ "lc-energy-storage-mature": {
+  "equity": 449663100,
+  "enterpriseValue": 476663100,
+  "bearEquity": 386710266,
+  "bullEquity": 512615934,
+  "dcfEv": 240230497.68,
+  "ebitdaEv": 896987740,
+  "revenueEv": 0,
+  "waccPct": 10.74
+ },
+ "lc-energy-storage-seed": {
+  "equity": 419028920,
+  "enterpriseValue": 446028920,
+  "bearEquity": 360364871.2,
+  "bullEquity": 477692968.8,
+  "dcfEv": 235612197.78,
+  "ebitdaEv": 820103080,
+  "revenueEv": 0,
+  "waccPct": 11.65
+ },
+ "lc-energy-wind-early": {
+  "equity": 31233680,
+  "enterpriseValue": 33213680,
+  "bearEquity": 26860964.8,
+  "bullEquity": 35606395.2,
+  "dcfEv": 16424027.69,
+  "ebitdaEv": 54126780,
+  "revenueEv": 0,
+  "waccPct": 14.12
+ },
+ "lc-energy-wind-growth": {
+  "equity": 31233680,
+  "enterpriseValue": 33213680,
+  "bearEquity": 26860964.8,
+  "bullEquity": 35606395.2,
+  "dcfEv": 16424027.69,
+  "ebitdaEv": 54126780,
+  "revenueEv": 0,
+  "waccPct": 14.12
+ },
+ "lc-energy-wind-mature": {
+  "equity": 31398740,
+  "enterpriseValue": 33378740,
+  "bearEquity": 27002916.4,
+  "bullEquity": 35794563.6,
+  "dcfEv": 16424027.69,
+  "ebitdaEv": 54497440,
+  "revenueEv": 0,
+  "waccPct": 14.12
+ },
+ "lc-energy-wind-seed": {
+  "equity": 32028760,
+  "enterpriseValue": 34008760,
+  "bearEquity": 27544733.6,
+  "bullEquity": 36512786.4,
+  "dcfEv": 16204142.46,
+  "ebitdaEv": 54126780,
+  "revenueEv": 0,
+  "waccPct": 14.79
+ },
+ "lc-fintech-insurtech-early": {
+  "equity": 272448310,
+  "enterpriseValue": 279198310,
+  "bearEquity": 250256156.75,
+  "bullEquity": 294640463.25,
+  "dcfEv": 60128943.12,
+  "ebitdaEv": 0,
+  "revenueEv": 432000000,
+  "waccPct": 12.96
+ },
+ "lc-fintech-insurtech-growth": {
+  "equity": 272448310,
+  "enterpriseValue": 279198310,
+  "bearEquity": 250256156.75,
+  "bullEquity": 294640463.25,
+  "dcfEv": 60128943.12,
+  "ebitdaEv": 0,
+  "revenueEv": 432000000,
+  "waccPct": 12.96
+ },
+ "lc-fintech-insurtech-mature": {
+  "equity": 278412950,
+  "enterpriseValue": 285162950,
+  "bearEquity": 255734949.71,
+  "bullEquity": 301090950.29,
+  "dcfEv": 60128943.12,
+  "ebitdaEv": 0,
+  "revenueEv": 442125000,
+  "waccPct": 12.96
+ },
+ "lc-fintech-insurtech-seed": {
+  "equity": 272138810,
+  "enterpriseValue": 278888810,
+  "bearEquity": 249971866.93,
+  "bullEquity": 294305753.07,
+  "dcfEv": 59845792.45,
+  "ebitdaEv": 0,
+  "revenueEv": 432000000,
+  "waccPct": 13.2
+ },
+ "lc-fintech-lending-early": {
+  "equity": 53702070,
+  "enterpriseValue": 55142070,
+  "bearEquity": 49327792.3,
+  "bullEquity": 58076347.7,
+  "dcfEv": 12431182.36,
+  "ebitdaEv": 0,
+  "revenueEv": 83616000,
+  "waccPct": 14.53
+ },
+ "lc-fintech-lending-growth": {
+  "equity": 53702070,
+  "enterpriseValue": 55142070,
+  "bearEquity": 49327792.3,
+  "bullEquity": 58076347.7,
+  "dcfEv": 12431182.36,
+  "ebitdaEv": 0,
+  "revenueEv": 83616000,
+  "waccPct": 14.53
+ },
+ "lc-fintech-lending-mature": {
+  "equity": 53951670,
+  "enterpriseValue": 55391670,
+  "bearEquity": 49557061.24,
+  "bullEquity": 58346278.76,
+  "dcfEv": 12431182.36,
+  "ebitdaEv": 0,
+  "revenueEv": 84032000,
+  "waccPct": 14.53
+ },
+ "lc-fintech-lending-seed": {
+  "equity": 54351350,
+  "enterpriseValue": 55791350,
+  "bearEquity": 49924185.49,
+  "bullEquity": 58778514.51,
+  "dcfEv": 12270739.14,
+  "ebitdaEv": 0,
+  "revenueEv": 83616000,
+  "waccPct": 15.19
+ },
+ "lc-fintech-payments-early": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "lc-fintech-payments-growth": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "lc-fintech-payments-mature": {
+  "equity": 5987895810,
+  "enterpriseValue": 6095895810,
+  "bearEquity": 5500154478.57,
+  "bullEquity": 6475637141.43,
+  "dcfEv": 997043907.65,
+  "ebitdaEv": 0,
+  "revenueEv": 8964000000,
+  "waccPct": 11.23
+ },
+ "lc-fintech-payments-seed": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "lc-fintech-wealth-early": {
+  "equity": 1274550970,
+  "enterpriseValue": 1301550970,
+  "bearEquity": 1170733000.08,
+  "bullEquity": 1378368939.92,
+  "dcfEv": 244752697.07,
+  "ebitdaEv": 0,
+  "revenueEv": 1896000000,
+  "waccPct": 12.11
+ },
+ "lc-fintech-wealth-growth": {
+  "equity": 1274550970,
+  "enterpriseValue": 1301550970,
+  "bearEquity": 1170733000.08,
+  "bullEquity": 1378368939.92,
+  "dcfEv": 244752697.07,
+  "ebitdaEv": 0,
+  "revenueEv": 1896000000,
+  "waccPct": 12.11
+ },
+ "lc-fintech-wealth-mature": {
+  "equity": 1390029960,
+  "enterpriseValue": 1417029960,
+  "bearEquity": 1276805701.44,
+  "bullEquity": 1503254218.56,
+  "dcfEv": 249261008.03,
+  "ebitdaEv": 0,
+  "revenueEv": 2073900000,
+  "waccPct": 11.23
+ },
+ "lc-fintech-wealth-seed": {
+  "equity": 1274550970,
+  "enterpriseValue": 1301550970,
+  "bearEquity": 1170733000.08,
+  "bullEquity": 1378368939.92,
+  "dcfEv": 244752697.07,
+  "ebitdaEv": 0,
+  "revenueEv": 1896000000,
+  "waccPct": 12.11
+ },
+ "lc-food_service-cafe-early": {
+  "equity": 200640,
+  "enterpriseValue": 254640,
+  "bearEquity": 146707.97,
+  "bullEquity": 254572.03,
+  "dcfEv": 323063.38,
+  "ebitdaEv": 217790,
+  "revenueEv": 0,
+  "waccPct": 14.27
+ },
+ "lc-food_service-cafe-growth": {
+  "equity": 200640,
+  "enterpriseValue": 254640,
+  "bearEquity": 146707.97,
+  "bullEquity": 254572.03,
+  "dcfEv": 323063.38,
+  "ebitdaEv": 217790,
+  "revenueEv": 0,
+  "waccPct": 14.27
+ },
+ "lc-food_service-cafe-mature": {
+  "equity": 200690,
+  "enterpriseValue": 254690,
+  "bearEquity": 146744.53,
+  "bullEquity": 254635.47,
+  "dcfEv": 323063.38,
+  "ebitdaEv": 217870,
+  "revenueEv": 0,
+  "waccPct": 14.27
+ },
+ "lc-food_service-cafe-seed": {
+  "equity": 198860,
+  "enterpriseValue": 252860,
+  "bearEquity": 145406.43,
+  "bullEquity": 252313.57,
+  "dcfEv": 319439.73,
+  "ebitdaEv": 217790,
+  "revenueEv": 0,
+  "waccPct": 14.84
+ },
+ "lc-food_service-catering-early": {
+  "equity": 653880,
+  "enterpriseValue": 815880,
+  "bearEquity": 478117.06,
+  "bullEquity": 829642.94,
+  "dcfEv": 965850.95,
+  "ebitdaEv": 735130,
+  "revenueEv": 0,
+  "waccPct": 14.44
+ },
+ "lc-food_service-catering-growth": {
+  "equity": 653880,
+  "enterpriseValue": 815880,
+  "bearEquity": 478117.06,
+  "bullEquity": 829642.94,
+  "dcfEv": 965850.95,
+  "ebitdaEv": 735130,
+  "revenueEv": 0,
+  "waccPct": 14.44
+ },
+ "lc-food_service-catering-mature": {
+  "equity": 654190,
+  "enterpriseValue": 816190,
+  "bearEquity": 478343.73,
+  "bullEquity": 830036.27,
+  "dcfEv": 965850.95,
+  "ebitdaEv": 735600,
+  "revenueEv": 0,
+  "waccPct": 14.44
+ },
+ "lc-food_service-catering-seed": {
+  "equity": 648880,
+  "enterpriseValue": 810880,
+  "bearEquity": 474461.06,
+  "bullEquity": 823298.94,
+  "dcfEv": 954695.6,
+  "ebitdaEv": 735130,
+  "revenueEv": 0,
+  "waccPct": 15.03
+ },
+ "lc-food_service-delivery-early": {
+  "equity": 1107040,
+  "enterpriseValue": 1395040,
+  "bearEquity": 809467.65,
+  "bullEquity": 1404612.35,
+  "dcfEv": 1720512.93,
+  "ebitdaEv": 1219790,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-food_service-delivery-growth": {
+  "equity": 1107040,
+  "enterpriseValue": 1395040,
+  "bearEquity": 809467.65,
+  "bullEquity": 1404612.35,
+  "dcfEv": 1720512.93,
+  "ebitdaEv": 1219790,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-food_service-delivery-mature": {
+  "equity": 1107850,
+  "enterpriseValue": 1395850,
+  "bearEquity": 810059.92,
+  "bullEquity": 1405640.08,
+  "dcfEv": 1720512.93,
+  "ebitdaEv": 1221030,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-food_service-delivery-seed": {
+  "equity": 1097800,
+  "enterpriseValue": 1385800,
+  "bearEquity": 802711.36,
+  "bullEquity": 1392888.64,
+  "dcfEv": 1700970,
+  "ebitdaEv": 1219790,
+  "revenueEv": 0,
+  "waccPct": 14.92
+ },
+ "lc-food_service-franchise-early": {
+  "equity": 133475430,
+  "enterpriseValue": 155975430,
+  "bearEquity": 105207760.75,
+  "bullEquity": 161743099.25,
+  "dcfEv": 140575887.52,
+  "ebitdaEv": 167592620,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-food_service-franchise-growth": {
+  "equity": 133475430,
+  "enterpriseValue": 155975430,
+  "bearEquity": 105207760.75,
+  "bullEquity": 161743099.25,
+  "dcfEv": 140575887.52,
+  "ebitdaEv": 167592620,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-food_service-franchise-mature": {
+  "equity": 142007270,
+  "enterpriseValue": 164507270,
+  "bearEquity": 111932712.16,
+  "bullEquity": 172081827.84,
+  "dcfEv": 143071985.78,
+  "ebitdaEv": 180677740,
+  "revenueEv": 0,
+  "waccPct": 11.3
+ },
+ "lc-food_service-franchise-seed": {
+  "equity": 133475430,
+  "enterpriseValue": 155975430,
+  "bearEquity": 105207760.75,
+  "bullEquity": 161743099.25,
+  "dcfEv": 140575887.52,
+  "ebitdaEv": 167592620,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-food_service-restaurant-early": {
+  "equity": 68357590,
+  "enterpriseValue": 85457590,
+  "bearEquity": 53880695.3,
+  "bullEquity": 82834484.7,
+  "dcfEv": 107824858.53,
+  "ebitdaEv": 68584040,
+  "revenueEv": 0,
+  "waccPct": 11.7
+ },
+ "lc-food_service-restaurant-growth": {
+  "equity": 68357590,
+  "enterpriseValue": 85457590,
+  "bearEquity": 53880695.3,
+  "bullEquity": 82834484.7,
+  "dcfEv": 107824858.53,
+  "ebitdaEv": 68584040,
+  "revenueEv": 0,
+  "waccPct": 11.7
+ },
+ "lc-food_service-restaurant-mature": {
+  "equity": 71385370,
+  "enterpriseValue": 88485370,
+  "bearEquity": 56267246.55,
+  "bullEquity": 86503493.45,
+  "dcfEv": 109476320.42,
+  "ebitdaEv": 72650090,
+  "revenueEv": 0,
+  "waccPct": 10.98
+ },
+ "lc-food_service-restaurant-seed": {
+  "equity": 68357590,
+  "enterpriseValue": 85457590,
+  "bearEquity": 53880695.3,
+  "bullEquity": 82834484.7,
+  "dcfEv": 107824858.53,
+  "ebitdaEv": 68584040,
+  "revenueEv": 0,
+  "waccPct": 11.7
+ },
+ "lc-health-biotech-early": {
+  "equity": 7436700,
+  "enterpriseValue": 8246700,
+  "bearEquity": 6395562,
+  "bullEquity": 8477838,
+  "dcfEv": 5097217.13,
+  "ebitdaEv": 12096070,
+  "revenueEv": 0,
+  "waccPct": 13.77
+ },
+ "lc-health-biotech-growth": {
+  "equity": 7436700,
+  "enterpriseValue": 8246700,
+  "bearEquity": 6395562,
+  "bullEquity": 8477838,
+  "dcfEv": 5097217.13,
+  "ebitdaEv": 12096070,
+  "revenueEv": 0,
+  "waccPct": 13.77
+ },
+ "lc-health-biotech-mature": {
+  "equity": 7451710,
+  "enterpriseValue": 8261710,
+  "bearEquity": 6408470.6,
+  "bullEquity": 8494949.4,
+  "dcfEv": 5097217.13,
+  "ebitdaEv": 12129420,
+  "revenueEv": 0,
+  "waccPct": 13.77
+ },
+ "lc-health-biotech-seed": {
+  "equity": 7579150,
+  "enterpriseValue": 8389150,
+  "bearEquity": 6518069,
+  "bullEquity": 8640231,
+  "dcfEv": 5035263.72,
+  "ebitdaEv": 12096070,
+  "revenueEv": 0,
+  "waccPct": 14.38
+ },
+ "lc-health-digital_health-early": {
+  "equity": 2028280,
+  "enterpriseValue": 2226280,
+  "bearEquity": 1744320.8,
+  "bullEquity": 2312239.2,
+  "dcfEv": 1231808.41,
+  "ebitdaEv": 2705100,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-health-digital_health-growth": {
+  "equity": 2028280,
+  "enterpriseValue": 2226280,
+  "bearEquity": 1744320.8,
+  "bullEquity": 2312239.2,
+  "dcfEv": 1231808.41,
+  "ebitdaEv": 2705100,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-health-digital_health-mature": {
+  "equity": 2029460,
+  "enterpriseValue": 2227460,
+  "bearEquity": 1745335.6,
+  "bullEquity": 2313584.4,
+  "dcfEv": 1231808.41,
+  "ebitdaEv": 2706850,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-health-digital_health-seed": {
+  "equity": 2027180,
+  "enterpriseValue": 2225180,
+  "bearEquity": 1743374.8,
+  "bullEquity": 2310985.2,
+  "dcfEv": 1216973.59,
+  "ebitdaEv": 2705100,
+  "revenueEv": 0,
+  "waccPct": 14.95
+ },
+ "lc-health-medtech-early": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "lc-health-medtech-growth": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "lc-health-medtech-mature": {
+  "equity": 130167720,
+  "enterpriseValue": 142767720,
+  "bearEquity": 119123186.18,
+  "bullEquity": 141212253.82,
+  "dcfEv": 84446560.34,
+  "ebitdaEv": 201088880,
+  "revenueEv": 0,
+  "waccPct": 10.73
+ },
+ "lc-health-medtech-seed": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "lc-health-services_health-early": {
+  "equity": 159903750,
+  "enterpriseValue": 177003750,
+  "bearEquity": 146336159.09,
+  "bullEquity": 173471340.91,
+  "dcfEv": 112661339.45,
+  "ebitdaEv": 213196360,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "lc-health-services_health-growth": {
+  "equity": 159903750,
+  "enterpriseValue": 177003750,
+  "bearEquity": 146336159.09,
+  "bullEquity": 173471340.91,
+  "dcfEv": 112661339.45,
+  "ebitdaEv": 213196360,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "lc-health-services_health-mature": {
+  "equity": 168713340,
+  "enterpriseValue": 185813340,
+  "bearEquity": 154398268.73,
+  "bullEquity": 183028411.27,
+  "dcfEv": 114606026.83,
+  "ebitdaEv": 225867460,
+  "revenueEv": 0,
+  "waccPct": 10.73
+ },
+ "lc-health-services_health-seed": {
+  "equity": 159903750,
+  "enterpriseValue": 177003750,
+  "bearEquity": 146336159.09,
+  "bullEquity": 173471340.91,
+  "dcfEv": 112661339.45,
+  "ebitdaEv": 213196360,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "lc-hospitality-airbnb_mgmt-early": {
+  "equity": 852430,
+  "enterpriseValue": 933430,
+  "bearEquity": 613749.6,
+  "bullEquity": 1091110.4,
+  "dcfEv": 678322.05,
+  "ebitdaEv": 1103510,
+  "revenueEv": 0,
+  "waccPct": 15.05
+ },
+ "lc-hospitality-airbnb_mgmt-growth": {
+  "equity": 852430,
+  "enterpriseValue": 933430,
+  "bearEquity": 613749.6,
+  "bullEquity": 1091110.4,
+  "dcfEv": 678322.05,
+  "ebitdaEv": 1103510,
+  "revenueEv": 0,
+  "waccPct": 15.05
+ },
+ "lc-hospitality-airbnb_mgmt-mature": {
+  "equity": 852660,
+  "enterpriseValue": 933660,
+  "bearEquity": 613915.2,
+  "bullEquity": 1091404.8,
+  "dcfEv": 678322.05,
+  "ebitdaEv": 1103880,
+  "revenueEv": 0,
+  "waccPct": 15.05
+ },
+ "lc-hospitality-airbnb_mgmt-seed": {
+  "equity": 853140,
+  "enterpriseValue": 934140,
+  "bearEquity": 614260.8,
+  "bullEquity": 1092019.2,
+  "dcfEv": 669228.33,
+  "ebitdaEv": 1103510,
+  "revenueEv": 0,
+  "waccPct": 15.74
+ },
+ "lc-hospitality-boutique_hotel-early": {
+  "equity": 6340790,
+  "enterpriseValue": 6880790,
+  "bearEquity": 4713858.57,
+  "bullEquity": 7967721.43,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8596800,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "lc-hospitality-boutique_hotel-growth": {
+  "equity": 6340790,
+  "enterpriseValue": 6880790,
+  "bearEquity": 4713858.57,
+  "bullEquity": 7967721.43,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8596800,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "lc-hospitality-boutique_hotel-mature": {
+  "equity": 6349980,
+  "enterpriseValue": 6889980,
+  "bearEquity": 4720690.59,
+  "bullEquity": 7979269.41,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8612790,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "lc-hospitality-boutique_hotel-seed": {
+  "equity": 6365660,
+  "enterpriseValue": 6905660,
+  "bearEquity": 4732347.38,
+  "bullEquity": 7998972.62,
+  "dcfEv": 4497064.03,
+  "ebitdaEv": 8596800,
+  "revenueEv": 0,
+  "waccPct": 15.34
+ },
+ "lc-hospitality-hotel_chain-early": {
+  "equity": 739866080,
+  "enterpriseValue": 798366080,
+  "bearEquity": 550029895.98,
+  "bullEquity": 929702264.02,
+  "dcfEv": 519808788.99,
+  "ebitdaEv": 1118856730,
+  "revenueEv": 0,
+  "waccPct": 12.11
+ },
+ "lc-hospitality-hotel_chain-growth": {
+  "equity": 739866080,
+  "enterpriseValue": 798366080,
+  "bearEquity": 550029895.98,
+  "bullEquity": 929702264.02,
+  "dcfEv": 519808788.99,
+  "ebitdaEv": 1118856730,
+  "revenueEv": 0,
+  "waccPct": 12.11
+ },
+ "lc-hospitality-hotel_chain-mature": {
+  "equity": 810359590,
+  "enterpriseValue": 868859590,
+  "bearEquity": 602436053.02,
+  "bullEquity": 1018283126.98,
+  "dcfEv": 530014333.39,
+  "ebitdaEv": 1258713820,
+  "revenueEv": 0,
+  "waccPct": 11.17
+ },
+ "lc-hospitality-hotel_chain-seed": {
+  "equity": 739866080,
+  "enterpriseValue": 798366080,
+  "bearEquity": 550029895.98,
+  "bullEquity": 929702264.02,
+  "dcfEv": 519808788.99,
+  "ebitdaEv": 1118856730,
+  "revenueEv": 0,
+  "waccPct": 12.11
+ },
+ "lc-hospitality-vacation-early": {
+  "equity": 143393630,
+  "enterpriseValue": 155993630,
+  "bearEquity": 106601431.7,
+  "bullEquity": 180185828.3,
+  "dcfEv": 112045032.22,
+  "ebitdaEv": 206558140,
+  "revenueEv": 0,
+  "waccPct": 12.07
+ },
+ "lc-hospitality-vacation-growth": {
+  "equity": 143393630,
+  "enterpriseValue": 155993630,
+  "bearEquity": 106601431.7,
+  "bullEquity": 180185828.3,
+  "dcfEv": 112045032.22,
+  "ebitdaEv": 206558140,
+  "revenueEv": 0,
+  "waccPct": 12.07
+ },
+ "lc-hospitality-vacation-mature": {
+  "equity": 148760180,
+  "enterpriseValue": 161360180,
+  "bearEquity": 110591022.54,
+  "bullEquity": 186929337.46,
+  "dcfEv": 114221456.06,
+  "ebitdaEv": 215595050,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "lc-hospitality-vacation-seed": {
+  "equity": 143393630,
+  "enterpriseValue": 155993630,
+  "bearEquity": 106601431.7,
+  "bullEquity": 180185828.3,
+  "dcfEv": 112045032.22,
+  "ebitdaEv": 206558140,
+  "revenueEv": 0,
+  "waccPct": 12.07
+ },
+ "lc-industry-distribution-early": {
+  "equity": 97298520,
+  "enterpriseValue": 124298520,
+  "bearEquity": 77897784.8,
+  "bullEquity": 116699255.2,
+  "dcfEv": 99721494.99,
+  "ebitdaEv": 156877370,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-industry-distribution-growth": {
+  "equity": 97298520,
+  "enterpriseValue": 124298520,
+  "bearEquity": 77897784.8,
+  "bullEquity": 116699255.2,
+  "dcfEv": 99721494.99,
+  "ebitdaEv": 156877370,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-industry-distribution-mature": {
+  "equity": 104594930,
+  "enterpriseValue": 131594930,
+  "bearEquity": 83739334.87,
+  "bullEquity": 125450525.13,
+  "dcfEv": 101414722.85,
+  "ebitdaEv": 171601240,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "lc-industry-distribution-seed": {
+  "equity": 97298520,
+  "enterpriseValue": 124298520,
+  "bearEquity": 77897784.8,
+  "bullEquity": 116699255.2,
+  "dcfEv": 99721494.99,
+  "ebitdaEv": 156877370,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-industry-food_bev-early": {
+  "equity": 7543860,
+  "enterpriseValue": 9523860,
+  "bearEquity": 6039660.04,
+  "bullEquity": 9048059.96,
+  "dcfEv": 6997323.71,
+  "ebitdaEv": 11231310,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-industry-food_bev-growth": {
+  "equity": 7543860,
+  "enterpriseValue": 9523860,
+  "bearEquity": 6039660.04,
+  "bullEquity": 9048059.96,
+  "dcfEv": 6997323.71,
+  "ebitdaEv": 11231310,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-industry-food_bev-mature": {
+  "equity": 7590400,
+  "enterpriseValue": 9570400,
+  "bearEquity": 6076920.24,
+  "bullEquity": 9103879.76,
+  "dcfEv": 6997323.71,
+  "ebitdaEv": 11309300,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "lc-industry-food_bev-seed": {
+  "equity": 7552020,
+  "enterpriseValue": 9532020,
+  "bearEquity": 6046192.98,
+  "bullEquity": 9057847.02,
+  "dcfEv": 6915520.89,
+  "ebitdaEv": 11231310,
+  "revenueEv": 0,
+  "waccPct": 14.93
+ },
+ "lc-industry-manufacturing-early": {
+  "equity": 801410730,
+  "enterpriseValue": 1026410730,
+  "bearEquity": 641614287.47,
+  "bullEquity": 961207172.53,
+  "dcfEv": 831012700.99,
+  "ebitdaEv": 1373784990,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-industry-manufacturing-growth": {
+  "equity": 801410730,
+  "enterpriseValue": 1026410730,
+  "bearEquity": 641614287.47,
+  "bullEquity": 961207172.53,
+  "dcfEv": 831012700.99,
+  "ebitdaEv": 1373784990,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-industry-manufacturing-mature": {
+  "equity": 872261600,
+  "enterpriseValue": 1097261600,
+  "bearEquity": 698337923.39,
+  "bullEquity": 1046185276.61,
+  "dcfEv": 845122938.23,
+  "ebitdaEv": 1545508110,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "lc-industry-manufacturing-seed": {
+  "equity": 801410730,
+  "enterpriseValue": 1026410730,
+  "bearEquity": 641614287.47,
+  "bullEquity": 961207172.53,
+  "dcfEv": 831012700.99,
+  "ebitdaEv": 1373784990,
+  "revenueEv": 0,
+  "waccPct": 12.15
+ },
+ "lc-industry-traditional-early": {
+  "equity": 30084920,
+  "enterpriseValue": 39084920,
+  "bearEquity": 24086169.28,
+  "bullEquity": 36083670.72,
+  "dcfEv": 33150814.63,
+  "ebitdaEv": 46797320,
+  "revenueEv": 0,
+  "waccPct": 12.29
+ },
+ "lc-industry-traditional-growth": {
+  "equity": 30084920,
+  "enterpriseValue": 39084920,
+  "bearEquity": 24086169.28,
+  "bullEquity": 36083670.72,
+  "dcfEv": 33150814.63,
+  "ebitdaEv": 46797320,
+  "revenueEv": 0,
+  "waccPct": 12.29
+ },
+ "lc-industry-traditional-mature": {
+  "equity": 30842620,
+  "enterpriseValue": 39842620,
+  "bearEquity": 24692788.5,
+  "bullEquity": 36992451.5,
+  "dcfEv": 33366302.9,
+  "ebitdaEv": 48259730,
+  "revenueEv": 0,
+  "waccPct": 11.97
+ },
+ "lc-industry-traditional-seed": {
+  "equity": 30075630,
+  "enterpriseValue": 39075630,
+  "bearEquity": 24078731.65,
+  "bullEquity": 36072528.35,
+  "dcfEv": 33126424.6,
+  "ebitdaEv": 46797320,
+  "revenueEv": 0,
+  "waccPct": 12.32
+ },
+ "lc-other-general-early": {
+  "equity": 28301000,
+  "enterpriseValue": 33251000,
+  "bearEquity": 23210250.42,
+  "bullEquity": 33391749.58,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 41786150,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "lc-other-general-growth": {
+  "equity": 28301000,
+  "enterpriseValue": 33251000,
+  "bearEquity": 23210250.42,
+  "bullEquity": 33391749.58,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 41786150,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "lc-other-general-mature": {
+  "equity": 28612260,
+  "enterpriseValue": 33562260,
+  "bearEquity": 23465521.35,
+  "bullEquity": 33758998.65,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 42505560,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "lc-other-general-seed": {
+  "equity": 28339480,
+  "enterpriseValue": 33289480,
+  "bearEquity": 23241808.69,
+  "bullEquity": 33437151.31,
+  "dcfEv": 26558956.43,
+  "ebitdaEv": 41786150,
+  "revenueEv": 0,
+  "waccPct": 13.72
+ },
+ "lc-real_estate-construction_contracting-early": {
+  "equity": 109795480,
+  "enterpriseValue": 126895480,
+  "bearEquity": 99957804.99,
+  "bullEquity": 119633155.01,
+  "dcfEv": 115462580.89,
+  "ebitdaEv": 138328370,
+  "revenueEv": 0,
+  "waccPct": 11.03
+ },
+ "lc-real_estate-construction_contracting-growth": {
+  "equity": 109795480,
+  "enterpriseValue": 126895480,
+  "bearEquity": 99957804.99,
+  "bullEquity": 119633155.01,
+  "dcfEv": 115462580.89,
+  "ebitdaEv": 138328370,
+  "revenueEv": 0,
+  "waccPct": 11.03
+ },
+ "lc-real_estate-construction_contracting-mature": {
+  "equity": 114959660,
+  "enterpriseValue": 132059660,
+  "bearEquity": 104659274.46,
+  "bullEquity": 125260045.54,
+  "dcfEv": 117585562.06,
+  "ebitdaEv": 146533760,
+  "revenueEv": 0,
+  "waccPct": 10.17
+ },
+ "lc-real_estate-construction_contracting-seed": {
+  "equity": 109795480,
+  "enterpriseValue": 126895480,
+  "bearEquity": 99957804.99,
+  "bullEquity": 119633155.01,
+  "dcfEv": 115462580.89,
+  "ebitdaEv": 138328370,
+  "revenueEv": 0,
+  "waccPct": 11.03
+ },
+ "lc-real_estate-proptech-early": {
+  "equity": 13374250,
+  "enterpriseValue": 14454250,
+  "bearEquity": 11501855,
+  "bullEquity": 15246645,
+  "dcfEv": 8443917.44,
+  "ebitdaEv": 17690580,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "lc-real_estate-proptech-growth": {
+  "equity": 13374250,
+  "enterpriseValue": 14454250,
+  "bearEquity": 11501855,
+  "bullEquity": 15246645,
+  "dcfEv": 8443917.44,
+  "ebitdaEv": 17690580,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "lc-real_estate-proptech-mature": {
+  "equity": 13417210,
+  "enterpriseValue": 14497210,
+  "bearEquity": 11538800.6,
+  "bullEquity": 15295619.4,
+  "dcfEv": 8443917.44,
+  "ebitdaEv": 17756680,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "lc-real_estate-proptech-seed": {
+  "equity": 13380220,
+  "enterpriseValue": 14460220,
+  "bearEquity": 11506989.2,
+  "bullEquity": 15253450.8,
+  "dcfEv": 8327209.24,
+  "ebitdaEv": 17690580,
+  "revenueEv": 0,
+  "waccPct": 14.53
+ },
+ "lc-real_estate-re_development-early": {
+  "equity": 5238700,
+  "enterpriseValue": 6048700,
+  "bearEquity": 4505282,
+  "bullEquity": 5972118,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7124170,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "lc-real_estate-re_development-growth": {
+  "equity": 5238700,
+  "enterpriseValue": 6048700,
+  "bearEquity": 4505282,
+  "bullEquity": 5972118,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7124170,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "lc-real_estate-re_development-mature": {
+  "equity": 5247900,
+  "enterpriseValue": 6057900,
+  "bearEquity": 4513194,
+  "bullEquity": 5982606,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7143530,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "lc-real_estate-re_development-seed": {
+  "equity": 5251160,
+  "enterpriseValue": 6061160,
+  "bearEquity": 4515997.6,
+  "bullEquity": 5986322.4,
+  "dcfEv": 5008718.15,
+  "ebitdaEv": 7124170,
+  "revenueEv": 0,
+  "waccPct": 14.17
+ },
+ "lc-real_estate-re_income-early": {
+  "equity": 22642050,
+  "enterpriseValue": 26242050,
+  "bearEquity": 19472163,
+  "bullEquity": 25811937,
+  "dcfEv": 23749454.05,
+  "ebitdaEv": 26706960,
+  "revenueEv": 0,
+  "waccPct": 11.03
+ },
+ "lc-real_estate-re_income-growth": {
+  "equity": 22642050,
+  "enterpriseValue": 26242050,
+  "bearEquity": 19472163,
+  "bullEquity": 25811937,
+  "dcfEv": 23749454.05,
+  "ebitdaEv": 26706960,
+  "revenueEv": 0,
+  "waccPct": 11.03
+ },
+ "lc-real_estate-re_income-mature": {
+  "equity": 22642050,
+  "enterpriseValue": 26242050,
+  "bearEquity": 19472163,
+  "bullEquity": 25811937,
+  "dcfEv": 23749454.05,
+  "ebitdaEv": 26706960,
+  "revenueEv": 0,
+  "waccPct": 11.03
+ },
+ "lc-real_estate-re_income-seed": {
+  "equity": 22577690,
+  "enterpriseValue": 26177690,
+  "bearEquity": 19416813.4,
+  "bullEquity": 25738566.6,
+  "dcfEv": 23602142.5,
+  "ebitdaEv": 26706960,
+  "revenueEv": 0,
+  "waccPct": 11.32
+ },
+ "lc-retail_unified-d2c-early": {
+  "equity": 6977390,
+  "enterpriseValue": 9677390,
+  "bearEquity": 5492601.41,
+  "bullEquity": 8462178.59,
+  "dcfEv": 9006039.04,
+  "ebitdaEv": 10019220,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "lc-retail_unified-d2c-growth": {
+  "equity": 6977390,
+  "enterpriseValue": 9677390,
+  "bearEquity": 5492601.41,
+  "bullEquity": 8462178.59,
+  "dcfEv": 9006039.04,
+  "ebitdaEv": 10019220,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "lc-retail_unified-d2c-mature": {
+  "equity": 7039340,
+  "enterpriseValue": 9739340,
+  "bearEquity": 5541368.45,
+  "bullEquity": 8537311.55,
+  "dcfEv": 9006039.04,
+  "ebitdaEv": 10112720,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "lc-retail_unified-d2c-seed": {
+  "equity": 6949900,
+  "enterpriseValue": 9649900,
+  "bearEquity": 5470961.28,
+  "bullEquity": 8428838.72,
+  "dcfEv": 8920786.18,
+  "ebitdaEv": 10019220,
+  "revenueEv": 0,
+  "waccPct": 14.3
+ },
+ "lc-retail_unified-marketplace-early": {
+  "equity": 12659080,
+  "enterpriseValue": 13469080,
+  "bearEquity": 9965227.78,
+  "bullEquity": 15352932.22,
+  "dcfEv": 2896937.39,
+  "ebitdaEv": 0,
+  "revenueEv": 18000000,
+  "waccPct": 10.46
+ },
+ "lc-retail_unified-marketplace-growth": {
+  "equity": 12659080,
+  "enterpriseValue": 13469080,
+  "bearEquity": 9965227.78,
+  "bullEquity": 15352932.22,
+  "dcfEv": 2896937.39,
+  "ebitdaEv": 0,
+  "revenueEv": 18000000,
+  "waccPct": 10.46
+ },
+ "lc-retail_unified-marketplace-mature": {
+  "equity": 12659080,
+  "enterpriseValue": 13469080,
+  "bearEquity": 9965227.78,
+  "bullEquity": 15352932.22,
+  "dcfEv": 2896937.39,
+  "ebitdaEv": 0,
+  "revenueEv": 18000000,
+  "waccPct": 10.46
+ },
+ "lc-retail_unified-marketplace-seed": {
+  "equity": 12652190,
+  "enterpriseValue": 13462190,
+  "bearEquity": 9959803.97,
+  "bullEquity": 15344576.03,
+  "dcfEv": 2873978.51,
+  "ebitdaEv": 0,
+  "revenueEv": 18000000,
+  "waccPct": 10.84
+ },
+ "lc-retail_unified-retail-fashion-early": {
+  "equity": 517040,
+  "enterpriseValue": 877040,
+  "bearEquity": 379989.93,
+  "bullEquity": 654090.07,
+  "dcfEv": 1214949.53,
+  "ebitdaEv": 714340,
+  "revenueEv": 0,
+  "waccPct": 13.25
+ },
+ "lc-retail_unified-retail-fashion-growth": {
+  "equity": 517040,
+  "enterpriseValue": 877040,
+  "bearEquity": 379989.93,
+  "bullEquity": 654090.07,
+  "dcfEv": 1214949.53,
+  "ebitdaEv": 714340,
+  "revenueEv": 0,
+  "waccPct": 13.25
+ },
+ "lc-retail_unified-retail-fashion-mature": {
+  "equity": 517630,
+  "enterpriseValue": 877630,
+  "bearEquity": 380423.54,
+  "bullEquity": 654836.46,
+  "dcfEv": 1214949.53,
+  "ebitdaEv": 715210,
+  "revenueEv": 0,
+  "waccPct": 13.25
+ },
+ "lc-retail_unified-retail-fashion-seed": {
+  "equity": 512520,
+  "enterpriseValue": 872520,
+  "bearEquity": 376668.03,
+  "bullEquity": 648371.97,
+  "dcfEv": 1204828.52,
+  "ebitdaEv": 714340,
+  "revenueEv": 0,
+  "waccPct": 13.66
+ },
+ "lc-retail_unified-retail-supermarkets-early": {
+  "equity": 966638730,
+  "enterpriseValue": 1416638730,
+  "bearEquity": 760938008.26,
+  "bullEquity": 1172339451.74,
+  "dcfEv": 1565193007.7,
+  "ebitdaEv": 1304571460,
+  "revenueEv": 0,
+  "waccPct": 11.78
+ },
+ "lc-retail_unified-retail-supermarkets-growth": {
+  "equity": 966638730,
+  "enterpriseValue": 1416638730,
+  "bearEquity": 760938008.26,
+  "bullEquity": 1172339451.74,
+  "dcfEv": 1565193007.7,
+  "ebitdaEv": 1304571460,
+  "revenueEv": 0,
+  "waccPct": 11.78
+ },
+ "lc-retail_unified-retail-supermarkets-mature": {
+  "equity": 1068608490,
+  "enterpriseValue": 1518608490,
+  "bearEquity": 841208603.33,
+  "bullEquity": 1296008376.67,
+  "dcfEv": 1586167536.91,
+  "ebitdaEv": 1467642890,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "lc-retail_unified-retail-supermarkets-seed": {
+  "equity": 966638730,
+  "enterpriseValue": 1416638730,
+  "bearEquity": 760938008.26,
+  "bullEquity": 1172339451.74,
+  "dcfEv": 1565193007.7,
+  "ebitdaEv": 1304571460,
+  "revenueEv": 0,
+  "waccPct": 11.78
+ },
+ "lc-retail_unified-specialty-early": {
+  "equity": 148790,
+  "enterpriseValue": 220790,
+  "bearEquity": 109350.73,
+  "bullEquity": 188229.27,
+  "dcfEv": 238557.25,
+  "ebitdaEv": 212230,
+  "revenueEv": 0,
+  "waccPct": 14.15
+ },
+ "lc-retail_unified-specialty-growth": {
+  "equity": 148790,
+  "enterpriseValue": 220790,
+  "bearEquity": 109350.73,
+  "bullEquity": 188229.27,
+  "dcfEv": 238557.25,
+  "ebitdaEv": 212230,
+  "revenueEv": 0,
+  "waccPct": 14.15
+ },
+ "lc-retail_unified-specialty-mature": {
+  "equity": 148830,
+  "enterpriseValue": 220830,
+  "bearEquity": 109380.13,
+  "bullEquity": 188279.87,
+  "dcfEv": 238557.25,
+  "ebitdaEv": 212290,
+  "revenueEv": 0,
+  "waccPct": 14.15
+ },
+ "lc-retail_unified-specialty-seed": {
+  "equity": 147940,
+  "enterpriseValue": 219940,
+  "bearEquity": 108726.04,
+  "bullEquity": 187153.96,
+  "dcfEv": 236147.94,
+  "ebitdaEv": 212230,
+  "revenueEv": 0,
+  "waccPct": 14.66
+ },
+ "lc-saas-b2b_saas-early": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "lc-saas-b2b_saas-growth": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "lc-saas-b2b_saas-mature": {
+  "equity": 151018510,
+  "enterpriseValue": 154618510,
+  "bearEquity": 141957399.4,
+  "bullEquity": 160079620.6,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 214600000,
+  "waccPct": 14.27
+ },
+ "lc-saas-b2b_saas-seed": {
+  "equity": 148807260,
+  "enterpriseValue": 152407260,
+  "bearEquity": 139878824.4,
+  "bullEquity": 157735695.6,
+  "dcfEv": 27651355.04,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.76
+ },
+ "lc-saas-b2c_saas-early": {
+  "equity": 670328030,
+  "enterpriseValue": 687428030,
+  "bearEquity": 630108348.2,
+  "bullEquity": 710547711.8,
+  "dcfEv": 137613906.33,
+  "ebitdaEv": 0,
+  "revenueEv": 912000000,
+  "waccPct": 12.44
+ },
+ "lc-saas-b2c_saas-growth": {
+  "equity": 670328030,
+  "enterpriseValue": 687428030,
+  "bearEquity": 630108348.2,
+  "bullEquity": 710547711.8,
+  "dcfEv": 137613906.33,
+  "ebitdaEv": 0,
+  "revenueEv": 912000000,
+  "waccPct": 12.44
+ },
+ "lc-saas-b2c_saas-mature": {
+  "equity": 709494720,
+  "enterpriseValue": 726594720,
+  "bearEquity": 666925036.8,
+  "bullEquity": 752064403.2,
+  "dcfEv": 140097323.2,
+  "ebitdaEv": 0,
+  "revenueEv": 966150000,
+  "waccPct": 11.58
+ },
+ "lc-saas-b2c_saas-seed": {
+  "equity": 670328030,
+  "enterpriseValue": 687428030,
+  "bearEquity": 630108348.2,
+  "bullEquity": 710547711.8,
+  "dcfEv": 137613906.33,
+  "ebitdaEv": 0,
+  "revenueEv": 912000000,
+  "waccPct": 12.44
+ },
+ "lc-saas-devtools-early": {
+  "equity": 43151950,
+  "enterpriseValue": 44231950,
+  "bearEquity": 40562833,
+  "bullEquity": 45741067,
+  "dcfEv": 8284991.38,
+  "ebitdaEv": 0,
+  "revenueEv": 63588000,
+  "waccPct": 14.83
+ },
+ "lc-saas-devtools-growth": {
+  "equity": 43151950,
+  "enterpriseValue": 44231950,
+  "bearEquity": 40562833,
+  "bullEquity": 45741067,
+  "dcfEv": 8284991.38,
+  "ebitdaEv": 0,
+  "revenueEv": 63588000,
+  "waccPct": 14.83
+ },
+ "lc-saas-devtools-mature": {
+  "equity": 43307950,
+  "enterpriseValue": 44387950,
+  "bearEquity": 40709473,
+  "bullEquity": 45906427,
+  "dcfEv": 8284991.38,
+  "ebitdaEv": 0,
+  "revenueEv": 63828000,
+  "waccPct": 14.83
+ },
+ "lc-saas-devtools-seed": {
+  "equity": 43392280,
+  "enterpriseValue": 44472280,
+  "bearEquity": 40788743.2,
+  "bullEquity": 45995816.8,
+  "dcfEv": 8180106.56,
+  "ebitdaEv": 0,
+  "revenueEv": 63588000,
+  "waccPct": 15.48
+ },
+ "lc-saas-marketplace-early": {
+  "equity": 168269020,
+  "enterpriseValue": 173219020,
+  "bearEquity": 158172878.8,
+  "bullEquity": 178365161.2,
+  "dcfEv": 38720335.26,
+  "ebitdaEv": 0,
+  "revenueEv": 240790000,
+  "waccPct": 13.85
+ },
+ "lc-saas-marketplace-growth": {
+  "equity": 168269020,
+  "enterpriseValue": 173219020,
+  "bearEquity": 158172878.8,
+  "bullEquity": 178365161.2,
+  "dcfEv": 38720335.26,
+  "ebitdaEv": 0,
+  "revenueEv": 240790000,
+  "waccPct": 13.85
+ },
+ "lc-saas-marketplace-mature": {
+  "equity": 171014650,
+  "enterpriseValue": 175964650,
+  "bearEquity": 160753771,
+  "bullEquity": 181275529,
+  "dcfEv": 38720335.26,
+  "ebitdaEv": 0,
+  "revenueEv": 244915000,
+  "waccPct": 13.85
+ },
+ "lc-saas-marketplace-seed": {
+  "equity": 167680430,
+  "enterpriseValue": 172630430,
+  "bearEquity": 157619604.2,
+  "bullEquity": 177741255.8,
+  "dcfEv": 38425956.67,
+  "ebitdaEv": 0,
+  "revenueEv": 240790000,
+  "waccPct": 14.23
+ },
+ "lc-services-accounting-early": {
+  "equity": 179201950,
+  "enterpriseValue": 201701950,
+  "bearEquity": 156698529.37,
+  "bullEquity": 201705370.63,
+  "dcfEv": 166864173.89,
+  "ebitdaEv": 215931460,
+  "revenueEv": 0,
+  "waccPct": 11.63
+ },
+ "lc-services-accounting-growth": {
+  "equity": 179201950,
+  "enterpriseValue": 201701950,
+  "bearEquity": 156698529.37,
+  "bullEquity": 201705370.63,
+  "dcfEv": 166864173.89,
+  "ebitdaEv": 215931460,
+  "revenueEv": 0,
+  "waccPct": 11.63
+ },
+ "lc-services-accounting-mature": {
+  "equity": 192020920,
+  "enterpriseValue": 214520920,
+  "bearEquity": 167907747.5,
+  "bullEquity": 216134092.5,
+  "dcfEv": 169723633.69,
+  "ebitdaEv": 232818400,
+  "revenueEv": 0,
+  "waccPct": 10.82
+ },
+ "lc-services-accounting-seed": {
+  "equity": 179201950,
+  "enterpriseValue": 201701950,
+  "bearEquity": 156698529.37,
+  "bullEquity": 201705370.63,
+  "dcfEv": 166864173.89,
+  "ebitdaEv": 215931460,
+  "revenueEv": 0,
+  "waccPct": 11.63
+ },
+ "lc-services-consulting-early": {
+  "equity": 8626640,
+  "enterpriseValue": 9706640,
+  "bearEquity": 7418910.4,
+  "bullEquity": 9834369.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10391280,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "lc-services-consulting-growth": {
+  "equity": 8626640,
+  "enterpriseValue": 9706640,
+  "bearEquity": 7418910.4,
+  "bullEquity": 9834369.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10391280,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "lc-services-consulting-mature": {
+  "equity": 8655290,
+  "enterpriseValue": 9735290,
+  "bearEquity": 7443549.4,
+  "bullEquity": 9867030.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10429480,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "lc-services-consulting-seed": {
+  "equity": 8589400,
+  "enterpriseValue": 9669400,
+  "bearEquity": 7386884,
+  "bullEquity": 9791916,
+  "dcfEv": 7560375.97,
+  "ebitdaEv": 10391280,
+  "revenueEv": 0,
+  "waccPct": 14.47
+ },
+ "lc-services-legal-early": {
+  "equity": 995340,
+  "enterpriseValue": 1130340,
+  "bearEquity": 823055.69,
+  "bullEquity": 1167624.31,
+  "dcfEv": 945823.68,
+  "ebitdaEv": 1183910,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ },
+ "lc-services-legal-growth": {
+  "equity": 995340,
+  "enterpriseValue": 1130340,
+  "bearEquity": 823055.69,
+  "bullEquity": 1167624.31,
+  "dcfEv": 945823.68,
+  "ebitdaEv": 1183910,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ },
+ "lc-services-legal-mature": {
+  "equity": 995820,
+  "enterpriseValue": 1130820,
+  "bearEquity": 823452.61,
+  "bullEquity": 1168187.39,
+  "dcfEv": 945823.68,
+  "ebitdaEv": 1184530,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ },
+ "lc-services-legal-seed": {
+  "equity": 990930,
+  "enterpriseValue": 1125930,
+  "bearEquity": 819409.03,
+  "bullEquity": 1162450.97,
+  "dcfEv": 934516.3,
+  "ebitdaEv": 1183910,
+  "revenueEv": 0,
+  "waccPct": 15.04
+ },
+ "lc-services-marketing-early": {
+  "equity": 1674430,
+  "enterpriseValue": 1899430,
+  "bearEquity": 1384601.39,
+  "bullEquity": 1964258.61,
+  "dcfEv": 1576372.79,
+  "ebitdaEv": 2021970,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ },
+ "lc-services-marketing-growth": {
+  "equity": 1674430,
+  "enterpriseValue": 1899430,
+  "bearEquity": 1384601.39,
+  "bullEquity": 1964258.61,
+  "dcfEv": 1576372.79,
+  "ebitdaEv": 2021970,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ },
+ "lc-services-marketing-mature": {
+  "equity": 1675690,
+  "enterpriseValue": 1900690,
+  "bearEquity": 1385643.29,
+  "bullEquity": 1965736.71,
+  "dcfEv": 1576372.79,
+  "ebitdaEv": 2023700,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ },
+ "lc-services-marketing-seed": {
+  "equity": 1668090,
+  "enterpriseValue": 1893090,
+  "bearEquity": 1379358.79,
+  "bullEquity": 1956821.21,
+  "dcfEv": 1557527.17,
+  "ebitdaEv": 2021970,
+  "revenueEv": 0,
+  "waccPct": 15.04
+ },
+ "sub-cyber-cloud": {
+  "equity": 551657270,
+  "enterpriseValue": 560657270,
+  "bearEquity": 517956025.87,
+  "bullEquity": 585358514.13,
+  "dcfEv": 64619560.49,
+  "ebitdaEv": 0,
+  "revenueEv": 798700000,
+  "waccPct": 12.43
+ },
+ "sub-cyber-enterprise": {
+  "equity": 121196210,
+  "enterpriseValue": 123176210,
+  "bearEquity": 113792223.35,
+  "bullEquity": 128600196.65,
+  "dcfEv": 13614773.94,
+  "ebitdaEv": 0,
+  "revenueEv": 170654000,
+  "waccPct": 14.57
+ },
+ "sub-cyber-ot": {
+  "equity": 26591780,
+  "enterpriseValue": 27131780,
+  "bearEquity": 24967263.99,
+  "bullEquity": 28216296.01,
+  "dcfEv": 3709079.68,
+  "ebitdaEv": 0,
+  "revenueEv": 39744000,
+  "waccPct": 14.63
+ },
+ "sub-cyber-services_cyber": {
+  "equity": 15187360,
+  "enterpriseValue": 15502360,
+  "bearEquity": 13061129.6,
+  "bullEquity": 17313590.4,
+  "dcfEv": 2138456.46,
+  "ebitdaEv": 0,
+  "revenueEv": 19957000,
+  "waccPct": 15.22
+ },
+ "sub-defense_aerospace-aviation_space": {
+  "equity": 21943810,
+  "enterpriseValue": 24643810,
+  "bearEquity": 18871676.6,
+  "bullEquity": 25015943.4,
+  "dcfEv": 15073507.81,
+  "ebitdaEv": 32227460,
+  "revenueEv": 0,
+  "waccPct": 12.8
+ },
+ "sub-defense_aerospace-defense_manufacturing": {
+  "equity": 1245659060,
+  "enterpriseValue": 1407659060,
+  "bearEquity": 1065982177.41,
+  "bullEquity": 1425335942.59,
+  "dcfEv": 960743483.52,
+  "ebitdaEv": 2000082030,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "sub-defense_aerospace-defense_tech": {
+  "equity": 108707420,
+  "enterpriseValue": 121307420,
+  "bearEquity": 93027198.21,
+  "bullEquity": 124387641.79,
+  "dcfEv": 74724422.75,
+  "ebitdaEv": 167890410,
+  "revenueEv": 0,
+  "waccPct": 9.93
+ },
+ "sub-energy-services_energy": {
+  "equity": 139088390,
+  "enterpriseValue": 148088390,
+  "bearEquity": 119616015.4,
+  "bullEquity": 158560764.6,
+  "dcfEv": 78293309.85,
+  "ebitdaEv": 216866940,
+  "revenueEv": 0,
+  "waccPct": 11.8
+ },
+ "sub-energy-solar": {
+  "equity": 95192190,
+  "enterpriseValue": 101942190,
+  "bearEquity": 81865283.4,
+  "bullEquity": 108519096.6,
+  "dcfEv": 57819749.02,
+  "ebitdaEv": 188616590,
+  "revenueEv": 0,
+  "waccPct": 12.54
+ },
+ "sub-energy-storage": {
+  "equity": 419028920,
+  "enterpriseValue": 446028920,
+  "bearEquity": 360364871.2,
+  "bullEquity": 477692968.8,
+  "dcfEv": 235612197.78,
+  "ebitdaEv": 820103080,
+  "revenueEv": 0,
+  "waccPct": 11.65
+ },
+ "sub-energy-wind": {
+  "equity": 31233680,
+  "enterpriseValue": 33213680,
+  "bearEquity": 26860964.8,
+  "bullEquity": 35606395.2,
+  "dcfEv": 16424027.69,
+  "ebitdaEv": 54126780,
+  "revenueEv": 0,
+  "waccPct": 14.12
+ },
+ "sub-fintech-insurtech": {
+  "equity": 272448310,
+  "enterpriseValue": 279198310,
+  "bearEquity": 250256156.75,
+  "bullEquity": 294640463.25,
+  "dcfEv": 60128943.12,
+  "ebitdaEv": 0,
+  "revenueEv": 432000000,
+  "waccPct": 12.96
+ },
+ "sub-fintech-lending": {
+  "equity": 53702070,
+  "enterpriseValue": 55142070,
+  "bearEquity": 49327792.3,
+  "bullEquity": 58076347.7,
+  "dcfEv": 12431182.36,
+  "ebitdaEv": 0,
+  "revenueEv": 83616000,
+  "waccPct": 14.53
+ },
+ "sub-fintech-payments": {
+  "equity": 5343963840,
+  "enterpriseValue": 5451963840,
+  "bearEquity": 4908673694.49,
+  "bullEquity": 5779253985.51,
+  "dcfEv": 979010666.34,
+  "ebitdaEv": 0,
+  "revenueEv": 7968000000,
+  "waccPct": 12.11
+ },
+ "sub-fintech-wealth": {
+  "equity": 1274550970,
+  "enterpriseValue": 1301550970,
+  "bearEquity": 1170733000.08,
+  "bullEquity": 1378368939.92,
+  "dcfEv": 244752697.07,
+  "ebitdaEv": 0,
+  "revenueEv": 1896000000,
+  "waccPct": 12.11
+ },
+ "sub-food_service-cafe": {
+  "equity": 200690,
+  "enterpriseValue": 254690,
+  "bearEquity": 146744.53,
+  "bullEquity": 254635.47,
+  "dcfEv": 323063.38,
+  "ebitdaEv": 217870,
+  "revenueEv": 0,
+  "waccPct": 14.27
+ },
+ "sub-food_service-catering": {
+  "equity": 654190,
+  "enterpriseValue": 816190,
+  "bearEquity": 478343.73,
+  "bullEquity": 830036.27,
+  "dcfEv": 965850.95,
+  "ebitdaEv": 735600,
+  "revenueEv": 0,
+  "waccPct": 14.44
+ },
+ "sub-food_service-delivery": {
+  "equity": 1107850,
+  "enterpriseValue": 1395850,
+  "bearEquity": 810059.92,
+  "bullEquity": 1405640.08,
+  "dcfEv": 1720512.93,
+  "ebitdaEv": 1221030,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "sub-food_service-franchise": {
+  "equity": 142007270,
+  "enterpriseValue": 164507270,
+  "bearEquity": 111932712.16,
+  "bullEquity": 172081827.84,
+  "dcfEv": 143071985.78,
+  "ebitdaEv": 180677740,
+  "revenueEv": 0,
+  "waccPct": 11.3
+ },
+ "sub-food_service-restaurant": {
+  "equity": 71385370,
+  "enterpriseValue": 88485370,
+  "bearEquity": 56267246.55,
+  "bullEquity": 86503493.45,
+  "dcfEv": 109476320.42,
+  "ebitdaEv": 72650090,
+  "revenueEv": 0,
+  "waccPct": 10.98
+ },
+ "sub-health-biotech": {
+  "equity": 7436700,
+  "enterpriseValue": 8246700,
+  "bearEquity": 6395562,
+  "bullEquity": 8477838,
+  "dcfEv": 5097217.13,
+  "ebitdaEv": 12096070,
+  "revenueEv": 0,
+  "waccPct": 13.77
+ },
+ "sub-health-digital_health": {
+  "equity": 2028280,
+  "enterpriseValue": 2226280,
+  "bearEquity": 1744320.8,
+  "bullEquity": 2312239.2,
+  "dcfEv": 1231808.41,
+  "ebitdaEv": 2705100,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "sub-health-medtech": {
+  "equity": 125236820,
+  "enterpriseValue": 137836820,
+  "bearEquity": 114610665.58,
+  "bullEquity": 135862974.42,
+  "dcfEv": 83013632.5,
+  "ebitdaEv": 192660000,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "sub-health-services_health": {
+  "equity": 159903750,
+  "enterpriseValue": 177003750,
+  "bearEquity": 146336159.09,
+  "bullEquity": 173471340.91,
+  "dcfEv": 112661339.45,
+  "ebitdaEv": 213196360,
+  "revenueEv": 0,
+  "waccPct": 11.54
+ },
+ "sub-hospitality-airbnb_mgmt": {
+  "equity": 852660,
+  "enterpriseValue": 933660,
+  "bearEquity": 613915.2,
+  "bullEquity": 1091404.8,
+  "dcfEv": 678322.05,
+  "ebitdaEv": 1103880,
+  "revenueEv": 0,
+  "waccPct": 15.05
+ },
+ "sub-hospitality-boutique_hotel": {
+  "equity": 6349980,
+  "enterpriseValue": 6889980,
+  "bearEquity": 4720690.59,
+  "bullEquity": 7979269.41,
+  "dcfEv": 4559119.97,
+  "ebitdaEv": 8612790,
+  "revenueEv": 0,
+  "waccPct": 14.64
+ },
+ "sub-hospitality-hotel_chain": {
+  "equity": 810359590,
+  "enterpriseValue": 868859590,
+  "bearEquity": 602436053.02,
+  "bullEquity": 1018283126.98,
+  "dcfEv": 530014333.39,
+  "ebitdaEv": 1258713820,
+  "revenueEv": 0,
+  "waccPct": 11.17
+ },
+ "sub-hospitality-vacation": {
+  "equity": 148760180,
+  "enterpriseValue": 161360180,
+  "bearEquity": 110591022.54,
+  "bullEquity": 186929337.46,
+  "dcfEv": 114221456.06,
+  "ebitdaEv": 215595050,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "sub-industry-distribution": {
+  "equity": 104594930,
+  "enterpriseValue": 131594930,
+  "bearEquity": 83739334.87,
+  "bullEquity": 125450525.13,
+  "dcfEv": 101414722.85,
+  "ebitdaEv": 171601240,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "sub-industry-food_bev": {
+  "equity": 7590400,
+  "enterpriseValue": 9570400,
+  "bearEquity": 6076920.24,
+  "bullEquity": 9103879.76,
+  "dcfEv": 6997323.71,
+  "ebitdaEv": 11309300,
+  "revenueEv": 0,
+  "waccPct": 14.34
+ },
+ "sub-industry-manufacturing": {
+  "equity": 872261600,
+  "enterpriseValue": 1097261600,
+  "bearEquity": 698337923.39,
+  "bullEquity": 1046185276.61,
+  "dcfEv": 845122938.23,
+  "ebitdaEv": 1545508110,
+  "revenueEv": 0,
+  "waccPct": 11.34
+ },
+ "sub-industry-traditional": {
+  "equity": 30842620,
+  "enterpriseValue": 39842620,
+  "bearEquity": 24692788.5,
+  "bullEquity": 36992451.5,
+  "dcfEv": 33366302.9,
+  "ebitdaEv": 48259730,
+  "revenueEv": 0,
+  "waccPct": 11.97
+ },
+ "sub-other-general": {
+  "equity": 28612260,
+  "enterpriseValue": 33562260,
+  "bearEquity": 23465521.35,
+  "bullEquity": 33758998.65,
+  "dcfEv": 26741879.65,
+  "ebitdaEv": 42505560,
+  "revenueEv": 0,
+  "waccPct": 13.38
+ },
+ "sub-real_estate-construction_contracting": {
+  "equity": 114959660,
+  "enterpriseValue": 132059660,
+  "bearEquity": 104659274.46,
+  "bullEquity": 125260045.54,
+  "dcfEv": 117585562.06,
+  "ebitdaEv": 146533760,
+  "revenueEv": 0,
+  "waccPct": 10.17
+ },
+ "sub-real_estate-proptech": {
+  "equity": 13417210,
+  "enterpriseValue": 14497210,
+  "bearEquity": 11538800.6,
+  "bullEquity": 15295619.4,
+  "dcfEv": 8443917.44,
+  "ebitdaEv": 17756680,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "sub-real_estate-re_development": {
+  "equity": 5247900,
+  "enterpriseValue": 6057900,
+  "bearEquity": 4513194,
+  "bullEquity": 5982606,
+  "dcfEv": 5075656.35,
+  "ebitdaEv": 7143530,
+  "revenueEv": 0,
+  "waccPct": 13.51
+ },
+ "sub-real_estate-re_income": {
+  "equity": 22642050,
+  "enterpriseValue": 26242050,
+  "bearEquity": 19472163,
+  "bullEquity": 25811937,
+  "dcfEv": 23749454.05,
+  "ebitdaEv": 26706960,
+  "revenueEv": 0,
+  "waccPct": 11.03
+ },
+ "sub-retail_unified-d2c": {
+  "equity": 7039340,
+  "enterpriseValue": 9739340,
+  "bearEquity": 5541368.45,
+  "bullEquity": 8537311.55,
+  "dcfEv": 9006039.04,
+  "ebitdaEv": 10112720,
+  "revenueEv": 0,
+  "waccPct": 13.83
+ },
+ "sub-retail_unified-marketplace": {
+  "equity": 12659080,
+  "enterpriseValue": 13469080,
+  "bearEquity": 9965227.78,
+  "bullEquity": 15352932.22,
+  "dcfEv": 2896937.39,
+  "ebitdaEv": 0,
+  "revenueEv": 18000000,
+  "waccPct": 10.46
+ },
+ "sub-retail_unified-retail-fashion": {
+  "equity": 517630,
+  "enterpriseValue": 877630,
+  "bearEquity": 380423.54,
+  "bullEquity": 654836.46,
+  "dcfEv": 1214949.53,
+  "ebitdaEv": 715210,
+  "revenueEv": 0,
+  "waccPct": 13.25
+ },
+ "sub-retail_unified-retail-supermarkets": {
+  "equity": 1068608490,
+  "enterpriseValue": 1518608490,
+  "bearEquity": 841208603.33,
+  "bullEquity": 1296008376.67,
+  "dcfEv": 1586167536.91,
+  "ebitdaEv": 1467642890,
+  "revenueEv": 0,
+  "waccPct": 11.15
+ },
+ "sub-retail_unified-specialty": {
+  "equity": 148830,
+  "enterpriseValue": 220830,
+  "bearEquity": 109380.13,
+  "bullEquity": 188279.87,
+  "dcfEv": 238557.25,
+  "ebitdaEv": 212290,
+  "revenueEv": 0,
+  "waccPct": 14.15
+ },
+ "sub-saas-b2b_saas": {
+  "equity": 149226790,
+  "enterpriseValue": 152826790,
+  "bearEquity": 140273182.6,
+  "bullEquity": 158180397.4,
+  "dcfEv": 27924903.82,
+  "ebitdaEv": 0,
+  "revenueEv": 211960000,
+  "waccPct": 14.27
+ },
+ "sub-saas-b2c_saas": {
+  "equity": 670328030,
+  "enterpriseValue": 687428030,
+  "bearEquity": 630108348.2,
+  "bullEquity": 710547711.8,
+  "dcfEv": 137613906.33,
+  "ebitdaEv": 0,
+  "revenueEv": 912000000,
+  "waccPct": 12.44
+ },
+ "sub-saas-devtools": {
+  "equity": 43151950,
+  "enterpriseValue": 44231950,
+  "bearEquity": 40562833,
+  "bullEquity": 45741067,
+  "dcfEv": 8284991.38,
+  "ebitdaEv": 0,
+  "revenueEv": 63588000,
+  "waccPct": 14.83
+ },
+ "sub-saas-marketplace": {
+  "equity": 168269020,
+  "enterpriseValue": 173219020,
+  "bearEquity": 158172878.8,
+  "bullEquity": 178365161.2,
+  "dcfEv": 38720335.26,
+  "ebitdaEv": 0,
+  "revenueEv": 240790000,
+  "waccPct": 13.85
+ },
+ "sub-services-accounting": {
+  "equity": 192020920,
+  "enterpriseValue": 214520920,
+  "bearEquity": 167907747.5,
+  "bullEquity": 216134092.5,
+  "dcfEv": 169723633.69,
+  "ebitdaEv": 232818400,
+  "revenueEv": 0,
+  "waccPct": 10.82
+ },
+ "sub-services-consulting": {
+  "equity": 8655290,
+  "enterpriseValue": 9735290,
+  "bearEquity": 7443549.4,
+  "bullEquity": 9867030.6,
+  "dcfEv": 7652711.65,
+  "ebitdaEv": 10429480,
+  "revenueEv": 0,
+  "waccPct": 13.86
+ },
+ "sub-services-legal": {
+  "equity": 995820,
+  "enterpriseValue": 1130820,
+  "bearEquity": 823452.61,
+  "bullEquity": 1168187.39,
+  "dcfEv": 945823.68,
+  "ebitdaEv": 1184530,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ },
+ "sub-services-marketing": {
+  "equity": 1675690,
+  "enterpriseValue": 1900690,
+  "bearEquity": 1385643.29,
+  "bullEquity": 1965736.71,
+  "dcfEv": 1576372.79,
+  "ebitdaEv": 2023700,
+  "revenueEv": 0,
+  "waccPct": 14.43
+ }
+}

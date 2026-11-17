@@ -36,6 +36,15 @@ function readWaccComponents(spec: CaseSpec) {
   });
 }
 
+function engineCornerEquityM(spec: CaseSpec, waccPct: number, terminalG: number): number {
+  return withQuietConsole(() => {
+    const state = buildWizardState(spec);
+    const synced = { ...state, financials: syncFinancialsDerived(state.financials) };
+    const inputs = buildValuationInputsFromEquifyState(synced, TEST_FX);
+    return computeValuation(inputs, { waccPct, terminalGrowthRate: terminalG, silent: true }).equity / 1000;
+  });
+}
+
 function uniformSteps(values: number[], tolRel = 0.02): boolean {
   if (values.length < 3) return true;
   const steps = values.slice(1).map((v, i) => v - values[i]);
@@ -61,12 +70,19 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
   if (data.multipleLegEbitdaBase != null && y24 > 0 && y25 > 0 && (data.financialCore?.blendWeights.ebitda ?? 0) > 0) {
     suite.check('ebitda-normalized-30-30-40-is-multiple-base', id, approx(data.multipleLegEbitdaBase, norm, 0.005), `${data.multipleLegEbitdaBase} vs ${norm.toFixed(0)}`);
   }
-  suite.check(
-    'ebitda-single-declared-base',
-    id,
-    data.multipleLegEbitdaBase == null || data.blendedEbitdaBase == null || approx(data.multipleLegEbitdaBase, data.blendedEbitdaBase, 0.005),
-    `multiple leg uses ${data.multipleLegEbitdaBase?.toFixed(0)}, DCF uses ${data.blendedEbitdaBase?.toFixed(0)}`,
-  );
+  // Round 2 (finding 15): two bases, each with its own name and the weights the engine used.
+  const dw = data.dcfEbitdaWeights;
+  if (dw && data.blendedEbitdaBase != null) {
+    const rebuilt = dw.past * (data.ebitdaPast ?? 0) + dw.current * (data.ebitdaCurrent ?? 0) + dw.projected * (data.ebitdaProjected ?? 0);
+    suite.check('ebitda-dcf-weights-rebuild-base', id, approx(rebuilt, data.blendedEbitdaBase, 0.005), `${rebuilt.toFixed(0)} vs ${data.blendedEbitdaBase.toFixed(0)}`);
+  }
+  const mw = data.multipleEbitdaWeights;
+  if (mw && data.normalizedEbitdaNote) {
+    const shown = [...data.normalizedEbitdaNote.matchAll(/\((\d+)%\)/g)].map((m) => Number(m[1]));
+    const expected = [mw.prior2, mw.prior1, mw.current].filter((w) => w > 0).map((w) => Math.round(w * 100));
+    suite.check('ebitda-multiple-note-weights-are-engine', id, shown.join('/') === expected.join('/'), `note ${shown.join('/')} vs engine ${expected.join('/')}`);
+    suite.check('ebitda-multiple-note-named', id, data.normalizedEbitdaNote.startsWith('EBITDA מנורמל למכפיל'), data.normalizedEbitdaNote.slice(0, 30));
+  }
 
   // (ב) WACC from components.
   const wb = readWaccComponents(spec);
@@ -84,6 +100,22 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
     Math.abs(waccFromReportWeights - data.waccPct) <= 0.25,
     `WACC ${data.waccPct.toFixed(2)} vs Ke*E/V+Kd*D/V with report equity ${waccFromReportWeights.toFixed(2)} (E/V ${(weReport * 100).toFixed(1)}%)`,
   );
+  // Round 2: the page 4 table adds up (Ke from its rows, WACC from Ke, Kd and the weights).
+  if (data.waccTable) {
+    const t = data.waccTable;
+    const keRow = t.find((r) => r.kind === 'subtotal');
+    const keIdx = keRow ? t.indexOf(keRow) : -1;
+    const keSum = t.slice(0, keIdx).filter((r) => r.kind === 'component').reduce((s, r) => s + r.pct, 0);
+    suite.check('wacc-table-ke-sums', id, !!keRow && Math.abs(keSum - keRow.pct) <= 0.01, `rows ${keSum.toFixed(2)} vs Ke ${keRow?.pct.toFixed(2)}`);
+    const weights = t.filter((r) => r.kind === 'weight');
+    const kdAfter = t.slice(keIdx + 1).filter((r) => r.kind === 'component')[1];
+    const bound = t.slice(keIdx + 1).filter((r) => r.kind === 'component')[2]?.pct ?? 0;
+    const waccFromTable = keRow && weights.length === 2 && kdAfter
+      ? (keRow.pct * weights[0].pct) / 100 + (kdAfter.pct * weights[1].pct) / 100 + bound
+      : NaN;
+    suite.check('wacc-table-equals-effective', id, Math.abs(waccFromTable - data.waccPct) <= 0.05, `table ${waccFromTable.toFixed(2)} vs WACC ${data.waccPct.toFixed(2)}`);
+    suite.check('wacc-weights-sum-100', id, weights.length === 2 && Math.abs(weights[0].pct + weights[1].pct - 100) <= 0.01, weights.map((w) => w.pct.toFixed(2)).join('+'));
+  }
   const chartSum = data.waccSegments.reduce((s, x) => s + x.pct, 0);
   suite.check('wacc-chart-equals-effective', id, Math.abs(chartSum - data.waccPct) <= 0.05, `chart ${chartSum.toFixed(2)} vs WACC ${data.waccPct.toFixed(2)}`);
 
@@ -119,7 +151,8 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
   suite.check('ev-equals-weighted-legs', id, approx(data.enterpriseValue, weighted, 0.001), `${data.enterpriseValue} vs ${weighted.toFixed(0)}`);
   suite.check('equity-equals-ev-minus-net-debt', id, approx(data.equity, Math.max(0, data.enterpriseValue - data.netDebt), 0.0005, 1), `${data.equity} vs ${data.enterpriseValue - data.netDebt}`);
   const legRows = data.modelBlend.filter((r) => !/צבר|Backlog/i.test(r.name));
-  suite.check('display-weights-sum-100', id, legRows.reduce((s, r) => s + r.weightPct, 0) === 100, legRows.map((r) => r.weightPct).join('+'));
+  suite.check('display-weights-sum-100', id, Math.abs(legRows.reduce((s, r) => s + r.weightPct, 0) - 100) < 1e-9, legRows.map((r) => r.weightPct).join('+'));
+  suite.check('display-weights-one-decimal', id, legRows.every((r) => Math.abs(r.weightPct * 10 - Math.round(r.weightPct * 10)) < 1e-9), legRows.map((r) => r.weightPct).join('+'));
   const badRows = legRows.filter((r) => !approx(r.contribution, r.ev * (r.weightPct / 100), 0.005, 1));
   suite.check(
     'display-contribution-equals-ev-times-shown-weight',
@@ -139,6 +172,19 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
     suite.check('sensitivity-growth-steps-uniform', id, uniformSteps(gNums), s.growthLabels.join(','));
     const wNums = s.waccLabels.map((l) => parseFloat(l));
     suite.check('sensitivity-wacc-steps-uniform', id, uniformSteps(wNums, 0.05), s.waccLabels.join(','));
+    suite.check('sensitivity-wacc-step-1pp', id, Math.abs((wNums[1] - wNums[0]) - 1) < 0.051, s.waccLabels.join(','));
+    suite.check('sensitivity-growth-1.5-to-3.5', id, gNums[0] === 3.5 && gNums.at(-1) === 1.5 && gNums.length === 5, s.growthLabels.join(','));
+    // A corner cell is an independent engine run, not a linear approximation.
+    const corner = engineCornerEquityM(spec, wNums[0], gNums[0] / 100);
+    suite.check('sensitivity-cell-is-engine-run', id, approx(s.cells[0][0], corner, 0.001, 0.0005), `${s.cells[0][0].toFixed(4)} vs engine ${corner.toFixed(4)}`);
+  }
+  const e = data.sensitivityEbitdaMult;
+  if (e) {
+    const center = e.cells[e.baseRow][e.baseCol] * 1e6;
+    suite.check('sensitivity-ebitda-center-equals-equity', id, approx(center, data.equity, 0.001), `${center.toFixed(0)} vs ${data.equity}`);
+    const mNums = e.multipleLabels.map((l) => parseFloat(l.replace(/[×x]/g, '')));
+    suite.check('sensitivity-multiple-steps-0.5', id, mNums.every((v, i) => i === 0 || Math.abs(v - mNums[i - 1] - 0.5) < 0.051 || mNums[i - 1] <= 0.1), e.multipleLabels.join(','));
+    suite.check('sensitivity-ebitda-rows-5', id, e.cells.length === 5 && e.baseRow === 2, `${e.cells.length} rows`);
   }
 
   // (ח) Scenarios.

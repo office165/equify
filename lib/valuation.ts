@@ -291,6 +291,8 @@ export interface ValuationComputed {
   revMult: number;
   revMultiplier: number;
   dcf: number;
+  /** Terminal value share of the DCF leg (%), from the actual projection. */
+  terminalSharePct?: number;
   ev: number;
   equity: number;
   /** Pre-calibration engine output (trailing run-rate). */
@@ -435,11 +437,6 @@ export function fmtMillionParts(
     return { prefix: '', suffix: 'M', amount: '' };
   }
   return formatCurrencyHeroParts(valueNis, profile);
-}
-
-export function terminalValuePct(dcf: number): number {
-  if (dcf <= 0) return 0;
-  return Math.round(((dcf * 0.57) / dcf) * 100);
 }
 
 export type {

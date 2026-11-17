@@ -31,7 +31,7 @@ import {
 } from './equify-pdf-charts';
 import { equifyLogoHtml } from '../brand/equify-logo-html';
 import { buildCoverCircleStageHtml } from './cover-circle-graphic';
-import { FINANCIAL_DATA_COPY, multiplesMethodologyCopy, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY, ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
+import { FINANCIAL_DATA_COPY, financialDataCopy, multiplesMethodologyCopy, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY, ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
 import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import type { ValuationData } from './types';
 import { getGoalStandardCopy } from '../wizard/equify_goal_copy';
@@ -84,6 +84,11 @@ function pdfFmt(data: Pick<ValuationData, 'locale' | 'currency' | 'activeCurrenc
   };
 }
 
+/** Blend weight as shown: whole percent when whole, otherwise one decimal (finding 19). */
+function weightPctHtml(f: ReturnType<typeof pdfFmt>, w: number): string {
+  return f.pct(w, Number.isInteger(Math.round(w * 10) / 10) && Math.abs(w - Math.round(w)) < 1e-9 ? 0 : 1);
+}
+
 function head(rid: string): string {
   return `<div class="head">${equifyLogoHtml('light-bg', { heightPt: 28 })}<span class="rid">${rid}</span></div>`;
 }
@@ -126,7 +131,7 @@ function identityLine(data: ValuationData): string {
 function defaultExecutiveSummary(data: ValuationData): string {
   const f = pdfFmt(data);
   const parts = data.modelBlend.map(
-    (r) => `${escHtml(r.name)} (${f.pct(r.weightPct, 0)})`,
+    (r) => `${escHtml(r.name)} (${weightPctHtml(f, r.weightPct)})`,
   );
   return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. בניכוי חוב נטו של ${f.moneyNarrative(data.netDebt)}, השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
 }
@@ -206,7 +211,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
   const blendRows = data.modelBlend
     .map(
       (r) =>
-        `<tr><td>${escHtml(r.name)}</td><td class="n">${f.money(r.ev)}</td><td class="n">${f.pct(r.weightPct, 0)}</td><td class="n">${f.money(r.contribution)}</td></tr>`,
+        `<tr><td>${escHtml(r.name)}${r.detail ? `<br><span class="blend-leg-note">${escHtml(r.detail)}</span>` : ''}</td><td class="n">${f.money(r.ev)}</td><td class="n">${weightPctHtml(f, r.weightPct)}</td><td class="n">${f.money(r.contribution)}</td></tr>`,
     )
     .join('');
   const noteDate = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
@@ -285,7 +290,7 @@ function buildPage3Financials(data: ValuationData): string {
   <div class="body">
     <span class="eyebrow">03 · נתונים פיננסיים</span>
     <h2>נתונים פיננסיים</h2>
-    <p class="sub">${escHtml(FINANCIAL_DATA_COPY)}</p>
+    <p class="sub">${escHtml(data.dcfEbitdaWeights ? financialDataCopy(data.dcfEbitdaWeights) : FINANCIAL_DATA_COPY)}</p>
     <div class="box"><h3>הכנסות מול EBITDA · ${unitLabel}</h3>${buildEquifyFinancialBarChartSvg(data.trajectory)}</div>
     <table class="report-table report-table--trajectory">
       ${reportColgroup(trajectoryTableWidths(data.trajectory.length))}
@@ -298,16 +303,33 @@ function buildPage3Financials(data: ValuationData): string {
 
 function buildPage4Dcf(data: ValuationData): string {
   const f = pdfFmt(data);
-  const waccRows = data.waccSegments
-    .flatMap((s) => {
-      const main = `<tr><td><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${s.color};margin-inline-end:6px"></span>${escHtml(s.label)}</td><td class="n">${f.pct(s.pct)}</td></tr>`;
-      const subs = (s.subRows ?? []).map(
-        (sub) =>
-          `<tr><td style="padding-inline-start:14px;font-size:8.5px;color:var(--dim)">└ ${escHtml(sub.label)}</td><td class="n" style="font-size:8.5px">${f.pct(sub.pct)}</td></tr>`,
-      );
-      return [main, ...subs];
-    })
-    .join('');
+  const swatch = (color?: string) =>
+    color
+      ? `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${color};margin-inline-end:6px"></span>`
+      : '';
+  const waccRows = data.waccTable
+    ? data.waccTable
+        .map((r) => {
+          if (r.kind === 'sub') {
+            return `<tr><td style="padding-inline-start:14px;font-size:8.5px;color:var(--dim)">└ ${escHtml(r.label)}</td><td class="n" style="font-size:8.5px">${f.pct(r.pct)}</td></tr>`;
+          }
+          if (r.kind === 'subtotal') {
+            return `<tr><td><b>${escHtml(r.label)}</b></td><td class="n"><b>${f.pct(r.pct)}</b></td></tr>`;
+          }
+          return `<tr><td>${swatch(r.color)}${escHtml(r.label)}</td><td class="n">${f.pct(r.pct)}</td></tr>`;
+        })
+        .join('')
+    : data.waccSegments
+        .flatMap((s) => {
+          const main = `<tr><td>${swatch(s.color)}${escHtml(s.label)}</td><td class="n">${f.pct(s.pct)}</td></tr>`;
+          const subs = (s.subRows ?? []).map(
+            (sub) =>
+              `<tr><td style="padding-inline-start:14px;font-size:8.5px;color:var(--dim)">└ ${escHtml(sub.label)}</td><td class="n" style="font-size:8.5px">${f.pct(sub.pct)}</td></tr>`,
+          );
+          return [main, ...subs];
+        })
+        .join('');
+  const waccNoteHtml = data.waccNote ? `<p class="note wacc-note">${escHtml(data.waccNote)}</p>` : '';
   const dcfCols = data.dcfRows.map((r) => `<th>${escHtml(r.label)}</th>`).join('');
   const fcffRow = data.dcfRows.map((r) => `<td class="n">${f.fixed(r.fcffM, 2)}</td>`).join('');
   const dfRow = data.dcfRows.map((r) => `<td class="n">${f.fixed(r.discountFactor, 3)}</td>`).join('');
@@ -332,6 +354,7 @@ function buildPage4Dcf(data: ValuationData): string {
               ${reportColgroup([...WACC_TABLE_WIDTHS])}
               <tr><th>רכיב</th><th>שיעור</th></tr>${waccRows}<tr class="sum"><td>WACC אפקטיבי</td><td class="n">${f.pct(data.waccPct)}</td></tr>
             </table>
+            ${waccNoteHtml}
           </div>
         </div>
       </section>
@@ -344,7 +367,7 @@ function buildPage4Dcf(data: ValuationData): string {
           <tr><td>שווי נוכחי</td>${pvRow}<td class="n">${f.fixed(data.terminalPvM, 1)}*</td></tr>
           <tr class="sum"><td>שווי פעילות לפי DCF</td>${emptyCells(data.dcfRows.length)}<td class="n">${f.money(data.dcfEv)}</td></tr>
         </table>
-        <p class="note">* ערך טרמינלי מהווה ${f.pct(data.terminalSharePct, 0)} מסך השווי.</p>
+        <p class="note">* ערך טרמינלי מהווה ${f.pct(data.terminalSharePct, 0)} מסך שווי ה DCF.${data.dcfNote ? ` ${escHtml(data.dcfNote)}` : ''}</p>
       </section>
     </div>
   </div>`;
@@ -353,9 +376,6 @@ function buildPage4Dcf(data: ValuationData): string {
 
 function multiplesInterpretation(data: ValuationData): string {
   const f = pdfFmt(data);
-  const ebitdaMed = data.industryEbitdaMedian ?? data.multipleBase ?? data.effectiveMult;
-  const revMed = data.industryRevenueMedian ?? data.revenueMultiple;
-  const marginMed = data.industryEbitdaMarginPct ?? data.marginPct;
   const ebitdaInterp = escHtml(
     ebitdaMultipleInterpretationCopy({
       locale: data.locale,
@@ -365,9 +385,22 @@ function multiplesInterpretation(data: ValuationData): string {
       multipleConcentrationPenalty: data.multipleConcentrationPenalty,
     }),
   );
-  return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${f.multiple(ebitdaMed)}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
-    <tr><td>מכפיל הכנסות</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">${f.multiple(revMed)}</td><td class="interp-cell">בטווח השוק</td></tr>
-    <tr><td>שיעור EBITDA</td><td class="n">${f.pctLabel(data.marginPct)}</td><td class="n">${f.pctLabel(marginMed)}</td><td class="interp-cell">רווחיות יחסית לענף</td></tr>`;
+  const im = data.industryMultiples;
+  if (!im) {
+    // No sourced industry data: show the company multiples only (finding 7).
+    return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${numHtml('—')}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
+    <tr><td>מכפיל הכנסות</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">${numHtml('—')}</td><td class="interp-cell">אין נתון ענפי עם מקור</td></tr>`;
+  }
+  const range = (lo: number, hi: number) => `<span dir="rtl">${f.multiple(lo)} עד ${f.multiple(hi)}</span>`;
+  const position = (v: number, lo: number, hi: number) =>
+    v < lo ? 'מתחת לטווח הענף' : v > hi ? 'מעל טווח הענף' : 'בתוך טווח הענף';
+  const revLabel = im.revenueMultipleKind === 'leg' ? 'מכפיל הכנסות' : 'EV/Sales משתמע';
+  const revInterp =
+    im.revenueMultipleKind === 'leg'
+      ? `מכפיל ההכנסות שבשימוש בשווי, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`
+      : `שווי הפעילות חלקי ההכנסות. לא נכנס לשווי, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`;
+  return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${range(im.evEbitdaLow, im.evEbitdaHigh)}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
+    <tr><td>${revLabel}</td><td class="n">${f.multiple(im.companyRevenueMultiple)}</td><td class="n">${range(im.evSalesLow, im.evSalesHigh)}</td><td class="interp-cell">${escHtml(revInterp)}</td></tr>`;
 }
 
 function buildCompsTable(data: ValuationData): string {
@@ -394,13 +427,13 @@ function buildPage5Multiples(data: ValuationData): string {
   <div class="body page-body--multiples page-body--distributed">
     <div class="page-intro">
       <span class="eyebrow">05 · מכפילי שוק</span>
-      <h2>מיקום מול עסקאות השוואה</h2>
+      <h2>מיקום מול מכפילי הענף</h2>
       <p class="sub">${escHtml(data.multiplesIntro ?? multiplesMethodologyCopy(`בענף ${data.sectorLabel || data.sector || 'הרלוונטי'}`))}</p>
     </div>
     <div class="page-stack">
       <section class="page-section page-section--tracks">
         <div class="box box-chart-visible">
-          <h3>מיקום מול טווח השוק</h3>
+          <h3>מיקום מול טווח הענף</h3>
           <div class="multiples-tracks-chart">${buildEquifyMultiplesTracksSvg(data.multiplesPositions, data.currency)}</div>
         </div>
       </section>
@@ -408,8 +441,9 @@ function buildPage5Multiples(data: ValuationData): string {
       <section class="page-section page-section--compare">
         <table class="report-table report-table--multiples multiples-compare-table">
           ${reportColgroup([...MULTIPLES_TABLE_WIDTHS])}
-          <tr><th>פרמטר</th><th>החברה</th><th>חציון השוק</th><th>פרשנות</th></tr>${multiplesInterpretation(data)}
+          <tr><th>פרמטר</th><th>החברה</th><th>הענף (Damodaran)</th><th>פרשנות</th></tr>${multiplesInterpretation(data)}
         </table>
+        ${data.industryMultiples ? `<p class="note sens-note">${escHtml(data.industryMultiples.footnote)}</p>` : ''}
       </section>
     </div>
   </div>`;
@@ -499,12 +533,14 @@ function buildPage7QualitySensitivity(data: ValuationData): string {
     : qualityScoreIntroCopy(data.qualityScore, data.qualityGrade);
   const sensHeader =
     data.locale === 'en'
-      ? `Sensitivity: equity value (${f.unitLabel}) · WACC × growth`
-      : `רגישות: שווי לבעלים (${f.unitLabel}) · WACC × צמיחה`;
+      ? `Sensitivity: equity value (${f.unitLabel}) · WACC × terminal growth`
+      : `רגישות: שווי לבעלים (${f.unitLabel}) · WACC × צמיחה טרמינלית`;
+  const revenueKind = data.sensitivityEbitdaMult?.multipleKind === 'revenue';
   const ebitdaSensHeader =
     data.locale === 'en'
-      ? `Sensitivity: EV (${f.unitLabel}) · EBITDA × multiple`
-      : `רגישות: EV (${f.unitLabel}) · EBITDA × מכפיל`;
+      ? `Sensitivity: equity value (${f.unitLabel}) · EBITDA × ${revenueKind ? 'revenue multiple' : 'EBITDA multiple'}`
+      : `רגישות: שווי לבעלים (${f.unitLabel}) · EBITDA × ${revenueKind ? 'מכפיל הכנסות' : 'מכפיל EBITDA'}`;
+  const sensNote = (note?: string) => (note ? `<p class="note sens-note">${escHtml(note)}</p>` : '');
 
   const body = `
   ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
@@ -519,8 +555,8 @@ function buildPage7QualitySensitivity(data: ValuationData): string {
         ${reportColgroup([...QUALITY_FACTOR_WIDTHS])}
         <tr><th>${en ? 'Quality factor' : 'גורם איכות'}</th><th>${en ? 'Finding' : 'ממצא'}</th><th>${en ? 'Score' : 'ציון'}</th></tr>${factorRows}</table>
     </div>
-    ${sensGrowth ? `<p class="sub quality-sens-intro">${escHtml(sensitivityIntro)}</p><div class="box"><h3>${sensHeader}</h3>${sensGrowth}</div>` : ''}
-    ${sensEbitda ? `<div class="box"><h3>${ebitdaSensHeader}</h3>${sensEbitda}</div>` : ''}
+    ${sensGrowth ? `<p class="sub quality-sens-intro">${escHtml(sensitivityIntro)}</p><div class="box"><h3>${sensHeader}</h3>${sensGrowth}${sensNote(sensGrowthMatrix?.note)}</div>` : ''}
+    ${sensEbitda ? `<div class="box"><h3>${ebitdaSensHeader}</h3>${sensEbitda}${sensNote(data.sensitivityEbitdaMult?.note)}</div>` : ''}
   </div>`;
   return wrapSheet(7, '', body, data.locale);
 }
@@ -533,7 +569,11 @@ function blendWeightBar(data: ValuationData): string {
       const bg = colors[i % colors.length]!;
       const fg = i === 0 ? '#fff' : '#0F2E29';
       const short = /dcf/i.test(r.name) ? 'DCF' : /ebitda/i.test(r.name) ? 'EBITDA' : 'REV';
-      return `<div class="blend-weight-bar" style="width:${r.weightPct.toFixed(0)}%;background:${bg};display:grid;place-items:center;color:${fg}">${short} · ${f.pct(r.weightPct, 0)}</div>`;
+      // Weight segments only: the backlog uplift row is an addition, not a weight.
+      if (r.weightPct <= 0 || /צבר|backlog/i.test(r.name)) return '';
+      // Labels of narrow segments do not fit; they are hidden instead of being clipped.
+      const label = r.weightPct >= 8 ? `${short} · ${weightPctHtml(f, r.weightPct)}` : '';
+      return `<div class="blend-weight-bar" style="width:${r.weightPct.toFixed(1)}%;background:${bg};display:grid;place-items:center;color:${fg}">${label}</div>`;
     })
     .join('');
 }

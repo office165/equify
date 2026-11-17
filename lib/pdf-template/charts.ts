@@ -453,7 +453,7 @@ export function buildSensitivityMatrixTable(
   locale?: string,
 ): string {
   const cornerHeader =
-    pdfDocumentDir(locale) === 'rtl' ? 'צמיחה \\ WACC' : 'Growth \\ WACC';
+    pdfDocumentDir(locale) === 'rtl' ? 'צמיחה טרמינלית \\ WACC' : 'Terminal growth \\ WACC';
   const baseSuffix = ' ←Base';
   const header = matrix.waccLabels
     .map((l) => `<th class="n">${matrixAxisLabelHtml(l, locale)}</th>`)

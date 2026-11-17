@@ -22,7 +22,7 @@ import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
 import {
   resolveScaleModifierProfile,
 } from './scale_modifier_pipeline';
-import { computeDcfWithGrowthDecay, buildValuationScenarios } from './scenario_matrix';
+import { computeDcfWithGrowthDecayDetailed, buildValuationScenarios, type DcfWithGuard } from './scenario_matrix';
 import { parseCapexPct, resolveCapexIndustryKey, computeFCFF } from './capex_fcf';
 import { calibrateCenterOfGravity } from './base_case_calibration';
 import { createValuationStrategy } from './strategies/valuation_strategy';
@@ -101,8 +101,9 @@ function computeDcf(params: {
   sector?: ValuationInputs['sector'];
   subSector?: string;
   turnaround?: TurnaroundDcfParams;
-}): number {
-  return computeDcfWithGrowthDecay({
+  terminalGrowthRate?: number;
+}): DcfWithGuard {
+  return computeDcfWithGrowthDecayDetailed({
     ebitdaK: params.ebitdaK,
     revK: params.revK,
     capexLevelPct: parseCapexPct(params.capexLevelPct),
@@ -110,6 +111,7 @@ function computeDcf(params: {
     wacc: params.wacc,
     industry: resolveCapexIndustryKey(params.sector, params.subSector),
     turnaround: params.turnaround,
+    terminalGrowthRate: params.terminalGrowthRate,
   });
 }
 
@@ -126,7 +128,22 @@ function computeDcf(params: {
  * 7. Scale Modifier Pipeline (lifecycle × revenue → WACC overlay, multiple dampener, blend shift)
  * 8. EV = sub-sector DCF / multiples blend (valuation weights registry)
  */
-export function computeValuation(inputs: ValuationInputs): ValuationComputed {
+/**
+ * Optional overrides for sensitivity runs (round 2, finding 6). Empty = the normal engine.
+ * Used only by the report sensitivity tables; they never change a reported value.
+ */
+export interface EngineOverrides {
+  /** Replace the CAPM WACC (%) after it is computed. */
+  waccPct?: number;
+  /** Terminal (Gordon) growth rate as a decimal (default 0.025). */
+  terminalGrowthRate?: number;
+  /** Replace the normalized effective multiple (EBITDA or revenue, per the sub-sector strategy). */
+  effectiveMultiple?: number;
+  /** Skip the [FCF Audit] log line. */
+  silent?: boolean;
+}
+
+export function computeValuation(inputs: ValuationInputs, overrides: EngineOverrides = {}): ValuationComputed {
   const sectorConfig = resolveSectorMethodologyConfig(inputs.sector, inputs.subSector);
   const calibration = applySectorMarginGuardrails(inputs, sectorConfig);
   const calibrated = calibration.inputs;
@@ -263,7 +280,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
 
   const waccBacklogAdjustment = backlog.waccAdjustmentPct;
   const backlogAlphaReductionPp = Math.abs(waccBacklogAdjustment);
-  const { wacc, waccBreakdown } = computeCapmWacc({
+  const capm = computeCapmWacc({
     sector: inputs.sector,
     lifecycle,
     lifecycleAdj,
@@ -286,6 +303,8 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
       contractRisk: specificRisk.breakdown.contractRisk * 100,
     },
   });
+  const wacc = overrides.waccPct ?? capm.wacc;
+  const waccBreakdown = capm.waccBreakdown;
 
   const qsRaw = computeQualityScore({
     recurring,
@@ -330,7 +349,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     lifecycleStage: lifecycle ?? 'growth',
     isManualOverride: multipleResolution.isManual,
   });
-  const effectiveMult = normalization.adjustedMultiple;
+  const effectiveMult = overrides.effectiveMultiple ?? normalization.adjustedMultiple;
 
   const automaticNormalization = normalizeMultipleForPrivateCompany({
     rawMultiple: multipleResolution.automaticMultiple,
@@ -359,7 +378,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
         }
       : undefined;
 
-  const dcf = computeDcf({
+  const dcfDetailed = computeDcf({
     ebitdaK: ebitda,
     revK,
     capexLevelPct: parseCapexPct(capexLevelPct),
@@ -368,7 +387,11 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     sector: inputs.sector,
     subSector: inputs.subSector,
     turnaround: turnaroundDcf,
+    terminalGrowthRate: overrides.terminalGrowthRate,
   });
+  const dcf = dcfDetailed.evK;
+  /** Terminal value share of the DCF leg (%), from the actual projection (replaces the constant 57). */
+  const terminalSharePct = dcfDetailed.projection.terminalShare * 100;
 
   const fcffAudit = computeFCFF({
     ebitda,
@@ -457,7 +480,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
   const calibratedEquityK = finalEv.equityK;
   const calibratedEvK = finalEv.enterpriseValueK;
 
-  console.log(
+  if (!overrides.silent) console.log(
     '[FCF Audit]',
     JSON.stringify({
       industry: fcfIndustry,
@@ -503,6 +526,7 @@ export function computeValuation(inputs: ValuationInputs): ValuationComputed {
     revMult: revLegEvK,
     revMultiplier,
     dcf,
+    terminalSharePct,
     ev: calibratedEvK,
     equity: calibratedEquityK,
     rawEv: cog.rawEvK,

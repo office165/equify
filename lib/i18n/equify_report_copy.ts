@@ -201,26 +201,41 @@ export function resolveEquifySectorKey(sector?: string): EquifySectorKey {
 }
 
 export const VALUATION_METHODOLOGY_COPY =
-  'דוח הערכת שווי בנוי על שלושה יסודות: תזרימי מזומנים מהוונים (DCF) בעלות הון בר-סיכון, מכפילי שוק מכוילים מתוך 12 עסקאות M&A בישראל בשנתיים האחרונות, וציון איכות המעריך את יציבות התזרים. השווי המוצג הוא ממוצע משוקלל של שלוש שיטות, לא אקדמי אלא מעשי השוק בפועל.' as const;
+  'דוח הערכת שווי בנוי על שלושה יסודות: תזרימי מזומנים מהוונים (DCF) בעלות הון מותאמת סיכון, מכפילי ענף, וציון איכות שמעריך את יציבות התזרים. השווי המוצג הוא ממוצע משוקלל של השיטות.' as const;
 
 export const FINANCIAL_DATA_COPY =
-  'הכנסות מוצגות לפי דוחות כספיים; בסיס ה-EBITDA לשווי הוא ממוצע משוקלל (30% שנה קודמת · 50% שנה נוכחית · 20% תחזית) בהתאם לנהלי M&A. צמיחת התחזית מוגבלת לתקרת הענף. ניתן להציג את הנתונים בישיבת בנק או מול משקיע.' as const;
+  'הכנסות מוצגות לפי דוחות כספיים. ה EBITDA המייצג ל DCF הוא שקלול של 30% שנה קודמת, 50% שנה נוכחית ו 20% תחזית. צמיחת התחזית מוגבלת לתקרת הענף.' as const;
+
+/**
+ * Page 3 copy with the weights the engine actually used for the DCF EBITDA base
+ * ("EBITDA מייצג ל DCF", finding 15). Without a prior year the engine re-weights current and projected.
+ */
+export function financialDataCopy(w: { past: number; current: number; projected: number }): string {
+  const p = (x: number) => `${Math.round(x * 100)}%`;
+  const parts = [
+    ...(w.past > 0 ? [`${p(w.past)} שנה קודמת`] : []),
+    `${p(w.current)} שנה נוכחית`,
+    `ו ${p(w.projected)} תחזית`,
+  ];
+  const list = parts.length === 3 ? `${parts[0]}, ${parts[1]} ${parts[2]}` : `${parts[0]} ${parts[1]}`;
+  return `הכנסות מוצגות לפי דוחות כספיים. ה EBITDA המייצג ל DCF הוא שקלול של ${list}. צמיחת התחזית מוגבלת לתקרת הענף.`;
+}
 
 export const FINANCIAL_DATA_COPY_EN =
   'Revenue reflects reported financials; the EBITDA base for valuation is a weighted average (30% prior · 50% current · 20% projected) per M&A practice. Forward growth is capped by sector guardrails. Suitable for bank or investor meetings.' as const;
 
 export const WACC_DCF_METHODOLOGY_COPY =
-  'עלות ההון (WACC) נמדדת לפי תורת Damodaran תחת CAPM: ריבית חסרת סיכון (אג״ח ממשלתי 10 שנים), פרמיית סיכון שוק (היסטורית), פרמיית סיכון מדינה, פרמיית גודל וסחירות. תרומת הסיכון הספציפי לעסק (Quality Score) מותאמת במודול האיכות שלנו. הערך הטרמינלי מבוסס על צמיחה ניטרלית של 2.5% כדי להימנע מהיפר-ערכה.' as const;
+  'עלות ההון (WACC) מחושבת לפי CAPM: ריבית חסרת סיכון, בטא ענפית ממונפת כפול פרמיית סיכון שוק, פרמיית גודל ופרמיה ספציפית לעסק לפי ציון האיכות. עלות החוב היא הריבית חסרת הסיכון ועוד 2 נקודות, אחרי מס של 23%. התזרים בשנה הטרמינלית צומח ב 2.5% בשנה.' as const;
 
 export const WACC_DCF_METHODOLOGY_COPY_EN =
-  "Cost of capital (WACC) follows Damodaran's CAPM framework: risk-free rate (10-year government bond), historical equity risk premium, country risk premium, and size/liquidity premium. Company-specific risk (Quality Score) is calibrated in our quality module. Terminal value uses neutral 2.5% growth to avoid overvaluation." as const;
+  'Cost of capital (WACC) follows CAPM: risk-free rate, sector levered beta times the equity risk premium, a size premium and a company-specific premium from the Quality Score. Cost of debt is the risk-free rate plus 2 points, after 23% tax. Terminal-year cash flow grows at 2.5% a year.' as const;
 
 export function multiplesMethodologyCopy(sector: string): string {
-  return `המכפילים מעוגנים בנתונים של 12 עסקאות M&A בישראל בתחום ${sector} (2023–2026). לכל עסקה: סכום, תאריך, שיעור EBITDA, והשוואה לחברות ציבוריות בחו״ל כאשר רלוונטי. המכפיל שלך לא נלקח מהאוויר: הוא מיקום בהתפלגות שוק אמיתית.`;
+  return `המכפיל של החברה נקבע לפי טווח המכפילים של הענף ${sector}, ציון האיכות שלה והנחת סחירות וגודל לחברה פרטית.`;
 }
 
 export function multiplesMethodologyCopyEn(sector: string): string {
-  return `Multiples are anchored to 12 Israeli M&A transactions in ${sector} (2023–2026). Each deal records consideration, date, EBITDA margin, and listed international peers where relevant. Your multiple is not arbitrary: it marks a position on a real market distribution.`;
+  return `The company multiple is set from the sector multiple range (${sector}), its quality score, and a marketability and size discount for a private company.`;
 }
 
 export interface EbitdaMultipleInterpretationParams {
@@ -312,49 +327,39 @@ function waccStepFromMatrix(matrix: SensitivityMatrix): number {
   return 0.7;
 }
 
-/** PDF page 7 — WACC × growth sensitivity matrix intro */
+/** PDF page 7: sensitivity intro (round 2: every cell is an engine run). */
 export function sensitivityIntroCopy(
   matrix: SensitivityMatrix,
-  baseGrowthPct: number,
+  _baseGrowthPct: number,
   baseWaccPct: number,
 ): string {
   const growths = matrix.growthLabels.map(parsePctLabel);
   const minGrowth = Math.min(...growths);
   const maxGrowth = Math.max(...growths);
   const waccStep = waccStepFromMatrix(matrix);
-  const baseGrowth = parsePctLabel(
-    matrix.growthLabels[matrix.baseRow] ?? `+${baseGrowthPct}%`,
-  );
-  const baseWacc = parsePctLabel(
-    matrix.waccLabels[matrix.baseCol] ?? `${baseWaccPct}%`,
-  );
-
-  return `הטבלאות להלן מציגות כיצד השווי משתנה כאשר:
-• ציר X: עלות הון (WACC) משתנה ב-${waccStep.toFixed(1)} נקודות אחוז לכל כיוון
-• ציר Y: צמיחה שנתית משתנה מ-${Math.round(minGrowth)}% עד ${Math.round(maxGrowth)}%
-התא המודגש הוא התרחיש בסיס (${Math.round(baseGrowth)}% צמיחה, ${baseWacc.toFixed(1)}% WACC). השימוש בניתוח זה: להבין איזה משתנים מרמזים על רגישות גבוהה וכדי להתכונן לתרחישים אלה.`;
+  const baseGrowth = parsePctLabel(matrix.growthLabels[matrix.baseRow] ?? '2.5%');
+  const baseWacc = parsePctLabel(matrix.waccLabels[matrix.baseCol] ?? `${baseWaccPct}%`);
+  return `הטבלאות מציגות את השווי לבעלים כשמשנים שני משתנים, וכל תא הוא הרצה מלאה של המנוע:
+• טבלה ראשונה: WACC בצעדים של ${waccStep.toFixed(1)} נקודות לכל כיוון, מול צמיחה טרמינלית מ ${minGrowth.toFixed(1)}% עד ${maxGrowth.toFixed(1)}%
+• טבלה שנייה: EBITDA בצעדים של 10%, מול המכפיל בצעדים של 0.5
+התא המודגש הוא תרחיש הבסיס (WACC ${baseWacc.toFixed(1)}%, צמיחה טרמינלית ${baseGrowth.toFixed(1)}%).`;
 }
 
 export function sensitivityIntroCopyEn(
   matrix: SensitivityMatrix,
-  baseGrowthPct: number,
+  _baseGrowthPct: number,
   baseWaccPct: number,
 ): string {
   const growths = matrix.growthLabels.map(parsePctLabel);
   const minGrowth = Math.min(...growths);
   const maxGrowth = Math.max(...growths);
   const waccStep = waccStepFromMatrix(matrix);
-  const baseGrowth = parsePctLabel(
-    matrix.growthLabels[matrix.baseRow] ?? `+${baseGrowthPct}%`,
-  );
-  const baseWacc = parsePctLabel(
-    matrix.waccLabels[matrix.baseCol] ?? `${baseWaccPct}%`,
-  );
-
-  return `The tables below show how equity value shifts when:
-• X-axis: cost of capital (WACC) moves by ${waccStep.toFixed(1)} percentage points in each direction
-• Y-axis: annual growth ranges from ${Math.round(minGrowth)}% to ${Math.round(maxGrowth)}%
-The highlighted cell is the base case (${Math.round(baseGrowth)}% growth, ${baseWacc.toFixed(1)}% WACC). Use this analysis to see which variables drive the most sensitivity and prepare for those outcomes.`;
+  const baseGrowth = parsePctLabel(matrix.growthLabels[matrix.baseRow] ?? '2.5%');
+  const baseWacc = parsePctLabel(matrix.waccLabels[matrix.baseCol] ?? `${baseWaccPct}%`);
+  return `The tables show equity value when two inputs change; every cell is a full engine run:
+• Table 1: WACC in steps of ${waccStep.toFixed(1)} points each way, against terminal growth from ${minGrowth.toFixed(1)}% to ${maxGrowth.toFixed(1)}%
+• Table 2: EBITDA in steps of 10%, against the multiple in steps of 0.5
+The highlighted cell is the base case (WACC ${baseWacc.toFixed(1)}%, terminal growth ${baseGrowth.toFixed(1)}%).`;
 }
 
 export interface ScenariosIntroInput {

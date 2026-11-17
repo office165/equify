@@ -84,10 +84,12 @@ export function buildEquifyFinancialBarChartSvg(trajectory: TrajectoryPoint[]): 
 }
 
 export function buildEquifyWaccDonutSvg(segments: WaccSegment[], waccPct: number): string {
-  const effectiveWacc = segments.reduce((sum, seg) => sum + seg.pct, 0) || waccPct || 0;
-  const total = effectiveWacc || 1;
+  // Round 2: the center shows the engine WACC; segments are weighted contributions that sum to it.
+  const effectiveWacc = waccPct || segments.reduce((sum, seg) => sum + seg.pct, 0) || 0;
+  const drawn = segments.filter((seg) => seg.pct > 0);
+  const total = drawn.reduce((sum, seg) => sum + seg.pct, 0) || 1;
   let offset = 0;
-  const arcs = segments
+  const arcs = drawn
     .map((seg) => {
       const len = (seg.pct / total) * DONUT_C;
       const el = `<circle cx="100" cy="100" r="${DONUT_R}" fill="none" stroke="${seg.color}" stroke-width="17" stroke-dasharray="${len.toFixed(1)} ${DONUT_C.toFixed(1)}" stroke-dashoffset="${(-offset).toFixed(1)}" transform="rotate(-90 100 100)"/>`;
@@ -146,7 +148,11 @@ export function buildEquifyMultiplesTracksSvg(
   const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
   const ebitda = byId.ebitda ?? rows[0]!;
   const revenue = byId.revenue ?? rows[1] ?? rows[0]!;
-  const third = byId.margin ?? byId.dcf ?? rows[2] ?? rows[0]!;
+  const third = byId.margin ?? byId.dcf ?? rows[2];
+  // Round 2: two tracks when there is no sourced third row (the margin band had no source).
+  if (!third) {
+    return `<svg viewBox="0 0 ${MULTIPLES_VIEW_W} 140" style="width:100%;overflow:visible" aria-hidden="true">${multiplesRowSvg(ebitda, 38, 28, currency)}${multiplesRowSvg(revenue, 108, 98, currency)}</svg>`;
+  }
   const thirdTitleY = third.id === 'margin' ? 168 : 168;
   const thirdY = third.id === 'margin' ? 178 : 178;
   const dcfCx = trackX(third.impliedEv / 1_000_000, third.rangeMin, third.rangeMax);

@@ -5,8 +5,25 @@
 export type WhatsAppProvider = 'twilio' | 'green-api';
 export type EmailProvider = 'resend' | 'sendgrid';
 
+/** Dev-only fallback. Never used when NODE_ENV is production (finding 24). */
+const DEV_JWT_SECRET = 'valubot-dev-jwt-secret';
+
+export class MissingJwtSecretError extends Error {
+  constructor() {
+    super('JWT_SECRET is not set. Tokens cannot be signed or verified in production without it.');
+    this.name = 'MissingJwtSecretError';
+  }
+}
+
+/**
+ * JWT signing secret. In production a missing or empty JWT_SECRET throws: a known default
+ * would let anyone forge dispatch and report-access tokens. Outside production a dev default is used.
+ */
 export function getJwtSecret(): string {
-  return process.env.JWT_SECRET ?? 'valubot-dev-jwt-secret';
+  const secret = process.env.JWT_SECRET?.trim();
+  if (secret) return secret;
+  if (process.env.NODE_ENV === 'production') throw new MissingJwtSecretError();
+  return DEV_JWT_SECRET;
 }
 
 export function getWhatsAppProvider(): WhatsAppProvider {

@@ -40,7 +40,19 @@ export interface WaccBreakdown {
    */
   profitabilityLossPremium: number;
   ke: number;
+  /** Cost of debt after tax (%). */
   kd: number;
+  /** Cost of debt before tax (%): Rf + corporate spread. Display only. */
+  kdPreTax?: number;
+  /** Tax rate used for Kd after tax (decimal). Display only. */
+  taxRate?: number;
+  /** E/V and D/V used in the WACC (decimals, sum 1). Display only. */
+  equityWeight?: number;
+  debtWeight?: number;
+  /** Ke x E/V + Kd x D/V before the [6%, 22%] bounds. Display only. */
+  waccRaw?: number;
+  /** Country risk premium inside Ke (pp). 0 in methodology 1. */
+  crp?: number;
 }
 
 export interface CapmWaccResult {
@@ -220,6 +232,12 @@ export function computeCapmWacc(params: CapmWaccParams): CapmWaccResult {
       profitabilityLossPremium,
       ke,
       kd,
+      kdPreTax: rf + CAPM_CORPORATE_SPREAD_PCT,
+      taxRate: CAPM_CORPORATE_TAX_RATE,
+      equityWeight,
+      debtWeight,
+      waccRaw,
+      crp: 0,
     },
   };
 }

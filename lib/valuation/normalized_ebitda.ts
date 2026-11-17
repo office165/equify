@@ -2,7 +2,7 @@ import type { ValuationInputs } from '../valuation';
 import { resolveCurrentYearEbitdaK } from './backlog_metrics';
 
 /**
- * Normalized (Maintainable) EBITDA — Big-4 standard methodology.
+ * Normalized (Maintainable) EBITDA: three-year weighted EBITDA used as the multiple-leg base.
  *
  * Financial rationale (PwC/Deloitte practice, Damodaran "normalized earnings"):
  * A single anomalous year (war, pandemic, one-off event) must not dominate
@@ -149,7 +149,8 @@ export function buildNormalizedEbitdaNoteHe(
   if (normalized.yearsAvailable <= 1) return undefined;
 
   const w = normalized.weightsUsed;
-  const lines: string[] = ['EBITDA מנורמלת (מתודולוגיית Big-4)'];
+  // Round 2 (finding 15): named "EBITDA מנורמל למכפיל", weights are the ones the engine used.
+  const lines: string[] = ['EBITDA מנורמל למכפיל'];
 
   if (w.prior2 > 0 && inputs.ebitda2024K != null) {
     lines.push(
@@ -167,9 +168,9 @@ export function buildNormalizedEbitdaNoteHe(
     );
   }
 
-  lines.push(`→ EBITDA מנורמלת: ${fmtK(normalized.normalizedEbitdaK)}`);
+  lines.push(`EBITDA מנורמל למכפיל: ${fmtK(normalized.normalizedEbitdaK)}`);
   if (normalized.isCurrentYearAnomalous) {
-    lines.push('⚠ השנה הנוכחית זוהתה כחריגה — שקלול מוגבר לשנות העבר');
+    lines.push('השנה הנוכחית חריגה, ולכן שנות העבר מקבלות משקל גבוה יותר');
   }
 
   return lines.join(' · ');

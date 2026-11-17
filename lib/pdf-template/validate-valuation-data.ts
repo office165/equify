@@ -100,22 +100,32 @@ export function collectValuationDataIssues(data: ValuationData): ValuationDataIs
     ev,
   );
 
+  // Shown contributions use weights rounded to 0.1% (finding 19), so their sum may differ from
+  // the EV by at most half a step per leg. That allowance is removed before the gap is classified.
   const contributionSum = data.modelBlend.reduce((sum, row) => sum + row.contribution, 0);
+  const roundingAllowance = data.modelBlend
+    .filter((row) => !/backlog|צבר/i.test(row.name))
+    .reduce((sum, row) => sum + Math.abs(row.ev) * 0.0005, 0);
+  const rawGap = contributionSum - data.enterpriseValue;
+  const gapAfterRounding = Math.sign(rawGap) * Math.max(0, Math.abs(rawGap) - roundingAllowance);
   classify(
     issues,
     `Model blend contributions ${contributionSum.toFixed(0)} ≠ enterpriseValue ${data.enterpriseValue.toFixed(0)}`,
-    contributionSum,
+    data.enterpriseValue + gapAfterRounding,
     data.enterpriseValue,
     ev,
   );
 
   for (const row of data.modelBlend) {
+    const shown = (row.ev * row.weightPct) / 100;
     const exact = data.financialCore ? exactRowWeight(row.name, core) : null;
-    const weight = exact ?? row.weightPct / 100;
-    const expectedContribution = row.ev * weight;
+    // Snapshots built before round 2 carry exact contributions next to whole-percent weights.
+    const exactContribution = exact != null ? row.ev * exact : shown;
+    const expectedContribution =
+      Math.abs(row.contribution - shown) <= Math.abs(row.contribution - exactContribution) ? shown : exactContribution;
     classify(
       issues,
-      `Model row "${row.name}" contribution ${row.contribution.toFixed(0)} ≠ EV×weight ${expectedContribution.toFixed(0)}`,
+      `Model row "${row.name}" contribution ${row.contribution.toFixed(0)} ≠ EV×shown weight ${expectedContribution.toFixed(0)}`,
       row.contribution,
       expectedContribution,
       row.contribution,

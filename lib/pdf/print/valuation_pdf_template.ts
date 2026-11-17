@@ -269,7 +269,7 @@ function buildPage5Multiples(vm: ValuationPdfViewModel): string {
     <div class="page-intro">
       <span class="eyebrow">05 · מכפילי שוק</span>
       <h2>מבט הצידה: השוק.</h2>
-      <p class="sub">המכפילים מכוילים מול עסקאות M&A ישראליות בענף ${escHtml(vm.industrySector)}. הפס האפור מציג את טווח השוק; הסימון מציג את מיקום החברה בתוכו.</p>
+      <p class="sub">המכפילים של החברה בענף ${escHtml(vm.industrySector)}, אחרי התאמה לגודל, לצמיחה ולשיעור ההכנסות החוזרות.</p>
     </div>
     <div class="page-stack">
       <section class="page-section page-section--tracks">
@@ -281,10 +281,10 @@ function buildPage5Multiples(vm: ValuationPdfViewModel): string {
       <section class="page-section page-section--compare">
         <table class="report-table report-table--multiples multiples-compare-table">
           ${reportColgroup([...MULTIPLES_TABLE_WIDTHS])}
-          <tr><th>פרמטר</th><th>החברה</th><th>חציון השוק</th><th>פרשנות</th></tr>
-          <tr><td>מכפיל EBITDA</td><td class="n">×${vm.ebitdaMultiple.toFixed(1)}</td><td class="n">×${vm.industryEbitdaMedian.toFixed(1)}</td><td class="interp-cell">${escHtml(ebitdaMultipleInterpretationCopy({ effectiveMult: vm.ebitdaMultiple, qualityScore: vm.qualityScore, qualityGrade: vm.qualityGrade }))}</td></tr>
-          <tr><td>מכפיל הכנסות</td><td class="n">×${vm.revenueMultiple.toFixed(1)}</td><td class="n">×${vm.industryRevenueMedian.toFixed(1)}</td><td class="interp-cell">בתוך טווח השוק</td></tr>
-          <tr><td>שיעור EBITDA</td><td class="n">${vm.ebitdaMarginPct.toFixed(1)}%</td><td class="n">${vm.industryEbitdaMarginPct.toFixed(1)}%</td><td class="interp-cell">רווחיות ביחס לענף</td></tr>
+          <tr><th>פרמטר</th><th>החברה</th><th>הענף</th><th>פרשנות</th></tr>
+          <tr><td>מכפיל EBITDA</td><td class="n">×${vm.ebitdaMultiple.toFixed(1)}</td><td class="n">—</td><td class="interp-cell">${escHtml(ebitdaMultipleInterpretationCopy({ effectiveMult: vm.ebitdaMultiple, qualityScore: vm.qualityScore, qualityGrade: vm.qualityGrade }))}</td></tr>
+          <tr><td>מכפיל הכנסות</td><td class="n">×${vm.revenueMultiple.toFixed(1)}</td><td class="n">—</td><td class="interp-cell">אין נתון ענפי עם מקור</td></tr>
+          <tr><td>שיעור EBITDA</td><td class="n">${vm.ebitdaMarginPct.toFixed(1)}%</td><td class="n">—</td><td class="interp-cell">אין נתון ענפי עם מקור</td></tr>
         </table>
         <p class="note">מכפילים מותאמים לגודל, צמיחה ושיעור הכנסות חוזרות (Quality-adjusted).</p>
       </section>

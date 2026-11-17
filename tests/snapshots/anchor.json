@@ -43,13 +43,13 @@
   "effectiveMult": 5.08,
   "revenueMultiple": 5.08,
   "fcffM": [
-   1.63,
-   1.68,
-   1.72,
-   1.75,
-   1.81
+   1.54,
+   1.59,
+   1.62,
+   1.65,
+   1.71
   ],
-  "terminalPvM": 2.55,
+  "terminalPvM": 2.4,
   "terminalSharePct": 29.58,
   "netDebt": -3000000,
   "keyFindings": "Quality A · WACC 15.6% · EBITDA מדווח 2026 2.3M ₪ · בסיס מכפיל 2.3M ₪ ×5.1 · TV 30% מ-DCF.",
@@ -71,13 +71,13 @@
   "effectiveMult": 4.26,
   "revenueMultiple": 0,
   "fcffM": [
-   0.83,
-   0.86,
-   0.89,
-   0.91,
-   0.94
+   1.42,
+   1.48,
+   1.52,
+   1.55,
+   1.6
   ],
-  "terminalPvM": 1.45,
+  "terminalPvM": 2.48,
   "terminalSharePct": 29.58,
   "netDebt": 4500000,
   "keyFindings": "Quality C+ · WACC 10.6% · EBITDA מדווח 2026 2.4M ₪ · בסיס מכפיל 2.1M ₪ ×4.3 · TV 30% מ-DCF.",
@@ -99,10 +99,10 @@
   "effectiveMult": 5.5,
   "revenueMultiple": 0,
   "fcffM": [
+   0.39,
    0.4,
    0.41,
-   0.42,
-   0.42,
+   0.41,
    0.43
   ],
   "terminalPvM": 0.61,
@@ -127,13 +127,13 @@
   "effectiveMult": 4.56,
   "revenueMultiple": 2,
   "fcffM": [
-   0.44,
-   0.46,
-   0.48,
-   0.49,
-   0.51
+   0.7,
+   0.73,
+   0.76,
+   0.79,
+   0.81
   ],
-  "terminalPvM": 0.8,
+  "terminalPvM": 1.27,
   "terminalSharePct": 29.58,
   "netDebt": 2500000,
   "keyFindings": "Quality B · WACC 9.4% · EBITDA מדווח 2026 200K ₪ · בסיס מכפיל -55K ₪ ×4.6 · TV 30% מ-DCF.",
@@ -155,13 +155,13 @@
   "effectiveMult": 4.56,
   "revenueMultiple": 2,
   "fcffM": [
-   0.47,
-   0.49,
-   0.51,
-   0.52,
-   0.53
+   0.53,
+   0.55,
+   0.57,
+   0.58,
+   0.6
   ],
-  "terminalPvM": 0.73,
+  "terminalPvM": 0.83,
   "terminalSharePct": 29.58,
   "netDebt": 800000,
   "keyFindings": "Quality C+ · WACC 16.5% · EBITDA מדווח 2026 -200K ₪ · בסיס מכפיל -290K ₪ ×4.6 · TV 30% מ-DCF.",

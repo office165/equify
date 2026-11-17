@@ -36,6 +36,15 @@ export interface WaccSegment {
   subRows?: Array<{ label: string; pct: number }>;
 }
 
+/** One row of the page 4 WACC table (round 2: Ke, Kd and weights in one table). */
+export interface WaccTableRow {
+  label: string;
+  /** Percent value (e.g. 4.5 for 4.5%). */
+  pct: number;
+  kind: 'component' | 'sub' | 'subtotal' | 'weight' | 'total';
+  color?: string;
+}
+
 export interface DcfYearRow {
   label: string;
   fcffM: number;
@@ -108,6 +117,8 @@ export interface SensitivityMatrix {
   cells: number[][];
   baseRow: number;
   baseCol: number;
+  /** Note under the table (how the cells were computed). */
+  note?: string;
 }
 
 export interface EbitdaSensitivityMatrix {
@@ -119,6 +130,9 @@ export interface EbitdaSensitivityMatrix {
   /** Canonical base EBITDA (absolute) used for the center row — must match financialCore.multipleLegEbitdaBaseAbs. */
   baseEbitdaAbs?: number;
   baseMultiple?: number;
+  /** Which multiple the columns vary (revenue for revenue-strategy sub-sectors). */
+  multipleKind?: 'ebitda' | 'revenue';
+  note?: string;
 }
 
 /**
@@ -212,17 +226,40 @@ export interface ValuationData {
   profitabilityMethodologyNote?: string;
   /** Big-4 normalized EBITDA disclosure when historical years exist. */
   normalizedEbitdaNote?: string;
+  /** Weights the engine used for the DCF EBITDA base ("EBITDA מייצג ל DCF"). */
+  dcfEbitdaWeights?: { past: number; current: number; projected: number };
+  /** Weights the engine used for the multiple EBITDA base ("EBITDA מנורמל למכפיל"). */
+  multipleEbitdaWeights?: { prior2: number; prior1: number; current: number; anomalous: boolean };
   disclaimer?: string;
 
   trajectory: TrajectoryPoint[];
+  /** Donut segments: each component weighted by E/V (Kd by D/V); sums to waccPct. */
   waccSegments: WaccSegment[];
+  /** Page 4 table: Rf, beta x ERP, size, specific, Ke, Kd, weights, WACC. */
+  waccTable?: WaccTableRow[];
+  /** Short note under the WACC table (weights, bounds). */
+  waccNote?: string;
   dcfRows: DcfYearRow[];
+  /** Note under the DCF table (terminal cap, CAPEX consistency factor). */
+  dcfNote?: string;
   terminalPvM: number;
   scenarios: ScenarioRow[];
   modelBlend: ModelBlendRow[];
   qualityFactors: QualityFactorRow[];
   multiplesPositions: MultiplePositionRow[];
 
+  /** Damodaran industry multiples for page 5 (round 2, finding 7). */
+  industryMultiples?: {
+    industry: string;
+    evEbitdaLow: number;
+    evEbitdaHigh: number;
+    evSalesLow: number;
+    evSalesHigh: number;
+    /** Company revenue multiple shown on page 5 and whether it is the leg multiple or EV/Sales implied. */
+    companyRevenueMultiple: number;
+    revenueMultipleKind: 'leg' | 'implied';
+    footnote: string;
+  };
   industryEbitdaMedian?: number;
   industryRevenueMedian?: number;
   industryEbitdaMarginPct?: number;

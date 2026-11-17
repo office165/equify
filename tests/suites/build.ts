@@ -5,6 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import { buildPdfHtml } from '../../lib/pdf-template';
+import { collectValuationDataIssues } from '../../lib/pdf-template/validate-valuation-data';
 import { buildAllCases } from '../lib/cases';
 import { Suite, type SuiteResult } from '../lib/harness';
 import { withQuietConsole } from '../lib/quiet';
@@ -23,6 +24,9 @@ export function run(): SuiteResult {
       const data = runCase(c);
       withQuietConsole(() => buildPdfHtml(data));
       ok += 1;
+      // Round 2: display rounding must never raise a coherence warning (it would alert office).
+      const warnings = collectValuationDataIssues(data).warnings;
+      suite.check('no-coherence-warnings', c.id, warnings.length === 0, warnings.join('; ').slice(0, 200));
     } catch (err) {
       message = err instanceof Error ? err.message : String(err);
       rows.push(`| ${c.id} | ${c.group} | ${message.replace(/\|/g, '/').slice(0, 220)} |`);

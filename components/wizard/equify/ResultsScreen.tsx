@@ -5,7 +5,6 @@ import { formatNetDebtLine } from '../../../lib/format/currency';
 import {
   fmtEquitySidebarM,
   fmtK,
-  terminalValuePct,
 } from '../../../lib/valuation';
 import { computeNetDebtK } from '../../../lib/wizard/map_equify_wizard';
 import { useWizardValuation } from './WizardValuationContext';
@@ -41,7 +40,8 @@ export function ResultsScreen({
     };
   }, [computed.equity, computed.ev, netDebtK]);
 
-  const tvPct = terminalValuePct(computed.dcf);
+  // Actual terminal share of the DCF leg (round 2: the constant 57 is gone).
+  const tvPct = Math.round(computed.terminalSharePct ?? 0);
 
   return (
     <section className="eqw-results" aria-label="תוצאות הערכת השווי">

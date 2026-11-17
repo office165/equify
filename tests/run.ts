@@ -12,6 +12,9 @@ import { run as runCorrectness } from './suites/correctness';
 import { run as runBuild } from './suites/build';
 import { run as runLadder } from './suites/scale_ladder';
 import { run as runRound1 } from './suites/round1_fixes';
+import { run as runValueLock } from './suites/value_lock';
+import { run as runRound2 } from './suites/round2_fixes';
+import { run as runDamodaran } from './suites/damodaran';
 
 const ROOT = path.join(__dirname, '..');
 
@@ -54,12 +57,15 @@ async function main(): Promise<void> {
   const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
   const verbose = process.argv.includes('--verbose');
   const suites: Array<[string, () => SuiteResult | Promise<SuiteResult>]> = [
+    ['value-lock', runValueLock],
     ['snapshot', runSnapshot],
     ['methodology-map', runMethodology],
     ['correctness', runCorrectness],
     ['build', runBuild],
     ['scale-ladder', runLadder],
     ['round1-fixes', runRound1],
+    ['round2-fixes', runRound2],
+    ['damodaran', runDamodaran],
   ];
 
   let failed = 0;
@@ -88,6 +94,30 @@ async function main(): Promise<void> {
     }
     for (const [key, g] of grouped) {
       knownWrongLines.push(`  ${key.split('#')[0]} (finding ${g.finding}): ${g.cases.length} case(s), e.g. ${g.cases[0]}: ${g.detail}`);
+    }
+  }
+
+  // Round 2: real Chrome layout check of the customer PDF (13 cases, about 40s).
+  // Needs Chrome and Google Fonts. PDF_LAYOUT_SKIP=1 skips it explicitly and says so.
+  if (!only || only === 'pdf-layout') {
+    if (process.env.PDF_LAYOUT_SKIP === '1') {
+      console.log('[SKIP] pdf-layout (PDF_LAYOUT_SKIP=1). Run npm run test:pdf-layout before pushing.');
+    } else {
+      const t1 = Date.now();
+      const tsxCli = path.join(ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
+      const res = spawnSync(process.execPath, [tsxCli, path.join('tests', 'pdf', 'layout.ts')], {
+        cwd: ROOT,
+        encoding: 'utf8',
+        env: { ...process.env, FORCE_COLOR: '0' },
+        timeout: 180_000,
+      });
+      const ok = res.status === 0;
+      console.log(`[${ok ? 'PASS' : 'FAIL'}] pdf-layout (${Date.now() - t1}ms)`);
+      if (!ok) {
+        failed += 1;
+        const out = `${res.stdout ?? ''}${res.stderr ?? ''}`.trim().split('\n');
+        console.log(out.filter((l) => /FAIL|page|Error|No Chrome/.test(l)).slice(0, 30).map((l) => `    ${l}`).join('\n'));
+      }
     }
   }
 

@@ -137,9 +137,10 @@ function computeCappedTerminalValue(params: {
   explicitPvK: number;
   terminalDiscountExponent: number;
   capexLevelPct: number;
+  terminalGrowthRate?: number;
 }): number {
   const w = params.waccPct / 100;
-  const g = TERMINAL_GROWTH_RATE;
+  const g = params.terminalGrowthRate ?? TERMINAL_GROWTH_RATE;
   const tvRaw = computeTerminalValue({
     fcff: params.terminalFcffK,
     wacc: Math.max(w, g + MIN_TERMINAL_SPREAD),
@@ -190,6 +191,8 @@ export function projectDcfHorizon(params: {
   wacc: number;
   industry?: string;
   turnaround?: TurnaroundDcfParams;
+  /** Terminal (Gordon) growth override for sensitivity runs. Default {@link TERMINAL_GROWTH_RATE}. */
+  terminalGrowthRate?: number;
 }): DcfHorizonProjection {
   const { ebitdaK, revK, dcfGrowthPct, wacc, industry = 'other' } = params;
   const capexLevelPct = parseCapexPct(params.capexLevelPct);
@@ -262,6 +265,7 @@ export function projectDcfHorizon(params: {
     explicitPvK,
     terminalDiscountExponent,
     capexLevelPct,
+    terminalGrowthRate: params.terminalGrowthRate,
   });
 
   let totalEvK = explicitPvK + terminalPvK;
@@ -282,6 +286,42 @@ export function projectDcfHorizon(params: {
   };
 }
 
+export interface DcfWithGuard {
+  /** DCF EV (₪K) after the CAPEX monotonicity guard. This is the engine DCF leg. */
+  evK: number;
+  /** Projection at the case CAPEX, before the guard. */
+  projection: DcfHorizonProjection;
+  /** evK / projection.totalEvK (1 when the guard does not bind). */
+  guardFactor: number;
+}
+
+/**
+ * DCF EV with the CAPEX monotonicity guard, plus the projection it was applied to.
+ * The report table uses guardFactor so that its rows sum exactly to evK (finding 16).
+ */
+export function computeDcfWithGrowthDecayDetailed(params: {
+  ebitdaK: number;
+  revK: number;
+  capexLevelPct: number;
+  dcfGrowthPct: number;
+  wacc: number;
+  industry?: string;
+  turnaround?: TurnaroundDcfParams;
+  terminalGrowthRate?: number;
+}): DcfWithGuard {
+  const capexPct = parseCapexPct(params.capexLevelPct);
+  const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;
+  const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
+  const evK = enforceCapexMonotonicity({
+    equityValue: projection.totalEvK,
+    capexPct,
+    baseEquityValue: baseEv,
+    industry: params.industry ?? 'other',
+  });
+  const guardFactor = projection.totalEvK > 0 ? evK / projection.totalEvK : 1;
+  return { evK, projection, guardFactor };
+}
+
 export function computeDcfWithGrowthDecay(params: {
   ebitdaK: number;
   revK: number;
@@ -290,16 +330,9 @@ export function computeDcfWithGrowthDecay(params: {
   wacc: number;
   industry?: string;
   turnaround?: TurnaroundDcfParams;
+  terminalGrowthRate?: number;
 }): number {
-  const capexPct = parseCapexPct(params.capexLevelPct);
-  const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;
-  const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
-  return enforceCapexMonotonicity({
-    equityValue: projection.totalEvK,
-    capexPct,
-    baseEquityValue: baseEv,
-    industry: params.industry ?? 'other',
-  });
+  return computeDcfWithGrowthDecayDetailed(params).evK;
 }
 
 export type ScenarioInputs = Pick<

@@ -99,13 +99,13 @@
   "effectiveMult": 4.34,
   "revenueMultiple": 2,
   "fcffM": [
-   1.28,
-   1.33,
-   1.38,
-   1.41,
-   1.45
+   1.45,
+   1.5,
+   1.55,
+   1.58,
+   1.63
   ],
-  "terminalPvM": 2,
+  "terminalPvM": 2.25,
   "terminalSharePct": 29.58,
   "netDebt": 1900000,
   "keyFindings": "Quality B+ · WACC 16.3% · EBITDA מדווח 2026 -500K ₪ · בסיס מכפיל -680K ₪ ×4.3 · TV 30% מ-DCF.",
@@ -127,13 +127,13 @@
   "effectiveMult": 6.67,
   "revenueMultiple": 0,
   "fcffM": [
-   2.38,
-   2.44,
-   2.49,
-   2.52,
-   2.6
+   2.34,
+   2.4,
+   2.45,
+   2.48,
+   2.56
   ],
-  "terminalPvM": 3.76,
+  "terminalPvM": 3.7,
   "terminalSharePct": 29.58,
   "netDebt": 200000,
   "keyFindings": "Quality B · WACC 14.6% · EBITDA מדווח 2026 3.0M ₪ · בסיס מכפיל 2.8M ₪ ×6.7 · TV 30% מ-DCF.",
@@ -155,13 +155,13 @@
   "effectiveMult": 5.3,
   "revenueMultiple": 5.3,
   "fcffM": [
-   2.48,
-   2.56,
-   2.62,
-   2.67,
-   2.75
+   2.34,
+   2.41,
+   2.47,
+   2.51,
+   2.59
   ],
-  "terminalPvM": 3.71,
+  "terminalPvM": 3.5,
   "terminalSharePct": 29.58,
   "netDebt": -5000000,
   "keyFindings": "Quality B+ · WACC 17.8% · EBITDA מדווח 2026 900K ₪ · בסיס מכפיל 900K ₪ ×5.3 · TV 30% מ-DCF.",
@@ -183,13 +183,13 @@
   "effectiveMult": 7.99,
   "revenueMultiple": 7.99,
   "fcffM": [
-   3.7,
-   3.81,
-   3.91,
-   3.97,
-   4.1
+   3.49,
+   3.6,
+   3.68,
+   3.74,
+   3.87
   ],
-  "terminalPvM": 5.77,
+  "terminalPvM": 5.44,
   "terminalSharePct": 29.58,
   "netDebt": -25000000,
   "keyFindings": "Quality B+ · WACC 15.6% · EBITDA מדווח 2026 5.0M ₪ · בסיס מכפיל 5.0M ₪ ×8.0 · TV 30% מ-DCF.",
@@ -239,13 +239,13 @@
   "effectiveMult": 4.66,
   "revenueMultiple": 2,
   "fcffM": [
-   0.6,
-   0.62,
-   0.64,
-   0.65,
-   0.67
+   0.79,
+   0.81,
+   0.83,
+   0.85,
+   0.87
   ],
-  "terminalPvM": 1.03,
+  "terminalPvM": 1.35,
   "terminalSharePct": 29.58,
   "netDebt": 3000000,
   "keyFindings": "Quality B · WACC 11.2% · EBITDA מדווח 2026 400K ₪ · בסיס מכפיל 421K ₪ ×4.7 · TV 30% מ-DCF.",
@@ -267,13 +267,13 @@
   "effectiveMult": 5.3,
   "revenueMultiple": 1.77,
   "fcffM": [
-   0.98,
-   1.01,
-   1.03,
-   1.05,
-   1.08
+   0.92,
+   0.95,
+   0.97,
+   0.99,
+   1.02
   ],
-  "terminalPvM": 1.51,
+  "terminalPvM": 1.42,
   "terminalSharePct": 29.58,
   "netDebt": -2000000,
   "keyFindings": "Quality B+ · WACC 16.1% · EBITDA מדווח 2026 $1.4M · בסיס מכפיל $1.4M ×5.3 · TV 30% מ-DCF.",

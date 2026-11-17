@@ -115,7 +115,7 @@ export function resolveProfitabilityRegime(params: {
       qualityScoreCap: isNegative ? 70 : 85,
       turnaroundYears: 0,
       labelHe: isNegative
-        ? 'הפסדית — הערכה לפי הכנסות ותוואי הבראה'
+        ? 'הפסדית, הערכה לפי הכנסות ותוואי הבראה'
         : 'רווחיות גבולית',
     };
   }
@@ -133,7 +133,7 @@ export function resolveProfitabilityRegime(params: {
       waccPremium: 0.04 - 0.015 * depth,
       qualityScoreCap: Math.round(55 + 15 * depth),
       turnaroundYears: Math.max(3, Math.round(5 - 2 * depth)),
-      labelHe: 'הפסדית — הערכה לפי הכנסות ותוואי הבראה',
+      labelHe: 'הפסדית, הערכה לפי הכנסות ותוואי הבראה',
     };
   }
 
@@ -148,7 +148,7 @@ export function resolveProfitabilityRegime(params: {
     waccPremium: 0.04,
     qualityScoreCap: 55,
     turnaroundYears: 5,
-    labelHe: 'הפסד עמוק — הערכה שמרנית לפי הכנסות',
+    labelHe: 'הפסד עמוק, הערכה שמרנית לפי הכנסות',
   };
 }
 
@@ -183,7 +183,7 @@ export function applyNormalizedEbitdaRegimeLabel(
   ) {
     return {
       ...regime,
-      labelHe: 'שנה חריגה על רקע היסטוריה רווחית — הערכה לפי EBITDA מנורמלת',
+      labelHe: 'שנה חריגה על רקע היסטוריה רווחית, הערכה לפי EBITDA מנורמלת',
     };
   }
   return regime;
@@ -201,8 +201,13 @@ export function buildProfitabilityMethodologyNoteHe(
 
   const blendWeights = composedWeights ?? resolution.blendWeights;
   const { turnaroundYears, labelHe } = resolution;
-  const revPct = Math.round(blendWeights.revenueMultiple * 100);
-  const dcfPct = Math.round(blendWeights.dcf * 100);
+  // Round 2: same precision as the blend table (0.1%), so the note and the table agree.
+  const pct = (w: number) => {
+    const v = Math.round(w * 1000) / 10;
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+  };
+  const revPct = pct(blendWeights.revenueMultiple);
+  const dcfPct = pct(blendWeights.dcf);
   const turnaroundLine =
     turnaroundYears > 0
       ? `DCF עם תוואי הבראה ל-${turnaroundYears} שנים (${dcfPct}%), `
@@ -212,12 +217,12 @@ export function buildProfitabilityMethodologyNoteHe(
     return (
       `מתודולוגיית הערכה: ${labelHe}\n` +
       `בשל EBITDA שלילית, ההערכה מבוססת על: מכפיל הכנסות (${revPct}%), ` +
-      `${turnaroundLine}ורצפת שווי נכסי.\n` +
+      `${turnaroundLine.replace(/, $/, '')}.\n` +
       `מכפיל EBITDA אינו ישים לחברה הפסדית ואינו נכלל בשקלול.`
     );
   }
 
-  const ebitdaPct = Math.round(blendWeights.ebitdaMultiple * 100);
+  const ebitdaPct = pct(blendWeights.ebitdaMultiple);
   return (
     `מתודולוגיית הערכה: ${labelHe}\n` +
     `שקלול מותאם: DCF (${dcfPct}%), מכפיל EBITDA (${ebitdaPct}%), מכפיל הכנסות (${revPct}%).`

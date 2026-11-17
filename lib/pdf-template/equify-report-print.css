@@ -659,3 +659,7 @@ td.interp-cell{
 .sens-grid th{background:var(--tint)}
 
 .blend-weight-bar{font-family:'IBM Plex Mono',monospace;font-size:var(--pdf-fs-body)!important;font-weight:700!important;line-height:var(--pdf-lh-body)!important}
+
+/* Round 2: short notes under the WACC and sensitivity tables (how the numbers were computed). */
+.note.sens-note,.note.wacc-note{border:0;background:none;padding:1mm 0 0;margin:0;font-size:8.5px;line-height:1.35;border-radius:0}
+.blend-leg-note{font-size:8.5px;color:var(--dim);font-weight:500}

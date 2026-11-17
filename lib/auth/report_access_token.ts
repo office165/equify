@@ -24,8 +24,10 @@ export function signReportAccessToken(email: string, source: ReportAccessPayload
 }
 
 export function verifyReportAccessToken(token: string): ReportAccessPayload | null {
+  // Outside the try: a missing JWT_SECRET in production must surface as a clear error.
+  const secret = getJwtSecret();
   try {
-    const p = jwt.verify(token, getJwtSecret(), {
+    const p = jwt.verify(token, secret, {
       issuer: REPORT_ACCESS_ISSUER,
       audience: REPORT_ACCESS_AUDIENCE,
     }) as ReportAccessPayload;

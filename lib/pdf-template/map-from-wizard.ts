@@ -7,7 +7,8 @@ import {
 } from '../valuation';
 import {
   STUB_PERIOD_DISCOUNT_EXPONENT,
-  projectDcfHorizon,
+  TERMINAL_TO_EXPLICIT_PV_MAX,
+  computeDcfWithGrowthDecayDetailed,
 } from '../valuation/scenario_matrix';
 import { parseCapexPct, resolveCapexIndustryKey } from '../valuation/capex_fcf';
 import type { ValuationLocale } from '../../api_client';
@@ -22,6 +23,7 @@ import type {
   TrajectoryPoint,
   ValuationData,
   WaccSegment,
+  WaccTableRow,
 } from './types';
 
 import {
@@ -38,7 +40,17 @@ import {
 import { formatValuationOutputSync } from '../currency-normalize';
 import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
 import { applyReportingFxLayer } from '../valuation/apply_reporting_fx';
-import { getCachedFxRates, isFallbackFxSnapshot } from '../utils/fxService';
+import { getCachedFxRates, getIlsToReportingMultiplier, isFallbackFxSnapshot } from '../utils/fxService';
+import {
+  DAMODARAN_SOURCES,
+  damodaranIndustryFor,
+  damodaranMappingFor,
+} from '../market-data/damodaran_2026';
+import {
+  buildEbitdaMultipleSensitivity,
+  buildGrowthWaccSensitivity,
+  type SensitivityContext,
+} from './sensitivity';
 import {
   formatCurrencyNarrativeHe,
   formatCurrencyShort,
@@ -63,6 +75,21 @@ import type { ReportFinancialCore } from './types';
 
 function kToNis(k: number): number {
   return k * 1000;
+}
+
+function isoToHe(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d}.${m}.${y}`;
+}
+
+/** Page 5 intro: what the industry multiples are and why the company multiple is lower. */
+function damodaranIntroHe(industry: string): string {
+  return `מכפילי הענף הם נתוני Damodaran לענף ${industry}, של חברות ציבוריות בעולם (Global) ובשווקים מתעוררים (Emerging Markets). מכפיל החברה נמוך מהם בדרך כלל, כי הוא כולל הנחת סחירות וגודל לחברה פרטית.`;
+}
+
+function damodaranFootnoteHe(industry: string): string {
+  const s = DAMODARAN_SOURCES;
+  return `מקור: Damodaran, ענף ${industry}, EV/EBITDA של חברות עם EBITDA חיובי ו EV/Sales, נתונים מ ${isoToHe(s.vebitdaGlobal.dataDate)} (${s.vebitdaGlobal.file}, ${s.vebitdaEmerging.file}, ${s.psGlobal.file}, ${s.psEmerging.file}), pages.stern.nyu.edu/~adamodar.`;
 }
 
 const LIFECYCLE_LABELS: Record<string, string> = {
@@ -178,56 +205,118 @@ function buildSpecificRiskSubRows(
   ];
 }
 
-function buildWaccSegments(
+const WACC_COLORS = {
+  rf: '#4DD6CE',
+  erp: '#00A89F',
+  crp: '#C9A84C',
+  size: '#163530',
+  spec: '#7FB8B4',
+  loss: '#B85C5C',
+  debt: '#A8842E',
+  bound: '#D9DEDD',
+} as const;
+
+/**
+ * Page 4 WACC (round 2, finding 2): one set of numbers for the table and the donut.
+ * Table: Rf, beta x ERP, size, specific, Ke, Kd before and after tax, E/V, D/V, WACC.
+ * Donut: each Ke component weighted by E/V and Kd after tax by D/V, so it sums to the WACC.
+ * Display only: the engine WACC is not recomputed here.
+ */
+function buildWaccDisplay(
   waccPct: number,
   breakdown: ValuationComputed['waccBreakdown'],
   qs: number,
   topCustomerPct: number,
   locale: 'he' | 'en' = 'he',
-): WaccSegment[] {
-  const rf = breakdown.rf;
+): { segments: WaccSegment[]; table: WaccTableRow[]; note: string } {
+  const en = locale === 'en';
+  const ev = breakdown.equityWeight ?? 1;
+  const dv = breakdown.debtWeight ?? 0;
+  const kdPre = breakdown.kdPreTax ?? breakdown.kd / (1 - (breakdown.taxRate ?? 0.23));
+  const tax = breakdown.taxRate ?? 0.23;
+  const crp = breakdown.crp ?? 0;
   const marketRisk = breakdown.leveredBeta * breakdown.erp;
-  const crp = 1.6;
-  const size = breakdown.alpha;
-  const spec = breakdown.specificRiskPremium;
-
-  return [
-    { label: 'ריבית חסרת סיכון', symbol: 'Rf', pct: rf, color: '#4DD6CE', source: 'Bank of Israel' },
+  const keParts: Array<{ key: keyof typeof WACC_COLORS; label: string; pct: number; source: string }> = [
+    { key: 'rf', label: en ? 'Risk-free rate (Rf)' : 'ריבית חסרת סיכון (Rf)', pct: breakdown.rf, source: 'Rf' },
     {
-      label: 'פרמיית סיכון שוק',
-      symbol: 'ERP',
+      key: 'erp',
+      label: en
+        ? `Levered beta ${breakdown.leveredBeta.toFixed(2)} times ERP ${breakdown.erp.toFixed(1)}%`
+        : `בטא ממונפת ${breakdown.leveredBeta.toFixed(2)} כפול ERP של ${breakdown.erp.toFixed(1)}%`,
       pct: marketRisk,
-      color: '#00A89F',
-      source: 'Damodaran 2026',
+      source: 'ERP',
     },
-    { label: 'פרמיית סיכון מדינה', symbol: 'CRP', pct: crp, color: '#C9A84C', source: 'Damodaran Israel' },
-    { label: 'פרמיית גודל', symbol: 'Size', pct: size, color: '#163530', source: 'Ibbotson' },
-    {
-      label: locale === 'en' ? 'Specific risk' : 'סיכון ספציפי',
-      symbol: 'SRP',
-      pct: spec,
-      color: '#7FB8B4',
-      source: `Quality Score ${qs}`,
-      subRows: buildSpecificRiskSubRows(breakdown, topCustomerPct, locale),
-    },
+    ...(crp > 0
+      ? [{ key: 'crp' as const, label: en ? 'Country risk premium (Israel)' : 'פרמיית סיכון מדינה (ישראל)', pct: crp, source: 'CRP' }]
+      : []),
+    { key: 'size', label: en ? 'Size premium' : 'פרמיית גודל', pct: breakdown.alpha, source: 'Size' },
+    { key: 'spec', label: en ? 'Company-specific premium' : 'פרמיה ספציפית', pct: breakdown.specificRiskPremium, source: `Quality Score ${qs}` },
     ...(breakdown.profitabilityLossPremium > 0
-      ? [
-          {
-            label: locale === 'en' ? 'Loss-making premium' : 'פרמיית הפסדיות',
-            symbol: 'Distress',
-            pct: breakdown.profitabilityLossPremium,
-            color: '#B85C5C',
-            source: 'Damodaran distress',
-          },
-        ]
+      ? [{ key: 'loss' as const, label: en ? 'Loss-making premium' : 'פרמיית הפסדיות', pct: breakdown.profitabilityLossPremium, source: 'Distress' }]
       : []),
   ];
+  const subRows = buildSpecificRiskSubRows(breakdown, topCustomerPct, locale);
+
+  const table: WaccTableRow[] = [];
+  for (const p of keParts) {
+    table.push({ label: p.label, pct: p.pct, kind: 'component', color: WACC_COLORS[p.key] });
+    if (p.key === 'spec') {
+      for (const sub of subRows) table.push({ label: sub.label, pct: sub.pct, kind: 'sub' });
+    }
+  }
+  table.push({ label: en ? 'Cost of equity (Ke)' : 'עלות הון עצמי (Ke)', pct: breakdown.ke, kind: 'subtotal' });
+  table.push({ label: en ? 'Cost of debt before tax (Kd)' : 'עלות חוב לפני מס (Kd)', pct: kdPre, kind: 'component' });
+  table.push({
+    label: en ? `Cost of debt after tax (${Math.round(tax * 100)}%)` : `עלות חוב אחרי מס (${Math.round(tax * 100)}%)`,
+    pct: breakdown.kd,
+    kind: 'component',
+    color: WACC_COLORS.debt,
+  });
+  table.push({ label: en ? 'Equity weight (E/V)' : 'משקל הון עצמי (E/V)', pct: ev * 100, kind: 'weight' });
+  table.push({ label: en ? 'Debt weight (D/V)' : 'משקל חוב (D/V)', pct: dv * 100, kind: 'weight' });
+
+  const segments: WaccSegment[] = keParts.map((p) => ({
+    label: p.label,
+    symbol: p.source,
+    pct: p.pct * ev,
+    color: WACC_COLORS[p.key],
+    source: p.source,
+  }));
+  if (dv > 0) {
+    segments.push({
+      label: en ? 'Cost of debt after tax' : 'עלות חוב אחרי מס',
+      symbol: 'Kd',
+      pct: breakdown.kd * dv,
+      color: WACC_COLORS.debt,
+    });
+  }
+  const raw = segments.reduce((sum, x) => sum + x.pct, 0);
+  const boundAdj = waccPct - raw;
+  if (Math.abs(boundAdj) > 0.005) {
+    segments.push({
+      label: en ? 'WACC bound adjustment (6% to 22%)' : 'התאמה לגבולות WACC (6% עד 22%)',
+      symbol: 'Bound',
+      pct: boundAdj,
+      color: WACC_COLORS.bound,
+    });
+    table.push({
+      label: en ? 'Bound adjustment (6% to 22%)' : 'התאמה לגבולות (6% עד 22%)',
+      pct: boundAdj,
+      kind: 'component',
+      color: WACC_COLORS.bound,
+    });
+  }
+
+  const note = en
+    ? 'WACC = Ke x E/V + Kd after tax x D/V. In the chart each component is weighted by its share of capital.'
+    : 'ה WACC הוא Ke כפול E/V, ועוד Kd אחרי מס כפול D/V. בגרף כל רכיב משוקלל לפי חלקו בהון.';
+  return { segments, table, note };
 }
 
 function buildDcfRows(
   inputs: ValuationInputs,
   computed: ValuationComputed,
-): { rows: DcfYearRow[]; terminalPvM: number; terminalSharePct: number } {
+): { rows: DcfYearRow[]; terminalPvM: number; terminalSharePct: number; note: string } {
   const revK = inputs.revenue2026K ?? inputs.rev ?? 0;
   const capexLevelPct = parseCapexPct(inputs.capexLevelPct ?? 0);
   const headlineGrowthPct =
@@ -251,7 +340,7 @@ function buildDcfRows(
           turnaroundYears: regime.turnaroundYears,
         }
       : undefined;
-  const projection = projectDcfHorizon({
+  const { projection, guardFactor } = computeDcfWithGrowthDecayDetailed({
     ebitdaK: computed.ebitda,
     revK,
     capexLevelPct,
@@ -265,7 +354,8 @@ function buildDcfRows(
 
   for (let i = 0; i < projection.fcffByYearK.length; i += 1) {
     const yearIndex = i + 1;
-    const fcffK = projection.fcffByYearK[i];
+    // FCFF after the CAPEX monotonicity guard (finding 16): rows sum to the DCF leg exactly.
+    const fcffK = projection.fcffByYearK[i] * guardFactor;
     const discountExponent =
       yearIndex === 1 ? STUB_PERIOD_DISCOUNT_EXPONENT : yearIndex - STUB_PERIOD_DISCOUNT_EXPONENT;
     const df = 1 / (1 + w) ** discountExponent;
@@ -277,10 +367,21 @@ function buildDcfRows(
     });
   }
 
-  const terminalPvM = projection.terminalPvK / 1000;
+  const terminalPvM = (projection.terminalPvK * guardFactor) / 1000;
   const terminalSharePct = projection.terminalShare * 100;
-
-  return { rows, terminalPvM, terminalSharePct };
+  // Methodology 1 behavior, stated explicitly (round 2, item 8). Removed when METHOD_V2 is on.
+  const notes: string[] = [
+    `הערך הטרמינלי מוגבל ל ${Math.round(TERMINAL_TO_EXPLICIT_PV_MAX * 100)}% מערך התקופה המפורשת.`,
+  ];
+  if (Math.abs(guardFactor - 1) > 0.0005) {
+    const pct = Math.abs((guardFactor - 1) * 100).toFixed(1);
+    notes.push(
+      guardFactor < 1
+        ? `התזרימים כוללים הקטנה של ${pct}% לעקביות מול רמת ה CAPEX, כך שהטבלה מסתכמת לשווי ה DCF.`
+        : `התזרימים כוללים הגדלה של ${pct}% לעקביות מול רמת ה CAPEX, כך שהטבלה מסתכמת לשווי ה DCF.`,
+    );
+  }
+  return { rows, terminalPvM, terminalSharePct, note: notes.join(' ') };
 }
 
 function buildQualityFactors(inputs: ValuationInputs): QualityFactorRow[] {
@@ -331,61 +432,6 @@ function buildQualityFactors(inputs: ValuationInputs): QualityFactorRow[] {
   ];
 }
 
-function buildSensitivityGrowthWacc(
-  core: ReportFinancialCore,
-  baseGrowth: number,
-  baseWacc: number,
-): SensitivityMatrix {
-  const baseEquityK = core.equityBaseAbs / 1000;
-  const growthDeltas = [15, 12, baseGrowth, 6, 3];
-  const waccDeltas = [-1.7, -1.0, 0, 1.0, 1.8].map((d) => baseWacc + d);
-  const baseRow = 2;
-  const baseCol = 2;
-
-  const cells = growthDeltas.map((g) =>
-    waccDeltas.map((w) => {
-      const growthFactor = 1 + (g - baseGrowth) * 0.012;
-      const waccFactor = 1 - (w - baseWacc) * 0.045;
-      const eqK = Math.max(0, baseEquityK * growthFactor * waccFactor);
-      return eqK / 1000;
-    }),
-  );
-
-  return {
-    growthLabels: growthDeltas.map((g) => `+${g}%`),
-    waccLabels: waccDeltas.map((w) => `${w.toFixed(1)}%`),
-    cells,
-    baseRow,
-    baseCol,
-  };
-}
-
-function buildSensitivityEbitdaMult(
-  core: ReportFinancialCore,
-  currency: string,
-): EbitdaSensitivityMatrix {
-  const ebitdaK = core.multipleLegEbitdaBaseAbs / 1000;
-  const mult = core.effectiveMultiple;
-  const ebitdaKs = [ebitdaK * 0.72, ebitdaK * 0.86, ebitdaK, ebitdaK * 1.14];
-  const mults = [mult * 0.73, mult * 0.87, mult, mult * 1.13, mult * 1.27];
-  const baseRow = 2;
-  const baseCol = 2;
-
-  const cells = ebitdaKs.map((e) =>
-    mults.map((m) => Math.max(0, (e * m) / 1000)),
-  );
-
-  return {
-    ebitdaLabels: ebitdaKs.map((e) => formatCurrencyShort(e * 1000, currency)),
-    multipleLabels: mults.map((m) => `×${m.toFixed(1)}`),
-    cells,
-    baseRow,
-    baseCol,
-    baseEbitdaAbs: core.multipleLegEbitdaBaseAbs,
-    baseMultiple: mult,
-  };
-}
-
 function scenarioRowsFromComputed(
   scenarios: ReturnType<typeof computeScenarios>,
   inputs: ValuationInputs,
@@ -424,24 +470,53 @@ function scenarioRowsFromComputed(
   });
 }
 
+/**
+ * Display weights in tenths of a percent that sum to exactly 100 (largest remainder).
+ * Round 2, finding 19: 22.5% is shown as 22.5%, not 23%, and the shown weights add up.
+ */
+export function displayWeightsPct(weights: number[]): number[] {
+  const total = weights.reduce((s, w) => s + Math.max(0, w), 0);
+  if (total <= 0) return weights.map(() => 0);
+  const raw = weights.map((w) => (Math.max(0, w) / total) * 1000);
+  const floors = raw.map(Math.floor);
+  let remaining = 1000 - floors.reduce((s, x) => s + x, 0);
+  const order = raw
+    .map((r, i) => ({ i, frac: r - Math.floor(r) }))
+    .sort((a, b) => b.frac - a.frac || a.i - b.i);
+  for (const { i } of order) {
+    if (remaining <= 0) break;
+    if (weights[i] <= 0) continue;
+    floors[i] += 1;
+    remaining -= 1;
+  }
+  return floors.map((t) => t / 10);
+}
+
 function buildModelBlendRows(
   computed: ValuationComputed,
   inputs: ValuationInputs,
   locale: ValuationLocale,
 ): ModelBlendRow[] {
-  const { blendWeights, modelBlendContributions } = computed;
-  const dcfWeight = Math.round(blendWeights.dcf * 100);
-  const ebitdaWeight = Math.round(blendWeights.ebitda * 100);
-  const revWeight = Math.round(blendWeights.rev * 100);
+  const { blendWeights } = computed;
+  const [dcfWeight, ebitdaWeight, revWeight] = displayWeightsPct([
+    blendWeights.dcf,
+    blendWeights.ebitda,
+    blendWeights.rev,
+  ]);
   const revMultDisplay =
     inputs.rev > 0 ? computed.revMult / inputs.rev : computed.effectiveMult * 0.25;
-
-  const contributions = modelBlendContributions ?? {
-    dcf: computed.dcf * blendWeights.dcf,
-    ebitda: computed.ebtMult * blendWeights.ebitda,
-    rev: computed.revMult * blendWeights.rev,
-    backlogAdjustment: computed.backlogEquityUpliftK ?? 0,
+  const backlogAdjustmentK =
+    computed.modelBlendContributions?.backlogAdjustment ?? computed.backlogEquityUpliftK ?? 0;
+  // Contribution shown = leg EV x shown weight (finding 19). The validator checks the
+  // engine sum separately with exact weights.
+  const contributions = {
+    dcf: (computed.dcf * dcfWeight) / 100,
+    ebitda: (computed.ebtMult * ebitdaWeight) / 100,
+    rev: (computed.revMult * revWeight) / 100,
+    backlogAdjustment: backlogAdjustmentK,
   };
+  const zeroLegNote =
+    locale === 'en' ? 'Not relevant: negative EBITDA' : 'לא רלוונטית בגלל EBITDA שלילי';
 
   const rows: ModelBlendRow[] = [
     {
@@ -458,6 +533,8 @@ function buildModelBlendRows(
       ev: kToNis(computed.ebtMult),
       weightPct: ebitdaWeight,
       contribution: kToNis(contributions.ebitda),
+      // Finding 22 (display only): a leg the engine zeroed still carries its weight in methodology 1.
+      ...(blendWeights.ebitda > 0 && computed.ebtMult === 0 ? { detail: zeroLegNote } : {}),
     },
   ];
 
@@ -500,7 +577,7 @@ export function mapEngineResultToValuationData(
   ilsComputed?: ValuationComputed,
 ): ValuationData {
   const netDebtK = computeNetDebtK(syncedState.financials);
-  const { rows: dcfRows, terminalPvM, terminalSharePct } = buildDcfRows(inputs, fxComputed);
+  const { rows: dcfRows, terminalPvM, terminalSharePct, note: dcfNote } = buildDcfRows(inputs, fxComputed);
   const now = new Date();
   const dateIso = now.toISOString().slice(0, 10);
   const dateShort = now.toLocaleDateString('he-IL');
@@ -528,14 +605,78 @@ export function mapEngineResultToValuationData(
     fxComputed.calibratedYears?.y2026.marginPct ??
     ebitdaMarginPctFromYear(financials.y2026);
   const trajectory = buildWizardReportTrajectory(financials);
-  const waccSegments = buildWaccSegments(
+  const waccDisplay = buildWaccDisplay(
     fxComputed.wacc,
     fxComputed.waccBreakdown,
     fxComputed.qs,
     syncedState.risk.topCustomer,
     locale,
   );
+  const waccSegments = waccDisplay.segments;
+  // Page 5 (round 2, finding 7): Damodaran industry multiples with source, no market median
+  // derived from the company. The company marker is the multiple the report uses.
+  const damodaran = damodaranIndustryFor(syncedState.profile.sector, syncedState.profile.subSector);
+  const damodaranMap = damodaranMappingFor(syncedState.profile.sector, syncedState.profile.subSector);
+  const revenueLegUsed = fxComputed.blendWeights.rev > 0 && fxComputed.revMult > 0;
+  const companyRevenueMultiple = revenueLegUsed
+    ? revMultDisplay
+    : inputs.rev > 0
+      ? fxComputed.ev / (inputs.rev * getIlsToReportingMultiplier(reportingCurrency, fxRates))
+      : 0;
+  const industryMultiples: ValuationData['industryMultiples'] =
+    damodaran && damodaranMap
+      ? {
+          industry: damodaranMap.industry,
+          evEbitdaLow: Math.min(damodaran.global.evEbitda.value, damodaran.emerging.evEbitda.value),
+          evEbitdaHigh: Math.max(damodaran.global.evEbitda.value, damodaran.emerging.evEbitda.value),
+          evSalesLow: Math.min(damodaran.global.evSales.value, damodaran.emerging.evSales.value),
+          evSalesHigh: Math.max(damodaran.global.evSales.value, damodaran.emerging.evSales.value),
+          companyRevenueMultiple,
+          revenueMultipleKind: revenueLegUsed ? 'leg' : 'implied',
+          footnote: damodaranFootnoteHe(damodaranMap.industry),
+        }
+      : undefined;
+  const track = (
+    id: 'ebitda' | 'revenue',
+    title: string,
+    impliedEv: number,
+    multiple: number,
+    low: number,
+    high: number,
+  ) => ({
+    id,
+    title,
+    impliedEv,
+    multiple,
+    rangeMin: Math.max(0, Math.min(multiple, low) * 0.85),
+    rangeMax: Math.max(multiple, high) * 1.1,
+    marketMin: low,
+    marketMax: high,
+    color: '#00A89F',
+  });
+  const pageFiveTracks = industryMultiples
+    ? [
+        track('ebitda', 'EV / EBITDA', kToNis(fxComputed.ebtMult), fxComputed.effectiveMult, industryMultiples.evEbitdaLow, industryMultiples.evEbitdaHigh),
+        track(
+          'revenue',
+          'EV / Revenue',
+          revenueLegUsed ? kToNis(fxComputed.revMult) : kToNis(fxComputed.ev),
+          companyRevenueMultiple,
+          industryMultiples.evSalesLow,
+          industryMultiples.evSalesHigh,
+        ),
+      ]
+    : [];
   const activeCurrency = resolveActiveCurrency(reportingCurrency, locale);
+  const fxMultiplier = getIlsToReportingMultiplier(reportingCurrency, fxRates);
+  const sensitivityCtx: SensitivityContext = {
+    inputs,
+    baseIls: ilsComputed ?? computeValuation(inputs, { silent: true }),
+    reportedEquityAbs: kToNis(fxComputed.equity),
+    fxMultiplier,
+    multipleLegEbitdaAbs: financialCore.multipleLegEbitdaBaseAbs,
+    currency: reportingCurrency,
+  };
   const equityIlsAbs = kToNis((ilsComputed ?? fxComputed).equity);
   const valuationOutput = formatValuationOutputSync(equityIlsAbs, fxRates);
 
@@ -623,7 +764,10 @@ export function mapEngineResultToValuationData(
 
     trajectory,
     waccSegments,
+    waccTable: waccDisplay.table,
+    waccNote: waccDisplay.note,
     dcfRows,
+    dcfNote,
     terminalPvM,
     scenarios: scenarioRowsFromComputed(
       fxScenarios,
@@ -634,52 +778,11 @@ export function mapEngineResultToValuationData(
     ),
     modelBlend,
     qualityFactors: buildQualityFactors(inputs),
-    multiplesPositions: [
-      {
-        id: 'ebitda',
-        title: 'EV / EBITDA',
-        impliedEv: kToNis(fxComputed.ebtMult),
-        multiple: fxComputed.effectiveMult,
-        rangeMin: industryMult * 0.75,
-        rangeMax: industryMult * 1.45,
-        marketMin: industryMult * 0.8,
-        marketMax: industryMult * 1.35,
-        color: '#00A89F',
-      },
-      {
-        id: 'revenue',
-        title: 'EV / Revenue',
-        impliedEv: kToNis(fxComputed.revMult),
-        multiple: revMultDisplay,
-        rangeMin: revMultDisplay * 0.55,
-        rangeMax: revMultDisplay * 1.65,
-        marketMin: revMultDisplay * 0.65,
-        marketMax: revMultDisplay * 1.45,
-        color: '#00A89F',
-      },
-      {
-        id: 'margin',
-        title: 'שיעור EBITDA',
-        impliedEv: kToNis(fxComputed.ebitda),
-        multiple: currentYearMarginPct,
-        rangeMin: Math.max(0, currentYearMarginPct - 12),
-        rangeMax: currentYearMarginPct + 12,
-        marketMin: Math.max(0, (currentYearMarginPct - 2)),
-        marketMax: currentYearMarginPct + 2,
-        color: '#A8842E',
-      },
-    ],
+    multiplesPositions: pageFiveTracks,
+    industryMultiples,
 
-    industryEbitdaMedian: industryMult,
-    industryRevenueMedian: revMultDisplay * 0.95,
-    industryEbitdaMarginPct: currentYearMarginPct - 2,
-
-    sensitivityGrowthWacc: buildSensitivityGrowthWacc(
-      financialCore,
-      financials.growth,
-      fxComputed.wacc,
-    ),
-    sensitivityEbitdaMult: buildSensitivityEbitdaMult(financialCore, reportingCurrency),
+    sensitivityGrowthWacc: buildGrowthWaccSensitivity(sensitivityCtx, locale === 'en'),
+    sensitivityEbitdaMult: buildEbitdaMultipleSensitivity(sensitivityCtx, locale === 'en'),
 
     netDebtNote: formatNetDebtNoteHe(
       netDebtK,
@@ -688,8 +791,17 @@ export function mapEngineResultToValuationData(
       reportingCurrency,
     ),
     keyFindings: `Quality ${fxComputed.qsGrade} · WACC ${fxComputed.wacc.toFixed(1)}% · EBITDA מדווח 2026 ${formatCurrencyShort(financialCore.auditedEbitda2026Abs, reportingCurrency)} · בסיס מכפיל ${formatCurrencyShort(financialCore.multipleLegEbitdaBaseAbs, reportingCurrency)} ×${fxComputed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
+    // Round 2: the note states the weights shown in the blend table (it used the regime's
+    // pre-scale weights, e.g. 45/14/42 next to a table of 48.5/22.7/28.8).
     profitabilityMethodologyNote: fxComputed.profitabilityRegime
-      ? buildProfitabilityMethodologyNoteHe(fxComputed.profitabilityRegime)
+      ? buildProfitabilityMethodologyNoteHe(fxComputed.profitabilityRegime, (() => {
+          const [d, e, r] = displayWeightsPct([
+            fxComputed.blendWeights.dcf,
+            fxComputed.blendWeights.ebitda,
+            fxComputed.blendWeights.rev,
+          ]);
+          return { dcf: d / 100, ebitdaMultiple: e / 100, revenueMultiple: r / 100 };
+        })())
       : undefined,
     normalizedEbitdaNote:
       fxComputed.normalizedEbitda && fxComputed.normalizedEbitda.yearsAvailable > 1
@@ -703,7 +815,23 @@ export function mapEngineResultToValuationData(
             (k) => formatCurrencyShort(k * 1000, reportingCurrency),
           )
         : undefined,
-    multiplesIntro: getMultiplesIntroText(syncedState.profile.sector, locale),
+    multiplesIntro: industryMultiples
+      ? damodaranIntroHe(industryMultiples.industry)
+      : getMultiplesIntroText(syncedState.profile.sector, locale),
+    dcfEbitdaWeights: (() => {
+      const w = BLENDED_EBITDA_WEIGHTS;
+      if (fxComputed.ebitdaBlend.hasPastActual && fxComputed.ebitdaBlend.past != null) {
+        return { past: w.past, current: w.current, projected: w.projected };
+      }
+      const sum = w.current + w.projected;
+      return { past: 0, current: w.current / sum, projected: w.projected / sum };
+    })(),
+    multipleEbitdaWeights: fxComputed.normalizedEbitda
+      ? {
+          ...fxComputed.normalizedEbitda.weightsUsed,
+          anomalous: fxComputed.normalizedEbitda.isCurrentYearAnomalous,
+        }
+      : undefined,
   };
 }
 
