@@ -31,6 +31,10 @@ import { Suite, type SuiteResult } from '../lib/harness';
 import { withQuietConsole } from '../lib/quiet';
 import { runCase, TEST_FX } from '../lib/run_case';
 import { marginCase } from './v2_sanity';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { resultsMarkdown, runCalibration } from '../../scripts/calibration/run';
 
 export const FINE_MARGINS_PCT = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 7, 8];
 
@@ -85,6 +89,41 @@ export function run(): SuiteResult {
           prev = { m, eq };
         }
       }
+    }
+  }
+
+  // Calibration script (part B): runs on an empty or missing folder and on a sample case without
+  // failing; a broken file is reported, not thrown. Once, in methodology 1 (it runs both itself).
+  if (!v2) {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'equify-cal-'));
+    try {
+      const empty = runCalibration(tmp);
+      suite.check('calibration-empty-folder', 'empty', empty.results.length === 0 && empty.errors.length === 0 && resultsMarkdown(empty).includes('אין תיקים'), '');
+      const missing = runCalibration(path.join(tmp, 'missing'));
+      suite.check('calibration-missing-folder', 'missing', missing.results.length === 0 && missing.errors.length === 0, '');
+      const sample = {
+        caseCode: 'CAL-TEST',
+        wizard: {
+          sector: 'services', subSector: 'consulting', lifecycle: 'growth', currency: 'ILS',
+          years: { '2024': { revenue: 9e6, ebitda: 1.2e6 }, '2025': { revenue: 10e6, ebitda: 1.4e6 }, '2026': { revenue: 11e6, ebitda: 1.6e6 } },
+          growthPct: 8, grossDebt: 1e6, cash: 5e5, ownerSalaryNormalization: 0, capexLevelPct: 2, backlogSigned: 0,
+          recurringPct: 40, topCustomerPct: 15, founderDependency: true, strongCompetition: false, ipProtection: false, longTermContracts: false,
+        },
+        target: { value: 8e6, low: 7e6, high: 9e6, by: 'TEST', method: 'בדיקה', source: 'TEST', date: null },
+      };
+      fs.writeFileSync(path.join(tmp, 'CAL-TEST.json'), JSON.stringify(sample));
+      fs.writeFileSync(path.join(tmp, 'broken.json'), '{bad');
+      fs.writeFileSync(path.join(tmp, 'TEMPLATE.json'), '{}');
+      const r = runCalibration(tmp);
+      const row = r.results[0];
+      suite.check(
+        'calibration-sample',
+        'CAL-TEST',
+        r.results.length === 1 && r.errors.length === 1 && r.errors[0].file === 'broken.json' && row.v1 > 0 && row.v2 > 0 && Math.abs(row.v2DevPct - ((row.v2 - 8e6) / 8e6) * 100) < 1e-9 && row.v2InRange === (row.v2 >= 7e6 && row.v2 <= 9e6),
+        JSON.stringify(row ?? r.errors).slice(0, 160),
+      );
+    } finally {
+      fs.rmSync(tmp, { recursive: true, force: true });
     }
   }
 
