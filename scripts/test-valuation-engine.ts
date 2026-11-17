@@ -164,6 +164,16 @@ function testCapexMonotonicDecrease(): void {
     );
   }
 
+  // Methodology 2 (decision 2 of 17.11.2026): enforceCapexMonotonicity is not part of it; the
+  // normalized terminal year (CAPEX = D&A) replaces it. The path is printed, not asserted.
+  if (process.env.METHOD_V2?.trim().toLowerCase() === 'on') {
+    pass(
+      test,
+      `METHOD_V2=on: not asserted (no CAPEX guard, decision 2): ${equities.map((v, i) => `${capexLevels[i]}%→${v.toFixed(0)}`).join(' | ')}`,
+    );
+    return;
+  }
+
   for (let i = 1; i < capexLevels.length; i += 1) {
     const prev = equities[i - 1]!;
     const curr = equities[i]!;
@@ -384,7 +394,13 @@ async function testMultiplePathInvariance(): Promise<void> {
       customMultiple: null,
     }),
   );
-  const rawMultiple = autoRun.computed.configuredDefaultMultiple;
+  // Methodology 2 (R1): the automatic revenue multiple is the margin-adjusted Damodaran EV/Sales
+  // after the private-company factor. The same invariant holds for the raw multiple behind it.
+  const r1 = autoRun.computed.v2?.revenueMultiple;
+  const rawMultiple =
+    r1 && r1.basis === 'damodaran-margin' && r1.privateFactor > 0
+      ? r1.multiple / r1.privateFactor
+      : autoRun.computed.configuredDefaultMultiple;
   const autoEquity = autoRun.computed.equity;
 
   const manualRun = runValuationEngine(

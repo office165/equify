@@ -3,11 +3,14 @@
  * appended to tests/snapshots/CHANGELOG.md together with the list of changed fields.
  *
  * Usage: npm run snapshot:update -- --reason "why the numbers changed"
+ * Methodology 2: METHOD_V2=on npm run snapshot:update -- --reason "..." writes tests/snapshots/v2/
+ * (and its own CHANGELOG.md). The methodology map and the value lock are methodology 1 only.
  */
 import fs from 'fs';
 import path from 'path';
+import { resolveMethodVersion } from '../lib/valuation/method_v2';
 import {
-  SNAPSHOT_DIR,
+  activeSnapshotDir,
   computeSnapshots,
   diffSnapshots,
   formatDiffTable,
@@ -45,11 +48,15 @@ for (const [group, cases] of Object.entries(current)) {
   writeSnapshot(group, cases);
 }
 
-const map = buildMethodologyMap();
-const lockBefore = readMethodologyLock();
-const methodologyChanged = JSON.stringify(lockBefore) !== JSON.stringify(map);
-writeMethodologyLock(map);
-writeMethodologyDoc(map);
+const isV2 = resolveMethodVersion() === 'v2';
+let methodologyChanged = false;
+if (!isV2) {
+  const map = buildMethodologyMap();
+  const lockBefore = readMethodologyLock();
+  methodologyChanged = JSON.stringify(lockBefore) !== JSON.stringify(map);
+  writeMethodologyLock(map);
+  writeMethodologyDoc(map);
+}
 
 const date = new Date().toISOString().slice(0, 10);
 const entry = [
@@ -61,9 +68,11 @@ const entry = [
   '',
   ...(rows.length ? ['```', formatDiffTable(rows, 200), '```', ''] : []),
 ].join('\n');
-const changelog = path.join(SNAPSHOT_DIR, 'CHANGELOG.md');
+const changelog = path.join(activeSnapshotDir(), 'CHANGELOG.md');
 const prior = fs.existsSync(changelog)
   ? fs.readFileSync(changelog, 'utf8')
-  : '# שינויים ב snapshot\n\nכל עדכון של tests/snapshots נרשם כאן עם סיבה.\n\n';
+  : isV2
+    ? '# שינויים ב snapshot של מתודולוגיה 2\n\nכל עדכון של tests/snapshots/v2 נרשם כאן עם סיבה. נוצר עם METHOD_V2=on.\n\n'
+    : '# שינויים ב snapshot\n\nכל עדכון של tests/snapshots נרשם כאן עם סיבה.\n\n';
 fs.writeFileSync(changelog, `${prior}${entry}\n`, 'utf8');
 console.log(`snapshot updated: ${rows.length} changed field(s), ${newCases} new case(s).`);

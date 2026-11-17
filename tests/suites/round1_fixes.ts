@@ -1,6 +1,8 @@
 /**
  * Round 1, part C: unit checks for the urgent fixes (no network, no real DB, no email).
  */
+import { resolveMethodVersion } from '../../lib/valuation/method_v2';
+import { resetFxCacheForTests } from '../../lib/utils/fxService';
 import { ANCHOR_CASES } from '../lib/fixtures';
 import { Suite, type SuiteResult } from '../lib/harness';
 import { withQuietConsole } from '../lib/quiet';
@@ -77,7 +79,10 @@ function coherenceChecks(suite: Suite): void {
       const data = runCase(c);
       const issues = collectValuationDataIssues(data);
       suite.check('loss-report-coherent', c.id, issues.violations.length === 0 && issues.warnings.length === 0, JSON.stringify(issues));
-      suite.check('loss-report-equity-unchanged', c.id, Math.round(data.equity) === c.expectedEquity, `${data.equity}`);
+      // Methodology 1 values. Methodology 2 moves these cases on purpose (R1); its values are in tests/snapshots/v2.
+      if (resolveMethodVersion() === 'v1') {
+        suite.check('loss-report-equity-unchanged', c.id, Math.round(data.equity) === c.expectedEquity, `${data.equity}`);
+      }
     }
     // Small gap (0.3%): report builds, warning logged, office alerted.
     const base = runCase(ANCHOR_CASES[0]);
@@ -110,6 +115,7 @@ function coherenceChecks(suite: Suite): void {
 async function fxChecks(suite: Suite): Promise<void> {
   const realFetch = globalThis.fetch;
   const calls: string[] = [];
+  resetFxCacheForTests();
   try {
     globalThis.fetch = (async (url: string | URL) => {
       calls.push(String(url));

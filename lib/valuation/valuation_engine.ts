@@ -22,7 +22,7 @@ import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
 import {
   resolveScaleModifierProfile,
 } from './scale_modifier_pipeline';
-import { computeDcfWithGrowthDecayDetailed, buildValuationScenarios, type DcfWithGuard } from './scenario_matrix';
+import { computeDcfWithGrowthDecayDetailed, buildValuationScenarios, type DcfWithGuard, type TerminalMethod } from './scenario_matrix';
 import { parseCapexPct, resolveCapexIndustryKey, computeFCFF } from './capex_fcf';
 import { calibrateCenterOfGravity } from './base_case_calibration';
 import { createValuationStrategy } from './strategies/valuation_strategy';
@@ -33,6 +33,18 @@ import {
   type MultipleNormalizationBreakdown,
 } from './normalize_multiple';
 import { computeCapmWacc } from './capm_wacc';
+import {
+  computeWaccV2,
+  exitMultipleCrossCheck,
+  redistributeZeroLegWeight,
+  resolveManualReview,
+  resolveMethodVersion,
+  resolveV2Components,
+  revenueMultipleV2,
+  type MethodVersion,
+  type V2Components,
+  type ValuationV2Detail,
+} from './method_v2';
 import {
   buildProfitabilityMethodologyNoteHe,
   applyNormalizedEbitdaRegimeLabel,
@@ -102,8 +114,12 @@ function computeDcf(params: {
   subSector?: string;
   turnaround?: TurnaroundDcfParams;
   terminalGrowthRate?: number;
+  terminalMethod?: TerminalMethod;
+  capexGuard?: boolean;
 }): DcfWithGuard {
   return computeDcfWithGrowthDecayDetailed({
+    terminalMethod: params.terminalMethod,
+    capexGuard: params.capexGuard,
     ebitdaK: params.ebitdaK,
     revK: params.revK,
     capexLevelPct: parseCapexPct(params.capexLevelPct),
@@ -141,9 +157,18 @@ export interface EngineOverrides {
   effectiveMultiple?: number;
   /** Skip the [FCF Audit] log line. */
   silent?: boolean;
+  /** Methodology version. Default: METHOD_V2 from the environment. */
+  method?: MethodVersion;
+  /** Analysis only (comparison report): turn on single parts of methodology 2. */
+  v2Components?: Partial<V2Components>;
 }
 
 export function computeValuation(inputs: ValuationInputs, overrides: EngineOverrides = {}): ValuationComputed {
+  const v2c = resolveV2Components({ method: overrides.method, components: overrides.v2Components });
+  const methodVersion: MethodVersion = overrides.v2Components
+    ? 'v2'
+    : resolveMethodVersion(overrides.method);
+  const matureRowMethod: MethodVersion = v2c.matureRow ? 'v2' : 'v1';
   const sectorConfig = resolveSectorMethodologyConfig(inputs.sector, inputs.subSector);
   const calibration = applySectorMarginGuardrails(inputs, sectorConfig);
   const calibrated = calibration.inputs;
@@ -225,13 +250,17 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
   });
 
   const dcfGrowthPct = growth;
-  const scaleProfile = resolveScaleModifierProfile({
-    lifecycle,
-    lifecycleAdj,
-    rev: revK,
-    revenue2026K: revK,
-  });
-  const { weights: blendWeights, regime: rawProfitabilityRegime } = resolveEngineBlendWeights({
+  const scaleProfile = resolveScaleModifierProfile(
+    {
+      lifecycle,
+      lifecycleAdj,
+      rev: revK,
+      revenue2026K: revK,
+    },
+    { method: matureRowMethod },
+  );
+  const { weights: resolvedBlendWeights, regime: rawProfitabilityRegime } = resolveEngineBlendWeights({
+    method: matureRowMethod,
     sector: inputs.sector,
     subSector: inputs.subSector,
     strategy: sectorConfig.strategy,
@@ -303,8 +332,20 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
       contractRisk: specificRisk.breakdown.contractRisk * 100,
     },
   });
-  const wacc = overrides.waccPct ?? capm.wacc;
-  const waccBreakdown = capm.waccBreakdown;
+  // Methodology 2 (W1): CRP, Damodaran beta and industry D/E weights. Same size, specific and
+  // loss premiums as methodology 1.
+  const capmV2 = v2c.w1
+    ? computeWaccV2({
+        sector: inputs.sector,
+        subSector: inputs.subSector,
+        alphaPp: capm.waccBreakdown.alpha,
+        specificRiskPremiumPp: capm.waccBreakdown.specificRiskPremium,
+        specificRiskBreakdownPp: capm.waccBreakdown.specificRiskBreakdown,
+        profitabilityLossPremiumPp: capm.waccBreakdown.profitabilityLossPremium,
+      })
+    : undefined;
+  const wacc = overrides.waccPct ?? (capmV2 ? capmV2.wacc : capm.wacc);
+  const waccBreakdown = capmV2 ? capmV2.waccBreakdown : capm.waccBreakdown;
 
   const qsRaw = computeQualityScore({
     recurring,
@@ -348,6 +389,7 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     industry: fcfIndustry,
     lifecycleStage: lifecycle ?? 'growth',
     isManualOverride: multipleResolution.isManual,
+    continuousScale: v2c.continuousSize,
   });
   const effectiveMult = overrides.effectiveMultiple ?? normalization.adjustedMultiple;
 
@@ -357,6 +399,7 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     industry: fcfIndustry,
     lifecycleStage: lifecycle ?? 'growth',
     isManualOverride: false,
+    continuousScale: v2c.continuousSize,
   });
   const automaticEffectiveMult = automaticNormalization.adjustedMultiple;
 
@@ -388,6 +431,8 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     subSector: inputs.subSector,
     turnaround: turnaroundDcf,
     terminalGrowthRate: overrides.terminalGrowthRate,
+    terminalMethod: v2c.t1 ? 'v2-gordon' : 'v1-capped',
+    capexGuard: !v2c.noCapexGuard,
   });
   const dcf = dcfDetailed.evK;
   /** Terminal value share of the DCF leg (%), from the actual projection (replaces the constant 57). */
@@ -416,11 +461,46 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
   let revLegEvK = legs.revMult;
   let revMultiplier = legs.revMultiplier;
 
-  if (blendWeights.ebitda <= 0 || baseEbitdaForMultiple <= 0) {
+  if (resolvedBlendWeights.ebitda <= 0 || baseEbitdaForMultiple <= 0) {
     ebitdaLegEvK = 0;
   }
 
-  if (blendWeights.rev > 0 && revLegEvK <= 0) {
+  // Methodology 2 (finding 22): the weight of a zero EBITDA leg moves to the other legs.
+  const blendWeights = v2c.zeroLeg
+    ? redistributeZeroLegWeight(resolvedBlendWeights, ebitdaLegEvK > 0 ? baseEbitdaForMultiple : 0, revK)
+    : resolvedBlendWeights;
+
+  let revenueMultipleDetail: ValuationV2Detail['revenueMultiple'];
+  if (v2c.r1 && blendWeights.rev > 0) {
+    // Methodology 2 (R1, decision 1 of 17.11.2026): margin-adjusted Damodaran EV/Sales.
+    const factors = normalizeMultipleForPrivateCompany({
+      rawMultiple: 1,
+      revenueK: revK,
+      industry: fcfIndustry,
+      lifecycleStage: lifecycle ?? 'growth',
+      isManualOverride: false,
+      continuousScale: v2c.continuousSize,
+      skipIndustryBounds: true,
+    }).breakdown;
+    const revenueStrategyManual =
+      sectorConfig.strategy === 'current_run_rate_revenue' && multipleResolution.isManual;
+    revenueMultipleDetail = revenueMultipleV2({
+      sector: inputs.sector,
+      subSector: inputs.subSector,
+      normalizedEbitdaK: normalizedEbitda.normalizedEbitdaK,
+      revenueK: revK,
+      privateFactor: factors.dlomFactor * factors.scaleFactor,
+      fallbackRawMultiple: resolveSubSectorRevenueMultiple({
+        sector: inputs.sector,
+        subSector: inputs.subSector,
+        sectorConfig,
+      }),
+      isManual: revenueStrategyManual,
+      manualMultiple: effectiveMult,
+    });
+    revMultiplier = revenueMultipleDetail.multiple;
+    revLegEvK = Math.round(revK * revMultiplier * 100) / 100;
+  } else if (blendWeights.rev > 0 && revLegEvK <= 0) {
     const rawRevMultiple = resolveSubSectorRevenueMultiple({
       sector: inputs.sector,
       subSector: inputs.subSector,
@@ -439,6 +519,7 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
       industry: fcfIndustry,
       lifecycleStage: lifecycle ?? 'growth',
       isManualOverride: false,
+      continuousScale: v2c.continuousSize,
     });
     revMultiplier = revNormalization.adjustedMultiple;
     revLegEvK = Math.round(revK * revMultiplier * 100) / 100;
@@ -479,6 +560,31 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
   });
   const calibratedEquityK = finalEv.equityK;
   const calibratedEvK = finalEv.enterpriseValueK;
+
+  let v2Detail: ValuationV2Detail | undefined;
+  if (methodVersion === 'v2') {
+    const terminal = dcfDetailed.projection.terminal;
+    v2Detail = {
+      components: v2c,
+      waccInputs: capmV2?.inputs,
+      revenueMultiple: revenueMultipleDetail,
+      exitCrossCheck: terminal
+        ? exitMultipleCrossCheck({
+            sector: inputs.sector,
+            subSector: inputs.subSector,
+            terminalEbitdaK: terminal.ebitdaK,
+            gordonTvK: terminal.tvK,
+            gordonPvK: dcfDetailed.projection.terminalPvK,
+            discountFactor: terminal.discountFactor,
+            dlomFactor: normalization.breakdown.dlomFactor,
+          })
+        : undefined,
+      manualReview: v2c.manualReview
+        ? resolveManualReview({ evK: calibratedEvK, debtK: debt, equityK: calibratedEquityK, revenueK: revK })
+        : undefined,
+      weightsBeforeZeroLeg: blendWeights !== resolvedBlendWeights ? { ...resolvedBlendWeights } : undefined,
+    };
+  }
 
   if (!overrides.silent) console.log(
     '[FCF Audit]',
@@ -560,6 +666,9 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     rawMultiple: normalization.breakdown.rawMultiple,
     profitabilityRegime,
     normalizedEbitda,
+    methodVersion,
+    dcfDetail: dcfDetailed,
+    v2: v2Detail,
   };
 }
 

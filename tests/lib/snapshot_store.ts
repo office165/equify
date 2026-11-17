@@ -1,14 +1,23 @@
 import fs from 'fs';
 import path from 'path';
 import { buildAllCases, type CaseSpec } from './cases';
+import { resolveMethodVersion } from '../../lib/valuation/method_v2';
 import { extractSnapshot, runCase, type CaseSnapshot } from './run_case';
 
+/** Methodology 1 snapshots, the value lock and the methodology map. */
 export const SNAPSHOT_DIR = path.join(__dirname, '..', 'snapshots');
+/** Methodology 2 snapshots (METHOD_V2=on). */
+export const SNAPSHOT_DIR_V2 = path.join(SNAPSHOT_DIR, 'v2');
+
+/** Snapshot folder of the active methodology (METHOD_V2 from the environment). */
+export function activeSnapshotDir(): string {
+  return resolveMethodVersion() === 'v2' ? SNAPSHOT_DIR_V2 : SNAPSHOT_DIR;
+}
 
 export type SnapshotFile = Record<string, CaseSnapshot | { error: string }>;
 
 export function snapshotPath(group: string): string {
-  return path.join(SNAPSHOT_DIR, `${group}.json`);
+  return path.join(activeSnapshotDir(), `${group}.json`);
 }
 
 /** Computes the current snapshot for every case, grouped by case group. */
@@ -32,7 +41,7 @@ export function readSnapshot(group: string): SnapshotFile | null {
 }
 
 export function writeSnapshot(group: string, data: SnapshotFile): void {
-  fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
+  fs.mkdirSync(activeSnapshotDir(), { recursive: true });
   const sorted: SnapshotFile = {};
   for (const k of Object.keys(data).sort()) sorted[k] = data[k];
   fs.writeFileSync(snapshotPath(group), `${JSON.stringify(sorted, null, 1)}\n`, 'utf8');

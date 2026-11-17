@@ -6,6 +6,7 @@
 import { buildPdfHtml } from '../../lib/pdf-template';
 import type { ValuationData } from '../../lib/pdf-template/types';
 import { computeValuation } from '../../lib/valuation';
+import { damodaranIndustryFor } from '../../lib/market-data/damodaran_2026';
 import { buildValuationInputsFromEquifyState } from '../../lib/wizard/build_valuation_inputs';
 import { syncFinancialsDerived } from '../../lib/wizard/financial_history';
 import { buildWizardState, type CaseSpec } from '../lib/fixtures';
@@ -86,20 +87,35 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
 
   // (ב) WACC from components.
   const wb = readWaccComponents(spec);
-  const keExpected = wb.rf + wb.leveredBeta * wb.erp + wb.alpha + wb.specificRiskPremium + wb.profitabilityLossPremium;
+  const keExpected = wb.rf + wb.leveredBeta * wb.erp + (wb.crp ?? 0) + wb.alpha + wb.specificRiskPremium + wb.profitabilityLossPremium;
   suite.check('wacc-ke-from-components', id, approx(wb.ke, keExpected, 0.0005, 0.001), `${wb.ke} vs ${keExpected}`);
   const kdExpected = (wb.rf + KD_SPREAD_PP) * (1 - TAX);
   suite.check('wacc-kd-after-tax-23', id, approx(wb.kd, kdExpected, 0.0005, 0.001), `${wb.kd} vs ${kdExpected}`);
-  const grossDebt = spec.grossDebt * 1000 * (spec.currency === 'USD' ? 1 : 1);
-  const equityForWeights = Math.max(0, data.equity);
-  const weReport = equityForWeights + grossDebt > 0 ? equityForWeights / (equityForWeights + grossDebt) : 1;
-  const waccFromReportWeights = wb.ke * weReport + wb.kd * (1 - weReport);
-  suite.check(
-    'wacc-equals-weights-from-report-equity',
-    id,
-    Math.abs(waccFromReportWeights - data.waccPct) <= 0.25,
-    `WACC ${data.waccPct.toFixed(2)} vs Ke*E/V+Kd*D/V with report equity ${waccFromReportWeights.toFixed(2)} (E/V ${(weReport * 100).toFixed(1)}%)`,
-  );
+  if (data.methodVersion === 'v2') {
+    // Methodology 2 (finding 18): the weights are the declared Damodaran industry D/E (target
+    // capital structure), not a pre-valuation proxy. The report states the D/E and its source.
+    const ind = damodaranIndustryFor(spec.sector, spec.subSector);
+    const de = ind ? ind.global.deRatio.value : 0;
+    const we = 1 / (1 + de);
+    const waccFromDeclared = Math.min(22, Math.max(6, wb.ke * we + wb.kd * (1 - we)));
+    suite.check(
+      'wacc-equals-weights-from-report-equity',
+      id,
+      Math.abs(waccFromDeclared - data.waccPct) <= 0.25 && /D\/E של [\d.]+ לענף/.test(data.waccNote ?? ''),
+      `WACC ${data.waccPct.toFixed(2)} vs Ke*E/V+Kd*D/V with the declared industry D/E ${de.toFixed(2)}: ${waccFromDeclared.toFixed(2)} (E/V ${(we * 100).toFixed(1)}%)`,
+    );
+  } else {
+    const grossDebt = spec.grossDebt * 1000 * (spec.currency === 'USD' ? 1 : 1);
+    const equityForWeights = Math.max(0, data.equity);
+    const weReport = equityForWeights + grossDebt > 0 ? equityForWeights / (equityForWeights + grossDebt) : 1;
+    const waccFromReportWeights = wb.ke * weReport + wb.kd * (1 - weReport);
+    suite.check(
+      'wacc-equals-weights-from-report-equity',
+      id,
+      Math.abs(waccFromReportWeights - data.waccPct) <= 0.25,
+      `WACC ${data.waccPct.toFixed(2)} vs Ke*E/V+Kd*D/V with report equity ${waccFromReportWeights.toFixed(2)} (E/V ${(weReport * 100).toFixed(1)}%)`,
+    );
+  }
   // Round 2: the page 4 table adds up (Ke from its rows, WACC from Ke, Kd and the weights).
   if (data.waccTable) {
     const t = data.waccTable;
@@ -130,7 +146,12 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
   const last = data.dcfRows.at(-1);
   if (last) {
     const w = data.waccPct / 100;
-    const tv = (last.fcffM * (1 + TERMINAL_G)) / (w - TERMINAL_G);
+    // Methodology 1: Gordon on the last explicit FCFF. Methodology 2 (T1): Gordon on the
+    // normalized terminal year the report states, with the 3 point minimum spread.
+    const tv =
+      data.methodVersion === 'v2' && data.terminalFcffM != null
+        ? data.terminalFcffM / (Math.max(w, TERMINAL_G + 0.03) - TERMINAL_G)
+        : (last.fcffM * (1 + TERMINAL_G)) / (w - TERMINAL_G);
     const tvPv = tv * last.discountFactor;
     suite.check('terminal-gordon', id, approx(data.terminalPvM, tvPv, 0.01, 0.001), `report ${data.terminalPvM.toFixed(3)}M vs Gordon ${tvPv.toFixed(3)}M`);
     const explicitPv = data.dcfRows.reduce((s, r) => s + r.pvM, 0);
@@ -175,7 +196,8 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
     suite.check('sensitivity-wacc-step-1pp', id, Math.abs((wNums[1] - wNums[0]) - 1) < 0.051, s.waccLabels.join(','));
     suite.check('sensitivity-growth-1.5-to-3.5', id, gNums[0] === 3.5 && gNums.at(-1) === 1.5 && gNums.length === 5, s.growthLabels.join(','));
     // A corner cell is an independent engine run, not a linear approximation.
-    const corner = engineCornerEquityM(spec, wNums[0], gNums[0] / 100);
+    // The label is rounded to 0.1 point; the cell runs at the exact WACC minus 2 points.
+    const corner = engineCornerEquityM(spec, data.waccPct - 2, gNums[0] / 100);
     suite.check('sensitivity-cell-is-engine-run', id, approx(s.cells[0][0], corner, 0.001, 0.0005), `${s.cells[0][0].toFixed(4)} vs engine ${corner.toFixed(4)}`);
   }
   const e = data.sensitivityEbitdaMult;

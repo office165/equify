@@ -15,21 +15,24 @@ import { run as runRound1 } from './suites/round1_fixes';
 import { run as runValueLock } from './suites/value_lock';
 import { run as runRound2 } from './suites/round2_fixes';
 import { run as runDamodaran } from './suites/damodaran';
+import { run as runV2Sanity } from './suites/v2_sanity';
+import type { MethodVersion } from '../lib/valuation/method_v2';
 
 const ROOT = path.join(__dirname, '..');
 
 // Tests never send real alerts or emails.
 process.env.OFFICE_ALERTS_DISABLED = 'true';
 
-/** Legacy scripts that are part of npm test as they are. */
-const LEGACY_SCRIPTS: Array<{ name: string; knownFailing?: string }> = [
+/** Legacy scripts that are part of npm test as they are. knownFailing applies to methodology 1 only unless knownFailingV2 says otherwise. */
+const LEGACY_SCRIPTS: Array<{ name: string; knownFailing?: string; knownFailingMethods?: MethodVersion[] }> = [
   { name: 'test-valuation-engine' },
   { name: 'test-canonical-reconciliation' },
   { name: 'test-report-financial-coherence' },
   {
     name: 'test-scale-modifier-pipeline',
     knownFailing:
-      'ידוע כנכשל: "enterprise targets DCF-heavy blend". blendTargets מחושב רק בין השורות seed/early ל growth (0.3 עד 0.5), והשורה mature (0.65) לא נכנסת. ראו reports/round-1.md, ממצא 20.',
+      'מתודולוגיה 1: "enterprise targets DCF-heavy blend" נכשלת, כי blendTargets מחושב רק בין השורות seed/early ל growth (0.3 עד 0.5) והשורה mature (0.65) לא נכנסת (ממצא 20). מתודולוגיה 2: הבדיקה הזאת עוברת, והסקריפט נעצר בבדיקה הבאה, "SMB lowers DCF weight vs default", שנכשלת בשתי המתודולוגיות: היא מעבירה ל applyScaleAdjustedBlendWeights את DEFAULT_VALUATION_BLEND_WEIGHTS בצורה {dcf, multiple} במקום {dcf, ebitda, rev}, ומקבלת NaN. תקלה ישנה בסקריפט שהייתה מוסתרת (ממצא 27).',
+    knownFailingMethods: ['v1', 'v2'],
   },
   { name: 'test-currency-normalize' },
   { name: 'test-verdict-sanity' },
@@ -39,13 +42,13 @@ const LEGACY_SCRIPTS: Array<{ name: string; knownFailing?: string }> = [
   { name: 'test-legal-close-nav' },
 ];
 
-function runLegacy(name: string): { ok: boolean; tail: string; ms: number } {
+function runLegacy(name: string, method: MethodVersion): { ok: boolean; tail: string; ms: number } {
   const t0 = Date.now();
   const tsxCli = path.join(ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
   const res = spawnSync(process.execPath, [tsxCli, path.join('scripts', `${name}.ts`)], {
     cwd: ROOT,
     encoding: 'utf8',
-    env: { ...process.env, FORCE_COLOR: '0' },
+    env: { ...process.env, FORCE_COLOR: '0', METHOD_V2: method === 'v2' ? 'on' : 'off' },
     timeout: 120_000,
   });
   const out = `${res.stdout ?? ''}${res.stderr ?? ''}`.trim().split('\n');
@@ -56,46 +59,81 @@ async function main(): Promise<void> {
   const t0 = Date.now();
   const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
   const verbose = process.argv.includes('--verbose');
-  const suites: Array<[string, () => SuiteResult | Promise<SuiteResult>]> = [
-    ['value-lock', runValueLock],
-    ['snapshot', runSnapshot],
-    ['methodology-map', runMethodology],
-    ['correctness', runCorrectness],
-    ['build', runBuild],
-    ['scale-ladder', runLadder],
-    ['round1-fixes', runRound1],
-    ['round2-fixes', runRound2],
-    ['damodaran', runDamodaran],
+  // npm test runs every suite twice: methodology 1 (METHOD_V2 off) and methodology 2 (on).
+  // value-lock is methodology 1 only: with the flag off nothing may move.
+  const suites: Array<[string, () => SuiteResult | Promise<SuiteResult>, MethodVersion[]]> = [
+    ['value-lock', runValueLock, ['v1']],
+    ['snapshot', runSnapshot, ['v1', 'v2']],
+    ['methodology-map', runMethodology, ['v1', 'v2']],
+    ['correctness', runCorrectness, ['v1', 'v2']],
+    ['build', runBuild, ['v1', 'v2']],
+    ['scale-ladder', runLadder, ['v1', 'v2']],
+    ['round1-fixes', runRound1, ['v1', 'v2']],
+    ['round2-fixes', runRound2, ['v1', 'v2']],
+    ['damodaran', runDamodaran, ['v1', 'v2']],
+    ['v2-sanity', runV2Sanity, ['v2']],
   ];
+  const methodArg = process.argv.includes('--method') ? process.argv[process.argv.indexOf('--method') + 1] : null;
+  const methods: MethodVersion[] = methodArg === 'v1' || methodArg === 'v2' ? [methodArg] : ['v1', 'v2'];
+  const originalFlag = process.env.METHOD_V2;
 
   let failed = 0;
   let stale = 0;
   const knownWrongLines: string[] = [];
   const knownFailingScripts: string[] = [];
 
-  for (const [name, fn] of suites) {
-    if (only && only !== name && only !== 'suites') continue;
-    const s0 = Date.now();
-    const r = await fn();
-    const status = r.failures.length || r.staleMarkers.length ? 'FAIL' : 'PASS';
-    console.log(`[${status}] ${name}: ${r.passed} passed, ${r.failures.length} failed, ${r.knownWrong.length} known-wrong (${Date.now() - s0}ms)`);
-    for (const f of r.failures.slice(0, 40)) console.log(`    FAIL ${f}`);
-    if (r.failures.length > 40) console.log(`    ... ${r.failures.length - 40} more`);
-    for (const m of r.staleMarkers) console.log(`    STALE ${m}`);
-    if (r.failures.length || verbose) for (const n of r.notes) console.log(n.split('\n').map((l) => `    ${l}`).join('\n'));
-    failed += r.failures.length;
-    stale += r.staleMarkers.length;
-    const grouped = new Map<string, { finding: number; cases: string[]; detail: string }>();
-    for (const k of r.knownWrong) {
-      const key = `${name}/${k.check}#${k.finding}`;
-      const g = grouped.get(key) ?? { finding: k.finding, cases: [], detail: k.detail };
-      g.cases.push(k.caseId);
-      grouped.set(key, g);
+  for (const method of methods) {
+    process.env.METHOD_V2 = method === 'v2' ? 'on' : 'off';
+    console.log(`--- ${method === 'v2' ? 'methodology 2 (METHOD_V2=on)' : 'methodology 1 (METHOD_V2 off)'} ---`);
+    for (const [name, fn, runIn] of suites) {
+      if (only && only !== name && only !== 'suites') continue;
+      if (!runIn.includes(method)) continue;
+      const s0 = Date.now();
+      const r = await fn();
+      const status = r.failures.length || r.staleMarkers.length ? 'FAIL' : 'PASS';
+      console.log(`[${status}] ${method}/${name}: ${r.passed} passed, ${r.failures.length} failed, ${r.knownWrong.length} known-wrong (${Date.now() - s0}ms)`);
+      for (const f of r.failures.slice(0, 40)) console.log(`    FAIL ${f}`);
+      if (r.failures.length > 40) console.log(`    ... ${r.failures.length - 40} more`);
+      for (const m of r.staleMarkers) console.log(`    STALE ${m}`);
+      if (r.failures.length || verbose) for (const n of r.notes) console.log(n.split('\n').map((l) => `    ${l}`).join('\n'));
+      failed += r.failures.length;
+      stale += r.staleMarkers.length;
+      const grouped = new Map<string, { finding: number; cases: string[]; detail: string }>();
+      for (const k of r.knownWrong) {
+        const key = `${method}/${name}/${k.check}#${k.finding}`;
+        const g = grouped.get(key) ?? { finding: k.finding, cases: [], detail: k.detail };
+        g.cases.push(k.caseId);
+        grouped.set(key, g);
+      }
+      for (const [key, g] of grouped) {
+        knownWrongLines.push(`  ${key.split('#')[0]} (finding ${g.finding}): ${g.cases.length} case(s), e.g. ${g.cases[0]}: ${g.detail}`);
+      }
     }
-    for (const [key, g] of grouped) {
-      knownWrongLines.push(`  ${key.split('#')[0]} (finding ${g.finding}): ${g.cases.length} case(s), e.g. ${g.cases[0]}: ${g.detail}`);
+
+    if (!only || only === 'legacy') {
+      for (const sc of LEGACY_SCRIPTS) {
+        const r = runLegacy(sc.name, method);
+        const knownHere = sc.knownFailing && (!sc.knownFailingMethods || sc.knownFailingMethods.includes(method));
+        if (knownHere) {
+          if (r.ok) {
+            console.log(`[FAIL] ${method}/scripts/${sc.name}: passes now, remove its knownFailing mark`);
+            stale += 1;
+          } else {
+            console.log(`[KNOWN] ${method}/scripts/${sc.name} (${r.ms}ms)`);
+            knownFailingScripts.push(`  ${method}/scripts/${sc.name}: ${sc.knownFailing}`);
+          }
+          continue;
+        }
+        console.log(`[${r.ok ? 'PASS' : 'FAIL'}] ${method}/scripts/${sc.name} (${r.ms}ms)`);
+        if (!r.ok) {
+          failed += 1;
+          console.log(r.tail.split('\n').map((l) => `    ${l}`).join('\n'));
+        }
+      }
     }
   }
+  if (originalFlag === undefined) delete process.env.METHOD_V2;
+  else process.env.METHOD_V2 = originalFlag;
 
   // Round 2: real Chrome layout check of the customer PDF (13 cases, about 40s).
   // Needs Chrome and Google Fonts. PDF_LAYOUT_SKIP=1 skips it explicitly and says so.
@@ -117,27 +155,6 @@ async function main(): Promise<void> {
         failed += 1;
         const out = `${res.stdout ?? ''}${res.stderr ?? ''}`.trim().split('\n');
         console.log(out.filter((l) => /FAIL|page|Error|No Chrome/.test(l)).slice(0, 30).map((l) => `    ${l}`).join('\n'));
-      }
-    }
-  }
-
-  if (!only || only === 'legacy') {
-    for (const s of LEGACY_SCRIPTS) {
-      const r = runLegacy(s.name);
-      if (s.knownFailing) {
-        if (r.ok) {
-          console.log(`[FAIL] scripts/${s.name}: passes now, remove its knownFailing mark`);
-          stale += 1;
-        } else {
-          console.log(`[KNOWN] scripts/${s.name} (${r.ms}ms)`);
-          knownFailingScripts.push(`  scripts/${s.name}: ${s.knownFailing}`);
-        }
-        continue;
-      }
-      console.log(`[${r.ok ? 'PASS' : 'FAIL'}] scripts/${s.name} (${r.ms}ms)`);
-      if (!r.ok) {
-        failed += 1;
-        console.log(r.tail.split('\n').map((l) => `    ${l}`).join('\n'));
       }
     }
   }

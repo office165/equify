@@ -42,6 +42,8 @@ export interface DeliverEquifyReportResult {
     messageId: string | null;
     error?: string;
   };
+  /** Methodology 2: true when the report was held for a manual review (customer got a notice). */
+  heldForManualReview?: boolean;
 }
 
 function statusValue(label: string): { label: string } {
@@ -178,7 +180,9 @@ export async function deliverEquifyReport(
   const locale = input.locale ?? 'he';
   const reportId = `eq-deliver-${Date.now()}`;
   const valuationData = await resolveValuationDataForDeliver(input, reportId, locale);
-  const aiNotes = buildDeliverAiNotes(input.valuationState, valuationData);
+  const aiNotes = valuationData.manualReview
+    ? `MANUAL REVIEW, report not sent to the customer (${valuationData.manualReview.reasons.join(', ')}) | ${buildDeliverAiNotes(input.valuationState, valuationData)}`
+    : buildDeliverAiNotes(input.valuationState, valuationData);
   const emailTarget = input.email.trim() || input.valuationState.userEmail.trim();
   const profile = input.valuationState.wizard.profile;
 
@@ -273,5 +277,6 @@ export async function deliverEquifyReport(
       messageId: emailResult.messageId,
       error: emailResult.error,
     },
+    heldForManualReview: packaged.heldForManualReview,
   };
 }

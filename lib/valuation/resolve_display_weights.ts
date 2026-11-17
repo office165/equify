@@ -123,14 +123,19 @@ export function resolveEngineBlendWeights(params: {
   lifecycle?: import('../valuation').EquifyLifecycleKey;
   lifecycleAdj?: number;
   revK: number;
+  /** Methodology for the mature row in blendTargets (default: METHOD_V2 from the environment). */
+  method?: import('./method_v2').MethodVersion;
 }): { weights: EngineBlendWeights; regime: RegimeResolution; sectorBase: RegimeBlendWeights } {
   const sectorBase = getSectorWeights(params.sector, params.subSector);
-  const scaleProfile = resolveScaleModifierProfile({
-    lifecycle: params.lifecycle,
-    lifecycleAdj: params.lifecycleAdj ?? 0,
-    rev: params.revK,
-    revenue2026K: params.revenueK,
-  });
+  const scaleProfile = resolveScaleModifierProfile(
+    {
+      lifecycle: params.lifecycle,
+      lifecycleAdj: params.lifecycleAdj ?? 0,
+      rev: params.revK,
+      revenue2026K: params.revenueK,
+    },
+    { method: params.method },
+  );
   const scaledBase = applyScaleAdjustedBlendWeights(
     toEngineShape(sectorBase),
     scaleProfile,

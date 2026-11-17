@@ -81,7 +81,10 @@ export function buildGrowthWaccSensitivity(ctx: SensitivityContext, en = false):
       return toM(run(ctx.inputs, { waccPct: w, terminalGrowthRate: g }));
     }),
   );
-  const flatGrowth = cells.every((row) => row.every((v, ci) => Math.abs(v - cells[baseRow][ci]) < 0.05));
+  // The 42% cap explains flat rows in methodology 1 only (methodology 2 has no cap).
+  const flatGrowth =
+    ctx.baseIls.methodVersion !== 'v2' &&
+    cells.every((row) => row.every((v, ci) => Math.abs(v - cells[baseRow][ci]) < 0.05));
   const note = en
     ? `Each cell is a full engine run. Terminal growth is the Gordon growth after year 5.${flatGrowth ? ' Rows are almost equal because the terminal value is capped at 42% of the explicit-period value.' : ''}`
     : `כל תא הוא הרצה מלאה של המנוע. הצמיחה הטרמינלית היא צמיחת Gordon אחרי שנה 5.${flatGrowth ? ' השורות כמעט זהות, כי הערך הטרמינלי מוגבל ל 42% מערך התקופה המפורשת.' : ''}`;

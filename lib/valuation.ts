@@ -337,6 +337,12 @@ export interface ValuationComputed {
   profitabilityRegime?: import('./valuation/profitability_regime').RegimeResolution;
   /** Big-4 normalized (maintainable) EBITDA — regime + multiple leg SSOT. */
   normalizedEbitda?: import('./valuation/normalized_ebitda').NormalizedEbitdaResult;
+  /** 'v1' unless METHOD_V2=on (or an explicit method / components override). */
+  methodVersion?: import('./valuation/method_v2').MethodVersion;
+  /** DCF leg detail (projection and CAPEX guard factor) the report table is built from. */
+  dcfDetail?: import('./valuation/scenario_matrix').DcfWithGuard;
+  /** Methodology 2 detail. Absent in methodology 1. */
+  v2?: import('./valuation/method_v2').ValuationV2Detail;
 }
 
 export interface ScenarioRow {

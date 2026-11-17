@@ -100,6 +100,11 @@ function resolveExchangeRatesUrl(): string {
   return EXCHANGE_RATES_API;
 }
 
+/** Tests only: back to the static fallback (npm test runs the suites twice in one process). */
+export function resetFxCacheForTests(): void {
+  cachedRates = buildFallbackSnapshot();
+}
+
 /** Synchronous read — cached live rates or static fallback (never blocks UI). */
 export function getCachedFxRates(): FxRatesSnapshot {
   return cachedRates;

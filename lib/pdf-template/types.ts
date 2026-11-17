@@ -242,6 +242,14 @@ export interface ValuationData {
   dcfRows: DcfYearRow[];
   /** Note under the DCF table (terminal cap, CAPEX consistency factor). */
   dcfNote?: string;
+  /** 'v2' when METHOD_V2 is on. Absent in methodology 1. */
+  methodVersion?: 'v2';
+  /** Methodology 2 (T1): FCFF of the normalized terminal year (M, report currency). */
+  terminalFcffM?: number;
+  /** Methodology 2 (T1): Gordon denominator rate, max(WACC, g + 3 points) (%). */
+  terminalDiscountRatePct?: number;
+  /** Methodology 2: the report needs a manual review before it is sent. */
+  manualReview?: import('../valuation/method_v2').ManualReview;
   terminalPvM: number;
   scenarios: ScenarioRow[];
   modelBlend: ModelBlendRow[];

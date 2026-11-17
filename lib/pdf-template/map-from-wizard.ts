@@ -1,3 +1,5 @@
+import { waccV2SourceNoteHe } from '../valuation/method_v2';
+import { CAPM_CORPORATE_TAX_RATE } from '../valuation/capm_wacc';
 import { formatNetDebtLine } from '../format/currency';
 import {
   computeScenarios,
@@ -316,7 +318,14 @@ function buildWaccDisplay(
 function buildDcfRows(
   inputs: ValuationInputs,
   computed: ValuationComputed,
-): { rows: DcfYearRow[]; terminalPvM: number; terminalSharePct: number; note: string } {
+): {
+  rows: DcfYearRow[];
+  terminalPvM: number;
+  terminalSharePct: number;
+  note: string;
+  terminalFcffM?: number;
+  terminalDiscountRatePct?: number;
+} {
   const revK = inputs.revenue2026K ?? inputs.rev ?? 0;
   const capexLevelPct = parseCapexPct(inputs.capexLevelPct ?? 0);
   const headlineGrowthPct =
@@ -340,6 +349,7 @@ function buildDcfRows(
           turnaroundYears: regime.turnaroundYears,
         }
       : undefined;
+  const v2 = computed.methodVersion === 'v2' ? computed.v2?.components : undefined;
   const { projection, guardFactor } = computeDcfWithGrowthDecayDetailed({
     ebitdaK: computed.ebitda,
     revK,
@@ -348,6 +358,7 @@ function buildDcfRows(
     wacc: computed.wacc,
     industry: resolveCapexIndustryKey(inputs.sector, inputs.subSector),
     turnaround,
+    ...(v2 ? { terminalMethod: v2.t1 ? ('v2-gordon' as const) : ('v1-capped' as const), capexGuard: !v2.noCapexGuard } : {}),
   });
   const rows: DcfYearRow[] = [];
   const baseYear = new Date().getFullYear() + 1;
@@ -370,9 +381,21 @@ function buildDcfRows(
   const terminalPvM = (projection.terminalPvK * guardFactor) / 1000;
   const terminalSharePct = projection.terminalShare * 100;
   // Methodology 1 behavior, stated explicitly (round 2, item 8). Removed when METHOD_V2 is on.
-  const notes: string[] = [
-    `הערך הטרמינלי מוגבל ל ${Math.round(TERMINAL_TO_EXPLICIT_PV_MAX * 100)}% מערך התקופה המפורשת.`,
-  ];
+  const notes: string[] = [];
+  const terminal = projection.terminal;
+  if (v2?.t1 && terminal) {
+    notes.push(
+      `הערך הטרמינלי מחושב לפי Gordon בלי תקרה, על שנה טרמינלית מנורמלת: CAPEX שווה לפחת, הון חוזר שגדל לפי g, מס ${Math.round(CAPM_CORPORATE_TAX_RATE * 100)}% על EBIT, g של ${(terminal.growthRate * 100).toFixed(1)}% ומרווח מינימלי של 3 נקודות בין WACC ל g.`,
+    );
+    const x = computed.v2?.exitCrossCheck;
+    if (x && x.gordonImpliedMultiple != null) {
+      notes.push(
+        `בדיקה צולבת: Gordon משקף מכפיל של ${x.gordonImpliedMultiple.toFixed(1)} על EBITDA של השנה הטרמינלית, מול ${x.multiple.toFixed(1)} לפי מכפיל יציאה של הענף (Damodaran ${x.industry}, אחרי הנחת סחירות). הבדיקה לא נכנסת לשווי.`,
+      );
+    }
+  } else {
+    notes.push(`הערך הטרמינלי מוגבל ל ${Math.round(TERMINAL_TO_EXPLICIT_PV_MAX * 100)}% מערך התקופה המפורשת.`);
+  }
   if (Math.abs(guardFactor - 1) > 0.0005) {
     const pct = Math.abs((guardFactor - 1) * 100).toFixed(1);
     notes.push(
@@ -381,7 +404,14 @@ function buildDcfRows(
         : `התזרימים כוללים הגדלה של ${pct}% לעקביות מול רמת ה CAPEX, כך שהטבלה מסתכמת לשווי ה DCF.`,
     );
   }
-  return { rows, terminalPvM, terminalSharePct, note: notes.join(' ') };
+  return {
+    rows,
+    terminalPvM,
+    terminalSharePct,
+    note: notes.join(' '),
+    terminalFcffM: terminal ? terminal.fcffK / 1000 : undefined,
+    terminalDiscountRatePct: terminal ? terminal.discountRate * 100 : undefined,
+  };
 }
 
 function buildQualityFactors(inputs: ValuationInputs): QualityFactorRow[] {
@@ -517,6 +547,15 @@ function buildModelBlendRows(
   };
   const zeroLegNote =
     locale === 'en' ? 'Not relevant: negative EBITDA' : 'לא רלוונטית בגלל EBITDA שלילי';
+  // Methodology 2: the weight of a zero EBITDA leg moved to the other legs (finding 22), and a
+  // zero DCF leg (no free cash flow in any forecast year) says so.
+  const isV2 = computed.methodVersion === 'v2';
+  const movedNote =
+    locale === 'en'
+      ? 'Not relevant: negative EBITDA, its weight moved to the other methods'
+      : 'לא רלוונטית בגלל EBITDA שלילי, והמשקל שלה הועבר לשיטות האחרות';
+  const zeroDcfNote =
+    locale === 'en' ? 'Zero: no free cash flow in the forecast' : 'אפס: אין תזרים חופשי בתחזית';
 
   const rows: ModelBlendRow[] = [
     {
@@ -524,6 +563,7 @@ function buildModelBlendRows(
       ev: kToNis(computed.dcf),
       weightPct: dcfWeight,
       contribution: kToNis(contributions.dcf),
+      ...(isV2 && blendWeights.dcf > 0 && computed.dcf === 0 ? { detail: zeroDcfNote } : {}),
     },
     {
       name:
@@ -535,6 +575,7 @@ function buildModelBlendRows(
       contribution: kToNis(contributions.ebitda),
       // Finding 22 (display only): a leg the engine zeroed still carries its weight in methodology 1.
       ...(blendWeights.ebitda > 0 && computed.ebtMult === 0 ? { detail: zeroLegNote } : {}),
+      ...(isV2 && computed.v2?.weightsBeforeZeroLeg ? { detail: movedNote } : {}),
     },
   ];
 
@@ -577,7 +618,15 @@ export function mapEngineResultToValuationData(
   ilsComputed?: ValuationComputed,
 ): ValuationData {
   const netDebtK = computeNetDebtK(syncedState.financials);
-  const { rows: dcfRows, terminalPvM, terminalSharePct, note: dcfNote } = buildDcfRows(inputs, fxComputed);
+  const {
+    rows: dcfRows,
+    terminalPvM,
+    terminalSharePct,
+    note: dcfNote,
+    terminalFcffM,
+    terminalDiscountRatePct,
+  } = buildDcfRows(inputs, fxComputed);
+  const isV2 = fxComputed.methodVersion === 'v2';
   const now = new Date();
   const dateIso = now.toISOString().slice(0, 10);
   const dateShort = now.toLocaleDateString('he-IL');
@@ -765,9 +814,20 @@ export function mapEngineResultToValuationData(
     trajectory,
     waccSegments,
     waccTable: waccDisplay.table,
-    waccNote: waccDisplay.note,
+    waccNote:
+      isV2 && fxComputed.v2?.waccInputs
+        ? `${waccDisplay.note} ${waccV2SourceNoteHe(fxComputed.v2.waccInputs)}`
+        : waccDisplay.note,
     dcfRows,
     dcfNote,
+    ...(isV2
+      ? {
+          methodVersion: 'v2' as const,
+          terminalFcffM,
+          terminalDiscountRatePct,
+          manualReview: fxComputed.v2?.manualReview,
+        }
+      : {}),
     terminalPvM,
     scenarios: scenarioRowsFromComputed(
       fxScenarios,

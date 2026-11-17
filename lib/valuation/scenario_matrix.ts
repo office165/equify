@@ -5,8 +5,10 @@ import {
   enforceCapexMonotonicity,
   computeFCFF,
   computeTerminalValue,
+  depreciationRateFor,
   parseCapexPct,
 } from './capex_fcf';
+import { V2_MIN_TERMINAL_SPREAD } from './method_v2';
 import {
   type ScenarioElasticity,
   buildVarianceRibbon,
@@ -73,6 +75,56 @@ export interface DcfHorizonProjection {
   terminalShare: number;
   totalEvK: number;
   dcfGrowthPct: number;
+  /** Methodology 2 (T1) only: the normalized terminal year and its Gordon value. */
+  terminal?: NormalizedTerminalYear;
+}
+
+/** T1: normalized terminal year (CAPEX = D&A, working capital grows with g, 23% tax on EBIT). */
+export interface NormalizedTerminalYear {
+  revenueK: number;
+  ebitdaK: number;
+  depreciationK: number;
+  nopatK: number;
+  deltaWcK: number;
+  fcffK: number;
+  growthRate: number;
+  /** Discount rate used in the Gordon denominator: max(WACC, g + 3 points). */
+  discountRate: number;
+  /** Undiscounted Gordon value. */
+  tvK: number;
+  /** Discount factor at 4.5 years. */
+  discountFactor: number;
+}
+
+/** Terminal value method: methodology 1 (capped) or methodology 2 (T1, uncapped Gordon). */
+export type TerminalMethod = 'v1-capped' | 'v2-gordon';
+
+/** T1 terminal year from the year 5 revenue and EBITDA. */
+export function computeNormalizedTerminalYear(params: {
+  revenueYear5K: number;
+  ebitdaYear5K: number;
+  /** Turnaround cases: terminal EBITDA = terminal revenue x sector-normal margin. */
+  sectorNormalMargin?: number;
+  industry: string;
+  waccPct: number;
+  terminalGrowthRate?: number;
+  terminalDiscountExponent: number;
+}): NormalizedTerminalYear {
+  const g = params.terminalGrowthRate ?? TERMINAL_GROWTH_RATE;
+  const w = params.waccPct / 100;
+  const revenueK = params.revenueYear5K * (1 + g);
+  const ebitdaK =
+    params.sectorNormalMargin != null && params.sectorNormalMargin > 0
+      ? revenueK * params.sectorNormalMargin
+      : params.ebitdaYear5K * (1 + g);
+  const depreciationK = revenueK * depreciationRateFor(params.industry);
+  const nopatK = Math.max(ebitdaK - depreciationK, 0) * (1 - 0.23);
+  const deltaWcK = revenueK * 0.015 * g;
+  const fcffK = Math.max(0, nopatK - deltaWcK);
+  const discountRate = Math.max(w, g + V2_MIN_TERMINAL_SPREAD);
+  const tvK = fcffK / (discountRate - g);
+  const discountFactor = 1 / (1 + w) ** params.terminalDiscountExponent;
+  return { revenueK, ebitdaK, depreciationK, nopatK, deltaWcK, fcffK, growthRate: g, discountRate, tvK, discountFactor };
 }
 
 /**
@@ -193,6 +245,8 @@ export function projectDcfHorizon(params: {
   turnaround?: TurnaroundDcfParams;
   /** Terminal (Gordon) growth override for sensitivity runs. Default {@link TERMINAL_GROWTH_RATE}. */
   terminalGrowthRate?: number;
+  /** Default 'v1-capped' (methodology 1). */
+  terminalMethod?: TerminalMethod;
 }): DcfHorizonProjection {
   const { ebitdaK, revK, dcfGrowthPct, wacc, industry = 'other' } = params;
   const capexLevelPct = parseCapexPct(params.capexLevelPct);
@@ -204,6 +258,9 @@ export function projectDcfHorizon(params: {
   const growthByYear: number[] = [];
   let explicitPvK = 0;
   let terminalFcffK = 0;
+  // Year 5 revenue and EBITDA, for the T1 normalized terminal year.
+  let revenueYear5K = revK;
+  let ebitdaYear5K = ebitdaK;
 
   if (turnaround) {
     let revenueK = revK;
@@ -232,6 +289,8 @@ export function projectDcfHorizon(params: {
       fcffByYearK.push(fcff);
       explicitPvK += fcff / (1 + w) ** discountExponentForYear(i);
       terminalFcffK = fcff;
+      revenueYear5K = revenueK;
+      ebitdaYear5K = ebitdaYearK;
     }
 
     if (turnaround.sectorNormalMargin > 0) {
@@ -254,11 +313,39 @@ export function projectDcfHorizon(params: {
       fcffByYearK.push(fcff);
       explicitPvK += fcff / (1 + w) ** discountExponentForYear(i);
       terminalFcffK = fcff;
+      revenueYear5K *= 1 + g;
+      ebitdaYear5K *= 1 + g;
     }
   }
 
   const terminalDiscountExponent =
     EXPLICIT_FORECAST_YEARS - STUB_PERIOD_DISCOUNT_EXPONENT;
+
+  if (params.terminalMethod === 'v2-gordon') {
+    // T1: uncapped Gordon on the normalized terminal year. No 0.42 cap, no 36% share cap.
+    const terminal = computeNormalizedTerminalYear({
+      revenueYear5K,
+      ebitdaYear5K,
+      sectorNormalMargin: turnaround?.sectorNormalMargin,
+      industry,
+      waccPct: wacc,
+      terminalGrowthRate: params.terminalGrowthRate,
+      terminalDiscountExponent,
+    });
+    const terminalPvV2 = terminal.tvK * terminal.discountFactor;
+    const totalV2 = explicitPvK + terminalPvV2;
+    return {
+      fcffByYearK,
+      growthByYear,
+      explicitPvK,
+      terminalPvK: terminalPvV2,
+      terminalShare: totalV2 > 0 ? terminalPvV2 / totalV2 : 0,
+      totalEvK: totalV2,
+      dcfGrowthPct: effectiveDcfGrowthPct,
+      terminal,
+    };
+  }
+
   let terminalPvK = computeCappedTerminalValue({
     terminalFcffK,
     waccPct: wacc,
@@ -308,8 +395,15 @@ export function computeDcfWithGrowthDecayDetailed(params: {
   industry?: string;
   turnaround?: TurnaroundDcfParams;
   terminalGrowthRate?: number;
+  terminalMethod?: TerminalMethod;
+  /** Default true (methodology 1). Methodology 2 does not apply enforceCapexMonotonicity. */
+  capexGuard?: boolean;
 }): DcfWithGuard {
   const capexPct = parseCapexPct(params.capexLevelPct);
+  if (params.capexGuard === false) {
+    const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
+    return { evK: projection.totalEvK, projection, guardFactor: 1 };
+  }
   const baseEv = projectDcfHorizon({ ...params, capexLevelPct: 0 }).totalEvK;
   const projection = projectDcfHorizon({ ...params, capexLevelPct: capexPct });
   const evK = enforceCapexMonotonicity({

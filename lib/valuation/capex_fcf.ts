@@ -50,6 +50,11 @@ const DEP_RATES: Record<string, number> = {
   other: 0.04,
 };
 
+/** Depreciation as a share of revenue for the FCFF industry key (same table computeFCFF uses). */
+export function depreciationRateFor(industry: string): number {
+  return DEP_RATES[industry] ?? 0.04;
+}
+
 const ASSET_LIGHT = ['saas', 'fintech', 'cyber', 'professional_services'] as const;
 const ASSET_HEAVY = ['manufacturing', 'construction', 'energy', 'realestate'] as const;
 

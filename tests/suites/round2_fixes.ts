@@ -85,7 +85,9 @@ export function run(): SuiteResult {
     const zeroLegs = data.modelBlend.filter((r) => r.weightPct > 0 && r.ev === 0 && !/צבר|backlog/i.test(r.name));
     if (!zeroLegs.length) continue;
     const html = withQuietConsole(() => buildPdfHtml(data));
-    suite.check('zero-leg-labelled', spec.id, zeroLegs.every((r) => r.detail === 'לא רלוונטית בגלל EBITDA שלילי') && html.includes('לא רלוונטית בגלל EBITDA שלילי'), zeroLegs.map((r) => r.name).join(', '));
+    const expectedLabel = (name: string) =>
+      data.methodVersion === 'v2' && name.startsWith('DCF') ? 'אפס: אין תזרים חופשי בתחזית' : 'לא רלוונטית בגלל EBITDA שלילי';
+    suite.check('zero-leg-labelled', spec.id, zeroLegs.every((r) => r.detail === expectedLabel(r.name) && html.includes(expectedLabel(r.name))), zeroLegs.map((r) => `${r.name}: ${r.detail ?? 'no label'}`).join(', '));
   }
 
   // Finding 15: the anomalous-year weights (35/40/25) are stated as used.

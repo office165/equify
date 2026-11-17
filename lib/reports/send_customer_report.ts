@@ -3,6 +3,7 @@
  * Signed download URLs stay inside the customer email only — never logs, Monday, or events.
  */
 
+import { alertOfficeManualReview, buildManualReviewNotice } from './manual_review_hold';
 import { EmailGateway } from '../gateway/email_gateway';
 import { VALUATION_PDF_FILENAME } from '../api/handlers/valuation_generate';
 import {
@@ -46,6 +47,8 @@ export interface PackageAndSendCustomerReportResult {
   filename: string;
   pdfBytes: number;
   archived: boolean;
+  /** Methodology 2: the report was held for a manual review; the customer got a notice instead. */
+  heldForManualReview: boolean;
   email: {
     delivered: boolean;
     messageId: string | null;
@@ -172,6 +175,36 @@ export async function packageAndSendCustomerReport(
   }
 
   const emailTarget = input.to.trim();
+
+  // Methodology 2: a report that needs a manual review is not sent automatically.
+  const review = input.valuationData.manualReview;
+  if (review) {
+    alertOfficeManualReview({ reportId: input.archive.valuationId ?? input.valuationData.reportId, review });
+    const notice = buildManualReviewNotice({
+      locale: input.locale,
+      recipientName: input.recipientName,
+      companyName: input.valuationData.companyName,
+    });
+    let email: PackageAndSendCustomerReportResult['email'] = { delivered: false, messageId: null, error: 'email_missing' };
+    if (emailTarget) {
+      try {
+        const result = await new EmailGateway().send({ to: emailTarget, ...notice });
+        email = { delivered: result.delivered, messageId: result.messageId, error: result.delivered ? undefined : 'email_not_delivered' };
+      } catch (err) {
+        email = { delivered: false, messageId: null, error: err instanceof Error ? err.message : 'email_send_failed' };
+      }
+    }
+    console.warn(`${tag} held_for_manual_review`, { reasons: review.reasons, noticeSent: email.delivered });
+    return {
+      pdfBuffer,
+      filename,
+      pdfBytes: pdfBuffer.byteLength,
+      archived: Boolean(pdfDownloadUrl),
+      heldForManualReview: true,
+      email,
+    };
+  }
+
   console.log(`${tag} email_send_start`, { to: emailTarget, hasLink: Boolean(pdfDownloadUrl) });
 
   const email = emailTarget
@@ -199,6 +232,7 @@ export async function packageAndSendCustomerReport(
     filename,
     pdfBytes: pdfBuffer.byteLength,
     archived: Boolean(pdfDownloadUrl),
+    heldForManualReview: false,
     email,
   };
 }
