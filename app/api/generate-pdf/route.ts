@@ -10,6 +10,12 @@ import {
 } from '../../../lib/pdf-template/resolve-pdf-request';
 import { renderHtmlToPdfBuffer } from '../../../lib/pdf/render_html_pdf';
 import { scheduleProductEvent } from '../../../lib/analytics/track_event';
+import {
+  REPORT_BLOCKED_CUSTOMER_MESSAGE_EN,
+  REPORT_BLOCKED_CUSTOMER_MESSAGE_HE,
+  ValuationReportCoherenceError,
+  alertOfficeReportBlocked,
+} from '../../../lib/pdf-template/validate-valuation-data';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -60,6 +66,14 @@ export async function POST(request: Request) {
     html = buildPdfHtml(valuationData);
   } catch (err) {
     console.error('[generate-pdf] HTML build failed', err);
+    if (err instanceof ValuationReportCoherenceError) {
+      alertOfficeReportBlocked(valuationData.reportId, err, 'api/generate-pdf');
+      return jsonError(
+        valuationData.locale === 'en' ? REPORT_BLOCKED_CUSTOMER_MESSAGE_EN : REPORT_BLOCKED_CUSTOMER_MESSAGE_HE,
+        422,
+        'REPORT_COHERENCE_BLOCKED',
+      );
+    }
     const message = err instanceof Error ? err.message : 'Report HTML build failed.';
     return jsonError(message, 500, 'REPORT_HTML_BUILD_FAILED');
   }

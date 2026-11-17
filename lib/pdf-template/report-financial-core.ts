@@ -23,6 +23,10 @@ function resolveEbitdaMultipleEvAbs(
   const fromEngine = absFromReportingK(ebitdaMultipleEvK);
   if (fromEngine > 0) return fromEngine;
   const baseAbs = absFromReportingK(ebitdaBaseK);
+  // The engine zeroes the EBITDA leg when the multiple base is not positive
+  // (valuation_engine.ts: baseEbitdaForMultiple <= 0). Showing base x multiple here
+  // produced a negative leg that the EV never contained (round 1, finding 1).
+  if (!(baseAbs > 0)) return 0;
   return Math.round(baseAbs * effectiveMultiple * 100) / 100;
 }
 

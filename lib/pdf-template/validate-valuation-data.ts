@@ -3,6 +3,15 @@ import {
   synthesizeFinancialCoreFromValuationData,
   type ReportFinancialCore,
 } from './report-financial-core';
+import { sendOfficeAlert } from '../alerts/office_alert';
+
+/** Gaps above this share of the anchor value block the report. */
+export const COHERENCE_BLOCK_RATIO = 0.005;
+/** Gaps above this share (and at most the block ratio) build the report, log and alert office. */
+export const COHERENCE_WARN_RATIO = 0.0005;
+/** Absolute floors (currency units) so rounding noise never warns or blocks. */
+const BLOCK_FLOOR_ABS = 1_000;
+const WARN_FLOOR_ABS = 100;
 
 export class ValuationReportCoherenceError extends Error {
   readonly violations: string[];
@@ -16,7 +25,20 @@ export class ValuationReportCoherenceError extends Error {
   }
 }
 
-function relativeTolerance(base: number, ratio = 0.005, floor = 1_000): number {
+/** Customer-facing message when a report is blocked (no technical detail, no promise on value). */
+export const REPORT_BLOCKED_CUSTOMER_MESSAGE_HE =
+  'הדוח שלך דורש בדיקה ידנית של הצוות שלנו לפני שהוא נשלח. קיבלנו את הפרטים, ונחזור אליך במייל תוך יום עסקים.';
+export const REPORT_BLOCKED_CUSTOMER_MESSAGE_EN =
+  'Your report needs a manual review by our team before it is sent. We have your details and will email you within one business day.';
+
+export interface ValuationDataIssues {
+  /** Gaps above the block threshold: the report must not be issued. */
+  violations: string[];
+  /** Small gaps (below the block threshold): report is issued, office is alerted. */
+  warnings: string[];
+}
+
+function relativeTolerance(base: number, ratio = COHERENCE_BLOCK_RATIO, floor = BLOCK_FLOOR_ABS): number {
   return Math.max(floor, Math.abs(base) * ratio);
 }
 
@@ -29,59 +51,101 @@ function weightedEnterpriseValue(core: ReportFinancialCore): number {
   );
 }
 
-export function collectValuationDataViolations(data: ValuationData): string[] {
-  const violations: string[] = [];
+/** Classifies a gap between two values that should match. */
+function classify(
+  issues: ValuationDataIssues,
+  message: string,
+  a: number,
+  b: number,
+  base: number,
+  blockRatio = COHERENCE_BLOCK_RATIO,
+  blockFloor = BLOCK_FLOOR_ABS,
+): void {
+  const gap = Math.abs(a - b);
+  if (gap > relativeTolerance(base, blockRatio, blockFloor)) {
+    issues.violations.push(message);
+  } else if (gap > Math.max(WARN_FLOOR_ABS, Math.abs(base) * COHERENCE_WARN_RATIO)) {
+    issues.warnings.push(`${message} (gap ${((gap / Math.max(1, Math.abs(base))) * 100).toFixed(3)}%)`);
+  }
+}
+
+/** Exact engine weight for a model-blend row (display weights are rounded to whole %). */
+function exactRowWeight(name: string, core: ReportFinancialCore): number | null {
+  if (/backlog|צבר/i.test(name)) return 1;
+  if (/dcf/i.test(name)) return core.blendWeights.dcf;
+  if (/ebitda/i.test(name)) return core.blendWeights.ebitda;
+  if (/revenue|הכנסות/i.test(name)) return core.blendWeights.rev;
+  return null;
+}
+
+export function collectValuationDataIssues(data: ValuationData): ValuationDataIssues {
+  const issues: ValuationDataIssues = { violations: [], warnings: [] };
   const core = data.financialCore ?? synthesizeFinancialCoreFromValuationData(data);
+  const ev = core.blendedEnterpriseValueAbs;
 
-  const evTol = relativeTolerance(core.blendedEnterpriseValueAbs);
   const weightedEv = weightedEnterpriseValue(core);
-  if (Math.abs(weightedEv - core.blendedEnterpriseValueAbs) > evTol) {
-    violations.push(
-      `Blended EV ${core.blendedEnterpriseValueAbs.toFixed(0)} ≠ weighted model sum ${weightedEv.toFixed(0)}`,
-    );
-  }
+  classify(
+    issues,
+    `Blended EV ${ev.toFixed(0)} ≠ weighted model sum ${weightedEv.toFixed(0)}`,
+    weightedEv,
+    ev,
+    ev,
+  );
 
-  if (Math.abs(data.enterpriseValue - core.blendedEnterpriseValueAbs) > evTol) {
-    violations.push(
-      `data.enterpriseValue ${data.enterpriseValue.toFixed(0)} ≠ financialCore.blendedEnterpriseValueAbs ${core.blendedEnterpriseValueAbs.toFixed(0)}`,
-    );
-  }
+  classify(
+    issues,
+    `data.enterpriseValue ${data.enterpriseValue.toFixed(0)} ≠ financialCore.blendedEnterpriseValueAbs ${ev.toFixed(0)}`,
+    data.enterpriseValue,
+    ev,
+    ev,
+  );
 
   const contributionSum = data.modelBlend.reduce((sum, row) => sum + row.contribution, 0);
-  if (Math.abs(contributionSum - data.enterpriseValue) > evTol) {
-    violations.push(
-      `Model blend contributions ${contributionSum.toFixed(0)} ≠ enterpriseValue ${data.enterpriseValue.toFixed(0)}`,
-    );
-  }
+  classify(
+    issues,
+    `Model blend contributions ${contributionSum.toFixed(0)} ≠ enterpriseValue ${data.enterpriseValue.toFixed(0)}`,
+    contributionSum,
+    data.enterpriseValue,
+    ev,
+  );
 
   for (const row of data.modelBlend) {
-    const expectedContribution = row.ev * (row.weightPct / 100);
-    const rowTol = relativeTolerance(row.contribution, 0.02, 500);
-    if (Math.abs(row.contribution - expectedContribution) > rowTol) {
-      violations.push(
-        `Model row "${row.name}" contribution ${row.contribution.toFixed(0)} ≠ EV×weight ${expectedContribution.toFixed(0)}`,
-      );
-    }
-  }
-
-  const multTol = relativeTolerance(core.ebitdaMultipleEvAbs, 0.01);
-  const impliedMultipleEv = core.multipleLegEbitdaBaseAbs * core.effectiveMultiple;
-  if (Math.abs(impliedMultipleEv - core.ebitdaMultipleEvAbs) > multTol) {
-    violations.push(
-      `Multiples leg EV ${core.ebitdaMultipleEvAbs.toFixed(0)} ≠ base EBITDA × multiple (${core.multipleLegEbitdaBaseAbs.toFixed(0)} × ${core.effectiveMultiple.toFixed(2)} = ${impliedMultipleEv.toFixed(0)})`,
+    const exact = data.financialCore ? exactRowWeight(row.name, core) : null;
+    const weight = exact ?? row.weightPct / 100;
+    const expectedContribution = row.ev * weight;
+    classify(
+      issues,
+      `Model row "${row.name}" contribution ${row.contribution.toFixed(0)} ≠ EV×weight ${expectedContribution.toFixed(0)}`,
+      row.contribution,
+      expectedContribution,
+      row.contribution,
+      0.02,
+      500,
     );
   }
 
+  // The engine zeroes the EBITDA leg when its base is not positive.
+  const impliedMultipleEv =
+    core.multipleLegEbitdaBaseAbs > 0 ? core.multipleLegEbitdaBaseAbs * core.effectiveMultiple : 0;
+  classify(
+    issues,
+    `Multiples leg EV ${core.ebitdaMultipleEvAbs.toFixed(0)} ≠ base EBITDA × multiple (${core.multipleLegEbitdaBaseAbs.toFixed(0)} × ${core.effectiveMultiple.toFixed(2)} = ${impliedMultipleEv.toFixed(0)})`,
+    impliedMultipleEv,
+    core.ebitdaMultipleEvAbs,
+    core.ebitdaMultipleEvAbs,
+    0.01,
+  );
+
   if (data.sensitivityEbitdaMult?.baseEbitdaAbs != null) {
-    const sensTol = relativeTolerance(core.multipleLegEbitdaBaseAbs, 0.001, 100);
-    if (
-      Math.abs(data.sensitivityEbitdaMult.baseEbitdaAbs - core.multipleLegEbitdaBaseAbs) >
-      sensTol
-    ) {
-      violations.push(
-        `Sensitivity matrix base EBITDA ${data.sensitivityEbitdaMult.baseEbitdaAbs.toFixed(0)} ≠ multipleLegEbitdaBaseAbs ${core.multipleLegEbitdaBaseAbs.toFixed(0)}`,
-      );
-    }
+    classify(
+      issues,
+      `Sensitivity matrix base EBITDA ${data.sensitivityEbitdaMult.baseEbitdaAbs.toFixed(0)} ≠ multipleLegEbitdaBaseAbs ${core.multipleLegEbitdaBaseAbs.toFixed(0)}`,
+      data.sensitivityEbitdaMult.baseEbitdaAbs,
+      core.multipleLegEbitdaBaseAbs,
+      core.multipleLegEbitdaBaseAbs,
+      0.001,
+      100,
+    );
   }
 
   const trajectory2026 = [...data.trajectory]
@@ -89,27 +153,61 @@ export function collectValuationDataViolations(data: ValuationData): string[] {
     .find((point) => point.label === '2026' && !point.forecast);
   if (trajectory2026) {
     const auditedM = core.auditedEbitda2026Abs / 1_000_000;
-    const trajTol = relativeTolerance(auditedM, 0.001, 0.01);
+    const trajTol = Math.max(0.01, Math.abs(auditedM) * 0.001);
     if (Math.abs(trajectory2026.ebitdaM - auditedM) > trajTol) {
-      violations.push(
+      issues.violations.push(
         `Trajectory 2026 EBITDA ${trajectory2026.ebitdaM.toFixed(2)}M ≠ auditedEbitda2026 ${auditedM.toFixed(2)}M`,
       );
     }
   }
 
-  if (Math.abs(data.ebitda - core.auditedEbitda2026Abs) > relativeTolerance(core.auditedEbitda2026Abs)) {
-    violations.push(
-      `data.ebitda ${data.ebitda.toFixed(0)} ≠ auditedEbitda2026Abs ${core.auditedEbitda2026Abs.toFixed(0)}`,
-    );
-  }
+  classify(
+    issues,
+    `data.ebitda ${data.ebitda.toFixed(0)} ≠ auditedEbitda2026Abs ${core.auditedEbitda2026Abs.toFixed(0)}`,
+    data.ebitda,
+    core.auditedEbitda2026Abs,
+    core.auditedEbitda2026Abs,
+  );
 
-  return violations;
+  return issues;
 }
 
-/** Throws before PDF/HTML render when report sections disagree on valuation anchors. */
+/** Blocking violations only (kept for existing callers and tests). */
+export function collectValuationDataViolations(data: ValuationData): string[] {
+  return collectValuationDataIssues(data).violations;
+}
+
+/**
+ * Runs before PDF/HTML render.
+ * Gap above 0.5%: throws ValuationReportCoherenceError (callers show a clear customer message).
+ * Gap below 0.5%: the report is built, a warning is logged and the office is alerted.
+ */
 export function assertValuationDataCoherence(data: ValuationData): void {
-  const violations = collectValuationDataViolations(data);
+  const { violations, warnings } = collectValuationDataIssues(data);
   if (violations.length > 0) {
     throw new ValuationReportCoherenceError(violations);
   }
+  if (warnings.length > 0) {
+    console.warn('[report-coherence] small gaps, report issued', {
+      reportId: data.reportId,
+      warnings,
+    });
+    sendOfficeAlert({
+      kind: 'report_coherence_warning',
+      subject: `פער קטן במספרי הדוח ${data.reportId}`,
+      lines: [
+        `דוח ${data.reportId} הופק, אבל נמצא פער קטן מ 0.5% בין מספרים שאמורים להיות זהים.`,
+        ...warnings,
+      ],
+    });
+  }
+}
+
+/** Office alert for a blocked report (no customer details beyond the report id). */
+export function alertOfficeReportBlocked(reportId: string, err: ValuationReportCoherenceError, context: string): void {
+  sendOfficeAlert({
+    kind: 'report_coherence_blocked',
+    subject: `דוח נחסם בבדיקת עקביות ${reportId}`,
+    lines: [`מקור: ${context}`, `דוח ${reportId} לא הופק. פער של יותר מ 0.5%:`, ...err.violations],
+  });
 }

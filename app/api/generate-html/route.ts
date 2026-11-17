@@ -8,6 +8,12 @@ import {
   snapshotResponseHeaders,
   type GenerateReportBody,
 } from '../../../lib/pdf-template/resolve-pdf-request';
+import {
+  REPORT_BLOCKED_CUSTOMER_MESSAGE_EN,
+  REPORT_BLOCKED_CUSTOMER_MESSAGE_HE,
+  ValuationReportCoherenceError,
+  alertOfficeReportBlocked,
+} from '../../../lib/pdf-template/validate-valuation-data';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -33,7 +39,20 @@ export async function POST(request: Request) {
     }
 
     const { valuationData } = resolved;
-    const html = buildPdfHtml(valuationData);
+    let html: string;
+    try {
+      html = buildPdfHtml(valuationData);
+    } catch (err) {
+      if (err instanceof ValuationReportCoherenceError) {
+        alertOfficeReportBlocked(valuationData.reportId, err, 'api/generate-html');
+        return jsonError(
+          valuationData.locale === 'en' ? REPORT_BLOCKED_CUSTOMER_MESSAGE_EN : REPORT_BLOCKED_CUSTOMER_MESSAGE_HE,
+          422,
+          'REPORT_COHERENCE_BLOCKED',
+        );
+      }
+      throw err;
+    }
     const pages = countReportPages(html);
 
     if (pages !== PDF_PAGE_COUNT) {

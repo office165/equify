@@ -15,10 +15,7 @@ export interface KnownWrongEntry {
 }
 
 export const KNOWN_WRONG: KnownWrongEntry[] = [
-  // Finding 1: loss-making reports do not build (negative EBITDA leg in the display core).
-  { suite: 'build', check: 'pdf-html-builds', cases: ['anchor-5-young-factory', 'anchor-6-loss-factory', 'edge-loss-all-years'], finding: 1, note: 'EV vs sum of legs, about 0.7% gap' },
-  // Finding 19: displayed weights are rounded to whole percent, row check uses the rounded weight.
-  { suite: 'build', check: 'pdf-html-builds', cases: ['sub-services-legal', 'lc-services-legal-early', 'lc-services-legal-growth', 'lc-services-legal-mature'], finding: 19, note: 'weight 22.5% shown as 23%' },
+  // Finding 19: displayed weights are rounded to whole percent (22.5% shows as 23%).
   { suite: 'correctness', check: 'display-contribution-equals-ev-times-shown-weight', cases: ['golden-boutique-hotel', 'golden-consulting', 'golden-manufacturing', 'golden-payments', 'golden-enterprise-cyber', 'golden-defense'], finding: 19, note: 'rounded weight on screen' },
   // Finding 2: WACC chart adds CRP 1.6 and omits Kd and weights.
   { suite: 'correctness', check: 'wacc-chart-equals-effective', cases: '*', finding: 2, note: 'chart sum vs effective WACC' },

@@ -9,6 +9,12 @@ import type { EquifyValuationPersistedState } from '../../../../lib/wizard/equif
 import {
   consumeUnusedPaymentTokenForEmail,
 } from '../../../../lib/payments/valid_payment_token';
+import {
+  REPORT_BLOCKED_CUSTOMER_MESSAGE_EN,
+  REPORT_BLOCKED_CUSTOMER_MESSAGE_HE,
+  ValuationReportCoherenceError,
+  alertOfficeReportBlocked,
+} from '../../../../lib/pdf-template/validate-valuation-data';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -103,6 +109,18 @@ export async function POST(request: Request) {
     return NextResponse.json(result, { status: result.ok ? 200 : 502 });
   } catch (err) {
     console.error('[api/reports/deliver]', err);
+    if (err instanceof ValuationReportCoherenceError) {
+      alertOfficeReportBlocked(
+        body.valuationState.sessionId ?? 'deliver',
+        err,
+        'api/reports/deliver',
+      );
+      return jsonError(
+        body.locale === 'en' ? REPORT_BLOCKED_CUSTOMER_MESSAGE_EN : REPORT_BLOCKED_CUSTOMER_MESSAGE_HE,
+        422,
+        'REPORT_COHERENCE_BLOCKED',
+      );
+    }
     const message = err instanceof Error ? err.message : 'deliver_failed';
     return jsonError(message, 500, 'DELIVER_FAILED');
   }
