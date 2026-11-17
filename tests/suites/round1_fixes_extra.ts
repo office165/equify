@@ -200,7 +200,7 @@ async function paywallChecks(suite: Suite): Promise<void> {
 }
 
 function paypalChecks(suite: Suite): void {
-  const env = {} as NodeJS.ProcessEnv;
+  const env = {} as unknown as NodeJS.ProcessEnv;
   suite.check('paypal-ils-paid', 'c6', evaluatePaypalAmount(999, 'ILS', env).kind === 'paid');
   suite.check('paypal-ils-underpaid', 'c6', evaluatePaypalAmount(500, 'ILS', env).kind === 'underpaid');
   suite.check('paypal-usd-paid', 'c6', evaluatePaypalAmount(299, 'USD', env).kind === 'paid');
@@ -208,7 +208,7 @@ function paypalChecks(suite: Suite): void {
   suite.check('paypal-usd-underpaid', 'c6', evaluatePaypalAmount(100, 'USD', env).kind === 'underpaid');
   suite.check('paypal-unknown-currency', 'c6', evaluatePaypalAmount(999, 'EUR', env).kind === 'unsupported_currency');
   suite.check('paypal-missing-currency', 'c6', evaluatePaypalAmount(999, undefined, env).kind === 'unsupported_currency');
-  const custom = { PAYPAL_MIN_AMOUNT_USD: '250', PAYPAL_MIN_AMOUNT_ILS: '900' } as NodeJS.ProcessEnv;
+  const custom = { PAYPAL_MIN_AMOUNT_USD: '250', PAYPAL_MIN_AMOUNT_ILS: '900' } as unknown as NodeJS.ProcessEnv;
   suite.check('paypal-env-min-usd', 'c6', evaluatePaypalAmount(260, 'USD', custom).kind === 'paid');
   suite.check('paypal-env-min-ils', 'c6', evaluatePaypalAmount(950, 'ILS', custom).kind === 'paid');
 }
@@ -221,7 +221,7 @@ function leadValueChecks(suite: Suite): void {
     suite.check('lead-quality-equals-report', c.id, lead.reportQualityScore === report.qualityScore, `${lead.reportQualityScore} vs ${report.qualityScore}`);
   }
   const body = { event: 'wizard_completed' as const, valuationMidpoint: 100, qualityScore: 78, reportValuationMidpoint: 1_158_290, reportQualityScore: 34 };
-  const on = applyLeadValueSource(body, { LEAD_VALUE_FROM_REPORT: 'on' } as NodeJS.ProcessEnv);
+  const on = applyLeadValueSource(body, { LEAD_VALUE_FROM_REPORT: 'on' } as unknown as NodeJS.ProcessEnv);
   const off = applyLeadValueSource(body, {} as NodeJS.ProcessEnv);
   suite.check('lead-flag-on-uses-report', 'c7', on.valuationMidpoint === 1_158_290 && on.qualityScore === 34);
   suite.check('lead-flag-off-unchanged', 'c7', off.valuationMidpoint === 100 && off.qualityScore === 78);
