@@ -1,5 +1,6 @@
 import type { ReportingCurrencyCode } from './formatCurrency';
 import { normalizeCurrencyCode } from './formatCurrency';
+import { fetchIlsPerUnitRates } from './fx_provider';
 
 export type FxCurrency = ReportingCurrencyCode | 'GBP';
 
@@ -19,12 +20,24 @@ export const STATIC_FX_FROM_ILS: Readonly<Record<FxCurrency, number>> = {
 
 export type FxRateSource = 'live' | 'fallback' | 'cache';
 
+/**
+ * Date the static fallback rates were last set (commit e2f08a5, 2026-06-29).
+ * Shown in the report as the date of the fallback rate, never as "today".
+ */
+export const FX_FALLBACK_AS_OF = '2026-06-29';
+
 export interface FxRatesSnapshot {
   /** ILS → target currency multipliers (same unit scale, e.g. ₪K → $K). */
   fromIls: Record<FxCurrency, number>;
   source: FxRateSource;
+  /** YYYY-MM-DD of the rates (provider date for live, FX_FALLBACK_AS_OF for fallback). */
   asOf: string;
   fetchedAt: number;
+}
+
+/** True when the snapshot holds the static fallback rates (not a live quote). */
+export function isFallbackFxSnapshot(rates: Pick<FxRatesSnapshot, 'source' | 'asOf'>): boolean {
+  return rates.source === 'fallback' || rates.asOf === 'static';
 }
 
 const EXCHANGE_RATES_API = '/api/exchange-rates';
@@ -37,7 +50,7 @@ function buildFallbackSnapshot(): FxRatesSnapshot {
   return {
     fromIls: { ...STATIC_FX_FROM_ILS },
     source: 'fallback',
-    asOf: 'static',
+    asOf: FX_FALLBACK_AS_OF,
     fetchedAt: Date.now(),
   };
 }
@@ -52,12 +65,13 @@ interface ExchangeRatesApiResponse {
   GBP: number;
   source: 'live' | 'fallback';
   fetchedAt: string;
+  asOf?: string;
 }
 
 function parseExchangeRatesPayload(payload: unknown): FxRatesSnapshot | null {
   if (!payload || typeof payload !== 'object') return null;
   const body = payload as ExchangeRatesApiResponse;
-  const { USD, EUR, GBP, source, fetchedAt } = body;
+  const { USD, EUR, GBP, source, fetchedAt, asOf } = body;
   if (!Number.isFinite(USD) || !Number.isFinite(EUR) || USD <= 0 || EUR <= 0) {
     return null;
   }
@@ -73,17 +87,17 @@ function parseExchangeRatesPayload(payload: unknown): FxRatesSnapshot | null {
       GBP: 1 / gbpIlsPerUnit,
     },
     source: source === 'live' ? 'live' : 'fallback',
-    asOf: source === 'live' ? 'live' : 'static',
+    asOf:
+      source === 'live'
+        ? asOf || new Date(fetchedAt).toISOString().slice(0, 10)
+        : FX_FALLBACK_AS_OF,
     fetchedAt: new Date(fetchedAt).getTime() || Date.now(),
   };
 }
 
+/** Browser only: same-origin API route. */
 function resolveExchangeRatesUrl(): string {
-  if (typeof window !== 'undefined') {
-    return EXCHANGE_RATES_API;
-  }
-  const base = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ?? 'http://localhost:3000';
-  return `${base}${EXCHANGE_RATES_API}`;
+  return EXCHANGE_RATES_API;
 }
 
 /** Synchronous read — cached live rates or static fallback (never blocks UI). */
@@ -115,6 +129,26 @@ export async function refreshFxRates(force = false): Promise<FxRatesSnapshot> {
     return cachedRates;
   }
 
+  // Server: call the provider directly (no HTTP round trip to our own API, no localhost).
+  if (typeof window === 'undefined') {
+    try {
+      const live = await fetchIlsPerUnitRates(FETCH_TIMEOUT_MS);
+      cachedRates = {
+        fromIls: { ILS: 1, USD: 1 / live.USD, EUR: 1 / live.EUR, GBP: 1 / live.GBP },
+        source: 'live',
+        asOf: live.asOfDate,
+        fetchedAt: Date.now(),
+      };
+      return cachedRates;
+    } catch (err) {
+      console.warn('[fxService] live FX unavailable, using fallback rates', err instanceof Error ? err.message : err);
+      if (!isFresh(cachedRates) || cachedRates.source === 'fallback') {
+        cachedRates = buildFallbackSnapshot();
+      }
+      return cachedRates;
+    }
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
@@ -126,7 +160,7 @@ export async function refreshFxRates(force = false): Promise<FxRatesSnapshot> {
     if (!res.ok) throw new Error(`Exchange rates HTTP ${res.status}`);
     const parsed = parseExchangeRatesPayload(await res.json());
     if (!parsed) throw new Error('Exchange rates payload invalid');
-    cachedRates = { ...parsed, source: 'cache' };
+    cachedRates = { ...parsed, source: parsed.source === 'live' ? 'cache' : 'fallback' };
     return cachedRates;
   } catch {
     if (!isFresh(cachedRates)) {

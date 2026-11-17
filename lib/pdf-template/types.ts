@@ -176,6 +176,8 @@ export interface ValuationData {
   fxUsdRate?: number;
   fxEurRate?: number;
   fxAsOf?: string;
+  /** 'fallback' when static backup rates were used (shown as such in the report). */
+  fxSource?: 'live' | 'fallback' | 'cache';
   enterpriseValue: number;
   bearEquity: number;
   bullEquity: number;

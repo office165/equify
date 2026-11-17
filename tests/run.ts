@@ -15,6 +15,9 @@ import { run as runRound1 } from './suites/round1_fixes';
 
 const ROOT = path.join(__dirname, '..');
 
+// Tests never send real alerts or emails.
+process.env.OFFICE_ALERTS_DISABLED = 'true';
+
 /** Legacy scripts that are part of npm test as they are. */
 const LEGACY_SCRIPTS: Array<{ name: string; knownFailing?: string }> = [
   { name: 'test-valuation-engine' },
@@ -46,11 +49,11 @@ function runLegacy(name: string): { ok: boolean; tail: string; ms: number } {
   return { ok: res.status === 0, tail: out.slice(-3).join('\n'), ms: Date.now() - t0 };
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const t0 = Date.now();
   const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
   const verbose = process.argv.includes('--verbose');
-  const suites: Array<[string, () => SuiteResult]> = [
+  const suites: Array<[string, () => SuiteResult | Promise<SuiteResult>]> = [
     ['snapshot', runSnapshot],
     ['methodology-map', runMethodology],
     ['correctness', runCorrectness],
@@ -67,7 +70,7 @@ function main(): void {
   for (const [name, fn] of suites) {
     if (only && only !== name && only !== 'suites') continue;
     const s0 = Date.now();
-    const r = fn();
+    const r = await fn();
     const status = r.failures.length || r.staleMarkers.length ? 'FAIL' : 'PASS';
     console.log(`[${status}] ${name}: ${r.passed} passed, ${r.failures.length} failed, ${r.knownWrong.length} known-wrong (${Date.now() - s0}ms)`);
     for (const f of r.failures.slice(0, 40)) console.log(`    FAIL ${f}`);
@@ -121,4 +124,4 @@ function main(): void {
   process.exit(failed > 0 || stale > 0 ? 1 : 0);
 }
 
-main();
+void main();

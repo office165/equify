@@ -38,7 +38,7 @@ import {
 import { formatValuationOutputSync } from '../currency-normalize';
 import { buildValuationInputsFromEquifyState } from '../wizard/build_valuation_inputs';
 import { applyReportingFxLayer } from '../valuation/apply_reporting_fx';
-import { getCachedFxRates } from '../utils/fxService';
+import { getCachedFxRates, isFallbackFxSnapshot } from '../utils/fxService';
 import {
   formatCurrencyNarrativeHe,
   formatCurrencyShort,
@@ -588,6 +588,7 @@ export function mapEngineResultToValuationData(
     fxUsdRate: valuationOutput.usd_rate_used,
     fxEurRate: valuationOutput.eur_rate_used,
     fxAsOf: fxRates.asOf,
+    fxSource: isFallbackFxSnapshot(fxRates) ? 'fallback' : fxRates.source,
     enterpriseValue: kToNis(fxComputed.ev),
     bearEquity: kToNis(fxScenarios.bearEq),
     bullEquity: kToNis(fxScenarios.bullEq),

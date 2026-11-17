@@ -8,6 +8,7 @@ import {
   splitCompactAmount,
   type ActiveCurrencyProfile,
 } from '../../utils/formatCurrency';
+import { FX_FALLBACK_AS_OF } from '../../utils/fxService';
 
 export type PdfLocale = 'he' | 'en';
 
@@ -183,6 +184,7 @@ export function equityTriCurrencyCoverHtml(data: {
   fxUsdRate?: number;
   fxEurRate?: number;
   fxAsOf?: string;
+  fxSource?: 'live' | 'fallback' | 'cache';
   equity?: number;
 }): string {
   const equityIls = data.equityIls ?? data.equity;
@@ -209,8 +211,10 @@ export function equityTriCurrencyCoverHtml(data: {
       ? formatFxRateLabel(data.fxEurRate)
       : null;
 
-  const fxDate = data.fxAsOf && data.fxAsOf !== 'static' ? escHtml(data.fxAsOf) : escHtml(
-    new Date().toISOString().slice(0, 10),
+  const isFallback = data.fxSource === 'fallback' || data.fxAsOf === 'static' || !data.fxAsOf;
+  // Fallback rates show their own date, never today's date (round 1, finding 8).
+  const fxDate = escHtml(
+    data.fxAsOf && data.fxAsOf !== 'static' ? data.fxAsOf : FX_FALLBACK_AS_OF,
   );
 
   const secondaryLines = [
@@ -220,7 +224,9 @@ export function equityTriCurrencyCoverHtml(data: {
     .filter(Boolean)
     .join('');
 
-  const footnote = `<div class="cv-fx-footnote">שערי המרה נכון ל-${fxDate} לפי שוק הבינלאומי</div>`;
+  const footnote = isFallback
+    ? `<div class="cv-fx-footnote">שער גיבוי, נכון ל-${fxDate}</div>`
+    : `<div class="cv-fx-footnote">שערי המרה נכון ל-${fxDate} לפי שוק הבינלאומי</div>`;
 
   return `<div class="cv-tri-currency">${primary}${secondaryLines ? `<div class="cv-fx-secondary">${secondaryLines}</div>` : ''}${footnote}</div>`;
 }
