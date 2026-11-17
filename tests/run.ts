@@ -141,20 +141,24 @@ async function main(): Promise<void> {
     if (process.env.PDF_LAYOUT_SKIP === '1') {
       console.log('[SKIP] pdf-layout (PDF_LAYOUT_SKIP=1). Run npm run test:pdf-layout before pushing.');
     } else {
-      const t1 = Date.now();
+      // Both methodologies: methodology 2 adds text on pages 4 and 6 (WACC sources, T1 note).
       const tsxCli = path.join(ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
-      const res = spawnSync(process.execPath, [tsxCli, path.join('tests', 'pdf', 'layout.ts')], {
-        cwd: ROOT,
-        encoding: 'utf8',
-        env: { ...process.env, FORCE_COLOR: '0' },
-        timeout: 180_000,
-      });
-      const ok = res.status === 0;
-      console.log(`[${ok ? 'PASS' : 'FAIL'}] pdf-layout (${Date.now() - t1}ms)`);
-      if (!ok) {
-        failed += 1;
+      for (const method of methods) {
+        const t1 = Date.now();
+        const res = spawnSync(process.execPath, [tsxCli, path.join('tests', 'pdf', 'layout.ts')], {
+          cwd: ROOT,
+          encoding: 'utf8',
+          env: { ...process.env, FORCE_COLOR: '0', METHOD_V2: method === 'v2' ? 'on' : 'off' },
+          timeout: 180_000,
+        });
+        const ok = res.status === 0;
         const out = `${res.stdout ?? ''}${res.stderr ?? ''}`.trim().split('\n');
-        console.log(out.filter((l) => /FAIL|page|Error|No Chrome/.test(l)).slice(0, 30).map((l) => `    ${l}`).join('\n'));
+        const mode = out.find((l) => l.startsWith('pdf-layout: ') && !/failure/.test(l))?.replace('pdf-layout: ', '') ?? '';
+        console.log(`[${ok ? 'PASS' : 'FAIL'}] ${method}/pdf-layout (${Date.now() - t1}ms${mode ? `, ${mode}` : ''})`);
+        if (!ok) {
+          failed += 1;
+          console.log(out.filter((l) => /FAIL|page|Error|No Chrome/.test(l)).slice(0, 30).map((l) => `    ${l}`).join('\n'));
+        }
       }
     }
   }

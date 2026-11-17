@@ -3,14 +3,17 @@
  * Per case: the PDF has exactly 8 pages, no element or text overflows its page, tables and
  * boxes do not scroll, no text is clipped by overflow:hidden, and the Assistant font loaded.
  * Runs separately from npm test (it needs Chrome and Google Fonts, and takes longer than 60s).
+ * Without swiftc (outside macOS) it still runs: Puppeteer renders the PDF, the overflow checks run
+ * in the DOM, the page count is read from the PDF, and only the PNG images are skipped.
  */
 import path from 'path';
-import { EXPECTED_PAGES, ROOT, caseHtml, checkLayout, launch, pdfCases, renderCase } from './pdf_harness';
+import { EXPECTED_PAGES, ROOT, caseHtml, checkLayout, launch, pdfCases, rasterizerStatus, renderCase } from './pdf_harness';
 
 async function main(): Promise<void> {
   const t0 = Date.now();
   const browser = await launch();
   const failures: string[] = [];
+  console.log(`pdf-layout: ${rasterizerStatus()}`);
   try {
     for (const spec of pdfCases()) {
       const html = caseHtml(spec);

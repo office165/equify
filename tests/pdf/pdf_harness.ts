@@ -67,27 +67,55 @@ export async function launch(): Promise<Browser> {
   });
 }
 
-let rasterizer: string | null = null;
-function ensureRasterizer(): string {
-  if (rasterizer) return rasterizer;
-  const out = path.join(ROOT, 'tmp', 'pdf-rasterize');
-  const src = path.join(__dirname, 'rasterize.swift');
-  if (!fs.existsSync(out) || fs.statSync(out).mtimeMs < fs.statSync(src).mtimeMs) {
-    fs.mkdirSync(path.dirname(out), { recursive: true });
-    execFileSync('swiftc', ['-O', src, '-o', out], { stdio: 'pipe' });
-  }
-  rasterizer = out;
-  return out;
+/**
+ * PNG rasterizer (macOS PDFKit via swiftc). Optional: without swiftc (Linux, CI) or with
+ * PDF_RASTERIZE=off the PDF is still rendered by Puppeteer and checked in the DOM; only the PNG
+ * images are skipped and the page count is read from the PDF itself.
+ */
+let rasterizer: string | null | undefined;
+let rasterizerNote = '';
+export function rasterizerStatus(): string {
+  ensureRasterizer();
+  return rasterizer ? 'PNG via PDFKit (swiftc)' : `no PNG (${rasterizerNote})`;
 }
 
-/** Writes <id>.pdf and <id>-p<N>.png (110 dpi). Returns the PDF page count. */
-export async function renderCase(browser: Browser, spec: CaseSpec, outDir: string): Promise<number> {
+function ensureRasterizer(): string | null {
+  if (rasterizer !== undefined) return rasterizer;
+  if (process.env.PDF_RASTERIZE?.trim().toLowerCase() === 'off') {
+    rasterizerNote = 'PDF_RASTERIZE=off';
+    rasterizer = null;
+    return null;
+  }
+  const out = path.join(ROOT, 'tmp', 'pdf-rasterize');
+  const src = path.join(__dirname, 'rasterize.swift');
+  try {
+    if (!fs.existsSync(out) || fs.statSync(out).mtimeMs < fs.statSync(src).mtimeMs) {
+      fs.mkdirSync(path.dirname(out), { recursive: true });
+      execFileSync('swiftc', ['-O', src, '-o', out], { stdio: 'pipe' });
+    }
+    rasterizer = out;
+  } catch (err) {
+    rasterizerNote = `swiftc unavailable: ${err instanceof Error ? err.message.split('\n')[0].slice(0, 80) : String(err)}`;
+    rasterizer = null;
+  }
+  return rasterizer;
+}
+
+/** Page count read from the PDF bytes (page objects of a Chrome PDF are not compressed). */
+export function countPdfPages(pdf: Buffer): number {
+  return (pdf.toString('latin1').match(/\/Type\s*\/Page(?![s\w])/g) ?? []).length;
+}
+
+/** Writes <id>.pdf and, when the rasterizer is available, <id>-p<N>.png (110 dpi). Returns the PDF page count. */
+export async function renderCase(browser: Browser, spec: CaseSpec, outDir: string, fileId = spec.id): Promise<number> {
   const html = caseHtml(spec);
   const pdf = await renderHtmlToPdfBuffer(html, browser);
   fs.mkdirSync(outDir, { recursive: true });
-  const pdfPath = path.join(outDir, `${spec.id}.pdf`);
+  const pdfPath = path.join(outDir, `${fileId}.pdf`);
   fs.writeFileSync(pdfPath, pdf);
-  const count = execFileSync(ensureRasterizer(), [pdfPath, path.join(outDir, spec.id), '110'], { encoding: 'utf8' });
+  const raster = ensureRasterizer();
+  if (!raster) return countPdfPages(pdf);
+  const count = execFileSync(raster, [pdfPath, path.join(outDir, fileId), '110'], { encoding: 'utf8' });
   return Number(count.trim());
 }
 
@@ -147,6 +175,9 @@ export async function checkLayout(browser: Browser, html: string): Promise<Layou
             issues.push({ page: n, kind: 'text-clipped', detail: \`\${label(el)} \${el.scrollWidth}x\${el.scrollHeight} > \${el.clientWidth}x\${el.clientHeight}\` });
           }
         });
+        // No text runs into the page footer (round 2: methodology 2 notes are longer).
+        const foot = p.querySelector('.foot');
+        const fr = foot ? foot.getBoundingClientRect() : null;
         // Every visible text run is inside its page.
         const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
         let node;
@@ -159,6 +190,9 @@ export async function checkLayout(browser: Browser, html: string): Promise<Layou
           const r = range.getBoundingClientRect();
           if (r.width === 0 && r.height === 0) continue;
           if (!inside(r)) issues.push({ page: n, kind: 'text-outside-page', detail: \`"\${(node.textContent ?? '').trim().slice(0, 40)}"\` });
+          if (fr && foot && !foot.contains(node) && r.bottom > fr.top + 1 && r.top < fr.bottom && r.right > fr.left && r.left < fr.right) {
+            issues.push({ page: n, kind: 'text-overlaps-footer', detail: \`"\${(node.textContent ?? '').trim().slice(0, 40)}"\` });
+          }
         }
       });
       const assistantLoaded = Array.from(document.fonts).some(

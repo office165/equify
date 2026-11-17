@@ -3,11 +3,12 @@
  * Usage: npx tsx tests/pdf/render.ts reports/round-2/pdf-before
  */
 import path from 'path';
-import { EXPECTED_PAGES, ROOT, launch, pdfCases, renderCase } from './pdf_harness';
+import { EXPECTED_PAGES, ROOT, launch, pdfCases, rasterizerStatus, renderCase } from './pdf_harness';
 
 async function main(): Promise<void> {
   const outDir = path.resolve(ROOT, process.argv[2] ?? 'tmp/pdf-render');
   const browser = await launch();
+  console.log(`render: ${rasterizerStatus()}`);
   let bad = 0;
   try {
     for (const spec of pdfCases()) {

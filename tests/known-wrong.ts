@@ -80,6 +80,11 @@ export const KNOWN_WRONG: KnownWrongEntry[] = [
     'sub-real_estate-re_income@200M:4->6',
   ] },
 
+  // Finding 28 (round 2ב): methodology 1 page 4 DCF table does not add up to the DCF leg. The table
+  // recomputes the projection: the recovery path is used for every loss regime (the engine needs
+  // turnaroundYears > 0), and non-ILS cases mix revenue in ILS with EBITDA in the report currency.
+  // Methodology 2 takes the engine projection and adds up. Fixing methodology 1 changes the report.
+  { suite: 'round2-fixes', check: 'dcf-table-sums-all-cases', cases: ['anchor-5-young-factory', 'anchor-6-loss-factory', 'anchor-7-thin-factory', 'edge-loss-all-years', 'edge-neg-to-pos', 'edge-usd', 'edge-eur'], finding: 28, note: 'recomputed DCF table', methods: ['v1'] },
   // Finding 21: hard size steps in normalize_multiple.resolveScaleFactor (5M, 20M, 120M revenue).
   { suite: 'scale-ladder', check: 'no-boundary-jump', cases: '*', finding: 21, note: 'step 0.88/0.92/0.96/1.0', methods: ['v1'] },
 ];

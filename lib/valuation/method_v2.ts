@@ -434,11 +434,8 @@ export function waccV2SourceNoteHe(inputs: WaccV2Inputs): string {
   };
   const industry = inputs.industry ?? 'הכללי';
   return [
-    `מקורות: ריבית חסרת סיכון ${inputs.rfPct.toFixed(2)}% מבנק ישראל (עקום אפס נומינלי של אג"ח ממשלתי, 10 שנים, ממוצע ${he(ISRAEL_RISK_FREE.asOf)}).`,
-    `ERP ${inputs.erpPct.toFixed(2)}% משתמע מ Damodaran (${s.histimpl.file}, ${he(s.histimpl.dataDate)}).`,
-    `פרמיית סיכון מדינה לישראל ${inputs.crpPct.toFixed(2)}% מ Damodaran לפי דירוג ${DAMODARAN_ISRAEL.rating} (${s.ctryprem.file}, ${he(s.ctryprem.dataDate)}).`,
-    `בטא לא ממונפת ${inputs.unleveredBeta.toFixed(2)} ו D/E של ${inputs.deRatio.toFixed(2)} לענף ${industry} מ Damodaran (${s.betaGlobal.file}, ${he(s.betaGlobal.dataDate)}), ומשקלות ההון לפי ה D/E הזה.`,
-    `עלות החוב לפני מס היא הריבית חסרת הסיכון ועוד ${CAPM_CORPORATE_SPREAD_PCT.toFixed(1)} נקודות (הנחת המערכת).`,
+    `מקורות: Rf מבנק ישראל (10 שנים, ${he(ISRAEL_RISK_FREE.asOf)}), ERP ו CRP (דירוג ${DAMODARAN_ISRAEL.rating}) מ Damodaran (${he(s.histimpl.dataDate)}, ${he(s.ctryprem.dataDate)}),`,
+    `בטא ו D/E של ${inputs.deRatio.toFixed(2)} לענף ${industry} מ Damodaran (${he(s.betaGlobal.dataDate)}), ולפיו המשקלות. Kd: Rf ועוד ${CAPM_CORPORATE_SPREAD_PCT.toFixed(1)} נקודות.`,
   ].join(' ');
 }
 

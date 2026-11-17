@@ -315,9 +315,39 @@ function buildWaccDisplay(
   return { segments, table, note };
 }
 
+function scaleDcfDetail(d: NonNullable<ValuationComputed['dcfDetail']>, m: number): NonNullable<ValuationComputed['dcfDetail']> {
+  if (m === 1) return d;
+  const p = d.projection;
+  return {
+    evK: d.evK * m,
+    guardFactor: d.guardFactor,
+    projection: {
+      ...p,
+      fcffByYearK: p.fcffByYearK.map((v) => v * m),
+      explicitPvK: p.explicitPvK * m,
+      terminalPvK: p.terminalPvK * m,
+      totalEvK: p.totalEvK * m,
+      terminal: p.terminal
+        ? {
+            ...p.terminal,
+            revenueK: p.terminal.revenueK * m,
+            ebitdaK: p.terminal.ebitdaK * m,
+            depreciationK: p.terminal.depreciationK * m,
+            nopatK: p.terminal.nopatK * m,
+            deltaWcK: p.terminal.deltaWcK * m,
+            fcffK: p.terminal.fcffK * m,
+            tvK: p.terminal.tvK * m,
+          }
+        : undefined,
+    },
+  };
+}
+
 function buildDcfRows(
   inputs: ValuationInputs,
   computed: ValuationComputed,
+  /** ILS K to reporting-currency K (methodology 2 builds the table from the engine projection). */
+  fxMultiplier = 1,
 ): {
   rows: DcfYearRow[];
   terminalPvM: number;
@@ -350,7 +380,10 @@ function buildDcfRows(
         }
       : undefined;
   const v2 = computed.methodVersion === 'v2' ? computed.v2?.components : undefined;
-  const { projection, guardFactor } = computeDcfWithGrowthDecayDetailed({
+  // Methodology 2: the table is the projection the engine valued (scaled to the reporting
+  // currency), so it always adds up to the DCF leg. Methodology 1 recomputes it (finding 28).
+  const engineDcf = v2 && computed.dcfDetail ? scaleDcfDetail(computed.dcfDetail, fxMultiplier) : undefined;
+  const { projection, guardFactor } = engineDcf ?? computeDcfWithGrowthDecayDetailed({
     ebitdaK: computed.ebitda,
     revK,
     capexLevelPct,
@@ -385,12 +418,12 @@ function buildDcfRows(
   const terminal = projection.terminal;
   if (v2?.t1 && terminal) {
     notes.push(
-      `הערך הטרמינלי מחושב לפי Gordon בלי תקרה, על שנה טרמינלית מנורמלת: CAPEX שווה לפחת, הון חוזר שגדל לפי g, מס ${Math.round(CAPM_CORPORATE_TAX_RATE * 100)}% על EBIT, g של ${(terminal.growthRate * 100).toFixed(1)}% ומרווח מינימלי של 3 נקודות בין WACC ל g.`,
+      `ערך טרמינלי לפי Gordon בלי תקרה, על שנה מנורמלת (CAPEX כפחת, מס ${Math.round(CAPM_CORPORATE_TAX_RATE * 100)}%, g ${(terminal.growthRate * 100).toFixed(1)}%).`,
     );
     const x = computed.v2?.exitCrossCheck;
     if (x && x.gordonImpliedMultiple != null) {
       notes.push(
-        `בדיקה צולבת: Gordon משקף מכפיל של ${x.gordonImpliedMultiple.toFixed(1)} על EBITDA של השנה הטרמינלית, מול ${x.multiple.toFixed(1)} לפי מכפיל יציאה של הענף (Damodaran ${x.industry}, אחרי הנחת סחירות). הבדיקה לא נכנסת לשווי.`,
+        `בדיקה צולבת: מכפיל ${x.gordonImpliedMultiple.toFixed(1)} על EBITDA טרמינלי, מול ${x.multiple.toFixed(1)} למכפיל יציאה בענף (Damodaran, אחרי סחירות). לא נכנס לשווי.`,
       );
     }
   } else {
@@ -625,7 +658,11 @@ export function mapEngineResultToValuationData(
     note: dcfNote,
     terminalFcffM,
     terminalDiscountRatePct,
-  } = buildDcfRows(inputs, fxComputed);
+  } = buildDcfRows(
+    inputs,
+    fxComputed,
+    getIlsToReportingMultiplier(syncedState.profile.currency ?? 'ILS', fxRates),
+  );
   const isV2 = fxComputed.methodVersion === 'v2';
   const now = new Date();
   const dateIso = now.toISOString().slice(0, 10);

@@ -1,0 +1,1133 @@
+[
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 1,
+  "changedPct": 0,
+  "rows": [
+   66,
+   66
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 2,
+  "changedPct": 0.3,
+  "rows": [
+   20,
+   85
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 3,
+  "changedPct": 4.63,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 4,
+  "changedPct": 3.04,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 5,
+  "changedPct": 3.96,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 6,
+  "changedPct": 0.01,
+  "rows": [
+   19,
+   68
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 7,
+  "changedPct": 5.51,
+  "rows": [
+   15,
+   92
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant",
+  "page": 8,
+  "changedPct": 0.04,
+  "rows": [
+   75,
+   76
+  ]
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 2,
+  "changedPct": 0.29,
+  "rows": [
+   84,
+   85
+  ]
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 3,
+  "changedPct": 4.56,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 4,
+  "changedPct": 5.52,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 5,
+  "changedPct": 3.33,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 7,
+  "changedPct": 5.77,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "anchor-2-saas",
+  "page": 8,
+  "changedPct": 0,
+  "rows": [
+   37,
+   37
+  ]
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 2,
+  "changedPct": 0.85,
+  "rows": [
+   18,
+   85
+  ]
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 3,
+  "changedPct": 4.48,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 4,
+  "changedPct": 5.72,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 5,
+  "changedPct": 3.9,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 7,
+  "changedPct": 5.51,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "anchor-3-contractor",
+  "page": 8,
+  "changedPct": 2.16,
+  "rows": [
+   32,
+   37
+  ]
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 2,
+  "changedPct": 0.3,
+  "rows": [
+   84,
+   85
+  ]
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 3,
+  "changedPct": 4.68,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 4,
+  "changedPct": 5.53,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 5,
+  "changedPct": 3.42,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 7,
+  "changedPct": 5.52,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "anchor-4-accounting",
+  "page": 8,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 2,
+  "changedPct": 4.53,
+  "rows": [
+   20,
+   85
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 3,
+  "changedPct": 4.19,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 4,
+  "changedPct": 6.21,
+  "rows": [
+   15,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 5,
+  "changedPct": 4.36,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 7,
+  "changedPct": 5.52,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory",
+  "page": 8,
+  "changedPct": 0.1,
+  "rows": [
+   33,
+   36
+  ]
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 2,
+  "changedPct": 4.55,
+  "rows": [
+   20,
+   85
+  ]
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 3,
+  "changedPct": 4.2,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 4,
+  "changedPct": 5.91,
+  "rows": [
+   15,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 5,
+  "changedPct": 4.29,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 7,
+  "changedPct": 5.56,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "anchor-6-loss-factory",
+  "page": 8,
+  "changedPct": 0.09,
+  "rows": [
+   32,
+   37
+  ]
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 2,
+  "changedPct": 0.98,
+  "rows": [
+   20,
+   85
+  ]
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 3,
+  "changedPct": 4.21,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 4,
+  "changedPct": 3.36,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 5,
+  "changedPct": 4.36,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 7,
+  "changedPct": 5.5,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "anchor-7-thin-factory",
+  "page": 8,
+  "changedPct": 0.16,
+  "rows": [
+   32,
+   37
+  ]
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 2,
+  "changedPct": 0.83,
+  "rows": [
+   20,
+   85
+  ]
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 3,
+  "changedPct": 4.66,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 4,
+  "changedPct": 5.52,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 5,
+  "changedPct": 3.33,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 7,
+  "changedPct": 6.05,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "golden-b2b-saas",
+  "page": 8,
+  "changedPct": 0.08,
+  "rows": [
+   32,
+   37
+  ]
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 2,
+  "changedPct": 0.75,
+  "rows": [
+   18,
+   85
+  ]
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 3,
+  "changedPct": 4.61,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 4,
+  "changedPct": 5.6,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 5,
+  "changedPct": 3.86,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 7,
+  "changedPct": 5.76,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "golden-boutique-hotel",
+  "page": 8,
+  "changedPct": 0.11,
+  "rows": [
+   32,
+   37
+  ]
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 2,
+  "changedPct": 0.29,
+  "rows": [
+   84,
+   85
+  ]
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 3,
+  "changedPct": 4.61,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 4,
+  "changedPct": 6.09,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 5,
+  "changedPct": 3.95,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 7,
+  "changedPct": 5.7,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "golden-income-re",
+  "page": 8,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 2,
+  "changedPct": 0.32,
+  "rows": [
+   84,
+   85
+  ]
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 3,
+  "changedPct": 4.79,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 4,
+  "changedPct": 5.66,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 5,
+  "changedPct": 4.07,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 7,
+  "changedPct": 6.17,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "golden-large-industrial",
+  "page": 8,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 2,
+  "changedPct": 0.76,
+  "rows": [
+   18,
+   85
+  ]
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 3,
+  "changedPct": 4.63,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 4,
+  "changedPct": 5.6,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 5,
+  "changedPct": 4.06,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 7,
+  "changedPct": 5.78,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "golden-manufacturing",
+  "page": 8,
+  "changedPct": 0.11,
+  "rows": [
+   32,
+   37
+  ]
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 1,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 2,
+  "changedPct": 0.76,
+  "rows": [
+   20,
+   85
+  ]
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 3,
+  "changedPct": 4.63,
+  "rows": [
+   15,
+   64
+  ]
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 4,
+  "changedPct": 3,
+  "rows": [
+   15,
+   90
+  ]
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 5,
+  "changedPct": 3.95,
+  "rows": [
+   12,
+   91
+  ]
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 6,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 7,
+  "changedPct": 5.55,
+  "rows": [
+   42,
+   92
+  ]
+ },
+ {
+  "pair": "golden-restaurant",
+  "page": 8,
+  "changedPct": 0.07,
+  "rows": [
+   33,
+   36
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 1,
+  "changedPct": 0.13,
+  "rows": [
+   35,
+   78
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 2,
+  "changedPct": 0.32,
+  "rows": [
+   20,
+   80
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 3,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 4,
+  "changedPct": 5.38,
+  "rows": [
+   27,
+   93
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 5,
+  "changedPct": 0.04,
+  "rows": [
+   32,
+   87
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 6,
+  "changedPct": 0.08,
+  "rows": [
+   28,
+   45
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 7,
+  "changedPct": 0.35,
+  "rows": [
+   48,
+   88
+  ]
+ },
+ {
+  "pair": "anchor-1-restaurant-v2",
+  "page": 8,
+  "changedPct": 0.15,
+  "rows": [
+   41,
+   62
+  ]
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 1,
+  "changedPct": 0.28,
+  "rows": [
+   36,
+   78
+  ]
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 2,
+  "changedPct": 0.55,
+  "rows": [
+   20,
+   80
+  ]
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 3,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 4,
+  "changedPct": 5.29,
+  "rows": [
+   27,
+   93
+  ]
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 5,
+  "changedPct": 0.21,
+  "rows": [
+   29,
+   87
+  ]
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 6,
+  "changedPct": 0.15,
+  "rows": [
+   28,
+   45
+  ]
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 7,
+  "changedPct": 0.75,
+  "rows": [
+   48,
+   88
+  ]
+ },
+ {
+  "pair": "anchor-2-saas-v2",
+  "page": 8,
+  "changedPct": 0.39,
+  "rows": [
+   41,
+   62
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 1,
+  "changedPct": 0.66,
+  "rows": [
+   35,
+   78
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 2,
+  "changedPct": 7.85,
+  "rows": [
+   20,
+   80
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 3,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 4,
+  "changedPct": 5.91,
+  "rows": [
+   27,
+   96
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 5,
+  "changedPct": 0.19,
+  "rows": [
+   27,
+   88
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 6,
+  "changedPct": 0.27,
+  "rows": [
+   28,
+   45
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 7,
+  "changedPct": 0.65,
+  "rows": [
+   48,
+   88
+  ]
+ },
+ {
+  "pair": "anchor-5-young-factory-v2",
+  "page": 8,
+  "changedPct": 1.54,
+  "rows": [
+   32,
+   62
+  ]
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 1,
+  "changedPct": 0.24,
+  "rows": [
+   36,
+   78
+  ]
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 2,
+  "changedPct": 0.82,
+  "rows": [
+   18,
+   80
+  ]
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 3,
+  "changedPct": 0,
+  "rows": null
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 4,
+  "changedPct": 5.32,
+  "rows": [
+   27,
+   93
+  ]
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 5,
+  "changedPct": 0.04,
+  "rows": [
+   32,
+   88
+  ]
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 6,
+  "changedPct": 0.14,
+  "rows": [
+   28,
+   45
+  ]
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 7,
+  "changedPct": 0.87,
+  "rows": [
+   48,
+   88
+  ]
+ },
+ {
+  "pair": "golden-large-industrial-v2",
+  "page": 8,
+  "changedPct": 0.63,
+  "rows": [
+   32,
+   62
+  ]
+ }
+]

@@ -9,6 +9,7 @@ import { MissingJwtSecretError, getJwtSecret } from '../../lib/config/deployment
 import { verifyReportAccessToken } from '../../lib/auth/report_access_token';
 import { Suite, type SuiteResult } from '../lib/harness';
 import { ANCHOR_CASES } from '../lib/fixtures';
+import { buildAllCases } from '../lib/cases';
 import { GOLDEN_CASES } from '../lib/golden';
 import { withQuietConsole } from '../lib/quiet';
 import { runCase } from '../lib/run_case';
@@ -115,6 +116,14 @@ export function run(): SuiteResult {
     walk(path.join(ROOT, dir));
   }
   suite.check('terminal-value-pct-removed', 'code', offenders.length === 0, offenders.join(', '));
+
+  // Finding 28 (round 2ב): the page 4 DCF table adds up to the DCF leg, in every case.
+  // Methodology 1 recomputes the table and misses in 7 cases (recovery path condition, currency).
+  for (const spec of buildAllCases()) {
+    const d = runCase(spec);
+    const sum = (d.dcfRows.reduce((acc, r) => acc + r.pvM, 0) + d.terminalPvM) * 1e6;
+    suite.check('dcf-table-sums-all-cases', spec.id, Math.abs(sum - d.dcfEv) <= Math.max(1000, Math.abs(d.dcfEv) * 0.005), `table ${(sum / 1e6).toFixed(2)}M vs DCF leg ${(d.dcfEv / 1e6).toFixed(2)}M`);
+  }
 
   return suite.result;
 }
