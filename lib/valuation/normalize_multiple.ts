@@ -1,4 +1,5 @@
 import { resolveIndustryKey } from './industry_migration';
+import { continuousScaleFactor } from './method_v2';
 import type { Industry } from './industry_types';
 
 /** Ibbotson / Damodaran DLOM baseline for Israeli private companies (20% discount). */
@@ -73,6 +74,10 @@ export function normalizeMultipleForPrivateCompany(params: {
   industry: string;
   lifecycleStage: string;
   isManualOverride: boolean;
+  /** Methodology 2: continuous size factor instead of the 5M/20M/120M steps (finding 21). */
+  continuousScale?: boolean;
+  /** Methodology 2 revenue multiple: skip the EV/EBITDA bounds (R1). */
+  skipIndustryBounds?: boolean;
 }): NormalizeMultipleResult {
   const { rawMultiple, revenueK, industry, lifecycleStage } = params;
   const safeRaw = Number.isFinite(rawMultiple) && rawMultiple > 0 ? rawMultiple : 0;
@@ -92,12 +97,12 @@ export function normalizeMultipleForPrivateCompany(params: {
 
   const dlomFactor = resolveDlomFactor(lifecycleStage, revenueK);
   const dlomAdjusted = safeRaw * dlomFactor;
-  const scaleFactor = resolveScaleFactor(revenueK);
+  const scaleFactor = params.continuousScale ? continuousScaleFactor(revenueK) : resolveScaleFactor(revenueK);
   const scaleAdjusted = dlomAdjusted * scaleFactor;
 
   const industryKey = resolveIndustryKey(industry);
   const [minM, maxM] = INDUSTRY_MULTIPLE_BOUNDS[industryKey] ?? [2.0, 15.0];
-  const finalMultiple = Math.min(Math.max(scaleAdjusted, minM), maxM);
+  const finalMultiple = params.skipIndustryBounds ? scaleAdjusted : Math.min(Math.max(scaleAdjusted, minM), maxM);
 
   return {
     adjustedMultiple: Math.round(finalMultiple * 1000) / 1000,

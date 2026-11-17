@@ -1,3 +1,4 @@
+import { resolveMethodVersion, type MethodVersion } from './method_v2';
 import type { EquifyLifecycleKey, ValuationInputs } from '../valuation';
 import { resolveLifecycleStage } from './capm_wacc';
 import type { ValuationStrategyKind } from './sector_methodology_matrix';
@@ -121,6 +122,7 @@ export function resolveScaleModifierProfile(
     ValuationInputs,
     'lifecycle' | 'lifecycleAdj' | 'rev' | 'revenue2026K'
   >,
+  opts: { method?: MethodVersion } = {},
 ): ScaleModifierProfile {
   const lifecycleStage = resolveLifecycleStage(inputs.lifecycle, inputs.lifecycleAdj);
   const revenueK = Math.max(0, inputs.revenue2026K ?? inputs.rev ?? 0);
@@ -157,11 +159,20 @@ export function resolveScaleModifierProfile(
       smbToMidT,
     ),
   };
-  const blendMixStrength = lerp(
+  let blendMixStrength = lerp(
     smallRow.blendMixStrength,
     midRow.blendMixStrength,
     smbToMidT,
   );
+
+  // Methodology 2 (finding 20): the mature row enters blendTargets the same way it enters the
+  // WACC overlay and the dampener above. Methodology 1 keeps the small-to-mid interpolation only.
+  if (resolveMethodVersion(opts.method) === 'v2' && lifecycleStage === 'mature' && revenueScale > 0.7) {
+    const entT = clamp((revenueScale - 0.7) / 0.3, 0, 1);
+    blendTargets.dcf = lerp(blendTargets.dcf, matureRow.blendTargets.dcf, entT);
+    blendTargets.multiple = lerp(blendTargets.multiple, matureRow.blendTargets.multiple, entT);
+    blendMixStrength = lerp(blendMixStrength, matureRow.blendMixStrength, entT);
+  }
 
   return {
     tier,
