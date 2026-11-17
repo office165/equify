@@ -175,6 +175,13 @@ export async function checkLayout(browser: Browser, html: string): Promise<Layou
             issues.push({ page: n, kind: 'text-clipped', detail: \`\${label(el)} \${el.scrollWidth}x\${el.scrollHeight} > \${el.clientWidth}x\${el.clientHeight}\` });
           }
         });
+        // Round 3: each private company layer line on page 4 is one line (no wrap).
+        p.querySelectorAll('.private-layer-line').forEach((el) => {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const tops = new Set(Array.from(range.getClientRects()).filter((r) => r.width > 0).map((r) => Math.round(r.top)));
+          if (tops.size > 1) issues.push({ page: n, kind: 'line-wraps', detail: \`\${tops.size} lines: "\${(el.textContent ?? '').trim().slice(0, 40)}"\` });
+        });
         // No text runs into the page footer (round 2: methodology 2 notes are longer).
         const foot = p.querySelector('.foot');
         const fr = foot ? foot.getBoundingClientRect() : null;

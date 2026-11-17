@@ -157,7 +157,8 @@ export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): vo
     const explicitPv = data.dcfRows.reduce((s, r) => s + r.pvM, 0);
     const share = (data.terminalPvM / (explicitPv + data.terminalPvM)) * 100;
     suite.check('terminal-share-consistent', id, Math.abs(share - data.terminalSharePct) <= 0.2, `${data.terminalSharePct.toFixed(2)} vs ${share.toFixed(2)}`);
-    suite.check('dcf-table-sums-to-dcf-ev', id, approx((explicitPv + data.terminalPvM) * 1e6, data.dcfEv, 0.005), `table ${((explicitPv + data.terminalPvM) * 1e6).toFixed(0)} vs DCF EV ${data.dcfEv.toFixed(0)}`);
+    const dcfTableTarget = data.dcfMarketableEv ?? data.dcfEv;
+    suite.check('dcf-table-sums-to-dcf-ev', id, approx((explicitPv + data.terminalPvM) * 1e6, dcfTableTarget, 0.005), `table ${((explicitPv + data.terminalPvM) * 1e6).toFixed(0)} vs DCF EV ${dcfTableTarget.toFixed(0)}`);
     suite.check('discount-factors-match-wacc', id, data.dcfRows.every((r, i) => approx(r.discountFactor, 1 / (1 + w) ** (i === 0 ? 0.5 : i + 0.5), 0.0005, 1e-6)), 'mid-year factors');
   }
 

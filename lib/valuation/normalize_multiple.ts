@@ -51,7 +51,7 @@ function resolveScaleFactor(revenueK: number): number {
 /**
  * DLOM relief for mature, larger private issuers — liquidity profile approaches mid-market.
  */
-function resolveDlomFactor(lifecycleStage: string, revenueK: number): number {
+export function resolveDlomFactor(lifecycleStage: string, revenueK: number): number {
   const revenueNis = revenueK * 1_000;
   if (lifecycleStage === 'mature') {
     return Math.min(PRIVATE_COMPANY_DLOM_FACTOR + (revenueNis / 200_000_000) * 0.05, 0.9);

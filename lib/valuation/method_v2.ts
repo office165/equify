@@ -66,6 +66,15 @@ export interface V2Components {
   zeroLeg: boolean;
   /** Manual review flag (debt above EV, zero or implausible equity). */
   manualReview: boolean;
+  /** Round 3: marketability discount on the DCF leg (same factor as the multiples). */
+  dcfMarketability: boolean;
+  /** Round 3, finding 26 option (b): the R1 floor fades out as the margin nears the thin-margin boundary. */
+  r1GradualFloor: boolean;
+  /**
+   * Round 3, analysis only: the verified bottom size decile premium (Damodaran) instead of the size
+   * overlay. Not in V2_ALL: the premium as a function of size is not verified.
+   */
+  sizePremiumDecile: boolean;
 }
 
 export const V2_ALL: Readonly<V2Components> = Object.freeze({
@@ -77,6 +86,9 @@ export const V2_ALL: Readonly<V2Components> = Object.freeze({
   matureRow: true,
   zeroLeg: true,
   manualReview: true,
+  dcfMarketability: true,
+  r1GradualFloor: true,
+  sizePremiumDecile: false,
 });
 
 export const V1_NONE: Readonly<V2Components> = Object.freeze({
@@ -88,6 +100,9 @@ export const V1_NONE: Readonly<V2Components> = Object.freeze({
   matureRow: false,
   zeroLeg: false,
   manualReview: false,
+  dcfMarketability: false,
+  r1GradualFloor: false,
+  sizePremiumDecile: false,
 });
 
 /**
@@ -317,6 +332,98 @@ export function revenueMultipleV2(params: {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Finding 26, option (b) (decision of round 3): the R1 floor fades out near the thin-margin boundary.
+// ---------------------------------------------------------------------------------------------
+
+/** Upper edge of the thin-margin regime (profitability_regime.ts): from here the company is healthy. */
+export const V2_THIN_MARGIN_BOUNDARY = 0.05;
+
+export interface R1FloorFade {
+  /** Revenue leg EV (K) after the fade. */
+  revLegEvK: number;
+  /** Revenue leg EV (K) from R1 before the fade. */
+  r1RevLegEvK: number;
+  /** Company margin used for the fade (decimal). */
+  margin: number;
+  /** Share of the floor premium still allowed (1 at margin 0 and below, 0 at the boundary). */
+  remaining: number;
+  /** Contribution of the floor premium to EV (K) at a margin of 0 and below. */
+  premiumAtZeroK: number;
+}
+
+/**
+ * In the thin-margin band the revenue leg (R1 with its floor) is above the EBITDA leg, and the
+ * regime moves weight from it to the EBITDA leg as the margin rises, so value fell with a better
+ * margin (finding 26). The floor premium is the part of the revenue leg above the EBITDA leg. Its
+ * contribution to EV (revenue weight x premium) now falls linearly with the margin, from
+ * premiumAtZeroK at a margin of 0 to nothing at the boundary, where the revenue leg equals the
+ * EBITDA leg (the point where its weight goes away). premiumAtZeroK is the largest value for which
+ * the linear path never asks for more than R1 gives anywhere in the band, and at most the multiples
+ * value of the same company at the boundary margin.
+ */
+export function fadeR1Floor(params: {
+  r1RevLegEvK: number;
+  ebitdaLegEvK: number;
+  revWeight: number;
+  margin: number;
+  premiumAtZeroK: number;
+}): R1FloorFade {
+  const { r1RevLegEvK, ebitdaLegEvK, revWeight, margin, premiumAtZeroK } = params;
+  const remaining = r1FadeRemaining(margin);
+  const base = { r1RevLegEvK, margin, remaining, premiumAtZeroK };
+  const e = Math.max(0, ebitdaLegEvK);
+  if (!(revWeight > 0) || r1RevLegEvK <= e || margin >= V2_THIN_MARGIN_BOUNDARY) {
+    return { ...base, revLegEvK: r1RevLegEvK };
+  }
+  const allowedPremiumK = (Math.max(0, premiumAtZeroK) * remaining) / revWeight;
+  return { ...base, revLegEvK: e + Math.min(r1RevLegEvK - e, allowedPremiumK) };
+}
+
+export function r1FadeRemaining(margin: number): number {
+  return Math.min(1, Math.max(0, 1 - margin / V2_THIN_MARGIN_BOUNDARY));
+}
+
+/**
+ * Margins (decimal) where the band is sampled to size premiumAtZeroK: 0.1% to 4.9% in 0.1 point
+ * steps. A margin of exactly 0 is left out: the regime reads EBITDA 0 as "not entered" and returns
+ * the healthy weights (profitability_regime.ts).
+ */
+export const V2_R1_FADE_GRID: number[] = Array.from({ length: 49 }, (_, i) => (i + 1) / 1000);
+
+/**
+ * premiumAtZeroK is the smallest of:
+ *   1. the multiples value of the same company at the boundary margin;
+ *   2. w_rev(m) x premium(m) / remaining(m) over the band (the linear path never asks for more than
+ *      R1 gives);
+ *   3. boundary x the smallest slope of (w_ebitda + w_rev) x EBITDA leg over the band, so the
+ *      premium never falls faster than the multiples legs grow with the margin.
+ * `at(m)` returns, for a company identical except for its margin m: the weights after the zero-leg
+ * move, the R1 revenue leg and the EBITDA leg (K).
+ */
+export function r1FadePremiumAtZero(params: {
+  boundaryMultiplesK: number;
+  at: (margin: number) => { revWeight: number; ebitdaWeight: number; r1RevLegEvK: number; ebitdaLegEvK: number };
+}): number {
+  let cap = Math.max(0, params.boundaryMultiplesK);
+  let prev: { m: number; base: number } | null = null;
+  for (const m of V2_R1_FADE_GRID) {
+    const rem = r1FadeRemaining(m);
+    if (!(rem > 0)) continue;
+    const p = params.at(m);
+    const e = Math.max(0, p.ebitdaLegEvK);
+    const premium = Math.max(0, p.r1RevLegEvK - e);
+    cap = Math.min(cap, (Math.max(0, p.revWeight) * premium) / rem);
+    const base = (Math.max(0, p.revWeight) + Math.max(0, p.ebitdaWeight)) * e;
+    if (prev) {
+      const slope = (base - prev.base) / (m - prev.m);
+      cap = Math.min(cap, Math.max(0, slope) * V2_THIN_MARGIN_BOUNDARY);
+    }
+    prev = { m, base };
+  }
+  return cap;
+}
+
+// ---------------------------------------------------------------------------------------------
 // T1 cross-check: industry exit multiple. Shown in the report, never used in value.
 // ---------------------------------------------------------------------------------------------
 
@@ -378,6 +485,12 @@ export function redistributeZeroLegWeight<W extends { dcf: number; ebitda: numbe
   weights: W,
   ebitdaBaseK: number,
   revenueK: number,
+  /**
+   * Round 3 (with the R1 floor fade): when the revenue leg has weight, the EBITDA weight moves to it
+   * only, so the market approach keeps its weight and the DCF keeps the weight the regime gave it.
+   * Pro rata moved weight back from the DCF to a smaller EBITDA leg as the margin rose (finding 26).
+   */
+  opts: { toRevenueLegFirst?: boolean } = {},
 ): W {
   if (!(weights.ebitda > 0)) return weights;
   const baseMargin = revenueK > 0 ? ebitdaBaseK / revenueK : ebitdaBaseK > 0 ? 1 : 0;
@@ -386,6 +499,9 @@ export function redistributeZeroLegWeight<W extends { dcf: number; ebitda: numbe
   const rest = weights.dcf + weights.rev;
   if (rest <= 0) return weights;
   const moved = weights.ebitda * share;
+  if (opts.toRevenueLegFirst && weights.rev > 0) {
+    return { ...weights, rev: weights.rev + moved, ebitda: weights.ebitda - moved };
+  }
   return {
     ...weights,
     dcf: weights.dcf + (moved * weights.dcf) / rest,
@@ -448,4 +564,10 @@ export interface ValuationV2Detail {
   manualReview?: ManualReview;
   /** Weights before the zero-leg move, when it applied. */
   weightsBeforeZeroLeg?: { dcf: number; ebitda: number; rev: number };
+  /** Round 3: marketability factor on the DCF leg and the DCF value before it (K). */
+  dcfMarketability?: { factor: number; marketableK: number };
+  /** Round 3: R1 floor fade (finding 26), when it changed the revenue leg. */
+  r1FloorFade?: R1FloorFade;
+  /** Round 3: size premium inside Ke (pp) and where it comes from. */
+  sizePremium?: { pp: number; basis: 'overlay' | 'damodaran-decile' };
 }

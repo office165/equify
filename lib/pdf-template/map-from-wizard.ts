@@ -1,4 +1,5 @@
 import { waccV2SourceNoteHe } from '../valuation/method_v2';
+import { dcfMarketabilityLinesHe, sizePremiumLineHe } from '../valuation/private_company_layer';
 import { CAPM_CORPORATE_TAX_RATE } from '../valuation/capm_wacc';
 import { formatNetDebtLine } from '../format/currency';
 import {
@@ -869,6 +870,16 @@ export function mapEngineResultToValuationData(
           terminalFcffM,
           terminalDiscountRatePct,
           manualReview: fxComputed.v2?.manualReview,
+          ...(fxComputed.v2?.dcfMarketability
+            ? {
+                dcfMarketableEv: kToNis(fxComputed.dcf) / fxComputed.v2.dcfMarketability.factor,
+                dcfMarketabilityFactor: fxComputed.v2.dcfMarketability.factor,
+              }
+            : {}),
+          privateLayerLines: [
+            ...(fxComputed.v2?.dcfMarketability ? dcfMarketabilityLinesHe(fxComputed.v2.dcfMarketability.factor) : []),
+            ...(fxComputed.v2?.sizePremium ? [sizePremiumLineHe(fxComputed.v2.sizePremium.pp, fxComputed.v2.sizePremium.basis)] : []),
+          ],
         }
       : {}),
     terminalPvM,

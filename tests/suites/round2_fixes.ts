@@ -123,7 +123,9 @@ export function run(): SuiteResult {
   for (const spec of buildAllCases()) {
     const d = runCase(spec);
     const sum = (d.dcfRows.reduce((acc, r) => acc + r.pvM, 0) + d.terminalPvM) * 1e6;
-    suite.check('dcf-table-sums-all-cases', spec.id, Math.abs(sum - d.dcfEv) <= Math.max(1000, Math.abs(d.dcfEv) * 0.005), `table ${(sum / 1e6).toFixed(2)}M vs DCF leg ${(d.dcfEv / 1e6).toFixed(2)}M`);
+    // Methodology 2 (round 3): the table sums to the DCF before the marketability discount.
+    const target = d.dcfMarketableEv ?? d.dcfEv;
+    suite.check('dcf-table-sums-all-cases', spec.id, Math.abs(sum - target) <= Math.max(1000, Math.abs(target) * 0.005), `table ${(sum / 1e6).toFixed(2)}M vs DCF ${(target / 1e6).toFixed(2)}M`);
   }
 
   return suite.result;

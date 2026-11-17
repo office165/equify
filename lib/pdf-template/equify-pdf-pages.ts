@@ -348,7 +348,7 @@ function buildPage4Dcf(data: ValuationData): string {
     <div class="page-stack">
       <section class="page-section page-section--wacc">
         <div class="dcf-wacc-layout">
-          <div class="box box-chart-visible"><h3>הרכב WACC</h3>${buildEquifyWaccDonutSvg(data.waccSegments, data.waccPct)}</div>
+          <div class="dcf-wacc-side"><div class="box box-chart-visible"><h3>הרכב WACC</h3>${buildEquifyWaccDonutSvg(data.waccSegments, data.waccPct)}</div>${(data.privateLayerLines ?? []).map((l) => `<p class="note wacc-note private-layer-line">${escHtml(l)}</p>`).join('')}</div>
           <div class="dcf-wacc-table-wrap">
             <table class="report-table report-table--wacc">
               ${reportColgroup([...WACC_TABLE_WIDTHS])}
@@ -365,7 +365,7 @@ function buildPage4Dcf(data: ValuationData): string {
           <tr><td>FCFF חזוי</td>${fcffRow}<td class="n">${data.dcfRows.at(-1) ? f.fixed(data.dcfRows.at(-1)!.fcffM, 2) : numHtml('—')}</td></tr>
           <tr><td>פקטור היוון</td>${dfRow}<td class="n">${numHtml('—')}</td></tr>
           <tr><td>שווי נוכחי</td>${pvRow}<td class="n">${f.fixed(data.terminalPvM, 1)}*</td></tr>
-          <tr class="sum"><td>שווי פעילות לפי DCF</td>${emptyCells(data.dcfRows.length)}<td class="n">${f.money(data.dcfEv)}</td></tr>
+          <tr class="sum"><td>${data.dcfMarketableEv != null ? 'שווי DCF לפני הנחת סחירות' : 'שווי פעילות לפי DCF'}</td>${emptyCells(data.dcfRows.length)}<td class="n">${f.money(data.dcfMarketableEv ?? data.dcfEv)}</td></tr>
         </table>
         <p class="note">* ערך טרמינלי מהווה ${f.pct(data.terminalSharePct, 0)} מסך שווי ה DCF.${data.dcfNote ? ` ${escHtml(data.dcfNote)}` : ''}</p>
       </section>

@@ -30,12 +30,17 @@ import { resolveEbitdaBaseForMultipleLeg } from './cyclical_ebitda_normalization
 import { resolveActiveEffectiveMultiple } from './multiple_override';
 import {
   normalizeMultipleForPrivateCompany,
+  resolveDlomFactor,
   type MultipleNormalizationBreakdown,
 } from './normalize_multiple';
+import { sizePremiumDecilePp } from './private_company_layer';
 import { computeCapmWacc } from './capm_wacc';
 import {
   computeWaccV2,
   exitMultipleCrossCheck,
+  fadeR1Floor,
+  r1FadePremiumAtZero,
+  V2_THIN_MARGIN_BOUNDARY,
   redistributeZeroLegWeight,
   resolveManualReview,
   resolveMethodVersion,
@@ -338,7 +343,9 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     ? computeWaccV2({
         sector: inputs.sector,
         subSector: inputs.subSector,
-        alphaPp: capm.waccBreakdown.alpha,
+        // Round 3: the verified bottom decile premium replaces the overlay only in analysis runs
+        // (sizePremiumDecile is not part of V2_ALL, its size gradient is not verified).
+        alphaPp: v2c.sizePremiumDecile ? sizePremiumDecilePp() : capm.waccBreakdown.alpha,
         specificRiskPremiumPp: capm.waccBreakdown.specificRiskPremium,
         specificRiskBreakdownPp: capm.waccBreakdown.specificRiskBreakdown,
         profitabilityLossPremiumPp: capm.waccBreakdown.profitabilityLossPremium,
@@ -434,7 +441,12 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     terminalMethod: v2c.t1 ? 'v2-gordon' : 'v1-capped',
     capexGuard: !v2c.noCapexGuard,
   });
-  const dcf = dcfDetailed.evK;
+  // Methodology 2, round 3: the DCF is discounted at public company rates (Damodaran betas, ERP,
+  // CRP), so it is a marketable value. The multiples' marketability factor (0.8, up to 0.9 for a
+  // mature company by size) makes it a private company value.
+  const dcfMarketableK = dcfDetailed.evK;
+  const dcfMarketabilityFactor = v2c.dcfMarketability ? resolveDlomFactor(lifecycle ?? 'growth', revK) : 1;
+  const dcf = dcfMarketableK * dcfMarketabilityFactor;
   /** Terminal value share of the DCF leg (%), from the actual projection (replaces the constant 57). */
   const terminalSharePct = dcfDetailed.projection.terminalShare * 100;
 
@@ -465,13 +477,21 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     ebitdaLegEvK = 0;
   }
 
+  // R1 with the gradual floor (round 3): R1 option B applies and the floor fades (finding 26).
+  const r1FadeActive = v2c.r1 && v2c.r1GradualFloor && sectorConfig.strategy !== 'current_run_rate_revenue';
   // Methodology 2 (finding 22): the weight of a zero EBITDA leg moves to the other legs.
   const blendWeights = v2c.zeroLeg
-    ? redistributeZeroLegWeight(resolvedBlendWeights, ebitdaLegEvK > 0 ? baseEbitdaForMultiple : 0, revK)
+    ? redistributeZeroLegWeight(resolvedBlendWeights, ebitdaLegEvK > 0 ? baseEbitdaForMultiple : 0, revK, {
+        toRevenueLegFirst: r1FadeActive,
+      })
     : resolvedBlendWeights;
 
   let revenueMultipleDetail: ValuationV2Detail['revenueMultiple'];
-  if (v2c.r1 && blendWeights.rev > 0) {
+  let r1FloorFade: ValuationV2Detail['r1FloorFade'];
+  // R1 option B (round 3): only where the revenue multiple is a secondary leg. Where it is the main
+  // method (current_run_rate_revenue: software, fintech, cyber) the V1 multiple stays, with the
+  // continuous size factor.
+  if (v2c.r1 && blendWeights.rev > 0 && sectorConfig.strategy !== 'current_run_rate_revenue') {
     // Methodology 2 (R1, decision 1 of 17.11.2026): margin-adjusted Damodaran EV/Sales.
     const factors = normalizeMultipleForPrivateCompany({
       rawMultiple: 1,
@@ -482,8 +502,8 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
       continuousScale: v2c.continuousSize,
       skipIndustryBounds: true,
     }).breakdown;
-    const revenueStrategyManual =
-      sectorConfig.strategy === 'current_run_rate_revenue' && multipleResolution.isManual;
+    // A manual multiple only replaces R1 in the revenue strategy, which option B keeps out of R1.
+    const revenueStrategyManual = false;
     revenueMultipleDetail = revenueMultipleV2({
       sector: inputs.sector,
       subSector: inputs.subSector,
@@ -500,6 +520,57 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     });
     revMultiplier = revenueMultipleDetail.multiple;
     revLegEvK = Math.round(revK * revMultiplier * 100) / 100;
+
+    // Finding 26, option (b): the floor fades out as the margin nears the thin-margin boundary.
+    const fadeMargin = revenueMultipleDetail.companyMargin ?? 0;
+    if (v2c.r1GradualFloor && revenueMultipleDetail.basis === 'damodaran-margin' && fadeMargin < V2_THIN_MARGIN_BOUNDARY) {
+      const weightsAt = (ebitdaK: number) => {
+        const { weights } = resolveEngineBlendWeights({
+          method: matureRowMethod,
+          sector: inputs.sector,
+          subSector: inputs.subSector,
+          strategy: sectorConfig.strategy,
+          revenueK: revK,
+          ebitdaK,
+          lifecycle,
+          lifecycleAdj,
+          revK,
+        });
+        return v2c.zeroLeg ? redistributeZeroLegWeight(weights, ebitdaK, revK, { toRevenueLegFirst: true }) : weights;
+      };
+      const r1LegAt = (ebitdaK: number) =>
+        revK *
+        revenueMultipleV2({
+          sector: inputs.sector,
+          subSector: inputs.subSector,
+          normalizedEbitdaK: ebitdaK,
+          revenueK: revK,
+          privateFactor: factors.dlomFactor * factors.scaleFactor,
+          fallbackRawMultiple: 0,
+          isManual: false,
+        }).multiple;
+      const boundaryEbitdaK = revK * V2_THIN_MARGIN_BOUNDARY;
+      const bw = weightsAt(boundaryEbitdaK);
+      const premiumAtZeroK = r1FadePremiumAtZero({
+        boundaryMultiplesK: bw.ebitda * boundaryEbitdaK * effectiveMult + bw.rev * r1LegAt(boundaryEbitdaK),
+        at: (m) => {
+          const w = weightsAt(revK * m);
+          return { revWeight: w.rev, ebitdaWeight: w.ebitda, r1RevLegEvK: r1LegAt(revK * m), ebitdaLegEvK: revK * m * effectiveMult };
+        },
+      });
+      const fade = fadeR1Floor({
+        r1RevLegEvK: revLegEvK,
+        ebitdaLegEvK,
+        revWeight: blendWeights.rev,
+        margin: fadeMargin,
+        premiumAtZeroK,
+      });
+      if (fade.revLegEvK !== revLegEvK) {
+        r1FloorFade = fade;
+        revLegEvK = Math.round(fade.revLegEvK * 100) / 100;
+        revMultiplier = revK > 0 ? revLegEvK / revK : revMultiplier;
+      }
+    }
   } else if (blendWeights.rev > 0 && revLegEvK <= 0) {
     const rawRevMultiple = resolveSubSectorRevenueMultiple({
       sector: inputs.sector,
@@ -583,6 +654,9 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
         ? resolveManualReview({ evK: calibratedEvK, debtK: debt, equityK: calibratedEquityK, revenueK: revK })
         : undefined,
       weightsBeforeZeroLeg: blendWeights !== resolvedBlendWeights ? { ...resolvedBlendWeights } : undefined,
+      dcfMarketability: v2c.dcfMarketability ? { factor: dcfMarketabilityFactor, marketableK: dcfMarketableK } : undefined,
+      r1FloorFade,
+      sizePremium: { pp: waccBreakdown.alpha, basis: v2c.sizePremiumDecile ? 'damodaran-decile' : 'overlay' },
     };
   }
 

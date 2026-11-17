@@ -196,7 +196,14 @@ export interface ValuationData {
   bearEquity: number;
   bullEquity: number;
   netDebt: number;
+  /** DCF leg value (after the marketability discount in methodology 2). */
   dcfEv: number;
+  /** Methodology 2: DCF value before the marketability discount (the page 4 table sums to it). */
+  dcfMarketableEv?: number;
+  /** Methodology 2: marketability factor on the DCF leg (0.8 to 0.9). */
+  dcfMarketabilityFactor?: number;
+  /** Methodology 2: private company layer lines for page 4 (one line each). */
+  privateLayerLines?: string[];
   ebitdaEv: number;
   revenueEv: number;
   waccPct: number;
