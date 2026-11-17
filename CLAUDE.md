@@ -51,11 +51,12 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 
 ## בדיקות
 
-אין test runner. כל בדיקה היא סקריפט: `npx tsx scripts/<name>.ts`.
+`npm test` (מאז סבב 1): runner אחד ב `tests/run.ts`. כולל snapshot של 385 תיקים דרך נתיב הדוח, מפת מתודולוגיה נעולה, בדיקות נכונות עם KNOWN_WRONG (`tests/known-wrong.ts`), בדיקת בנייה, ואת הסקריפטים הבטוחים ב scripts/. עדכון snapshot רק ב `npm run snapshot:update -- --reason "..."`.
+סקריפטים בודדים: `npx tsx scripts/<name>.ts`.
 בטוחות להרצה: `test-valuation-engine`, `test-canonical-reconciliation`, `test-report-financial-coherence`, `test-scale-modifier-pipeline`, `test-currency-normalize`, `test-verdict-sanity`, `test-customer-report-email`, `test-paypal-payment-path`, `test-promo-validate-mint`, `test-legal-close-nav`.
 לא להריץ בלי אישור (נוגעות במאנדיי האמיתי או בפרודקשן): `test-monday-lead`, `test-monday-leads-e2e`, `test-production-lead`.
 דורשות כרום: `test-maximal-pdf`, `test-sample-report-pdf`, `test-legal-close-puppeteer`.
-pre-commit (`.githooks/pre-commit`): `npm run test:engine` ואז `scripts/guard-no-manual-currency-sign.sh`.
+pre-commit (`.githooks/pre-commit`): `npm test` ואז `scripts/guard-no-manual-currency-sign.sh`.
 build: `npm run build` (tsc ואז next build). next build צריך גישה ל Google Fonts.
 
 ## הכללים
