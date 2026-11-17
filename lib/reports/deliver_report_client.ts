@@ -4,6 +4,7 @@ import type { ValuationLocale } from '../../api_client';
 import type { EquifyValuationPersistedState } from '../wizard/equify_valuation_persistence';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import type { ReportDeliverTrigger } from './deliver_equify_report';
+import { storeReportAccessToken } from './report_access_storage';
 
 export interface DeliverReportRequest {
   mondayItemId?: string | null;
@@ -70,6 +71,7 @@ export async function postDeliverEquifyReport(
         ...data,
       };
     }
+    storeReportAccessToken((data as { reportAccessToken?: unknown } | null)?.reportAccessToken);
     return { ...(data ?? { ok: true }), httpStatus: response.status, ok: true };
   } catch {
     return { ok: false, error: 'network' };

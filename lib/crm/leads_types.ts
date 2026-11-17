@@ -69,6 +69,9 @@ export interface LeadUpsertBody {
   equifyGoal?: EquifyGoalId;
   valuationMidpoint?: number;
   qualityScore?: number;
+  /** Report-engine equity (ILS) and quality score; used when LEAD_VALUE_FROM_REPORT=on. */
+  reportValuationMidpoint?: number;
+  reportQualityScore?: number;
   source?: LeadSource;
   package?: LeadPackage;
   aiNotes?: string;

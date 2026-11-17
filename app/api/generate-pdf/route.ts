@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { appRouteMethodNotAllowed, jsonError } from '../../../lib/api/http';
+import { isFlagOn } from '../../../lib/flags/round1_flags';
+import {
+  readReportAccessToken,
+  verifyReportAccessToken,
+} from '../../../lib/auth/report_access_token';
 import { buildPdfHtml, PDF_PAGE_COUNT } from '../../../lib/pdf-template';
 import {
   buildContentDisposition,
@@ -49,6 +54,13 @@ export async function POST(request: Request) {
     body = (await request.json()) as GenerateReportBody;
   } catch {
     return jsonError('Invalid JSON body.', 400, 'INVALID_JSON');
+  }
+
+  if (isFlagOn('PAYWALL_V2')) {
+    const token = readReportAccessToken(request, body as { reportAccessToken?: unknown });
+    if (!token || !verifyReportAccessToken(token)) {
+      return jsonError('Signed payment token required.', 402, 'PAYMENT_REQUIRED');
+    }
   }
 
   const resolved = await resolveValuationDataFromBody(body);

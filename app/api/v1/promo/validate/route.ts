@@ -15,6 +15,8 @@ import {
   isPromoValidateRateLimited,
   recordPromoValidateFailure,
 } from '../../../../../lib/payments/promo_validate_rate_limit';
+import { isFlagOn } from '../../../../../lib/flags/round1_flags';
+import { signReportAccessToken } from '../../../../../lib/auth/report_access_token';
 
 export const runtime = 'nodejs';
 
@@ -122,7 +124,13 @@ export async function POST(request: Request) {
       redemptionId: minted.redemptionId,
     });
     return NextResponse.json(
-      { valid: true, dispatchToken: minted.dispatchToken },
+      {
+        valid: true,
+        dispatchToken: minted.dispatchToken,
+        ...(isFlagOn('PAYWALL_V2')
+          ? { reportAccessToken: signReportAccessToken(email, 'promo') }
+          : {}),
+      },
       { status: 200 },
     );
   } catch (err) {

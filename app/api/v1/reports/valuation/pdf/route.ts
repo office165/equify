@@ -8,6 +8,7 @@ import {
 } from '../../../../../../lib/api/http';
 import type { ReportDataOverrides } from '../../../../../../lib/pdf/map_matrix_to_report_data';
 import { buildValuationReportPdf } from '../../../../../../lib/pdf/valuation_report_pdf';
+import { isFlagOn } from '../../../../../../lib/flags/round1_flags';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -19,6 +20,10 @@ interface ValuationPdfRequestBody {
 }
 
 export async function POST(request: Request) {
+  if (isFlagOn('PAYWALL_V2')) {
+    // Legacy unauthenticated PDF path (lib/pdf/valuation_report_pdf.ts). Closed under PAYWALL_V2.
+    return jsonError('This endpoint is no longer available.', 410, 'GONE');
+  }
   let body: ValuationPdfRequestBody;
 
   try {

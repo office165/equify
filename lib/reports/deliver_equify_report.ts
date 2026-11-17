@@ -12,6 +12,7 @@ import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
 import { buildExportValuationDataFromLiveSession } from '../results/build-export-valuation-data';
 import { scheduleProductEvent } from '../analytics/track_event';
 import { packageAndSendCustomerReport } from './send_customer_report';
+import { isFlagOn } from '../flags/round1_flags';
 
 export type ReportDeliverTrigger = 'PAYPAL_PAID' | 'PROMO_FREE';
 
@@ -113,6 +114,8 @@ async function syncMondayDeliverable(params: {
   aiNotes: string;
   pdfBuffer: Buffer;
   filename: string;
+  /** Values printed in the report (used when LEAD_VALUE_FROM_REPORT=on). */
+  reportValues?: { equityIls: number; qualityScore: number };
 }): Promise<{
   columnsUpdated: boolean;
   fileUploaded: boolean;
@@ -120,12 +123,15 @@ async function syncMondayDeliverable(params: {
 }> {
   const { itemId, valuationState, triggerType, aiNotes, pdfBuffer, filename } = params;
   const statuses = resolveMondayStatuses(triggerType);
+  const fromReport = isFlagOn('LEAD_VALUE_FROM_REPORT') && params.reportValues;
   const columnValues: Record<string, unknown> = {
     [VALUBOT_MONDAY_COLUMNS.valuationMidpoint]: String(
-      equityMidpointNis(valuationState.summary.equityK),
+      fromReport
+        ? Math.round(params.reportValues!.equityIls)
+        : equityMidpointNis(valuationState.summary.equityK),
     ),
     [VALUBOT_MONDAY_COLUMNS.qualityScore]: String(
-      Math.round(valuationState.summary.qualityScore),
+      Math.round(fromReport ? params.reportValues!.qualityScore : valuationState.summary.qualityScore),
     ),
     [VALUBOT_MONDAY_COLUMNS.leadStatus]: statusValue(statuses.leadStatus),
     [VALUBOT_MONDAY_COLUMNS.processStage]: statusValue(statuses.processStage),
@@ -222,6 +228,10 @@ export async function deliverEquifyReport(
         aiNotes,
         pdfBuffer,
         filename,
+        reportValues: {
+          equityIls: valuationData.equityIls ?? valuationData.equity,
+          qualityScore: valuationData.qualityScore,
+        },
       })
     : {
         columnsUpdated: false,

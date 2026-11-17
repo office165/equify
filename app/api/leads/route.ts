@@ -8,6 +8,7 @@ import { getLeadsHealthConfig, isVercelRuntime } from '../../../lib/crm/leads_pe
 import { scheduleMondaySyncForLead } from '../../../lib/crm/schedule_monday_sync';
 import type { LeadUpsertBody } from '../../../lib/crm/leads_types';
 import { scheduleProductEvent } from '../../../lib/analytics/track_event';
+import { applyLeadValueSource } from '../../../lib/crm/report_lead_values';
 
 export const runtime = 'nodejs';
 
@@ -37,6 +38,8 @@ const leadUpsertSchema = z.object({
     .optional(),
   valuationMidpoint: z.number().optional(),
   qualityScore: z.number().optional(),
+  reportValuationMidpoint: z.number().optional(),
+  reportQualityScore: z.number().optional(),
   source: z.enum(['organic', 'linkedin', 'twitter', 'reddit']).optional(),
   package: z.enum(['Flash', 'Pro', 'Enterprise']).optional(),
   aiNotes: z.string().optional(),
@@ -59,7 +62,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = parsed.data as LeadUpsertBody;
+  const body = applyLeadValueSource(parsed.data as LeadUpsertBody);
 
   console.log('[api/leads] ingestion', {
     event: body.event,

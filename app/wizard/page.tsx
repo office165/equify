@@ -15,6 +15,7 @@ import { syncMatrixFromEquifyState } from '../../lib/valuation/sync_matrix_from_
 import { loadEquifyWizardState, saveEquifyWizardState } from '../../lib/wizard/equify_storage';
 import type { EquifyWizardState } from '../../lib/wizard/map_equify_wizard';
 import { resolveBaseEquityValue } from '../../lib/wizard/resolve_base_equity';
+import { computeReportLeadValues } from '../../lib/crm/report_lead_values';
 import { toLeadUpsertBody } from '../../lib/wizard/secured_lead_dispatch';
 import { attachEquifyGoalToMatrix, isEquifyGoalId } from '../../lib/wizard/equify_goal';
 import { resumeWizardProgressQueue } from '../../lib/wizard/wizard_progress_queue';
@@ -74,6 +75,15 @@ export default function WizardPage() {
         );
         const qualityScore =
           result.forecast_matrix_json?.meta?.confidence_score ?? undefined;
+        // Report-engine values; the server uses them only when LEAD_VALUE_FROM_REPORT=on.
+        let reportValues: { reportValuationMidpoint?: number; reportQualityScore?: number } = {};
+        if (equifyState) {
+          try {
+            reportValues = computeReportLeadValues(equifyState);
+          } catch {
+            reportValues = {};
+          }
+        }
 
         const completedLeadBody = toLeadUpsertBody(
           captureWizardLeadIdentifiers(values),
@@ -84,6 +94,7 @@ export default function WizardPage() {
             sectorLabel,
             valuationMidpoint,
             qualityScore,
+            ...reportValues,
             valuationPurpose: values.valuationPurpose || undefined,
             equifyGoal: isEquifyGoalId(equifyState?.goal)
               ? equifyState.goal

@@ -8,7 +8,12 @@ import {
 import type { EquifyValuationPersistedState } from '../../../../lib/wizard/equify_valuation_persistence';
 import {
   consumeUnusedPaymentTokenForEmail,
+  hasValidUnusedPaymentTokenForEmail,
 } from '../../../../lib/payments/valid_payment_token';
+import { isFlagOn } from '../../../../lib/flags/round1_flags';
+import { runDeliverPaywallV2 } from '../../../../lib/payments/paywall_v2';
+import { sendOfficeAlert } from '../../../../lib/alerts/office_alert';
+import { signReportAccessToken } from '../../../../lib/auth/report_access_token';
 import {
   REPORT_BLOCKED_CUSTOMER_MESSAGE_EN,
   REPORT_BLOCKED_CUSTOMER_MESSAGE_HE,
@@ -85,6 +90,36 @@ export async function POST(request: Request) {
   }
 
   const body = parsed.data;
+
+  if (isFlagOn('PAYWALL_V2')) {
+    // Token is consumed only after the PDF was built and the email was sent.
+    const orderId =
+      body.valuationState.sessionId ??
+      body.valuationState.leadId ??
+      body.mondayItemId ??
+      body.valuationState.mondayItemId ??
+      'unknown';
+    const outcome = await runDeliverPaywallV2(
+      { email: body.email, orderId, locale: body.locale },
+      {
+        hasUnusedToken: hasValidUnusedPaymentTokenForEmail,
+        consumeToken: consumeUnusedPaymentTokenForEmail,
+        deliver: () =>
+          deliverEquifyReport({
+            mondayItemId: body.mondayItemId,
+            email: body.email,
+            valuationState: body.valuationState as unknown as EquifyValuationPersistedState,
+            triggerType: body.triggerType as ReportDeliverTrigger,
+            locale: body.locale,
+            forecastMatrix: body.forecastMatrix as never,
+          }),
+        alertOffice: (subject, lines) =>
+          sendOfficeAlert({ kind: 'report_delivery_failed', subject, lines }),
+        mintAccessToken: (email) => signReportAccessToken(email, 'deliver'),
+      },
+    );
+    return NextResponse.json(outcome.body, { status: outcome.status });
+  }
 
   if (
     body.triggerType === 'PAYPAL_PAID' ||

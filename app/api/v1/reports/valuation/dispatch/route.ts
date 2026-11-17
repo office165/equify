@@ -14,6 +14,9 @@ import {
   getSupabaseAdminClient,
   isSupabaseAdminConfigured,
 } from '../../../../../../lib/db/supabase';
+import { isFlagOn } from '../../../../../../lib/flags/round1_flags';
+import { runDispatchPaywallV2 } from '../../../../../../lib/payments/paywall_v2';
+import { sendOfficeAlert } from '../../../../../../lib/alerts/office_alert';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -67,6 +70,10 @@ export async function POST(request: Request) {
 
   const locale: ValuationLocale = body.locale === 'he' ? 'he' : 'en';
   const email = body.email?.trim() || dispatchClaims.email || null;
+
+  if (isFlagOn('PAYWALL_V2')) {
+    return dispatchWithPaywallV2({ supabase, dispatchClaims, valuationId, locale, email, body });
+  }
 
   const usedAt = new Date().toISOString();
   // Atomic claim: UPDATE … WHERE is_used = false (RETURNING id).
@@ -145,6 +152,68 @@ export async function POST(request: Request) {
     const { status, message } = mapThrownError(err);
     return jsonError(message, status);
   }
+}
+
+/** PAYWALL_V2: claim the token only after the email was sent; email failure is not 202. */
+async function dispatchWithPaywallV2(ctx: {
+  supabase: ReturnType<typeof getSupabaseAdminClient>;
+  dispatchClaims: ReturnType<PaymentDispatchTokenService['verifyDispatch']>;
+  valuationId: string | null;
+  locale: ValuationLocale;
+  email: string | null;
+  body: {
+    phone?: string;
+    forecast_matrix_json?: ForecastMatrixWithDiagnostics;
+    wizard?: EquifyWizardState;
+  };
+}): Promise<Response> {
+  const { supabase, dispatchClaims, valuationId, locale, email, body } = ctx;
+  const cached = valuationId ? getInMemoryValuation(valuationId) : null;
+  const forecastMatrix = body.forecast_matrix_json ?? cached?.forecast_matrix_json;
+  if (!forecastMatrix) {
+    return jsonError('Valuation forecast matrix not found', 404, 'NOT_FOUND');
+  }
+  const orderId = valuationId ?? dispatchClaims.sub;
+  const outcome = await runDispatchPaywallV2(
+    { orderId, locale },
+    {
+      isTokenUnused: async () => {
+        const { data } = await supabase
+          .from('stripe_transactions')
+          .select('id')
+          .eq('id', dispatchClaims.sub)
+          .eq('token_jti', dispatchClaims.jti)
+          .eq('is_used', false)
+          .in('gateway_provider', ['paypal', 'promo_free'])
+          .maybeSingle();
+        return Boolean(data?.id);
+      },
+      claimToken: async () => {
+        const { data, error } = await supabase
+          .from('stripe_transactions')
+          .update({ is_used: true, used_at: new Date().toISOString() })
+          .eq('id', dispatchClaims.sub)
+          .eq('token_jti', dispatchClaims.jti)
+          .eq('is_used', false)
+          .select('id')
+          .maybeSingle();
+        return !error && Boolean(data?.id);
+      },
+      dispatch: () =>
+        new ValuationDispatchService(null).dispatchAfterPaymentResolution({
+          valuationId: orderId,
+          companyName: forecastMatrix.meta?.company_name ?? cached?.companyName ?? orderId,
+          locale,
+          forecastMatrix,
+          email,
+          phoneE164: body.phone?.trim() ?? null,
+          paymentVerified: true,
+          wizard: body.wizard ?? null,
+        }),
+      alertOffice: (subject, lines) => sendOfficeAlert({ kind: 'report_dispatch_failed', subject, lines }),
+    },
+  );
+  return NextResponse.json(outcome.body, { status: outcome.status });
 }
 
 export function GET() {

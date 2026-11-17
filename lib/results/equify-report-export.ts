@@ -18,6 +18,7 @@ import { resolveDisplayCompanyName } from '../wizard/resolve_company_display';
 import { syncFinancialsDerived } from '../wizard/financial_history';
 import { getCachedFxRates } from '../utils/fxService';
 import type { ValuationData } from '../pdf-template/types';
+import { readStoredReportAccessToken } from '../reports/report_access_storage';
 import {
   buildValuationReportSnapshot,
   type ValuationReportSnapshot,
@@ -206,6 +207,9 @@ async function downloadFromReportApi(
     headers: {
       'Content-Type': 'application/json',
       'X-Snapshot-Hash': payload.snapshot.snapshotHash,
+      ...(readStoredReportAccessToken()
+        ? { Authorization: `Bearer ${readStoredReportAccessToken()}` }
+        : {}),
     },
     body: JSON.stringify({
       state: payload.state,

@@ -9,6 +9,8 @@ import {
 } from '../../../../../lib/db/supabase';
 import { claimPaypalCaptureAndMint } from '../../../../../lib/payments/paypal_claim_mint';
 import { appRouteMethodNotAllowed } from '../../../../../lib/api/http';
+import { isFlagOn } from '../../../../../lib/flags/round1_flags';
+import { evaluatePaypalAmount } from '../../../../../lib/payments/paypal_amount_policy';
 
 const ON_DEMAND_AMOUNT = 999;
 const PROMO_MATCH_WINDOW_MS = 48 * 60 * 60 * 1000;
@@ -41,12 +43,13 @@ async function insertUnmatched(input: {
   captureId: string;
   event: Record<string, unknown>;
   reason: string;
+  currency?: string;
 }): Promise<boolean> {
   const supabase = getSupabaseAdminClient();
   const { error } = await supabase.from('unmatched_payments').insert({
     payer_email: input.payerEmail,
     amount: input.amount,
-    currency: 'ILS',
+    currency: input.currency ?? 'ILS',
     gateway_provider: 'paypal',
     gateway_transaction_id: input.captureId,
     raw_event: {
@@ -105,6 +108,11 @@ export async function POST(request: Request) {
   const captureId = parsed.transactionId?.trim() ?? '';
   const amountIls = Number(parsed.amountIls) || ON_DEMAND_AMOUNT;
   const minAmountIls = resolvePaypalMinAmountIls();
+  // PAYPAL_USD=on: read currency_code; USD has its own minimum, other currencies are unmatched.
+  const currencyAware = isFlagOn('PAYPAL_USD');
+  const decision = currencyAware
+    ? evaluatePaypalAmount(Number(parsed.amountIls) || 0, parsed.currency)
+    : null;
 
   if (!captureId) {
     return NextResponse.json({ received: true }, { status: 200 });
@@ -144,7 +152,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, unmatched: true }, { status: 200 });
   }
 
-  if (amountIls < minAmountIls) {
+  if (decision?.kind === 'unsupported_currency') {
+    const wrote = await insertUnmatched({
+      payerEmail,
+      amount: decision.amount,
+      captureId,
+      event,
+      reason: `unsupported_currency_${decision.currency}`,
+      currency: decision.currency,
+    });
+    if (!wrote) {
+      return NextResponse.json({ error: 'unmatched_write_failed' }, { status: 500 });
+    }
+    return NextResponse.json(
+      { received: true, unmatched: true, reason: 'unsupported_currency' },
+      { status: 200 },
+    );
+  }
+
+  const underpaid = decision ? decision.kind === 'underpaid' : amountIls < minAmountIls;
+  if (underpaid) {
     const sinceIso = new Date(Date.now() - PROMO_MATCH_WINDOW_MS).toISOString();
     const { data: redemption, error: promoErr } = await supabase
       .from('promo_redemptions')
@@ -164,10 +191,11 @@ export async function POST(request: Request) {
     if (!redemption?.id) {
       const wrote = await insertUnmatched({
         payerEmail,
-        amount: amountIls,
+        amount: decision ? decision.amount : amountIls,
         captureId,
         event,
         reason: 'underpayment_no_promo',
+        currency: decision?.currency,
       });
       if (!wrote) {
         return NextResponse.json(
