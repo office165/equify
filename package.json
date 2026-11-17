@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "tsc -p tsconfig.json --noEmit && next build",
+    "test": "tsx tests/run.ts",
+    "snapshot:update": "tsx tests/snapshot-update.ts",
+    "methodology:map": "tsx tests/methodology-doc.ts",
+    "typecheck:tests": "tsc -p tests/tsconfig.json --noEmit",
     "build:mobile": "CAPACITOR_BUILD=true next build",
     "cap:sync": "npm run build:mobile && npx cap sync",
     "cap:ios": "npx cap open ios",

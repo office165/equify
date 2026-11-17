@@ -1,0 +1,184 @@
+/**
+ * Correctness checks on golden cases. Each number is recomputed independently from the
+ * method the report itself declares (no engine import for the math; the engine is only
+ * used to read the declared WACC components Ke and Kd, which the report does not print).
+ */
+import { buildPdfHtml } from '../../lib/pdf-template';
+import type { ValuationData } from '../../lib/pdf-template/types';
+import { computeValuation } from '../../lib/valuation';
+import { buildValuationInputsFromEquifyState } from '../../lib/wizard/build_valuation_inputs';
+import { syncFinancialsDerived } from '../../lib/wizard/financial_history';
+import { buildWizardState, type CaseSpec } from '../lib/fixtures';
+import { GOLDEN_CASES } from '../lib/golden';
+import { Suite, approx, type SuiteResult } from '../lib/harness';
+import { withQuietConsole } from '../lib/quiet';
+import { runCase, TEST_FX } from '../lib/run_case';
+
+const TAX = 0.23;
+const KD_SPREAD_PP = 2.0;
+const TERMINAL_G = 0.025;
+
+function htmlText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/[⁦-⁩‎‏]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+function readWaccComponents(spec: CaseSpec) {
+  return withQuietConsole(() => {
+    const state = buildWizardState(spec);
+    const synced = { ...state, financials: syncFinancialsDerived(state.financials) };
+    const inputs = buildValuationInputsFromEquifyState(synced, TEST_FX);
+    return computeValuation(inputs).waccBreakdown;
+  });
+}
+
+function uniformSteps(values: number[], tolRel = 0.02): boolean {
+  if (values.length < 3) return true;
+  const steps = values.slice(1).map((v, i) => v - values[i]);
+  const ref = steps[0];
+  return steps.every((s) => Math.abs(s - ref) <= Math.max(1e-9, Math.abs(ref) * tolRel));
+}
+
+export function checkCase(suite: Suite, spec: CaseSpec, data: ValuationData): void {
+  const id = spec.id;
+  const g = spec.growth;
+
+  // (א) EBITDA bases as declared. Page 3 declares 30/50/20 (prior/current/projected).
+  if (data.ebitdaPast != null && data.blendedEbitdaBase != null) {
+    const expected = 0.3 * data.ebitdaPast + 0.5 * (data.ebitdaCurrent ?? 0) + 0.2 * (data.ebitdaProjected ?? 0);
+    suite.check('ebitda-blend-30-50-20', id, approx(data.blendedEbitdaBase, expected, 0.005), `${data.blendedEbitdaBase} vs ${expected.toFixed(0)}`);
+  }
+  if (data.ebitdaCurrent != null && data.ebitdaProjected != null) {
+    suite.check('ebitda-projected-equals-growth', id, approx(data.ebitdaProjected, data.ebitdaCurrent * (1 + g / 100), 0.005), `${data.ebitdaProjected} vs ${(data.ebitdaCurrent * (1 + g / 100)).toFixed(0)}`);
+  }
+  // Page 2 declares a second base (normalized 30/30/40 on 2024/2025/2026) used by the multiple leg.
+  const [y24, y25, y26] = spec.y.map((r) => r[1] * 1000);
+  const norm = 0.3 * y24 + 0.3 * y25 + 0.4 * y26;
+  if (data.multipleLegEbitdaBase != null && y24 > 0 && y25 > 0 && (data.financialCore?.blendWeights.ebitda ?? 0) > 0) {
+    suite.check('ebitda-normalized-30-30-40-is-multiple-base', id, approx(data.multipleLegEbitdaBase, norm, 0.005), `${data.multipleLegEbitdaBase} vs ${norm.toFixed(0)}`);
+  }
+  suite.check(
+    'ebitda-single-declared-base',
+    id,
+    data.multipleLegEbitdaBase == null || data.blendedEbitdaBase == null || approx(data.multipleLegEbitdaBase, data.blendedEbitdaBase, 0.005),
+    `multiple leg uses ${data.multipleLegEbitdaBase?.toFixed(0)}, DCF uses ${data.blendedEbitdaBase?.toFixed(0)}`,
+  );
+
+  // (ב) WACC from components.
+  const wb = readWaccComponents(spec);
+  const keExpected = wb.rf + wb.leveredBeta * wb.erp + wb.alpha + wb.specificRiskPremium + wb.profitabilityLossPremium;
+  suite.check('wacc-ke-from-components', id, approx(wb.ke, keExpected, 0.0005, 0.001), `${wb.ke} vs ${keExpected}`);
+  const kdExpected = (wb.rf + KD_SPREAD_PP) * (1 - TAX);
+  suite.check('wacc-kd-after-tax-23', id, approx(wb.kd, kdExpected, 0.0005, 0.001), `${wb.kd} vs ${kdExpected}`);
+  const grossDebt = spec.grossDebt * 1000 * (spec.currency === 'USD' ? 1 : 1);
+  const equityForWeights = Math.max(0, data.equity);
+  const weReport = equityForWeights + grossDebt > 0 ? equityForWeights / (equityForWeights + grossDebt) : 1;
+  const waccFromReportWeights = wb.ke * weReport + wb.kd * (1 - weReport);
+  suite.check(
+    'wacc-equals-weights-from-report-equity',
+    id,
+    Math.abs(waccFromReportWeights - data.waccPct) <= 0.25,
+    `WACC ${data.waccPct.toFixed(2)} vs Ke*E/V+Kd*D/V with report equity ${waccFromReportWeights.toFixed(2)} (E/V ${(weReport * 100).toFixed(1)}%)`,
+  );
+  const chartSum = data.waccSegments.reduce((s, x) => s + x.pct, 0);
+  suite.check('wacc-chart-equals-effective', id, Math.abs(chartSum - data.waccPct) <= 0.05, `chart ${chartSum.toFixed(2)} vs WACC ${data.waccPct.toFixed(2)}`);
+
+  // (ג) FCFF never above EBITDA (upper bound: blended base grown at declared headline growth).
+  const baseEbitdaM = (data.blendedEbitdaBase ?? data.ebitda) / 1e6;
+  data.dcfRows.forEach((r, i) => {
+    const bound = baseEbitdaM * (1 + Math.max(0, g) / 100) ** (i + 1);
+    suite.check('fcff-not-above-ebitda', `${id}#${r.label}`, r.fcffM <= bound + 1e-9, `FCFF ${r.fcffM.toFixed(3)}M vs EBITDA bound ${bound.toFixed(3)}M`);
+  });
+
+  // (ד) Gordon terminal value, discounted with the last explicit year's factor.
+  const last = data.dcfRows.at(-1);
+  if (last) {
+    const w = data.waccPct / 100;
+    const tv = (last.fcffM * (1 + TERMINAL_G)) / (w - TERMINAL_G);
+    const tvPv = tv * last.discountFactor;
+    suite.check('terminal-gordon', id, approx(data.terminalPvM, tvPv, 0.01, 0.001), `report ${data.terminalPvM.toFixed(3)}M vs Gordon ${tvPv.toFixed(3)}M`);
+    const explicitPv = data.dcfRows.reduce((s, r) => s + r.pvM, 0);
+    const share = (data.terminalPvM / (explicitPv + data.terminalPvM)) * 100;
+    suite.check('terminal-share-consistent', id, Math.abs(share - data.terminalSharePct) <= 0.2, `${data.terminalSharePct.toFixed(2)} vs ${share.toFixed(2)}`);
+    suite.check('dcf-table-sums-to-dcf-ev', id, approx((explicitPv + data.terminalPvM) * 1e6, data.dcfEv, 0.005), `table ${((explicitPv + data.terminalPvM) * 1e6).toFixed(0)} vs DCF EV ${data.dcfEv.toFixed(0)}`);
+    suite.check('discount-factors-match-wacc', id, data.dcfRows.every((r, i) => approx(r.discountFactor, 1 / (1 + w) ** (i === 0 ? 0.5 : i + 0.5), 0.0005, 1e-6)), 'mid-year factors');
+  }
+
+  // (ה) EBITDA multiple leg.
+  if (data.ebitdaEv > 0 && data.multipleLegEbitdaBase != null) {
+    suite.check('ebitda-leg-base-times-multiple', id, approx(data.ebitdaEv, data.multipleLegEbitdaBase * data.effectiveMult, 0.01), `${data.ebitdaEv} vs ${(data.multipleLegEbitdaBase * data.effectiveMult).toFixed(0)}`);
+  }
+
+  // (ו) Blend and equity bridge.
+  const core = data.financialCore!;
+  const weighted = data.dcfEv * core.blendWeights.dcf + data.ebitdaEv * core.blendWeights.ebitda + data.revenueEv * core.blendWeights.rev + (core.backlogEvAdjustmentAbs ?? 0);
+  suite.check('ev-equals-weighted-legs', id, approx(data.enterpriseValue, weighted, 0.001), `${data.enterpriseValue} vs ${weighted.toFixed(0)}`);
+  suite.check('equity-equals-ev-minus-net-debt', id, approx(data.equity, Math.max(0, data.enterpriseValue - data.netDebt), 0.0005, 1), `${data.equity} vs ${data.enterpriseValue - data.netDebt}`);
+  const legRows = data.modelBlend.filter((r) => !/צבר|Backlog/i.test(r.name));
+  suite.check('display-weights-sum-100', id, legRows.reduce((s, r) => s + r.weightPct, 0) === 100, legRows.map((r) => r.weightPct).join('+'));
+  const badRows = legRows.filter((r) => !approx(r.contribution, r.ev * (r.weightPct / 100), 0.005, 1));
+  suite.check(
+    'display-contribution-equals-ev-times-shown-weight',
+    id,
+    badRows.length === 0,
+    badRows.map((r) => `${r.name}: ${r.contribution.toFixed(0)} vs ${((r.ev * r.weightPct) / 100).toFixed(0)}`).join('; '),
+  );
+
+  // (ז) Sensitivity (growth x WACC).
+  const s = data.sensitivityGrowthWacc;
+  if (s) {
+    const center = s.cells[s.baseRow][s.baseCol] * 1e6;
+    suite.check('sensitivity-center-equals-equity', id, approx(center, data.equity, 0.001), `${center.toFixed(0)} vs ${data.equity}`);
+    suite.check('sensitivity-growth-rows-unique', id, new Set(s.growthLabels).size === s.growthLabels.length, s.growthLabels.join(','));
+    const gNums = s.growthLabels.map((l) => parseFloat(l.replace(/[+%]/g, '')));
+    suite.check('sensitivity-growth-rows-sorted', id, gNums.every((v, i) => i === 0 || v < gNums[i - 1]), s.growthLabels.join(','));
+    suite.check('sensitivity-growth-steps-uniform', id, uniformSteps(gNums), s.growthLabels.join(','));
+    const wNums = s.waccLabels.map((l) => parseFloat(l));
+    suite.check('sensitivity-wacc-steps-uniform', id, uniformSteps(wNums, 0.05), s.waccLabels.join(','));
+  }
+
+  // (ח) Scenarios.
+  const baseScenario = data.scenarios.find((x) => x.key === 'base');
+  suite.check('scenario-base-equals-equity', id, !!baseScenario && approx(baseScenario.equity, data.equity, 0.0005, 1), `${baseScenario?.equity} vs ${data.equity}`);
+  suite.check('scenario-ordered', id, data.bearEquity <= data.equity && data.equity <= data.bullEquity, `${data.bearEquity} / ${data.equity} / ${data.bullEquity}`);
+
+  // (ט) Same number in every place of the HTML.
+  let html = '';
+  try {
+    html = withQuietConsole(() => buildPdfHtml(data));
+    suite.check('html-builds', id, true);
+  } catch (err) {
+    suite.check('html-builds', id, false, err instanceof Error ? err.message.slice(0, 160) : String(err));
+    return;
+  }
+  const text = htmlText(html);
+  const waccShown = new Set<string>();
+  for (const m of text.matchAll(/(\d+(?:\.\d+)?)%\s*WACC(?! אפקטיבי \d)|(?<!\\ )WACC[^%\d\\]{0,12}?(\d+(?:\.\d+)?)%/g)) {
+    waccShown.add(m[1] ?? m[2]);
+  }
+  suite.check('html-wacc-single-value', id, waccShown.size === 1 && waccShown.has(data.waccPct.toFixed(1)), `WACC values in HTML: ${[...waccShown].join(', ')} (effective ${data.waccPct.toFixed(1)})`);
+  const eqShown = new Set<string>();
+  for (const m of text.matchAll(/([\d.,]+\s?[KMB]?) ?₪ שווי לבעלים · בסיס/g)) eqShown.add(m[1].replace(/\s/g, ''));
+  for (const m of text.matchAll(/השווי לבעלים בתרחיש הבסיס עומד על ([\d.,]+[KMB]?)/g)) eqShown.add(m[1]);
+  for (const m of text.matchAll(/חוב נטו -?[\d.,]+[KMB]? ₪ שווי לבעלים ([\d.,]+[KMB]?) ₪/g)) eqShown.add(m[1]);
+  suite.check('html-equity-single-value', id, eqShown.size === 1, `equity strings: ${[...eqShown].join(', ')}`);
+  const evShown = new Set<string>();
+  for (const m of text.matchAll(/שווי פעילות של ([\d.,]+[KMB])/g)) evShown.add(m[1]);
+  for (const m of text.matchAll(/([\d.,]+[KMB]) ₪ שווי פעילות \(EV\)/g)) evShown.add(m[1]);
+  for (const m of text.matchAll(/שווי פעילות משולב 100% ([\d.,]+[KMB])/g)) evShown.add(m[1]);
+  suite.check('html-ev-single-value', id, evShown.size === 1, `EV strings: ${[...evShown].join(', ')}`);
+}
+
+export function run(): SuiteResult {
+  const suite = new Suite('correctness');
+  for (const spec of GOLDEN_CASES) {
+    const data = runCase(spec);
+    suite.note(`${spec.id}: equity ${Math.round(data.equity).toLocaleString('en-US')} EV ${Math.round(data.enterpriseValue).toLocaleString('en-US')} WACC ${data.waccPct.toFixed(2)}`);
+    checkCase(suite, spec, data);
+  }
+  return suite.result;
+}

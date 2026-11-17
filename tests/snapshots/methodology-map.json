@@ -1,0 +1,2552 @@
+[
+ {
+  "sector": "hospitality",
+  "subSector": "boutique_hotel",
+  "methodologyProfile": "hospitality",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4321,
+    "ebitda": 0.5679,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 9.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 8.74,
+  "configMaxMultiple": 10.26,
+  "boundsMin": 4,
+  "boundsMax": 14,
+  "effectiveMultipleRef": 7.296,
+  "revenueMultipleRaw": 2.1,
+  "revenueMultipleEffective": 4,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 30,
+  "growthCapPct": 10,
+  "unleveredBeta": 0.88,
+  "depreciationPctOfRevenue": 5,
+  "capexBase": "blended",
+  "multiplesIndustry": "hospitality",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 13.8
+ },
+ {
+  "sector": "hospitality",
+  "subSector": "hotel_chain",
+  "methodologyProfile": "hospitality",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4321,
+    "ebitda": 0.5679,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 10.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 9.66,
+  "configMaxMultiple": 11.34,
+  "boundsMin": 4,
+  "boundsMax": 14,
+  "effectiveMultipleRef": 8.064,
+  "revenueMultipleRaw": 2.2,
+  "revenueMultipleEffective": 4,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 30,
+  "growthCapPct": 10,
+  "unleveredBeta": 0.88,
+  "depreciationPctOfRevenue": 5,
+  "capexBase": "blended",
+  "multiplesIndustry": "hospitality",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 13.5
+ },
+ {
+  "sector": "hospitality",
+  "subSector": "vacation",
+  "methodologyProfile": "hospitality",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4321,
+    "ebitda": 0.5679,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 9,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 8.28,
+  "configMaxMultiple": 9.72,
+  "boundsMin": 4,
+  "boundsMax": 14,
+  "effectiveMultipleRef": 6.912,
+  "revenueMultipleRaw": 2,
+  "revenueMultipleEffective": 4,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 30,
+  "growthCapPct": 10,
+  "unleveredBeta": 0.88,
+  "depreciationPctOfRevenue": 5,
+  "capexBase": "blended",
+  "multiplesIndustry": "hospitality",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 13.8
+ },
+ {
+  "sector": "hospitality",
+  "subSector": "airbnb_mgmt",
+  "methodologyProfile": "hospitality",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4081,
+    "ebitda": 0.5919,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 8.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 7.82,
+  "configMaxMultiple": 9.18,
+  "boundsMin": 4,
+  "boundsMax": 14,
+  "effectiveMultipleRef": 6.528,
+  "revenueMultipleRaw": 2,
+  "revenueMultipleEffective": 4,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 30,
+  "growthCapPct": 10,
+  "unleveredBeta": 0.88,
+  "depreciationPctOfRevenue": 5,
+  "capexBase": "blended",
+  "multiplesIndustry": "hospitality",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 14
+ },
+ {
+  "sector": "saas",
+  "subSector": "b2b_saas",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3122,
+    "ebitda": 0,
+    "rev": 0.6878
+   },
+   "early": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "growth": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "mature": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 6.9,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 3,
+  "boundsMax": 22,
+  "effectiveMultipleRef": 5.299,
+  "revenueMultipleRaw": 6.9,
+  "revenueMultipleEffective": 5.299,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.12,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "saas",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "saas",
+  "subSector": "b2c_saas",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.2643,
+    "ebitda": 0,
+    "rev": 0.7357
+   },
+   "early": {
+    "dcf": 0.2589,
+    "ebitda": 0,
+    "rev": 0.7411
+   },
+   "growth": {
+    "dcf": 0.2589,
+    "ebitda": 0,
+    "rev": 0.7411
+   },
+   "mature": {
+    "dcf": 0.2589,
+    "ebitda": 0,
+    "rev": 0.7411
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 6,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 3,
+  "boundsMax": 22,
+  "effectiveMultipleRef": 4.608,
+  "revenueMultipleRaw": 6,
+  "revenueMultipleEffective": 4.608,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.12,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "saas",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "saas",
+  "subSector": "devtools",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0,
+    "rev": 0.6398
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 7.2,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 3,
+  "boundsMax": 22,
+  "effectiveMultipleRef": 5.53,
+  "revenueMultipleRaw": 7.2,
+  "revenueMultipleEffective": 5.53,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.12,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "saas",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "saas",
+  "subSector": "marketplace",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3122,
+    "ebitda": 0,
+    "rev": 0.6878
+   },
+   "early": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "growth": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "mature": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 5.7,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 3,
+  "boundsMax": 22,
+  "effectiveMultipleRef": 4.378,
+  "revenueMultipleRaw": 5.7,
+  "revenueMultipleEffective": 4.378,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.12,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "saas",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "fintech",
+  "subSector": "payments",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3122,
+    "ebitda": 0,
+    "rev": 0.6878
+   },
+   "early": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "growth": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "mature": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 8.3,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 2.5,
+  "boundsMax": 18,
+  "effectiveMultipleRef": 6.374,
+  "revenueMultipleRaw": 8.3,
+  "revenueMultipleEffective": 6.374,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.05,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "fintech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "fintech",
+  "subSector": "lending",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.4081,
+    "ebitda": 0,
+    "rev": 0.5919
+   },
+   "early": {
+    "dcf": 0.4159,
+    "ebitda": 0,
+    "rev": 0.5841
+   },
+   "growth": {
+    "dcf": 0.4159,
+    "ebitda": 0,
+    "rev": 0.5841
+   },
+   "mature": {
+    "dcf": 0.4159,
+    "ebitda": 0,
+    "rev": 0.5841
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 7.1,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 2.5,
+  "boundsMax": 18,
+  "effectiveMultipleRef": 5.453,
+  "revenueMultipleRaw": 7.1,
+  "revenueMultipleEffective": 5.453,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.05,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "fintech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "fintech",
+  "subSector": "insurtech",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0,
+    "rev": 0.6398
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 7.5,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 2.5,
+  "boundsMax": 18,
+  "effectiveMultipleRef": 5.76,
+  "revenueMultipleRaw": 7.5,
+  "revenueMultipleEffective": 5.76,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.05,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "fintech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "fintech",
+  "subSector": "wealth",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3122,
+    "ebitda": 0,
+    "rev": 0.6878
+   },
+   "early": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "growth": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "mature": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 7.9,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 2.5,
+  "boundsMax": 18,
+  "effectiveMultipleRef": 6.067,
+  "revenueMultipleRaw": 7.9,
+  "revenueMultipleEffective": 6.067,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.05,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "fintech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "cyber",
+  "subSector": "enterprise",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3122,
+    "ebitda": 0,
+    "rev": 0.6878
+   },
+   "early": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "growth": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "mature": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 10.1,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 4,
+  "boundsMax": 25,
+  "effectiveMultipleRef": 7.757,
+  "revenueMultipleRaw": 10.1,
+  "revenueMultipleEffective": 7.757,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.1,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "cyber",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "cyber",
+  "subSector": "cloud",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.2883,
+    "ebitda": 0,
+    "rev": 0.7117
+   },
+   "early": {
+    "dcf": 0.285,
+    "ebitda": 0,
+    "rev": 0.715
+   },
+   "growth": {
+    "dcf": 0.285,
+    "ebitda": 0,
+    "rev": 0.715
+   },
+   "mature": {
+    "dcf": 0.285,
+    "ebitda": 0,
+    "rev": 0.715
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 10.4,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 4,
+  "boundsMax": 25,
+  "effectiveMultipleRef": 7.987,
+  "revenueMultipleRaw": 10.4,
+  "revenueMultipleEffective": 7.987,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.1,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "cyber",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "cyber",
+  "subSector": "ot",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0,
+    "rev": 0.6398
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0,
+    "rev": 0.6364
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 9,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 4,
+  "boundsMax": 25,
+  "effectiveMultipleRef": 6.912,
+  "revenueMultipleRaw": 9,
+  "revenueMultipleEffective": 6.912,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.1,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "cyber",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "cyber",
+  "subSector": "services_cyber",
+  "methodologyProfile": "saas",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.2643,
+    "ebitda": 0,
+    "rev": 0.7357
+   },
+   "early": {
+    "dcf": 0.2589,
+    "ebitda": 0,
+    "rev": 0.7411
+   },
+   "growth": {
+    "dcf": 0.2589,
+    "ebitda": 0,
+    "rev": 0.7411
+   },
+   "mature": {
+    "dcf": 0.2589,
+    "ebitda": 0,
+    "rev": 0.7411
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 8.1,
+  "multipleType": "EV/Revenue",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 8,
+  "boundsMin": 4,
+  "boundsMax": 25,
+  "effectiveMultipleRef": 6.221,
+  "revenueMultipleRaw": 8.1,
+  "revenueMultipleEffective": 6.221,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 35,
+  "growthCapPct": 60,
+  "unleveredBeta": 1.1,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "cyber",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "health",
+  "subSector": "medtech",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4081,
+    "ebitda": 0.5919,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 13,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 3,
+  "boundsMax": 20,
+  "effectiveMultipleRef": 9.984,
+  "revenueMultipleRaw": 4.9,
+  "revenueMultipleEffective": 3.763,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.98,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "healthtech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "health",
+  "subSector": "biotech",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.552,
+    "ebitda": 0.448,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 13.8,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 3,
+  "boundsMax": 20,
+  "effectiveMultipleRef": 10.598,
+  "revenueMultipleRaw": 5.2,
+  "revenueMultipleEffective": 3.994,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.98,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "healthtech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "health",
+  "subSector": "digital_health",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3362,
+    "ebitda": 0.6638,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 13.2,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 3,
+  "boundsMax": 20,
+  "effectiveMultipleRef": 10.138,
+  "revenueMultipleRaw": 5,
+  "revenueMultipleEffective": 3.84,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.98,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "healthtech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "health",
+  "subSector": "services_health",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3122,
+    "ebitda": 0.6878,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3112,
+    "ebitda": 0.6888,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3112,
+    "ebitda": 0.6888,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3112,
+    "ebitda": 0.6888,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 10.6,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 3,
+  "boundsMax": 20,
+  "effectiveMultipleRef": 8.141,
+  "revenueMultipleRaw": 4,
+  "revenueMultipleEffective": 3.072,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.98,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "healthtech",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "services",
+  "subSector": "consulting",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.2643,
+    "ebitda": 0.7357,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.2589,
+    "ebitda": 0.7411,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.2589,
+    "ebitda": 0.7411,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.2589,
+    "ebitda": 0.7411,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 8.5,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 2.5,
+  "boundsMax": 12,
+  "effectiveMultipleRef": 6.528,
+  "revenueMultipleRaw": 1.5,
+  "revenueMultipleEffective": 2.5,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.92,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "professional_services",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "services",
+  "subSector": "legal",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.2403,
+    "ebitda": 0.7597,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.2327,
+    "ebitda": 0.7673,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.2327,
+    "ebitda": 0.7673,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.2327,
+    "ebitda": 0.7673,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 8.1,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 2.5,
+  "boundsMax": 12,
+  "effectiveMultipleRef": 6.221,
+  "revenueMultipleRaw": 1.4,
+  "revenueMultipleEffective": 2.5,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.92,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "professional_services",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "services",
+  "subSector": "accounting",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.2643,
+    "ebitda": 0.7357,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.2589,
+    "ebitda": 0.7411,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.2589,
+    "ebitda": 0.7411,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.2589,
+    "ebitda": 0.7411,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 7.8,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 2.5,
+  "boundsMax": 12,
+  "effectiveMultipleRef": 5.99,
+  "revenueMultipleRaw": 1.4,
+  "revenueMultipleEffective": 2.5,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.92,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "professional_services",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "services",
+  "subSector": "marketing",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.2883,
+    "ebitda": 0.7117,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.285,
+    "ebitda": 0.715,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.285,
+    "ebitda": 0.715,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.285,
+    "ebitda": 0.715,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 8.3,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 2.5,
+  "boundsMax": 12,
+  "effectiveMultipleRef": 6.374,
+  "revenueMultipleRaw": 1.5,
+  "revenueMultipleEffective": 2.5,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.92,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "professional_services",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "industry",
+  "subSector": "manufacturing",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.504,
+    "ebitda": 0.496,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 6.2,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 4.762,
+  "revenueMultipleRaw": 0.7,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 1.02,
+  "depreciationPctOfRevenue": 6,
+  "capexBase": "revenue",
+  "multiplesIndustry": "manufacturing",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "industry",
+  "subSector": "distribution",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4561,
+    "ebitda": 0.5439,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 5.9,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 4.531,
+  "revenueMultipleRaw": 0.7,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 1.02,
+  "depreciationPctOfRevenue": 6,
+  "capexBase": "revenue",
+  "multiplesIndustry": "manufacturing",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "industry",
+  "subSector": "food_bev",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4081,
+    "ebitda": 0.5919,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 6,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 4.608,
+  "revenueMultipleRaw": 0.7,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 1.02,
+  "depreciationPctOfRevenue": 6,
+  "capexBase": "revenue",
+  "multiplesIndustry": "manufacturing",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "industry",
+  "subSector": "traditional",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4561,
+    "ebitda": 0.5439,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 5.5,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 4.224,
+  "revenueMultipleRaw": 0.6,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 1.02,
+  "depreciationPctOfRevenue": 6,
+  "capexBase": "revenue",
+  "multiplesIndustry": "manufacturing",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "retail_unified",
+  "subSector": "retail-supermarkets",
+  "methodologyProfile": "retail_unified",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0.6398,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 4.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 4.14,
+  "configMaxMultiple": 4.86,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 3.456,
+  "revenueMultipleRaw": 0.4,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 18,
+  "growthCapPct": 20,
+  "unleveredBeta": 1.03,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "retail_unified",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 11
+ },
+ {
+  "sector": "retail_unified",
+  "subSector": "d2c",
+  "methodologyProfile": "retail_unified",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3362,
+    "ebitda": 0.6638,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 6,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 5.52,
+  "configMaxMultiple": 6.48,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 4.608,
+  "revenueMultipleRaw": 0.4,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 18,
+  "growthCapPct": 20,
+  "unleveredBeta": 1.03,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "retail_unified",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 14
+ },
+ {
+  "sector": "retail_unified",
+  "subSector": "retail-fashion",
+  "methodologyProfile": "retail_unified",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3362,
+    "ebitda": 0.6638,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 3.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 3.22,
+  "configMaxMultiple": 3.78,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 2.688,
+  "revenueMultipleRaw": 0.3,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 18,
+  "growthCapPct": 20,
+  "unleveredBeta": 1.03,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "retail_unified",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 14.5
+ },
+ {
+  "sector": "retail_unified",
+  "subSector": "marketplace",
+  "methodologyProfile": "retail_unified",
+  "strategy": "current_run_rate_revenue",
+  "weights": {
+   "seed": {
+    "dcf": 0.3122,
+    "ebitda": 0,
+    "rev": 0.6878
+   },
+   "early": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "growth": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   },
+   "mature": {
+    "dcf": 0.3112,
+    "ebitda": 0,
+    "rev": 0.6888
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 0.6,
+  "multipleType": "Revenue",
+  "configMinMultiple": 0.55,
+  "configMaxMultiple": 0.65,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 2,
+  "revenueMultipleRaw": 0.6,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 18,
+  "growthCapPct": 20,
+  "unleveredBeta": 1.03,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "retail_unified",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 14.5
+ },
+ {
+  "sector": "retail_unified",
+  "subSector": "specialty",
+  "methodologyProfile": "retail_unified",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3362,
+    "ebitda": 0.6638,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3374,
+    "ebitda": 0.6626,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 5.2,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 4.78,
+  "configMaxMultiple": 5.62,
+  "boundsMin": 2,
+  "boundsMax": 9,
+  "effectiveMultipleRef": 3.994,
+  "revenueMultipleRaw": 0.4,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 18,
+  "growthCapPct": 20,
+  "unleveredBeta": 1.03,
+  "depreciationPctOfRevenue": 3,
+  "capexBase": "blended",
+  "multiplesIndustry": "retail_unified",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 14.8
+ },
+ {
+  "sector": "food_service",
+  "subSector": "restaurant",
+  "methodologyProfile": "food_service",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0.6398,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 3.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 3.22,
+  "configMaxMultiple": 3.78,
+  "boundsMin": 2,
+  "boundsMax": 8,
+  "effectiveMultipleRef": 2.688,
+  "revenueMultipleRaw": 0.5,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.95,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "food_service",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 15.5
+ },
+ {
+  "sector": "food_service",
+  "subSector": "cafe",
+  "methodologyProfile": "food_service",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0.6398,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 4,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 3.68,
+  "configMaxMultiple": 4.32,
+  "boundsMin": 2,
+  "boundsMax": 8,
+  "effectiveMultipleRef": 3.072,
+  "revenueMultipleRaw": 0.5,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.95,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "food_service",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 15
+ },
+ {
+  "sector": "food_service",
+  "subSector": "catering",
+  "methodologyProfile": "food_service",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0.6398,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 4.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 4.14,
+  "configMaxMultiple": 4.86,
+  "boundsMin": 2,
+  "boundsMax": 8,
+  "effectiveMultipleRef": 3.456,
+  "revenueMultipleRaw": 0.5,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.95,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "food_service",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 14.5
+ },
+ {
+  "sector": "food_service",
+  "subSector": "franchise",
+  "methodologyProfile": "food_service",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0.6398,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 6.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 5.98,
+  "configMaxMultiple": 7.02,
+  "boundsMin": 2,
+  "boundsMax": 8,
+  "effectiveMultipleRef": 4.992,
+  "revenueMultipleRaw": 0.6,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.95,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "food_service",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 14
+ },
+ {
+  "sector": "food_service",
+  "subSector": "delivery",
+  "methodologyProfile": "food_service",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0.6398,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 4.2,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 3.86,
+  "configMaxMultiple": 4.54,
+  "boundsMin": 2,
+  "boundsMax": 8,
+  "effectiveMultipleRef": 3.226,
+  "revenueMultipleRaw": 0.6,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.95,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "food_service",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 15.5
+ },
+ {
+  "sector": "energy",
+  "subSector": "solar",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.552,
+    "ebitda": 0.448,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 13.8,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 3,
+  "boundsMax": 16,
+  "effectiveMultipleRef": 10.598,
+  "revenueMultipleRaw": 5,
+  "revenueMultipleEffective": 3.84,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.86,
+  "depreciationPctOfRevenue": 7,
+  "capexBase": "revenue",
+  "multiplesIndustry": "energy",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "energy",
+  "subSector": "storage",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.504,
+    "ebitda": 0.496,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 14.4,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 3,
+  "boundsMax": 16,
+  "effectiveMultipleRef": 11.059,
+  "revenueMultipleRaw": 5.2,
+  "revenueMultipleEffective": 3.994,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.86,
+  "depreciationPctOfRevenue": 7,
+  "capexBase": "revenue",
+  "multiplesIndustry": "energy",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "energy",
+  "subSector": "wind",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.552,
+    "ebitda": 0.448,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.573,
+    "ebitda": 0.427,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 13.5,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 3,
+  "boundsMax": 16,
+  "effectiveMultipleRef": 10.368,
+  "revenueMultipleRaw": 4.9,
+  "revenueMultipleEffective": 3.763,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.86,
+  "depreciationPctOfRevenue": 7,
+  "capexBase": "revenue",
+  "multiplesIndustry": "energy",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "energy",
+  "subSector": "services_energy",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4081,
+    "ebitda": 0.5919,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 11.9,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 3,
+  "boundsMax": 16,
+  "effectiveMultipleRef": 9.139,
+  "revenueMultipleRaw": 4.3,
+  "revenueMultipleEffective": 3.302,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.86,
+  "depreciationPctOfRevenue": 7,
+  "capexBase": "revenue",
+  "multiplesIndustry": "energy",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "defense_aerospace",
+  "subSector": "defense_manufacturing",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4561,
+    "ebitda": 0.5439,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4683,
+    "ebitda": 0.5317,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 9.8,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 3,
+  "boundsMax": 14,
+  "effectiveMultipleRef": 7.526,
+  "revenueMultipleRaw": 2,
+  "revenueMultipleEffective": 3,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.82,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "defense",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "defense_aerospace",
+  "subSector": "aviation_space",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4321,
+    "ebitda": 0.5679,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4421,
+    "ebitda": 0.5579,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 11,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 3,
+  "boundsMax": 14,
+  "effectiveMultipleRef": 8.448,
+  "revenueMultipleRaw": 2.2,
+  "revenueMultipleEffective": 3,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.82,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "defense",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "defense_aerospace",
+  "subSector": "defense_tech",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4081,
+    "ebitda": 0.5919,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 11.4,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 5,
+  "configMaxMultiple": 7.5,
+  "boundsMin": 3,
+  "boundsMax": 14,
+  "effectiveMultipleRef": 8.755,
+  "revenueMultipleRaw": 2.3,
+  "revenueMultipleEffective": 3,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.82,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "defense",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "real_estate",
+  "subSector": "re_development",
+  "methodologyProfile": "real_estate",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.528,
+    "ebitda": 0.472,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.5468,
+    "ebitda": 0.4532,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.5468,
+    "ebitda": 0.4532,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.5468,
+    "ebitda": 0.4532,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 6.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 5.98,
+  "configMaxMultiple": 7.02,
+  "boundsMin": 4,
+  "boundsMax": 20,
+  "effectiveMultipleRef": 4.992,
+  "revenueMultipleRaw": 11.6,
+  "revenueMultipleEffective": 8.909,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 40,
+  "growthCapPct": 10,
+  "unleveredBeta": 0.78,
+  "depreciationPctOfRevenue": 5,
+  "capexBase": "revenue",
+  "multiplesIndustry": "realestate",
+  "cyclicalNormalization": true,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 12
+ },
+ {
+  "sector": "real_estate",
+  "subSector": "re_income",
+  "methodologyProfile": "real_estate",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.1684,
+    "ebitda": 0.8316,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.1542,
+    "ebitda": 0.8458,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.1542,
+    "ebitda": 0.8458,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.1542,
+    "ebitda": 0.8458,
+    "rev": 0
+   }
+  },
+  "multipleSource": "valuation profile nav range",
+  "defaultMultiple": 1,
+  "multipleType": "NAV",
+  "configMinMultiple": 0.8,
+  "configMaxMultiple": 2,
+  "boundsMin": 4,
+  "boundsMax": 20,
+  "effectiveMultipleRef": 4,
+  "revenueMultipleRaw": 10.8,
+  "revenueMultipleEffective": 8.294,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 40,
+  "growthCapPct": 10,
+  "unleveredBeta": 0.78,
+  "depreciationPctOfRevenue": 5,
+  "capexBase": "revenue",
+  "multiplesIndustry": "realestate",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ },
+ {
+  "sector": "real_estate",
+  "subSector": "construction_contracting",
+  "methodologyProfile": "industry",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.4081,
+    "ebitda": 0.5919,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.4159,
+    "ebitda": 0.5841,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 5.5,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 5.06,
+  "configMaxMultiple": 5.94,
+  "boundsMin": 2,
+  "boundsMax": 8,
+  "effectiveMultipleRef": 4.224,
+  "revenueMultipleRaw": 10.5,
+  "revenueMultipleEffective": 8,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 22,
+  "growthCapPct": 25,
+  "unleveredBeta": 0.78,
+  "depreciationPctOfRevenue": 6,
+  "capexBase": "revenue",
+  "multiplesIndustry": "construction",
+  "cyclicalNormalization": true,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 9.5
+ },
+ {
+  "sector": "real_estate",
+  "subSector": "proptech",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.3602,
+    "ebitda": 0.6398,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.3636,
+    "ebitda": 0.6364,
+    "rev": 0
+   }
+  },
+  "multipleSource": "engine defaults (industry_config)",
+  "defaultMultiple": 12,
+  "multipleType": "EBITDA",
+  "configMinMultiple": 11.04,
+  "configMaxMultiple": 12.96,
+  "boundsMin": 2.5,
+  "boundsMax": 12,
+  "effectiveMultipleRef": 9.216,
+  "revenueMultipleRaw": 11.9,
+  "revenueMultipleEffective": 9.139,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 0.78,
+  "depreciationPctOfRevenue": 2,
+  "capexBase": "ebitda",
+  "multiplesIndustry": "professional_services",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": 8.5
+ },
+ {
+  "sector": "other",
+  "subSector": "general",
+  "methodologyProfile": "services",
+  "strategy": "historical_blended_ebitda",
+  "weights": {
+   "seed": {
+    "dcf": 0.504,
+    "ebitda": 0.496,
+    "rev": 0
+   },
+   "early": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   },
+   "growth": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   },
+   "mature": {
+    "dcf": 0.5206,
+    "ebitda": 0.4794,
+    "rev": 0
+   }
+  },
+  "multipleSource": "market offline median x multAdj",
+  "defaultMultiple": 9,
+  "multipleType": "EV/EBITDA",
+  "configMinMultiple": 4,
+  "configMaxMultiple": 6,
+  "boundsMin": 2,
+  "boundsMax": 12,
+  "effectiveMultipleRef": 6.912,
+  "revenueMultipleRaw": 1.5,
+  "revenueMultipleEffective": 2,
+  "dlomGrowth": 0.8,
+  "dlomMatureRef": 0.8075,
+  "scaleFactorRef": 0.96,
+  "maxHistoricalMarginPct": 28,
+  "growthCapPct": 15,
+  "unleveredBeta": 1,
+  "depreciationPctOfRevenue": 4,
+  "capexBase": "blended",
+  "multiplesIndustry": "other",
+  "cyclicalNormalization": false,
+  "lossRegime": true,
+  "backlogInflection": true,
+  "waccBasePctConfigured": null
+ }
+]

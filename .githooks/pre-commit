@@ -1,9 +1,10 @@
 #!/bin/sh
-# Blocks commits when valuation engine regressions are detected.
+# Blocks commits when the safety net (snapshot, methodology map, correctness, build,
+# legacy engine scripts) detects a regression.
 set -e
 
-echo "▶ Running valuation engine regression suite (test:engine)..."
-npm run test:engine --silent
+echo "▶ Running safety net (npm test)..."
+npm test --silent
 
 echo "▶ Checking bridge render paths for manual currency sign concatenation..."
 sh scripts/guard-no-manual-currency-sign.sh
