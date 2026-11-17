@@ -3,5 +3,5 @@
   "compilerOptions": {
     "incremental": false
   },
-  "include": ["./**/*.ts", "../types/**/*.d.ts", "../next-env.d.ts"]
+  "include": ["./**/*.ts", "../scripts/what-if/**/*.ts", "../types/**/*.d.ts", "../next-env.d.ts"]
 }
