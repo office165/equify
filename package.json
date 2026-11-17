@@ -16,6 +16,8 @@
     "cap:android": "npx cap open android",
     "start": "node dist/main.js",
     "test:pdf": "tsx scripts/test-maximal-pdf.ts",
+    "test:pdf-layout": "tsx tests/pdf/layout.ts",
+    "pdf:render": "tsx tests/pdf/render.ts",
     "test:canonical": "tsx scripts/test-canonical-reconciliation.ts",
     "test:report-coherence": "tsx scripts/test-report-financial-coherence.ts",
     "test:engine": "tsx scripts/test-valuation-engine.ts",
