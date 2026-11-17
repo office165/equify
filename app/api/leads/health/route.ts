@@ -53,11 +53,17 @@ export async function GET() {
     };
   }
 
-  const status = schemaOk ? 200 : 503;
+  // Leads are written to Postgres (valubot_leads). When it does not answer, leads fall back
+  // to a temp file and are lost on the next cold start, so health must fail, not report ok.
+  const dbOk = dbProbe.reachable;
+  const ok = schemaOk && dbOk;
+  const status = ok ? 200 : 503;
 
   return NextResponse.json(
     {
-      ok: schemaOk,
+      ok,
+      dbOk,
+      schemaOk,
       at: new Date().toISOString(),
       config: {
         ...config,

@@ -18,6 +18,10 @@ import {
   ensureSupabasePoolerRegion,
   resolveDatabaseConnectionString,
 } from './lib/database/supabase_pooler';
+import {
+  resolvePostgresSslConfig,
+  stripSslQueryParams,
+} from './lib/database/postgres_ssl';
 import { executeInMemoryValuation } from './lib/valuation/in_memory_engine';
 
 export const LIVE_ON_DEMAND_AMOUNT_ILS = 999.0;
@@ -39,16 +43,13 @@ export function resolvePostgresSsl(
   connectionString: string,
   explicitSsl?: boolean,
 ): PoolConfig['ssl'] {
-  const useSsl =
-    explicitSsl ??
-    (connectionString.includes('supabase.co') || process.env.PG_SSL === 'true');
-  if (!useSsl) return undefined;
-  return { rejectUnauthorized: process.env.PG_SSL_REJECT_UNAUTHORIZED === 'true' };
+  return resolvePostgresSslConfig(connectionString, explicitSsl);
 }
 
 export function createPostgresPool(connectionString: string, max = 20): Pool {
   return new Pool({
-    connectionString,
+    // ssl* params are stripped so the URL cannot override the verified TLS config below.
+    connectionString: stripSslQueryParams(connectionString),
     max,
     idleTimeoutMillis: 30_000,
     ssl: resolvePostgresSsl(connectionString),
