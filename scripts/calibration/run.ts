@@ -10,7 +10,8 @@
  * (mapWizardToValuationData, static FX) in methodology 1 and in methodology 2.
  *
  * A case with a target range is checked twice: is the result inside the range, and how far is it
- * from the center. The script never fails on an empty or missing folder, and a broken case file is
+ * from the center. Holdings and assets outside the operating business, which the engine does not
+ * value (nonOperatingAssets), are added to the engine value before it is compared with the target. The script never fails on an empty or missing folder, and a broken case file is
  * reported and skipped.
  */
 import fs from 'fs';
@@ -53,6 +54,16 @@ export interface CalibrationCase {
     longTermContracts: boolean;
     goal?: EquifyGoalKey;
   };
+  /**
+   * Holdings and assets outside the operating business that the target includes and the engine does
+   * not value (for example a stake in a subsidiary). Added to the engine value. Optional.
+   */
+  nonOperatingAssets?: {
+    value: number;
+    low?: number;
+    high?: number;
+    note?: string;
+  };
   target: {
     /** Center of the target (full currency units). */
     value: number;
@@ -73,6 +84,14 @@ export interface CalibrationCase {
 export interface CaseResult {
   file: string;
   caseCode: string;
+  /** Engine value (equity or EV) without the non-operating assets. */
+  v1Engine: number;
+  v2Engine: number;
+  /** Non-operating assets added to the engine value (0 when the case has none). */
+  nonOperating: number;
+  nonOperatingLow?: number;
+  nonOperatingHigh?: number;
+  /** Engine value plus non-operating assets: what is compared with the target. */
   v1: number;
   v2: number;
   target: number;
@@ -130,6 +149,14 @@ export function validateCase(raw: unknown): CalibrationCase {
   if (t.high != null) num(t.high, 'target.high');
   if (t.low != null && t.high != null && !(t.low <= t.value && t.value <= t.high)) fail('target: low <= value <= high expected');
   if (typeof t.by !== 'string' || typeof t.method !== 'string' || typeof t.source !== 'string') fail('target.by, target.method and target.source are required');
+  const n = c.nonOperatingAssets;
+  if (n != null) {
+    num(n.value, 'nonOperatingAssets.value');
+    if (n.value < 0) fail('nonOperatingAssets.value must be 0 or above');
+    if (n.low != null) num(n.low, 'nonOperatingAssets.low');
+    if (n.high != null) num(n.high, 'nonOperatingAssets.high');
+    if (n.low != null && n.high != null && !(n.low <= n.value && n.value <= n.high)) fail('nonOperatingAssets: low <= value <= high expected');
+  }
   return c;
 }
 
@@ -180,14 +207,22 @@ export function evaluateCase(c: CalibrationCase, file: string): CaseResult {
   const spec = caseSpecFor(c);
   const basis = c.target.basis ?? 'equity';
   const pick = (d: ValuationData) => (basis === 'ev' ? d.enterpriseValue : d.equity);
-  const v1 = pick(runPath(spec, 'v1'));
-  const v2 = pick(runPath(spec, 'v2'));
+  const v1Engine = pick(runPath(spec, 'v1'));
+  const v2Engine = pick(runPath(spec, 'v2'));
+  const nonOperating = c.nonOperatingAssets?.value ?? 0;
+  const v1 = v1Engine + nonOperating;
+  const v2 = v2Engine + nonOperating;
   const t = c.target.value;
   const inRange = (v: number) => (c.target.low != null && c.target.high != null ? v >= c.target.low && v <= c.target.high : null);
   const v2DevPct = ((v2 - t) / t) * 100;
   return {
     file,
     caseCode: c.caseCode,
+    v1Engine,
+    v2Engine,
+    nonOperating,
+    nonOperatingLow: c.nonOperatingAssets?.low,
+    nonOperatingHigh: c.nonOperatingAssets?.high,
     v1,
     v2,
     target: t,
@@ -237,6 +272,10 @@ function median(xs: number[]): number {
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
 const fmtM = (x: number) => `${(x / 1e6).toFixed(2)}M`;
 const fmtPct = (p: number) => (Number.isFinite(p) ? `${p >= 0 ? '+' : ''}${p.toFixed(1)}%` : 'n/a');
+const fmtNonOp = (r: CaseResult) =>
+  r.nonOperating > 0 || r.nonOperatingLow != null
+    ? `${fmtM(r.nonOperating)}${r.nonOperatingLow != null && r.nonOperatingHigh != null ? ` (${fmtM(r.nonOperatingLow)} עד ${fmtM(r.nonOperatingHigh)})` : ''}`
+    : 'אין';
 const fmtAbs = (p: number) => (Number.isFinite(p) ? `${p.toFixed(1)}%` : 'n/a');
 const yesNo = (b: boolean | null) => (b == null ? 'אין טווח' : b ? 'כן' : 'לא');
 
@@ -284,13 +323,13 @@ export function resultsMarkdown(run: CalibrationRun, now: Date = new Date()): st
     out.push('אין תיקים בתיקייה. להוספת תיק: להעתיק את TEMPLATE.json לקובץ חדש ולמלא לפי ההסבר בתוכו.');
   } else {
     out.push(
-      '| תיק | בסיס | V1 | V2 | יעד (מרכז) | טווח | סטייה V1 | סטייה V2 | V1 בטווח | V2 בטווח | V2 בתוך 15% | ממי, שיטה, תאריך |',
-      '|---|---|---|---|---|---|---|---|---|---|---|---|',
+      '| תיק | בסיס | V1 מנוע | V2 מנוע | נכסים מחוץ לפעילות | V1 כולל | V2 כולל | יעד (מרכז) | טווח | סטייה V1 | סטייה V2 | V1 בטווח | V2 בטווח | V2 בתוך 15% | ממי, שיטה, תאריך |',
+      '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     );
     for (const r of run.results) {
       const range = r.low != null && r.high != null ? `${fmtM(r.low)} עד ${fmtM(r.high)}` : 'אין';
       out.push(
-        `| ${r.caseCode} | ${r.basis === 'ev' ? 'EV' : 'שווי לבעלים'} | ${fmtM(r.v1)} | ${fmtM(r.v2)} | ${fmtM(r.target)} | ${range} | ${fmtPct(r.v1DevPct)} | ${fmtPct(r.v2DevPct)} | ${yesNo(r.v1InRange)} | ${yesNo(r.v2InRange)} | ${r.v2Close ? 'כן' : 'לא'} | ${r.by}, ${r.method}, ${r.date ?? 'תאריך לא צוין'} |`,
+        `| ${r.caseCode} | ${r.basis === 'ev' ? 'EV' : 'שווי לבעלים'} | ${fmtM(r.v1Engine)} | ${fmtM(r.v2Engine)} | ${fmtNonOp(r)} | ${fmtM(r.v1)} | ${fmtM(r.v2)} | ${fmtM(r.target)} | ${range} | ${fmtPct(r.v1DevPct)} | ${fmtPct(r.v2DevPct)} | ${yesNo(r.v1InRange)} | ${yesNo(r.v2InRange)} | ${r.v2Close ? 'כן' : 'לא'} | ${r.by}, ${r.method}, ${r.date ?? 'תאריך לא צוין'} |`,
       );
     }
     const s = summarize(run.results);
@@ -307,6 +346,26 @@ export function resultsMarkdown(run: CalibrationRun, now: Date = new Date()): st
       '',
       `V2 בתוך ${CLOSE_PCT}% ממרכז היעד: ${s.v2Close} מתוך ${s.cases} תיקים.`,
     );
+  }
+  const withNonOpRange = run.results.filter((r) => r.nonOperatingLow != null && r.nonOperatingHigh != null);
+  if (withNonOpRange.length) {
+    out.push(
+      '',
+      '## רגישות לנכסים מחוץ לפעילות',
+      '',
+      'השווי הכולל כשהנכסים מחוץ לפעילות בקצה התחתון ובקצה העליון של הטווח שלהם.',
+      '',
+      '| תיק | V1 כולל | V2 כולל | סטייה V1 | סטייה V2 |',
+      '|---|---|---|---|---|',
+    );
+    for (const r of withNonOpRange) {
+      const lo = r.nonOperatingLow!;
+      const hi = r.nonOperatingHigh!;
+      const dev = (v: number) => fmtPct(((v - r.target) / r.target) * 100);
+      out.push(
+        `| ${r.caseCode} | ${fmtM(r.v1Engine + lo)} עד ${fmtM(r.v1Engine + hi)} | ${fmtM(r.v2Engine + lo)} עד ${fmtM(r.v2Engine + hi)} | ${dev(r.v1Engine + lo)} עד ${dev(r.v1Engine + hi)} | ${dev(r.v2Engine + lo)} עד ${dev(r.v2Engine + hi)} |`,
+      );
+    }
   }
   if (run.errors.length) {
     out.push('', '## קבצים שלא נקראו', '');

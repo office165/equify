@@ -248,7 +248,7 @@ function main(): void {
   out.push('## 5. כיול מול הערכות אמיתיות (`sbc_sync/calibration`)');
   out.push('');
   const cal = runCalibration(DEFAULT_DIR);
-  out.push('התיקים אמיתיים ונמצאים מחוץ לגיט. כאן מופיעים רק קוד התיק והסטייה באחוזים ממרכז היעד; הטבלה המלאה ב `sbc_sync/calibration/results.md` (`npx tsx scripts/calibration/run.ts`).');
+  out.push('התיקים אמיתיים ונמצאים מחוץ לגיט. כאן מופיעים רק קוד התיק והסטייה באחוזים ממרכז היעד; הטבלה המלאה ב `sbc_sync/calibration/results.md` (`npx tsx scripts/calibration/run.ts`). כשהיעד כולל נכסים או החזקות מחוץ לפעילות שהמנוע לא מעריך (`nonOperatingAssets` בתיק), הם נוספים לשווי של המנוע לפני ההשוואה.');
   out.push('');
   if (!cal.results.length) {
     out.push('אין תיקים בתיקיית הכיול.');
@@ -258,7 +258,7 @@ function main(): void {
     for (const f of caseFiles(DEFAULT_DIR)) {
       try {
         const c = validateCase(JSON.parse(fs.readFileSync(path.join(DEFAULT_DIR, f), 'utf8')));
-        const eq = run(inputsFor(caseSpecFor(c)), { ...V2_ALL, sizePremiumDecile: true }).equity * 1000;
+        const eq = run(inputsFor(caseSpecFor(c)), { ...V2_ALL, sizePremiumDecile: true }).equity * 1000 + (c.nonOperatingAssets?.value ?? 0);
         sizeDev.set(c.caseCode, ((eq - c.target.value) / c.target.value) * 100);
       } catch {
         // reported by runCalibration
@@ -290,7 +290,9 @@ function main(): void {
   out.push('| פרמיית גודל: מקור לפי גודל (מנוי Kroll, או להשאיר את שכבת המערכת) | | | |');
   out.push('| הנחת סחירות על ה DCF (0.8 עד 0.9) | | | |');
   out.push('| העברת משקל מרגל EBITDA אפס לרגל ההכנסות קודם (חלק מהפתרון לממצא 26) | | | |');
-  out.push('| תת הענף של CAL-001 ותיקי כיול נוספים | | | |');
+  out.push('| ממצא 29: מנגנון הצבר מקזז את הפרמיה הספציפית (ריכוזיות, תלות במייסד) | | | |');
+  out.push('| ממצא 30: המכפיל לפי ציון האיכות (כולל קנס ריכוזיות) לא נכנס לשווי | | | |');
+  out.push('| תיקי כיול נוספים | | | |');
   out.push('| מתי להדליק METHOD_V2 | | | |');
   out.push('');
 

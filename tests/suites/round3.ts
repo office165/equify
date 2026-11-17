@@ -109,6 +109,7 @@ export function run(): SuiteResult {
           growthPct: 8, grossDebt: 1e6, cash: 5e5, ownerSalaryNormalization: 0, capexLevelPct: 2, backlogSigned: 0,
           recurringPct: 40, topCustomerPct: 15, founderDependency: true, strongCompetition: false, ipProtection: false, longTermContracts: false,
         },
+        nonOperatingAssets: { value: 5e5, low: 3e5, high: 7e5, note: 'בדיקה' },
         target: { value: 8e6, low: 7e6, high: 9e6, by: 'TEST', method: 'בדיקה', source: 'TEST', date: null },
       };
       fs.writeFileSync(path.join(tmp, 'CAL-TEST.json'), JSON.stringify(sample));
@@ -119,7 +120,18 @@ export function run(): SuiteResult {
       suite.check(
         'calibration-sample',
         'CAL-TEST',
-        r.results.length === 1 && r.errors.length === 1 && r.errors[0].file === 'broken.json' && row.v1 > 0 && row.v2 > 0 && Math.abs(row.v2DevPct - ((row.v2 - 8e6) / 8e6) * 100) < 1e-9 && row.v2InRange === (row.v2 >= 7e6 && row.v2 <= 9e6),
+        r.results.length === 1 &&
+          r.errors.length === 1 &&
+          r.errors[0].file === 'broken.json' &&
+          row.v1Engine > 0 &&
+          row.v2Engine > 0 &&
+          // Non-operating assets are added to the engine value before the comparison.
+          row.nonOperating === 5e5 &&
+          Math.abs(row.v2 - (row.v2Engine + 5e5)) < 1e-6 &&
+          Math.abs(row.v1 - (row.v1Engine + 5e5)) < 1e-6 &&
+          Math.abs(row.v2DevPct - ((row.v2 - 8e6) / 8e6) * 100) < 1e-9 &&
+          row.v2InRange === (row.v2 >= 7e6 && row.v2 <= 9e6) &&
+          resultsMarkdown(r).includes('רגישות לנכסים מחוץ לפעילות'),
         JSON.stringify(row ?? r.errors).slice(0, 160),
       );
     } finally {
