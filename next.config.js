@@ -7,6 +7,7 @@ const nextConfig = {
       'pdfkit',
       'puppeteer-core',
       '@sparticuz/chromium',
+      'exceljs',
     ],
     // Every route that builds the customer report reads lib/pdf-template/equify-report-print.css
     // from disk (process.cwd()) and, when it renders a PDF, needs the Chromium binary.

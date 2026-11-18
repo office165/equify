@@ -19,6 +19,7 @@ import {
 import type { ValuationLocale } from '../../api_client';
 import type { ValuationData } from '../pdf-template/types';
 import { renderEquifyReportPdfBuffer } from './render_equify_report_pdf';
+import { appendixFilename, buildExcelAppendix, EXCEL_APPENDIX_CONTENT_TYPE, isExcelAppendixEnabled } from '../excel/build_excel_appendix';
 
 export interface CustomerReportArchiveContact {
   userEmail: string;
@@ -98,6 +99,34 @@ async function tryArchiveCustomerReportPdf(
   }
 }
 
+export interface CustomerReportAttachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
+
+/**
+ * Attachments of the report email: the PDF, and with EXCEL_APPENDIX=on also the Excel appendix
+ * (round 7). With the flag off the list is exactly the PDF, as before. If the appendix cannot be
+ * built, the email goes with the PDF only.
+ */
+export async function buildCustomerReportAttachments(
+  pdfBuffer: Buffer,
+  filename: string,
+  valuationData: ValuationData,
+): Promise<CustomerReportAttachment[]> {
+  const out: CustomerReportAttachment[] = [{ filename, content: pdfBuffer, contentType: 'application/pdf' }];
+  if (!isExcelAppendixEnabled()) return out;
+  try {
+    const xl = await buildExcelAppendix(valuationData);
+    if (xl) out.push({ filename: appendixFilename(filename), content: xl.buffer, contentType: EXCEL_APPENDIX_CONTENT_TYPE });
+    else console.warn('[customer-report] excel_appendix_skipped', { reason: 'no_model' });
+  } catch (err) {
+    console.error('[customer-report] excel_appendix_failed', err instanceof Error ? err.message : err);
+  }
+  return out;
+}
+
 async function sendCustomerReportEmail(params: {
   to: string;
   locale: ValuationLocale;
@@ -105,6 +134,7 @@ async function sendCustomerReportEmail(params: {
   recipientName?: string;
   pdfBuffer: Buffer;
   filename: string;
+  attachments: CustomerReportAttachment[];
   pdfDownloadUrl: string | null;
   indicativeEnterpriseValue?: number | null;
   currency?: string;
@@ -125,13 +155,7 @@ async function sendCustomerReportEmail(params: {
       subject: buildMarketingReportEmailSubject(emailParams),
       html: buildMarketingReportEmailHtml(emailParams),
       text: buildMarketingReportEmailText(emailParams),
-      attachments: [
-        {
-          filename: params.filename,
-          content: params.pdfBuffer,
-          contentType: 'application/pdf',
-        },
-      ],
+      attachments: params.attachments,
     });
     return {
       delivered: result.delivered,
@@ -215,6 +239,7 @@ export async function packageAndSendCustomerReport(
         recipientName: input.recipientName,
         pdfBuffer,
         filename,
+        attachments: await buildCustomerReportAttachments(pdfBuffer, filename, input.valuationData),
         pdfDownloadUrl,
         indicativeEnterpriseValue: input.indicativeEnterpriseValue,
         currency: input.currency ?? input.valuationData.currency,

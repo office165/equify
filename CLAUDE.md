@@ -46,13 +46,16 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | `PAYWALL_V2`, `PAYPAL_USD`, `LEAD_VALUE_FROM_REPORT` | ראו `reports/round-1.md` | 1 |
 | `NEXT_PUBLIC_ANALYTICS` | Vercel Analytics ו Speed Insights (`components/analytics/SiteAnalytics.tsx`). נכנס בזמן בנייה | 6 |
 | `NEXT_PUBLIC_GSC_VERIFICATION` | תגית אימות של Search Console, רק כשמוגדר | 6 |
+| `EXCEL_APPENDIX` | נספח Excel מצורף למייל של הדוח (`lib/excel/`) | 7 |
+| `OPUS_NARRATIVE` | תקציר, מסקנות ו "על מה השווי נשען" מ `claude-opus-5-5` (`lib/narrative/`), עם שומר מספרים. צריך את המיגרציה `20261118_report_narratives.sql` | 7 |
 
 SEO: `app/robots.ts`, `app/sitemap.ts`, `lib/seo/` (דומיין canonical קבוע equify.co.il, metadata, JSON-LD), `public/llms.txt`.
 כללי הכתיבה בדוח נבדקים ב `npm test` (סוויטה `round5`, `lib/report/report_text_rules.ts`).
 
 ## מודל שפה
 
-קריאה אחת בלבד בכל המערכת: `lib/wizard/sector_suggest_llm.ts`.
+שתי קריאות. הצעת ענף: `lib/wizard/sector_suggest_llm.ts` (Haiku, תמיד). ניתוח מילולי בדוח: `lib/narrative/opus_narrative.ts` (Opus 5.5, רק עם `OPUS_NARRATIVE=on`, ראו `reports/round-7.md`).
+פרטי הצעת הענף:
 מודל `claude-haiku-4-5-20251001` (אפשר לעקוף עם `ANTHROPIC_SECTOR_MODEL`), משימה: הצעת ענף ותת ענף מתוך תיאור חופשי של העסק בשלב 1 של האשף.
 פרומפט מערכת של כ 4,300 תווים (50 תתי ענפים), עד 600 טוקנים פלט. עלות משוערת: פחות מחצי סנט לקריאה. מטמון 15 דקות, הגבלה של 10 קריאות לשעה לכל IP, ונפילה למילות מפתח אם אין מפתח או שיש שגיאה.
 הדוח עצמו לא נכתב על ידי מודל. `lib/prompts/valuation.ts` קיים אבל לא בשימוש.

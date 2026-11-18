@@ -264,6 +264,14 @@ export interface ValuationData {
   dcfNote?: string;
   /** 'v2' when METHOD_V2 is on. Absent in methodology 1. */
   methodVersion?: 'v2';
+  /** Round 7: inputs of the Excel appendix (report currency, absolute). Not shown in the PDF. */
+  excelInputs?: { grossDebt: number; cash: number; capexPct: number };
+  /** Round 7 (OPUS_NARRATIVE): narrative that passed the guard. Absent: template text. */
+  opusNarrative?: {
+    executiveSummary: string;
+    conclusions: string[];
+    drivers: Array<{ key: string; title: string; text: string }>;
+  };
   /** Methodology 2 (T1): FCFF of the normalized terminal year (M, report currency). */
   terminalFcffM?: number;
   /** Methodology 2 (T1): Gordon denominator rate, max(WACC, g + 3 points) (%). */

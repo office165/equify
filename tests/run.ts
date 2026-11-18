@@ -21,6 +21,8 @@ import { run as runCreditCapacity } from './credit_capacity.test';
 import { run as runRound4 } from './suites/round4';
 import { run as runRound5 } from './suites/round5';
 import { run as runRound6 } from './suites/round6';
+import { run as runRound7Excel } from './suites/round7_excel';
+import { run as runRound7Narrative } from './suites/round7_narrative';
 import type { MethodVersion } from '../lib/valuation/method_v2';
 
 const ROOT = path.join(__dirname, '..');
@@ -82,6 +84,8 @@ async function main(): Promise<void> {
     ['round4', runRound4, ['v1', 'v2']],
     ['round5', runRound5, ['v1', 'v2']],
     ['round6', runRound6, ['v1']],
+    ['round7-excel', runRound7Excel, ['v1', 'v2']],
+    ['round7-narrative', runRound7Narrative, ['v1', 'v2']],
   ];
   const methodArg = process.argv.includes('--method') ? process.argv[process.argv.indexOf('--method') + 1] : null;
   const methods: MethodVersion[] = methodArg === 'v1' || methodArg === 'v2' ? [methodArg] : ['v1', 'v2'];

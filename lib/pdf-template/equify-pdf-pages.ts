@@ -219,7 +219,10 @@ function buildPage2ExecSummary(data: ValuationData): string {
   const f = pdfFmt(data);
   const wf = computeWaterfallFills(data);
   const netDebtRow = formatWaterfallNetDebtRow(data.netDebt, data);
-  const summary = resolveExecutiveSummaryHtml(data, defaultExecutiveSummary);
+  // Round 7 (OPUS_NARRATIVE): a narrative that passed the guard replaces the template summary.
+  const summary = data.opusNarrative
+    ? escHtml(data.opusNarrative.executiveSummary)
+    : resolveExecutiveSummaryHtml(data, defaultExecutiveSummary);
   const moatCallout = buildMoatNotesCalloutHtml(data);
   const methodologyNoteHtml = data.profitabilityMethodologyNote
     ? `<div class="box tint methodology-note" style="margin-top:3mm;white-space:pre-line">${escHtml(data.profitabilityMethodologyNote)}</div>`
@@ -611,6 +614,15 @@ function blendWeightBar(data: ValuationData): string {
     .join('');
 }
 
+/** Round 7 (OPUS_NARRATIVE): conclusions and "על מה השווי נשען" on page 8. Empty without a narrative. */
+function narrativeBlocksHtml(data: ValuationData): string {
+  const n = data.opusNarrative;
+  if (!n) return '';
+  const lines = n.conclusions.map((c) => `<li>${escHtml(c)}</li>`).join('');
+  const drivers = n.drivers.map((d) => `<li><b>${escHtml(d.title)}:</b> ${escHtml(d.text)}</li>`).join('');
+  return `<div class="box narrative-box" style="text-align:right;margin-top:6mm"><h3>מסקנות</h3><ul class="narrative-list" style="margin:0 0 2mm;padding-inline-start:5mm">${lines}</ul><h3>על מה השווי נשען</h3><ul class="narrative-list" style="margin:0;padding-inline-start:5mm">${drivers}</ul></div>`;
+}
+
 function buildPage8Combined(data: ValuationData): string {
   const f = pdfFmt(data);
   const dateLabel = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
@@ -624,6 +636,7 @@ function buildPage8Combined(data: ValuationData): string {
     <div class="c-val" style="margin:10mm 0 2mm">${equityTriCurrencyCoverHtml(data)}</div>
     <div class="c-cap">שווי לבעלים, תרחיש בסיס, טווח ${f.money(data.bearEquity)} עד ${f.money(data.bullEquity)}, נכון ליום ${escHtml(dateLabel)}</div>
     <div class="seal" style="margin:9mm auto 0"><i></i>ALGORITHMIC EQUITY INDICATION | SBC METHOD</div>
+    ${narrativeBlocksHtml(data)}
     <p class="note" style="text-align:right;margin-top:8mm"><b>גילוי נאות:</b> ${escHtml(data.disclaimer ?? defaultDisclaimer())}</p>
   </div>`;
   return wrapSheet(8, '', body, data.locale);

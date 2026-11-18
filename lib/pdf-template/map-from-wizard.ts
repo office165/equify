@@ -947,6 +947,12 @@ export function mapEngineResultToValuationData(
     sensitivityGrowthWacc: buildGrowthWaccSensitivity(sensitivityCtx, locale === 'en'),
     sensitivityEbitdaMult: buildEbitdaMultipleSensitivity(sensitivityCtx, locale === 'en'),
 
+    // Round 7 (EXCEL_APPENDIX): inputs the Excel appendix needs that the PDF does not show as numbers.
+    excelInputs: {
+      grossDebt: wizardFinancialAbsFromK(financials.grossDebtK),
+      cash: wizardFinancialAbsFromK(financials.cashK),
+      capexPct: parseCapexPct(inputs.capexLevelPct ?? 0),
+    },
     netDebtNote: formatNetDebtNoteHe(
       netDebtK,
       financials.grossDebtK,
