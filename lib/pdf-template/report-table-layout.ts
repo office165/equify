@@ -18,6 +18,8 @@ export function labelPlusEqualCols(labelPct: number, numericCols: number): numbe
 export const BLEND_TABLE_WIDTHS = [38, 22, 18, 22] as const;
 export const WACC_TABLE_WIDTHS = [62, 38] as const;
 export const MULTIPLES_TABLE_WIDTHS = [24, 16, 16, 44] as const;
+/** Customer report page 5 (round 4): the public companies column is wider (raw and private company ranges). */
+export const MULTIPLES_COMPARE_WIDTHS = [19, 13, 24, 44] as const;
 export const SCENARIO_TABLE_WIDTHS = [16, 14, 14, 12, 12, 16, 16] as const;
 export const QUALITY_FACTOR_WIDTHS = [44, 36, 20] as const;
 

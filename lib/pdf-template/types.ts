@@ -287,6 +287,11 @@ export interface ValuationData {
     companyRevenueMultiple: number;
     revenueMultipleKind: 'leg' | 'implied';
     footnote: string;
+    /**
+     * Round 4 (display only): the same ranges after the engine's private company adjustments for
+     * this company (marketability factor x size factor). Absent when the factors are 1.
+     */
+    privateFactor?: number;
   };
   industryEbitdaMedian?: number;
   industryRevenueMedian?: number;

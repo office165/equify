@@ -43,7 +43,7 @@ import {
 import {
   BLEND_TABLE_WIDTHS,
   WACC_TABLE_WIDTHS,
-  MULTIPLES_TABLE_WIDTHS,
+  MULTIPLES_COMPARE_WIDTHS,
   SCENARIO_TABLE_WIDTHS,
   QUALITY_FACTOR_WIDTHS,
   compsTableWidths,
@@ -397,9 +397,18 @@ function multiplesInterpretation(data: ValuationData): string {
     return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${numHtml('—')}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
     <tr><td>מכפיל הכנסות</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">${numHtml('—')}</td><td class="interp-cell">אין נתון ענפי עם מקור</td></tr>`;
   }
-  const range = (lo: number, hi: number) => `<span dir="rtl">${f.multiple(lo)} עד ${f.multiple(hi)}</span>`;
+  // Round 4 (part D, display only): the raw Damodaran range is public companies; when the engine
+  // applies private company factors, the adjusted range is shown next to it, and the position is
+  // stated against both.
+  const pf = im.privateFactor;
+  const range = (lo: number, hi: number) =>
+    `<span dir="rtl">${f.multiple(lo)} עד ${f.multiple(hi)}</span>${pf ? `<br><span dir="rtl" class="private-range" style="font-size:8.5px;color:var(--dim);white-space:nowrap">חברה פרטית: ${f.multiple(lo * pf)} עד ${f.multiple(hi * pf)}</span>` : ''}`;
+  const where = (v: number, lo: number, hi: number, of: string) =>
+    v < lo ? `מתחת לטווח ${of}` : v > hi ? `מעל הטווח ${of}` : `בתוך הטווח ${of}`;
   const position = (v: number, lo: number, hi: number) =>
-    v < lo ? 'מתחת לטווח הענף' : v > hi ? 'מעל טווח הענף' : 'בתוך טווח הענף';
+    pf
+      ? `${where(v, lo, hi, 'של חברות ציבוריות')}, ו${where(v, lo * pf, hi * pf, 'אחרי התאמות לחברה פרטית')}`
+      : where(v, lo, hi, 'של חברות ציבוריות');
   const revLabel = im.revenueMultipleKind === 'leg' ? 'מכפיל הכנסות' : 'EV/Sales משתמע';
   const revInterp =
     im.revenueMultipleKind === 'leg'
@@ -439,15 +448,15 @@ function buildPage5Multiples(data: ValuationData): string {
     <div class="page-stack">
       <section class="page-section page-section--tracks">
         <div class="box box-chart-visible">
-          <h3>מיקום מול טווח הענף</h3>
+          <h3>מיקום מול מכפילי חברות ציבוריות (Damodaran)</h3>
           <div class="multiples-tracks-chart">${buildEquifyMultiplesTracksSvg(data.multiplesPositions, data.currency)}</div>
         </div>
       </section>
       ${compsTable ? `<section class="page-section page-section--comps">${compsTable}</section>` : ''}
       <section class="page-section page-section--compare">
         <table class="report-table report-table--multiples multiples-compare-table">
-          ${reportColgroup([...MULTIPLES_TABLE_WIDTHS])}
-          <tr><th>פרמטר</th><th>החברה</th><th>הענף (Damodaran)</th><th>פרשנות</th></tr>${multiplesInterpretation(data)}
+          ${reportColgroup([...MULTIPLES_COMPARE_WIDTHS])}
+          <tr><th>פרמטר</th><th>החברה</th><th>${data.industryMultiples ? 'חברות ציבוריות (Damodaran)' : 'הענף (Damodaran)'}</th><th>פרשנות</th></tr>${multiplesInterpretation(data)}
         </table>
         ${data.industryMultiples ? `<p class="note sens-note">${escHtml(data.industryMultiples.footnote)}</p>` : ''}
       </section>

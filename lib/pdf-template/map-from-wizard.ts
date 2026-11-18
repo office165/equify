@@ -750,6 +750,12 @@ export function mapEngineResultToValuationData(
           companyRevenueMultiple,
           revenueMultipleKind: revenueLegUsed ? 'leg' : 'implied',
           footnote: damodaranFootnoteHe(damodaranMap.industry),
+          ...(() => {
+            // Round 4 (page 5, display only): the factors the engine applies to this company's multiples.
+            const b = fxComputed.multipleNormalizationBreakdown;
+            const factor = b ? b.dlomFactor * b.scaleFactor : 1;
+            return factor > 0 && factor < 0.999 ? { privateFactor: factor } : {};
+          })(),
         }
       : undefined;
   const track = (

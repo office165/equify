@@ -280,3 +280,9 @@ edge-eur               | terminalSharePct | 0                                   
 edge-eur               | keyFindings      | Quality B · WACC 13.6% · EBITDA מדווח 2026 €1.1M · בסיס מ... | Quality B · WACC 13.6% · EBITDA מדווח 2026 €1.1M · בסיס מ... | text   
 ```
 
+## 2026-11-18
+
+סיבה: Round 4 part D (V1, display only): page 5 labels the raw Damodaran range as public companies and shows the range after this company's private company factors (marketability x size) next to it; the position text names both. No snapshot field covers page 5 text, so no field changed. Value-lock passes.
+
+תיקים חדשים: 0. שדות שהשתנו: 0. מפת מתודולוגיה השתנתה: לא.
+

@@ -9,9 +9,11 @@
  *     4 cases with CREDIT_CHAPTER on (restaurant, factory, SaaS, and the case with a subsidiary and
  *     owner loans) to reports/round-4/pdf-credit/, with the layout check.
  *   npx tsx scripts/round-4/render.ts page5 <before|after>
- *     Page 5 of one case (the restaurant) to reports/round-4/page5-<before|after>.png and .pdf.
+ *     Page 5 of one case (the restaurant) to reports/round-4/page5-<before|after>.png and .pdf
+ *     ("before" was rendered from the round 3 commit, the same day, with this mode).
  * A pixel differs when any channel differs by more than 24 (same rule as rounds 2 and 3).
  */
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -112,7 +114,10 @@ async function page5(which: string): Promise<number> {
   }
   fs.mkdirSync(OUT, { recursive: true });
   fs.copyFileSync(path.join(dir, `${spec.id}-p5.png`), path.join(OUT, `page5-${which}.png`));
-  fs.copyFileSync(path.join(dir, `${spec.id}.pdf`), path.join(OUT, `page5-${which}-full.pdf`));
+  // Page 5 alone (scripts/round-4/extract-page.swift, compiled to tmp/extract-page).
+  const extractor = path.join(ROOT, 'tmp', 'extract-page');
+  execFileSync('swiftc', ['-O', path.join(__dirname, 'extract-page.swift'), '-o', extractor], { stdio: 'pipe' });
+  execFileSync(extractor, [path.join(dir, `${spec.id}.pdf`), path.join(OUT, `page5-${which}.pdf`), '5']);
   console.log(`page5-${which}: written`);
   return 0;
 }

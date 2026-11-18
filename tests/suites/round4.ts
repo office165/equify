@@ -148,6 +148,7 @@ export function run(): SuiteResult {
 
   creditChapterChecks(s, cases);
   calibrationHoldingCheck(s);
+  page5Checks(s, cases);
   if (resolveMethodVersion() === 'v2') findings29And30Checks(s, cases);
   return s.result;
 }
@@ -301,4 +302,21 @@ function calibrationHoldingCheck(s: Suite): void {
   s.check('calibration-holding', 'engine-way', r.nonOperatingSource === 'engine' && Math.abs(r.nonOperating - engine) < 1e-6 && Math.abs((resolveMethodVersion() === 'v2' ? r.v2 : r.v1) - d.equity) < 1e-3 * Math.max(1, Math.abs(d.equity)) && engine !== 3e6, `${r.nonOperating} vs ${engine}, v1 ${r.v1} vs ${d.equity}`);
   const fixed = evaluateCase(validateCase({ ...raw, nonOperatingAssets: { value: 3e6 } }), 'test.json');
   s.check('calibration-holding', 'fixed-way', fixed.nonOperatingSource === 'fixed' && fixed.nonOperating === 3e6, `${fixed.nonOperating}`);
+}
+
+/**
+ * Part D (display only): page 5 labels the raw Damodaran range as public companies, shows the range
+ * after the company's private company factors next to it, and no longer says "טווח הענף".
+ */
+function page5Checks(s: Suite, cases: CaseSpec[]): void {
+  for (const spec of sample(cases, 9)) {
+    const d = withCreditFlag(false, () => reportData(buildWizardState(spec), spec.id));
+    const html = withQuietConsole(() => buildEquifyPdfPages(d));
+    const im = d.industryMultiples;
+    if (!im) continue;
+    const old = /(בתוך|מתחת ל|מעל )טווח הענף/.test(html);
+    const pf = im.privateFactor;
+    const okPrivate = pf == null || (pf > 0 && pf < 1 && html.includes('חברה פרטית:') && html.includes('אחרי התאמות לחברה פרטית'));
+    s.check('page5-public-label', spec.id, !old && html.includes('חברות ציבוריות (Damodaran)') && okPrivate, `pf ${pf}`);
+  }
 }
