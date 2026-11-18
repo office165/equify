@@ -142,12 +142,17 @@ function defaultExecutiveSummary(data: ValuationData): string {
   const f = pdfFmt(data);
   // Round 5: "<model> במשקל <w>" (it read "DCF + WACC (13.4%) (36.1%)"); the backlog row is an addition, not a weight.
   const parts = data.modelBlend
-    .filter((r) => !isBacklogRow(r.name))
+    .filter((r) => !isBacklogRow(r.name) && r.weightPct > 0)
     .map((r) => `${escHtml(r.name)} במשקל ${weightPctHtml(f, r.weightPct)}`);
+  // Round 5: net cash is added, not "deducted as a negative net debt".
+  const debtPart =
+    data.netDebt < 0
+      ? `בתוספת מזומן נטו של ${f.moneyNarrative(-data.netDebt)}`
+      : `בניכוי חוב נטו של ${f.moneyNarrative(data.netDebt)}`;
   if (data.nonOperatingAssets) {
-    return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. בניכוי חוב נטו של ${f.moneyNarrative(data.netDebt)} ובתוספת נכסים שלא בפעילות של ${f.moneyNarrative(data.nonOperatingAssets.value)} (הערכה), השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
+    return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. ${debtPart} ובתוספת נכסים שלא בפעילות של ${f.moneyNarrative(data.nonOperatingAssets.value)} (הערכה), השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
   }
-  return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. בניכוי חוב נטו של ${f.moneyNarrative(data.netDebt)}, השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
+  return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. ${debtPart}, השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
 }
 
 function defaultDisclaimer(): string {

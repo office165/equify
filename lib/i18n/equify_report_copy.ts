@@ -260,10 +260,10 @@ export function ebitdaMultipleInterpretationCopy(
 }
 
 export const QUALITY_METHODOLOGY_COPY =
-  'ציון האיכות משקלל שבעה גורמים שמשפיעים על סיכון התזרים: יציבות הכנסות (חוזרות מול חד פעמיות), גיוון לקוחות (ריכוז מול פיזור), תלות במנהיגות או מייסדים, עוצמת התחרות בענף, הגנות קניין רוחני, אורך החוזים עם לקוחות, וקצב הצמיחה הצפוי. הציון הוא סכום הנקודות של הגורמים (עד 110), עם תקרה של 100.' as const;
+  'ציון האיכות משקלל שבעה גורמים שמשפיעים על סיכון התזרים: יציבות הכנסות (חוזרות מול חד פעמיות), גיוון לקוחות (ריכוז מול פיזור), תלות במנהיגות או מייסדים, עוצמת התחרות בענף, הגנות קניין רוחני, אורך החוזים עם לקוחות, וקצב הצמיחה הצפוי. הציון הוא סכום הנקודות של הגורמים לפני עיגול (עד 110), עם תקרה של 100.' as const;
 
 export const QUALITY_METHODOLOGY_COPY_EN =
-  'The Quality Score blends seven factors that affect cash-flow risk: revenue stability (recurring vs. one-off), customer diversification (concentration vs. spread), leadership or founder dependency, sector competition intensity, intellectual property protections, contract length with customers, and expected growth rate. The score is the sum of the factor points (up to 110), capped at 100.' as const;
+  'The Quality Score blends seven factors that affect cash-flow risk: revenue stability (recurring vs. one-off), customer diversification (concentration vs. spread), leadership or founder dependency, sector competition intensity, intellectual property protections, contract length with customers, and expected growth rate. The score is the sum of the factor points before rounding (up to 110), capped at 100.' as const;
 
 function qualityScoreInterpretationHe(grade: string): string {
   if (grade === 'A') return 'משמעו: עסק באיכות גבוהה, עם יציבות תזרים מובחנת.';
@@ -286,7 +286,7 @@ function qualityScoreInterpretationEn(grade: string): string {
 /** PDF page 7 — Quality Score narrative with live score and grade */
 export function qualityScoreIntroCopy(score: number, grade: string): string {
   const rounded = Math.round(score);
-  return `${QUALITY_METHODOLOGY_COPY} הציון שהתקבל (${rounded}/100, ${grade}) ${qualityScoreInterpretationHe(grade)}`;
+  return `${QUALITY_METHODOLOGY_COPY} הציון שהתקבל (\u2066${rounded}/100, ${grade}\u2069) ${qualityScoreInterpretationHe(grade)}`;
 }
 
 export function qualityScoreIntroCopyEn(score: number, grade: string): string {
