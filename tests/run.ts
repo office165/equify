@@ -17,6 +17,7 @@ import { run as runRound2 } from './suites/round2_fixes';
 import { run as runDamodaran } from './suites/damodaran';
 import { run as runV2Sanity } from './suites/v2_sanity';
 import { run as runRound3 } from './suites/round3';
+import { run as runCreditCapacity } from './credit_capacity.test';
 import type { MethodVersion } from '../lib/valuation/method_v2';
 
 const ROOT = path.join(__dirname, '..');
@@ -74,6 +75,7 @@ async function main(): Promise<void> {
     ['damodaran', runDamodaran, ['v1', 'v2']],
     ['v2-sanity', runV2Sanity, ['v2']],
     ['round3', runRound3, ['v1', 'v2']],
+    ['credit-capacity', runCreditCapacity, ['v1', 'v2']],
   ];
   const methodArg = process.argv.includes('--method') ? process.argv[process.argv.indexOf('--method') + 1] : null;
   const methods: MethodVersion[] = methodArg === 'v1' || methodArg === 'v2' ? [methodArg] : ['v1', 'v2'];
