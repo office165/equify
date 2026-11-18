@@ -5,7 +5,7 @@ import {
   readReportAccessToken,
   verifyReportAccessToken,
 } from '../../../lib/auth/report_access_token';
-import { buildPdfHtml, PDF_PAGE_COUNT } from '../../../lib/pdf-template';
+import { buildPdfHtml, reportPageCount } from '../../../lib/pdf-template';
 import {
   buildContentDisposition,
   defaultUtf8PdfFilename,
@@ -91,9 +91,9 @@ export async function POST(request: Request) {
   }
 
   const pages = countReportPages(html);
-  if (pages !== PDF_PAGE_COUNT) {
+  if (pages !== reportPageCount(valuationData)) {
     console.warn(
-      `[generate-pdf] Expected ${PDF_PAGE_COUNT} pages, built ${pages} for ${valuationData.reportId}`,
+      `[generate-pdf] Expected ${reportPageCount(valuationData)} pages, built ${pages} for ${valuationData.reportId}`,
     );
   }
 

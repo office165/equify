@@ -17,6 +17,7 @@ import {
 } from '../pdf/print/print_formatters';
 import { formatReportEvHeader, formatReportMillionsUnitFromProfile, normalizeCurrencyCode } from '../utils/formatCurrency';
 import { formatNetDebtLine } from '../format/currency';
+import { formatCreditAmount, SBC_SITE_URL } from '../credit/credit_chapter';
 import {
   buildEbitdaSensitivityTable,
   buildSensitivityMatrixTable,
@@ -250,6 +251,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
           <div class="wf-row"><span class="lbl">${netDebtRow.label}</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${wf.debtPct.toFixed(1)}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div>${netDebtRow.valueHtml}</div>
           ${data.nonOperatingAssets ? `<div class="wf-row"><span class="lbl">נכסים שלא בפעילות (הערכה)</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.nonOperatingPct.toFixed(1)}%;background:linear-gradient(90deg,#E8D9A8,#C9A84C)"></div></div><b>${f.money(data.nonOperatingAssets.value)}</b></div>` : ''}
           <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:'Assistant'">שווי לבעלים</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.equityPct.toFixed(1)}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${f.money(data.equity)}</b></div>
+          ${data.creditChapter ? `<p class="note credit-summary-line" style="margin:2mm 0 0">${escHtml(data.creditChapter.summaryLineHe)}</p>` : ''}
         </div>
       </section>
       <section class="page-section page-section--blend">
@@ -600,8 +602,98 @@ function buildPage8Combined(data: ValuationData): string {
   return wrapSheet(8, '', body, data.locale);
 }
 
+const LIEN_TYPE_HE: Record<string, string> = {
+  floating: 'שעבוד שוטף',
+  all_assets: 'שעבוד על כל הרכוש',
+  specific: 'שעבוד ספציפי',
+};
+
+/**
+ * Round 4 (CREDIT_CHAPTER): "כושר האשראי של העסק", after the financial data (page 4 of 9).
+ * Same style as the other pages. Every amount is a whole amount and the tables add up exactly
+ * (checkCreditChapterConsistency blocks the page otherwise).
+ */
+function buildCreditChapterPage(data: ValuationData): string {
+  const c = data.creditChapter!;
+  const amt = (v: number) => numHtml(formatCreditAmount(v, c.currency));
+  const minus = (v: number) => (v > 0 ? numHtml(formatCreditAmount(-v, c.currency)) : amt(0));
+  const pct = (v: number, d = 2) => numHtml(`${v.toFixed(d)}%`);
+  const ratio = (v: number) => numHtml(v.toFixed(2));
+  const termLabel = `${c.termYears} שנה, ריבית ${c.ratePct.toFixed(2)}%`;
+
+  const blocker = c.blocker.active
+    ? `<div class="callout red credit-blocker"><b>נדרש אישור הבנק הקיים לפני כל מימון חדש.</b> לעסק יש ${escHtml(LIEN_TYPE_HE[c.liens.type ?? ''] ?? 'שעבוד')} לטובת בנק, ולכן כל מימון חדש מחייב את הסכמתו.</div>`
+    : '';
+
+  const numbers =
+    c.status === 'no_capacity'
+      ? `<div class="callout credit-explanation">${escHtml(c.explanationHe ?? '')}</div>`
+      : `
+    <table class="report-table report-table--credit">
+      <tr><th>תזרים לשירות חוב</th><th>היום (${escHtml(c.today.label)})</th><th>בשיא (${escHtml(c.peak.label)})</th></tr>
+      <tr><td>EBITDA מנורמל</td><td class="n">${amt(c.today.ebitda)}</td><td class="n">${amt(c.peak.ebitda)}</td></tr>
+      <tr><td>מס</td><td class="n">${minus(c.today.tax)}</td><td class="n">${minus(c.peak.tax)}</td></tr>
+      <tr><td>השקעות שוטפות</td><td class="n">${minus(c.today.maintenanceCapex)}</td><td class="n">${minus(c.peak.maintenanceCapex)}</td></tr>
+      <tr class="sum"><td>תזרים לשירות חוב (CFADS)</td><td class="n">${amt(c.today.cfads)}</td><td class="n">${amt(c.peak.cfads)}</td></tr>
+      <tr><td>כושר החזר (${escHtml(termLabel)})</td><td class="n">${amt(c.today.capacity)}</td><td class="n">${amt(c.peak.capacity)}</td></tr>
+    </table>
+    ${
+      c.status === 'no_room'
+        ? `<div class="callout credit-explanation">${escHtml(c.explanationHe ?? '')}</div>`
+        : `<table class="report-table report-table--credit">
+      <tr><th>שלב ראשון (לפי התזרים של היום)</th><th>סכום</th></tr>
+      <tr><td>תקרה לפי ענף (${pct(c.ceilingPct * 100, 0)} מכושר ההחזר)</td><td class="n">${amt(c.ceiling)}</td></tr>
+      <tr class="sum"><td>שלב ראשון מוצע</td><td class="n">${amt(c.firstStage)}</td></tr>
+      <tr><td>החזר חודשי על השלב הראשון</td><td class="n">${amt(c.firstStageMonthly)}</td></tr>
+      <tr><td>החזר שנתי על השלב הראשון</td><td class="n">${amt(c.firstStageAnnual)}</td></tr>
+      <tr><td>החזר שנתי על ההלוואות הקיימות</td><td class="n">${amt(c.existingAnnual)}</td></tr>
+      <tr class="sum"><td>סך ההחזר השנתי</td><td class="n">${amt(c.totalAnnual)}</td></tr>
+      <tr><td>יחס כיסוי (רף הענף ${ratio(c.minDscr)})</td><td class="n">${c.dscr != null ? ratio(c.dscr) : ''}</td></tr>
+    </table>`
+    }`;
+
+  const ownerBox =
+    c.ownerLoans > 0
+      ? `<div class="box tint credit-owner-loans"><h3>הלוואות בעלים</h3><p style="margin:0 0 2mm">הלוואות בעלים של ${amt(c.ownerLoans)} נחשבות היום חלק מהחוב. אם הבעלים חותמים על כתב נחיתות, כלומר מתחייבים לא לקבל אותן בחזרה לפני שהמימון החדש נפרע, גוף מממן יכול לראות בהן הון.</p>
+      <table class="report-table report-table--credit"><tr><td>חוב נטו עם הלוואות הבעלים</td><td class="n">${amt(c.netDebtWithOwnerLoans)}</td></tr><tr><td>חוב נטו בלעדיהן (בהנחת כתב נחיתות)</td><td class="n">${amt(c.netDebtWithoutOwnerLoans)}</td></tr></table></div>`
+      : '';
+
+  const debtLine = `<p class="note">החוב היום: חוב ברוטו של ${amt(c.grossDebt)} ומזומן של ${amt(c.cash)}. טווח ריבית סביר לענף: ${pct(c.rateRangePct[0])} עד ${pct(c.rateRangePct[1])} (פריים ${pct(c.primeRatePct)} ועוד מרווח הענף). זה טווח להערכה בלבד, והריבית בפועל נקבעת על ידי הגוף המממן.</p>`;
+
+  const cta = `<div class="callout gold credit-cta"><b>רוצים שנבדוק את זה מול כ 40 גופים מממנים?</b> ב SBC אנחנו מלווים עסקים בייעוץ מימון: בונים את בקשת האשראי, מתאימים את מבנה המימון לעסק ומציגים אותו לגופים המממנים המתאימים. הבדיקה לא מבטיחה אישור, סכום או ריבית. <a href="${escHtml(SBC_SITE_URL)}" style="color:var(--pine);font-weight:700">${escHtml(SBC_SITE_URL.replace(/^https?:\/\//, ''))}</a></div>`;
+
+  const body = `
+  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  <div class="rule-grad"></div>
+  <div class="body credit-chapter">
+    <span class="eyebrow">04 · כושר האשראי של העסק</span>
+    <h2>כושר האשראי של העסק</h2>
+    <p class="sub">כמה אשראי העסק יכול לשאת לפי התזרים שלו, בשיטת תקן SBC לבקשות אשראי. כושר החזר הוא הסכום שהתזרים לשירות חוב של היום מחזיר על פני תקופת ההלוואה המקובלת בענף. שלב ראשון הוא סכום שמרני: בתוך התקרה של הענף, ובלי שיחס הכיסוי ירד מהרף שלו.</p>
+    ${blocker}
+    ${numbers}
+    ${debtLine}
+    ${ownerBox}
+    ${cta}
+    <p class="note sens-note">${escHtml(c.sourcesHe)} החישוב הוא אינדיקציה ולא התחייבות למימון.</p>
+  </div>`;
+  return wrapSheet(4, '', body, data.locale);
+}
+
+/** Pages after the credit chapter move by one; the total becomes 9. */
+function renumberPage(html: string, newPage: number | null, total: number): string {
+  let out = html.replace(/(<span class="foot-r foot-pg">(?:עמוד|Page) <b>)(\d+)(<\/b> \/ )(\d+)/, (_m, a, p, b) => `${a}${newPage ?? p}${b}${total}`);
+  if (newPage != null) {
+    out = out.replace(/(<span class="eyebrow"[^>]*>(?:[^<]*?))(\d{2})( · )/, (_m, a, _n, b) => `${a}${String(newPage).padStart(2, '0')}${b}`);
+  }
+  return out;
+}
+
+export function equifyPdfPageCount(data: Pick<ValuationData, 'creditChapter'>): number {
+  return TOTAL_PAGES + (data.creditChapter ? 1 : 0);
+}
+
 export function buildEquifyPdfPages(data: ValuationData): string {
-  return [
+  const pages = [
     buildPage1Cover(data),
     buildPage2ExecSummary(data),
     buildPage3Financials(data),
@@ -610,6 +702,14 @@ export function buildEquifyPdfPages(data: ValuationData): string {
     buildPage6Scenarios(data),
     buildPage7QualitySensitivity(data),
     buildPage8Combined(data),
+  ];
+  if (!data.creditChapter) return pages.join('\n');
+  // Round 4: the credit chapter goes after the financial data; the pages after it move by one.
+  const total = equifyPdfPageCount(data);
+  return [
+    ...pages.slice(0, 3).map((p) => renumberPage(p, null, total)),
+    renumberPage(buildCreditChapterPage(data), 4, total),
+    ...pages.slice(3).map((p, i) => renumberPage(p, i + 5, total)),
   ].join('\n');
 }
 

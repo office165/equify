@@ -3,7 +3,7 @@ import {
   pdfDocumentDir,
   resolvePdfLocale,
 } from './pdf/print/print_formatters';
-import { buildEquifyPdfPages, EQUIFY_PDF_PAGE_COUNT } from './pdf-template/equify-pdf-pages';
+import { buildEquifyPdfPages, EQUIFY_PDF_PAGE_COUNT, equifyPdfPageCount } from './pdf-template/equify-pdf-pages';
 import { buildEquifyPdfCss } from './pdf-template/equify-pdf-styles';
 import type { ValuationData } from './pdf-template/types';
 import { assertValuationDataCoherence } from './pdf-template/validate-valuation-data';
@@ -30,6 +30,11 @@ export type {
 } from './pdf-template/types';
 
 export const PDF_PAGE_COUNT = EQUIFY_PDF_PAGE_COUNT;
+
+/** Pages of this report: 8, or 9 with the credit chapter (round 4, CREDIT_CHAPTER). */
+export function reportPageCount(data: Pick<ValuationData, 'creditChapter'>): number {
+  return equifyPdfPageCount(data);
+}
 
 /**
  * בונה HTML מלא להדפסה — 8 עמודי A4 (equify-report-source) עם SVG דינמי.

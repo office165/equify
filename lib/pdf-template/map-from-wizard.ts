@@ -2,6 +2,8 @@ import { waccV2SourceNoteHe } from '../valuation/method_v2';
 import { dcfMarketabilityLinesHe, sizePremiumLineHe } from '../valuation/private_company_layer';
 import { CAPM_CORPORATE_TAX_RATE } from '../valuation/capm_wacc';
 import { formatNetDebtLine } from '../format/currency';
+import { isCreditChapterOn } from '../credit/flag';
+import { buildCreditChapterData, checkCreditChapterConsistency, type CreditChapterData } from '../credit/credit_chapter';
 import {
   computeScenarios,
   computeValuation,
@@ -646,6 +648,27 @@ function buildModelBlendRows(
   return rows;
 }
 
+/**
+ * Round 4: credit chapter data, only with CREDIT_CHAPTER on and the credit questions answered.
+ * The page is blocked (not built) when its amounts do not add up exactly.
+ */
+function resolveCreditChapter(
+  state: EquifyWizardState,
+  inputs: ValuationInputs,
+  fxComputed: ValuationComputed,
+  fxMultiplier: number,
+): CreditChapterData | undefined {
+  if (!isCreditChapterOn() || !state.credit) return undefined;
+  const data = buildCreditChapterData({ state, inputs, computed: fxComputed, fxMultiplier });
+  if (!data) return undefined;
+  const violations = checkCreditChapterConsistency(data);
+  if (violations.length) {
+    console.warn('[credit-chapter] blocked, amounts do not add up:', violations.join('; '));
+    return undefined;
+  }
+  return data;
+}
+
 /** Maps pre-computed engine output to PDF layout fields — no valuation math. */
 export function mapEngineResultToValuationData(
   syncedState: EquifyWizardState,
@@ -838,6 +861,15 @@ export function mapEngineResultToValuationData(
           },
         }
       : {}),
+    ...(() => {
+      const creditChapter = resolveCreditChapter(
+        syncedState,
+        inputs,
+        fxComputed,
+        getIlsToReportingMultiplier(reportingCurrency, fxRates),
+      );
+      return creditChapter ? { creditChapter } : {};
+    })(),
     dcfEv: kToNis(fxComputed.dcf),
     ebitdaEv: kToNis(fxComputed.ebtMult),
     revenueEv: kToNis(fxComputed.revMult),

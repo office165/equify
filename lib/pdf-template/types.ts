@@ -215,6 +215,8 @@ export interface ValuationData {
     companyValue: number;
     multiple?: number;
   };
+  /** Round 4 (CREDIT_CHAPTER): the credit chapter page. Absent when the flag is off or the page is blocked. */
+  creditChapter?: import('../credit/credit_chapter').CreditChapterData;
   ebitdaEv: number;
   revenueEv: number;
   waccPct: number;

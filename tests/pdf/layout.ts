@@ -7,16 +7,17 @@
  * in the DOM, the page count is read from the PDF, and only the PNG images are skipped.
  */
 import path from 'path';
-import { EXPECTED_PAGES, ROOT, caseHtml, checkLayout, launch, pdfCases, rasterizerStatus, renderCase } from './pdf_harness';
+import { ROOT, caseHtml, checkLayout, creditMode, expectedPages, launch, pdfCases, rasterizerStatus, renderCase } from './pdf_harness';
 
 async function main(): Promise<void> {
   const t0 = Date.now();
   const browser = await launch();
   const failures: string[] = [];
-  console.log(`pdf-layout: ${rasterizerStatus()}`);
+  console.log(`pdf-layout: ${rasterizerStatus()}${creditMode() ? ', CREDIT_CHAPTER on' : ''}`);
   try {
     for (const spec of pdfCases()) {
       const html = caseHtml(spec);
+      const EXPECTED_PAGES = expectedPages(spec);
       const layout = await checkLayout(browser, html);
       const pdfPages = await renderCase(browser, spec, path.join(ROOT, 'tmp', 'pdf-layout'));
       const caseFailures: string[] = [];

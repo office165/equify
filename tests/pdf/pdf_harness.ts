@@ -12,13 +12,17 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import puppeteer, { type Browser } from 'puppeteer-core';
-import { buildPdfHtml, PDF_PAGE_COUNT } from '../../lib/pdf-template';
+import { buildPdfHtml, PDF_PAGE_COUNT, reportPageCount } from '../../lib/pdf-template';
+import { mapWizardToValuationData } from '../../lib/pdf-template/map-from-wizard';
+import type { ValuationData } from '../../lib/pdf-template/types';
+import type { EquifyWizardCredit } from '../../lib/wizard/map_equify_wizard';
+import { buildWizardState } from '../lib/fixtures';
+import { TEST_FX } from '../lib/run_case';
 import { renderHtmlToPdfBuffer } from '../../lib/pdf/render_html_pdf';
 import { probeLocalChromeExecutable } from '../../lib/pdf/resolve_chrome_executable';
 import { ANCHOR_CASES, type CaseSpec } from '../lib/fixtures';
 import { GOLDEN_CASES } from '../lib/golden';
 import { withQuietConsole } from '../lib/quiet';
-import { runCase } from '../lib/run_case';
 
 export const ROOT = path.join(__dirname, '..', '..');
 
@@ -31,16 +35,57 @@ const GOLDEN_FOR_PDF = [
   'golden-large-industrial',
 ];
 
+/** Round 4: CREDIT_CHAPTER=on renders every case with credit answers (the chapter is page 4 of 9). */
+export function creditMode(): boolean {
+  return process.env.CREDIT_CHAPTER?.trim().toLowerCase() === 'on';
+}
+
+/** Round 4: the case with every credit question answered (owner loans, a bank lien, a subsidiary). */
+export const CREDIT_FULL_CASE_ID = 'credit-full-subsidiary';
+
+/** Basic answers for the 13 cases: a monthly loan payment of 0.6% of the gross debt, nothing else. */
+export function caseCredit(spec: CaseSpec): EquifyWizardCredit {
+  if (spec.id === CREDIT_FULL_CASE_ID) {
+    return {
+      monthlyDebtServiceK: Math.round(spec.grossDebt * 0.006),
+      ownerLoans: { has: true, amountK: Math.round(spec.grossDebt * 0.3) },
+      liens: { has: true, holder: 'bank', type: 'floating' },
+      nonOperating: { has: true, holdingPct: 75, preTaxProfitK: Math.round(spec.y[2][1] * 0.25), estimatedValueK: 0 },
+    };
+  }
+  return {
+    monthlyDebtServiceK: Math.round(spec.grossDebt * 0.006),
+    ownerLoans: { has: false, amountK: 0 },
+    liens: { has: false, holder: '', type: '' },
+    nonOperating: { has: false, holdingPct: 0, preTaxProfitK: 0, estimatedValueK: 0 },
+  };
+}
+
 /** 7 anchors and 6 varied golden cases (restaurant, hotel, SaaS, factory, income RE, 1B company). */
 export function pdfCases(): CaseSpec[] {
   const all = [...ANCHOR_CASES, ...GOLDEN_FOR_PDF.map((id) => GOLDEN_CASES.find((c) => c.id === id)!)];
+  if (creditMode()) {
+    const factory = GOLDEN_CASES.find((c) => c.id === 'golden-manufacturing')!;
+    all.push({ ...factory, id: CREDIT_FULL_CASE_ID });
+  }
   const only = process.env.PDF_ONLY?.split(',').map((x) => x.trim()).filter(Boolean);
   return only?.length ? all.filter((c) => only.includes(c.id)) : all;
 }
 
+export function caseData(spec: CaseSpec): ValuationData {
+  const state = buildWizardState(spec);
+  if (creditMode()) state.credit = caseCredit(spec);
+  return withQuietConsole(() => mapWizardToValuationData(state, `TEST-${spec.id}`, 'he', TEST_FX));
+}
+
 export function caseHtml(spec: CaseSpec): string {
-  const data = runCase(spec);
+  const data = caseData(spec);
   return withQuietConsole(() => buildPdfHtml(data));
+}
+
+/** 8 pages, or 9 with the credit chapter. */
+export function expectedPages(spec: CaseSpec): number {
+  return reportPageCount(caseData(spec));
 }
 
 function resolveChrome(): string {
