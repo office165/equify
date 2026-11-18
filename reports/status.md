@@ -1,18 +1,31 @@
 # אקוויפי: מצב בעמוד אחד
 
-עודכן: 18.11.2026, 22:06, אחרי סבב 5 (לילה של סבבים 5 עד 9). פירוט מלא: `reports/round-5.md`.
+עודכן: 18.11.2026, 22:25, אחרי סבב 6 (לילה של סבבים 5 עד 9). פירוט: `reports/round-5.md`, `reports/round-6.md`.
 
 ## לילה 18.11: סבבים 5 עד 9
 
 | סבב | ענף | מצב |
 |---|---|---|
 | 5: בדיקת Big 4 של הדוח | `round-5` (מתוך main) | נעשה |
-| 6: אתר, SEO ו GEO | `round-6` (מתוך round-5) | הבא |
-| 7: נספח Excel וניתוח Opus | `round-7` | ממתין |
+| 6: אתר, SEO ו GEO | `round-6` (מתוך round-5) | נעשה (מהירות בטלפון: חלקית) |
+| 7: נספח Excel וניתוח Opus | `round-7` (מתוך round-6) | הבא |
 | 8: דופק וחוסרים משפטיים | `round-8` | ממתין |
 | 9: upay וחשבונית ירוקה | `round-9` | ממתין |
 
-**הצעד הבא (להמשך אחרי עצירה):** סבב 6, צעד 1: `git checkout round-5 && git checkout -b round-6`, ואז sitemap ו robots.
+**הצעד הבא (להמשך אחרי עצירה):** סבב 7, צעד 1: `git checkout round-6 && git checkout -b round-7`, ואז נספח Excel (`EXCEL_APPENDIX`).
+
+## סבב 6 בקצרה
+
+| נושא | מצב אחרי סבב 6 |
+|---|---|
+| ענף | `round-6` (מתוך round-5), קומיט אחד, לא נדחף |
+| SEO | robots.txt ו sitemap.xml דינמיים (רק עמודים ציבוריים, preview חסום), canonical לכל עמוד על equify.co.il, noindex לאשף, לתוצאות ולדוח, כותרות בלי כפילות |
+| JSON-LD | Organization, WebSite, Service (999 ₪), FAQPage עם 4 שאלות מהאתר |
+| GEO | `public/llms.txt` |
+| דגלים חדשים | `NEXT_PUBLIC_ANALYTICS` (Vercel Analytics ו Speed Insights), `NEXT_PUBLIC_GSC_VERIFICATION`. שניהם כבויים |
+| מהירות בטלפון | בית 77, אשף 86, לפני ואחרי. ה LCP הוא מסך הפתיחה והאנימציה, כלומר עיצוב |
+| ממצאים | עמוד הבית טוען "12 עסקאות M&A בישראל", משקלות קבועים 50/30/20 ושיטת נכסים. כל אלה לא נכונים היום. לא תוקן, צריך אישור טקסט |
+| בדיקות | סוויטה `round6`, `npm test` בשני המצבים, tsc ו build ירוקים |
 
 ## סבב 5 בקצרה
 

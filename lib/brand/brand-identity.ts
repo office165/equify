@@ -5,9 +5,10 @@ export const BRAND_NAME_SHORT = 'equify';
 export const BRAND_SUB = 'BY SBC';
 
 /** Home `/` SEO — also drives default + OG/Twitter via site-metadata. */
-export const HOME_TITLE = 'כמה שווה העסק שלך? הערכת שווי ב-10 דקות | equify';
+export const HOME_TITLE = 'כמה שווה העסק שלך? הערכת שווי ב 10 דקות | equify';
 export const HOME_DESCRIPTION =
-  'הערכת שווי לעסק בישראל, מבוססת DCF ומכפילי עסקאות M&A מקומיות. דוח PDF מלא תוך דקות, בלי פגישות ובלי אלפי שקלים. מתחילים בחינם.';
+  // Round 6: the old text said "מכפילי עסקאות M&A מקומיות"; the multiples are of public companies (Damodaran).
+  'הערכת שווי לעסקים קטנים ובינוניים בישראל, לפי DCF, מכפילי EBITDA ומכפילי הכנסות. ממלאים אשף ומקבלים דוח PDF מפורט. אינדיקציה אלגוריתמית, לא חוות דעת חתומה.';
 
 /** Aliases — keep call sites in sync with HOME_* (single source). */
 export const BRAND_TITLE = HOME_TITLE;

@@ -5,12 +5,13 @@ import {
   HOME_TITLE,
 } from '../lib/brand/brand-identity';
 
-function resolveSiteUrl(): URL {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'https://equify.co.il';
-  return new URL(raw.endsWith('/') ? raw : `${raw}/`);
-}
+import { SITE_ORIGIN } from '../lib/seo/site';
 
-export const siteUrl = resolveSiteUrl();
+// Round 6: canonical base is always the equify.co.il domain (lib/seo/site.ts).
+export const siteUrl = new URL(`${SITE_ORIGIN}/`);
+
+/** Search Console verification, shown only when NEXT_PUBLIC_GSC_VERIFICATION is set. */
+const gscVerification = process.env.NEXT_PUBLIC_GSC_VERIFICATION?.trim();
 
 const title = HOME_TITLE;
 const description = HOME_DESCRIPTION;
@@ -19,7 +20,7 @@ export const rootMetadata: Metadata = {
   metadataBase: siteUrl,
   title: {
     default: title,
-    template: `%s · ${BRAND_NAME}`,
+    template: `%s | ${BRAND_NAME}`,
   },
   description,
   applicationName: BRAND_NAME,
@@ -43,11 +44,8 @@ export const rootMetadata: Metadata = {
   },
   alternates: {
     canonical: '/',
-    languages: {
-      'en-IL': '/',
-      'he-IL': '/',
-    },
   },
+  ...(gscVerification ? { verification: { google: gscVerification } } : {}),
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
@@ -59,7 +57,6 @@ export const rootMetadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'he_IL',
-    alternateLocale: ['en_US', 'en_IL'],
     url: '/',
     siteName: BRAND_NAME,
     title,
@@ -80,7 +77,6 @@ export const rootMetadata: Metadata = {
     images: ['/equify-icon.png'],
   },
   other: {
-    'og:locale:alternate': 'en_US',
     'linkedin:owner': BRAND_NAME,
   },
 };

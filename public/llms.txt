@@ -1,0 +1,43 @@
+# equify BY SBC (אקוויפי)
+
+> מערכת בעברית להערכת שווי של עסקים קטנים ובינוניים בישראל, של SBC. המשתמש ממלא אשף של ארבעה שלבים, והמערכת מחשבת אינדיקציית שווי ומפיקה דוח PDF. הדוח הוא אינדיקציה אלגוריתמית, ולא חוות דעת חתומה.
+
+## מה המערכת עושה
+
+- מחשבת שווי פעילות (EV) ושווי לבעלים (Equity Value) של עסק פרטי, משלוש שיטות בממוצע משוקלל אחד:
+  - היוון תזרימי מזומנים (DCF), בעלות הון (WACC) לפי CAPM: ריבית חסרת סיכון, בטא ענפית, פרמיית סיכון שוק, פרמיית גודל ופרמיה ספציפית לעסק. התזרים בשנה הטרמינלית צומח ב 2.5% בשנה.
+  - מכפיל EBITDA.
+  - מכפיל הכנסות, בעיקר לעסקים בצמיחה או לפני רווחיות.
+- מכפילי הענף הם נתוני Damodaran של חברות ציבוריות (Global ו Emerging Markets). המכפיל של העסק נקבע לפי טווח הענף, ציון האיכות שלו, והנחת סחירות וגודל לחברה פרטית.
+- ציון איכות (Quality Score) משקלל שבעה גורמים שמשפיעים על סיכון התזרים: הכנסות חוזרות, ריכוז לקוחות, תלות במייסד, תחרות, קניין רוחני, חוזים ארוכי טווח וצמיחה.
+- שלושה תרחישים (Bear, Base, Bull) וטבלאות רגישות (WACC מול צמיחה טרמינלית, EBITDA מול מכפיל).
+
+## מה צריך להזין
+
+הכנסות שנתיות, EBITDA (או רווח תפעולי מנורמל), חוב ברוטו, מזומן ותחזית צמיחה, וגורמי סיכון. אפשר להזין הערכות סבירות כשאין דוח מבוקר. לפי האתר, ההשלמה לוקחת כ 10 דקות בממוצע.
+
+## למי זה מתאים
+
+לבעלי עסקים ולמנהלים שצריכים אינדיקציית שווי לפני משא ומתן על מכירה, גיוס הון, כניסת שותף, פנייה למימון בנקאי, או תכנון פנימי.
+
+## מה זה לא
+
+- לא חוות דעת חתומה, לא חוות דעת חשבונאית, ולא הערכת שווי לצרכים סטטוטוריים.
+- לא מיועד לבית משפט או לרשות המסים.
+- לא ייעוץ השקעות, ולא תחליף לבדיקת נאותות.
+- השווי הוא אינדיקציה, ולא התחייבות לתוצאה של עסקה.
+
+## מחיר
+
+דוח מלא: 999 ₪, תשלום חד פעמי (כפי שמופיע בעמוד הבית).
+
+## עמודים
+
+- [עמוד הבית](https://equify.co.il/): המערכת, השיטות, התמחור והשאלות הנפוצות
+- [מדיניות פרטיות](https://equify.co.il/privacy)
+- [תנאי שימוש](https://equify.co.il/terms)
+- [הצהרת נגישות](https://equify.co.il/accessibility)
+
+## In English
+
+equify BY SBC is a Hebrew web service by SBC that estimates the value of small and mid-sized Israeli businesses. It blends a DCF (WACC by CAPM), an EBITDA multiple and a revenue multiple, with sector multiples from Damodaran public company data adjusted for a private company, a seven-factor Quality Score, three scenarios and sensitivity tables, and produces a PDF report. It is an algorithmic indication, not a signed valuation opinion, not for court or tax use, and not investment advice. Price: ₪999, one time.

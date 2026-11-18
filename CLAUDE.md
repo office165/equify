@@ -37,6 +37,19 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | מטא ו SEO | `app/site-metadata.ts`, `app/layout.tsx`, אימות Search Console ב `public/google14add48e078b922c.html` |
 | מיגרציות | `supabase/migrations/` (הנוכחי). `migrations/` ו `schema.sql` ישנים |
 
+## דגלים (כולם כבויים כברירת מחדל)
+
+| דגל | מה הוא מדליק | סבב |
+|---|---|---|
+| `METHOD_V2` | מתודולוגיה 2 במנוע ובדוח | 2 |
+| `CREDIT_CHAPTER` (וגם `NEXT_PUBLIC_CREDIT_CHAPTER` לאשף) | שאלות אשראי באשף ופרק כושר האשראי בדוח | 4 |
+| `PAYWALL_V2`, `PAYPAL_USD`, `LEAD_VALUE_FROM_REPORT` | ראו `reports/round-1.md` | 1 |
+| `NEXT_PUBLIC_ANALYTICS` | Vercel Analytics ו Speed Insights (`components/analytics/SiteAnalytics.tsx`). נכנס בזמן בנייה | 6 |
+| `NEXT_PUBLIC_GSC_VERIFICATION` | תגית אימות של Search Console, רק כשמוגדר | 6 |
+
+SEO: `app/robots.ts`, `app/sitemap.ts`, `lib/seo/` (דומיין canonical קבוע equify.co.il, metadata, JSON-LD), `public/llms.txt`.
+כללי הכתיבה בדוח נבדקים ב `npm test` (סוויטה `round5`, `lib/report/report_text_rules.ts`).
+
 ## מודל שפה
 
 קריאה אחת בלבד בכל המערכת: `lib/wizard/sector_suggest_llm.ts`.

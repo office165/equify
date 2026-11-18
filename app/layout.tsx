@@ -4,6 +4,7 @@ import './globals.css';
 import { BRAND_NAME } from '../lib/brand/brand-identity';
 import { rootMetadata } from './site-metadata';
 import { AppProviders } from '../components/shared/AppProviders';
+import { SiteAnalytics } from '../components/analytics/SiteAnalytics';
 
 const assistant = Assistant({
   subsets: ['hebrew', 'latin'],
@@ -54,6 +55,7 @@ export default function RootLayout({
         className={`${assistant.variable} ${ibmPlexMono.variable} ${assistant.className} min-h-[100dvh] bg-[#020504] pb-safe text-slate-50 antialiased`}
       >
         <AppProviders>{children}</AppProviders>
+        <SiteAnalytics />
       </body>
     </html>
   );
