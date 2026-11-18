@@ -1,0 +1,32 @@
+{
+ "home-desktop": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "help": "Elements must meet minimum color contrast ratio thresholds",
+   "count": 1,
+   "examples": [
+    {
+     "target": ".stats-kicker",
+     "html": "<p class=\"stats-kicker\">למה equify</p>"
+    }
+   ]
+  }
+ ],
+ "home-mobile": [
+  {
+   "id": "color-contrast",
+   "impact": "serious",
+   "help": "Elements must meet minimum color contrast ratio thresholds",
+   "count": 1,
+   "examples": [
+    {
+     "target": ".stats-kicker",
+     "html": "<p class=\"stats-kicker\">למה equify</p>"
+    }
+   ]
+  }
+ ],
+ "wizard-desktop": [],
+ "wizard-mobile": []
+}
