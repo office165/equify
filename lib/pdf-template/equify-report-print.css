@@ -154,6 +154,8 @@ p{line-height:var(--pdf-lh-body);color:var(--ink);margin-bottom:1.5mm;font-size:
 .page-body--multiples .page-section--tracks .box{margin:0;padding:5mm}
 .page-body--multiples .page-section--comps .report-table{margin:0}
 .page-body--multiples .page-section--compare .report-table{margin:0}
+/* Round 5: page 5 has two sections; spreading them left a gap of about 40% of the page between the chart and the table. */
+.page-body--multiples .page-stack{justify-content:flex-start;min-height:0}
 
 /* Page 7 — keep quality + both sensitivity tables on-sheet with footer visible */
 .page-body--quality{

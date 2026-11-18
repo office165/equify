@@ -213,9 +213,10 @@ export function equityTriCurrencyCoverHtml(data: {
 
   const isFallback = data.fxSource === 'fallback' || data.fxAsOf === 'static' || !data.fxAsOf;
   // Fallback rates show their own date, never today's date (round 1, finding 8).
-  const fxDate = escHtml(
-    data.fxAsOf && data.fxAsOf !== 'static' ? data.fxAsOf : FX_FALLBACK_AS_OF,
-  );
+  // Round 5 (display only): the date in the same format as the rest of the report (dd.mm.yyyy).
+  const fxRaw = data.fxAsOf && data.fxAsOf !== 'static' ? data.fxAsOf : FX_FALLBACK_AS_OF;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(fxRaw);
+  const fxDate = escHtml(iso ? `${iso[3]}.${iso[2]}.${iso[1]}` : fxRaw);
 
   const secondaryLines = [
     usd ? `<div class="cv-fx-line">≈ ${usd} USD${usdRate ? ` <span class="cv-fx-rate">(שער: ${numHtml(usdRate)})</span>` : ''}</div>` : '',
@@ -225,15 +226,16 @@ export function equityTriCurrencyCoverHtml(data: {
     .join('');
 
   const footnote = isFallback
-    ? `<div class="cv-fx-footnote">שער גיבוי, נכון ל-${fxDate}</div>`
-    : `<div class="cv-fx-footnote">שערי המרה נכון ל-${fxDate} לפי שוק הבינלאומי</div>`;
+    ? `<div class="cv-fx-footnote">שער גיבוי, נכון ליום ${fxDate}</div>`
+    : `<div class="cv-fx-footnote">שערי המרה נכונים ליום ${fxDate}, לפי השוק הבינלאומי</div>`;
 
   return `<div class="cv-tri-currency">${primary}${secondaryLines ? `<div class="cv-fx-secondary">${secondaryLines}</div>` : ''}${footnote}</div>`;
 }
 
+/** Round 5: one multiple format in the report, "×2.7" (same as multHtml). */
 export function fmtMultipleHtml(value: number | null | undefined): string {
-  if (!isMeaningfulNumber(value)) return numHtml('—');
-  return numHtml(`${value.toFixed(1)}x`);
+  if (!isMeaningfulNumber(value)) return numHtml('אין נתון');
+  return numHtml(`×${value.toFixed(1)}`);
 }
 
 export function fmtPercentHtml(

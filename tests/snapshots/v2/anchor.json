@@ -24,8 +24,8 @@
   "terminalPvM": 2.06,
   "terminalSharePct": 54.79,
   "netDebt": 600000,
-  "keyFindings": "Quality C+ · WACC 13.5% · EBITDA מדווח 2026 615K ₪ · בסיס מכפיל 570K ₪ ×2.4 · TV 55% מ-DCF.",
-  "ebitdaBlendedNote": "שקלול 30/50/20 · עבר 560K ₪ · נוכחי 615K ₪ · תחזית (+6.0%) 652K ₪ · בסיס 606K ₪"
+  "keyFindings": "Quality C+, WACC 13.5%, EBITDA מדווח 2026 615K ₪, בסיס מכפיל 570K ₪ ×2.4, TV 55% מה DCF.",
+  "ebitdaBlendedNote": "שקלול 30/50/20, עבר 560K ₪, נוכחי 615K ₪, תחזית (+6.0%) 652K ₪, בסיס 606K ₪"
  },
  "anchor-2-saas": {
   "equity": 46102250,
@@ -52,8 +52,8 @@
   "terminalPvM": 6.24,
   "terminalSharePct": 51.1,
   "netDebt": -3000000,
-  "keyFindings": "Quality A · WACC 16.4% · EBITDA מדווח 2026 2.3M ₪ · בסיס מכפיל 2.3M ₪ ×5.0 · TV 51% מ-DCF.",
-  "ebitdaBlendedNote": "שקלול 30/50/20 · עבר 1.3M ₪ · נוכחי 2.3M ₪ · תחזית (+30.0%) 3.0M ₪ · בסיס 2.1M ₪"
+  "keyFindings": "Quality A, WACC 16.4%, EBITDA מדווח 2026 2.3M ₪, בסיס מכפיל 2.3M ₪ ×5.0, TV 51% מה DCF.",
+  "ebitdaBlendedNote": "שקלול 30/50/20, עבר 1.3M ₪, נוכחי 2.3M ₪, תחזית (+30.0%) 3.0M ₪, בסיס 2.1M ₪"
  },
  "anchor-3-contractor": {
   "equity": 3412720,
@@ -80,8 +80,8 @@
   "terminalPvM": 4.46,
   "terminalSharePct": 56.84,
   "netDebt": 4500000,
-  "keyFindings": "Quality C+ · WACC 11.6% · EBITDA מדווח 2026 2.4M ₪ · בסיס מכפיל 2.1M ₪ ×4.0 · TV 57% מ-DCF.",
-  "ebitdaBlendedNote": "שקלול 30/50/20 · עבר 2.1M ₪ · נוכחי 2.4M ₪ · תחזית (+8.0%) 2.6M ₪ · בסיס 2.3M ₪"
+  "keyFindings": "Quality C+, WACC 11.6%, EBITDA מדווח 2026 2.4M ₪, בסיס מכפיל 2.1M ₪ ×4.0, TV 57% מה DCF.",
+  "ebitdaBlendedNote": "שקלול 30/50/20, עבר 2.1M ₪, נוכחי 2.4M ₪, תחזית (+8.0%) 2.6M ₪, בסיס 2.3M ₪"
  },
  "anchor-4-accounting": {
   "equity": 2889820,
@@ -108,8 +108,8 @@
   "terminalPvM": 1.78,
   "terminalSharePct": 54.43,
   "netDebt": -300000,
-  "keyFindings": "Quality B · WACC 14.8% · EBITDA מדווח 2026 500K ₪ · בסיס מכפיל 479K ₪ ×5.4 · TV 54% מ-DCF.",
-  "ebitdaBlendedNote": "שקלול 30/50/20 · עבר 480K ₪ · נוכחי 500K ₪ · תחזית (+4.0%) 520K ₪ · בסיס 498K ₪"
+  "keyFindings": "Quality B, WACC 14.8%, EBITDA מדווח 2026 500K ₪, בסיס מכפיל 479K ₪ ×5.4, TV 54% מה DCF.",
+  "ebitdaBlendedNote": "שקלול 30/50/20, עבר 480K ₪, נוכחי 500K ₪, תחזית (+4.0%) 520K ₪, בסיס 498K ₪"
  },
  "anchor-5-young-factory": {
   "equity": 0,
@@ -136,8 +136,8 @@
   "terminalPvM": 0,
   "terminalSharePct": 0,
   "netDebt": 2500000,
-  "keyFindings": "Quality B · WACC 17.3% · EBITDA מדווח 2026 200K ₪ · בסיס מכפיל -55K ₪ ×4.0 · TV 0% מ-DCF.",
-  "ebitdaBlendedNote": "שקלול 30/50/20 · עבר -150K ₪ · נוכחי 200K ₪ · תחזית (+15.0%) 230K ₪ · בסיס 101K ₪"
+  "keyFindings": "Quality B, WACC 17.3%, EBITDA מדווח 2026 200K ₪, בסיס מכפיל -55K ₪ ×4.0, TV 0% מה DCF.",
+  "ebitdaBlendedNote": "שקלול 30/50/20, עבר -150K ₪, נוכחי 200K ₪, תחזית (+15.0%) 230K ₪, בסיס 101K ₪"
  },
  "anchor-6-loss-factory": {
   "equity": 0,
@@ -164,8 +164,8 @@
   "terminalPvM": 0,
   "terminalSharePct": 0,
   "netDebt": 800000,
-  "keyFindings": "Quality C+ · WACC 18.6% · EBITDA מדווח 2026 -200K ₪ · בסיס מכפיל -290K ₪ ×4.0 · TV 0% מ-DCF.",
-  "ebitdaBlendedNote": "שקלול 30/50/20 · עבר -300K ₪ · נוכחי -200K ₪ · תחזית (+15.0%) 0 ₪ · בסיס -190K ₪"
+  "keyFindings": "Quality C+, WACC 18.6%, EBITDA מדווח 2026 -200K ₪, בסיס מכפיל -290K ₪ ×4.0, TV 0% מה DCF.",
+  "ebitdaBlendedNote": "שקלול 30/50/20, עבר -300K ₪, נוכחי -200K ₪, תחזית (+15.0%) 0 ₪, בסיס -190K ₪"
  },
  "anchor-7-thin-factory": {
   "equity": 0,
@@ -192,7 +192,7 @@
   "terminalPvM": 0,
   "terminalSharePct": 0,
   "netDebt": 2500000,
-  "keyFindings": "Quality B− · WACC 16.8% · EBITDA מדווח 2026 200K ₪ · בסיס מכפיל 245K ₪ ×4.1 · TV 0% מ-DCF.",
-  "ebitdaBlendedNote": "שקלול 30/50/20 · עבר 250K ₪ · נוכחי 200K ₪ · תחזית (+5.0%) 210K ₪ · בסיס 217K ₪"
+  "keyFindings": "Quality B−, WACC 16.8%, EBITDA מדווח 2026 200K ₪, בסיס מכפיל 245K ₪ ×4.1, TV 0% מה DCF.",
+  "ebitdaBlendedNote": "שקלול 30/50/20, עבר 250K ₪, נוכחי 200K ₪, תחזית (+5.0%) 210K ₪, בסיס 217K ₪"
  }
 }

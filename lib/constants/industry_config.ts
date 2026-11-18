@@ -101,7 +101,7 @@ export const SMB_SECTOR_METADATA: SectorApplicationMetadata = {
     },
     {
       id: 'retail-fashion',
-      name: 'חנויות אופנה ופופ-אפ',
+      name: 'חנויות אופנה ופופ אפ',
       multipleType: 'EBITDA',
       defaultMultiple: 3.5,
       waccBaseline: 14.5,
@@ -198,7 +198,7 @@ const SMB_SUB_RETAIL_SUPERMARKETS: SubSectorOption = {
 const SMB_SUB_RETAIL_FASHION: SubSectorOption = {
   id: 'retail-fashion',
   institutionalId: 'retail-fashion',
-  labelHe: 'חנויות אופנה ופופ-אפ',
+  labelHe: 'חנויות אופנה ופופ אפ',
   labelEn: 'Fashion Retail',
   multAdj: 0.85,
   institutional: SMB_INSTITUTIONAL_BY_ID['retail-fashion'],
@@ -427,7 +427,7 @@ export const INDUSTRY_CONFIG: Record<EquifySectorKey, IndustryConfigEntry> = {
     chipLabelEn: 'Tech / SaaS',
     industryCode: 'Software/SaaS',
     maDealCount: 12,
-    multiplesSectorPhraseHe: 'בענפי הטכנולוגיה וה-SaaS',
+    multiplesSectorPhraseHe: 'בענפי הטכנולוגיה וה SaaS',
     multiplesSectorPhraseEn: 'in technology & SaaS',
     subSectors: [
       { id: 'b2b_saas', labelHe: 'B2B SaaS', labelEn: 'B2B SaaS', multAdj: 1.15 },
@@ -965,7 +965,7 @@ export function getSectorDisplayLabel(
   const main = getSectorChipLabel(sector, locale);
   if (!subSectorId) return main;
   const sub = getSubSectorLabel(sector, subSectorId, locale);
-  return sub ? `${main} · ${sub}` : main;
+  return sub ? `${main}, ${sub}` : main;
 }
 
 export const SECTOR_SELECT_OPTIONS = (

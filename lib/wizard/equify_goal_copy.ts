@@ -17,14 +17,14 @@ export interface GoalStandardCopy {
 const HE: Record<EquifyGoalId, GoalStandardCopy> = {
   negotiation: {
     insight:
-      'הדוח ייערך לפי סטנדרט Market Value. יודגשו מכפילי עסקאות שנסגרו בפועל והגורמים שרוכש אסטרטגי בוחן.',
+      'הדוח ייערך לפי סטנדרט Market Value. יודגשו מכפילי השוק והגורמים שרוכש אסטרטגי בוחן.',
     standardOfValue:
-      'סטנדרט השווי: Market Value, בהתאם למטרת ההערכה שנבחרה (מכירה / M&A). הדוח מדגיש מכפילי עסקאות שנסגרו בפועל והגורמים שרוכש אסטרטגי בוחן. אינדיקציה אלגוריתמית בלבד, ואינה חוות דעת חתומה.',
+      'סטנדרט השווי: Market Value, בהתאם למטרת ההערכה שנבחרה (מכירה / M&A). הדוח מדגיש את מכפילי השוק (חברות ציבוריות, Damodaran) ואת הגורמים שרוכש אסטרטגי בוחן. אינדיקציה אלגוריתמית בלבד, ואינה חוות דעת חתומה.',
     sbcHeadline: 'מתכננים מכירה?',
     sbcBody:
       'SBC מלווה עסקאות M&A בישראל. שיחת היכרות ללא התחייבות.',
     waText:
-      'היי, סיימתי הערכת שווי ב-equify ואני בוחן מכירה. אשמח לשיחה.',
+      'היי, סיימתי הערכת שווי ב equify ואני בוחן מכירה. אשמח לשיחה.',
   },
   fundraise: {
     insight:
@@ -35,7 +35,7 @@ const HE: Record<EquifyGoalId, GoalStandardCopy> = {
     sbcBody:
       'SBC מלווה סבבי גיוס והכנה למשקיעים. שיחת היכרות ללא התחייבות.',
     waText:
-      'היי, סיימתי הערכת שווי ב-equify לקראת גיוס הון. אשמח לשיחה.',
+      'היי, סיימתי הערכת שווי ב equify לקראת גיוס הון. אשמח לשיחה.',
   },
   partner: {
     insight:
@@ -46,18 +46,18 @@ const HE: Record<EquifyGoalId, GoalStandardCopy> = {
     sbcBody:
       'SBC מלווה הסכמי שותפים וחלוקת הון. שיחת היכרות ללא התחייבות.',
     waText:
-      'היי, סיימתי הערכת שווי ב-equify לקראת שותפות. אשמח לשיחה.',
+      'היי, סיימתי הערכת שווי ב equify לקראת שותפות. אשמח לשיחה.',
   },
   bank: {
     insight:
-      'יודגשו יציבות התזרים והרכב הנכסים, שהם מה שגוף מלווה בוחן.',
+      'יודגשו יציבות התזרים והחוב נטו, שהם מה שגוף מלווה בוחן.',
     standardOfValue:
-      'סטנדרט השווי: Collateral / Going-Concern Value למימון בנקאי. הדוח מדגיש יציבות תזרים והרכב נכסים. אינדיקציה אלגוריתמית בלבד, ואינה חוות דעת חתומה.',
+      'סטנדרט השווי: Collateral / Going-Concern Value למימון בנקאי. הדוח מדגיש את יציבות התזרים ואת החוב נטו. אינדיקציה אלגוריתמית בלבד, ואינה חוות דעת חתומה.',
     sbcHeadline: 'פונים למימון?',
     sbcBody:
       'SBC מלווה הכנת תיק לגוף מלווה. שיחת היכרות ללא התחייבות.',
     waText:
-      'היי, סיימתי הערכת שווי ב-equify לקראת מימון בנקאי. אשמח לשיחה.',
+      'היי, סיימתי הערכת שווי ב equify לקראת מימון בנקאי. אשמח לשיחה.',
   },
   internal: {
     insight:
@@ -68,7 +68,7 @@ const HE: Record<EquifyGoalId, GoalStandardCopy> = {
     sbcBody:
       'SBC מלווה תכנון אסטרטגי ודיווח לדירקטוריון. שיחת היכרות ללא התחייבות.',
     waText:
-      'היי, סיימתי הערכת שווי ב-equify לשימוש פנימי. אשמח לשיחה.',
+      'היי, סיימתי הערכת שווי ב equify לשימוש פנימי. אשמח לשיחה.',
   },
   legal: {
     insight:
@@ -79,16 +79,16 @@ const HE: Record<EquifyGoalId, GoalStandardCopy> = {
     sbcBody:
       'הדוח האלגוריתמי אינו תחליף לחוות דעת. SBC יכולה להפנות להערכה מקצועית. שיחת היכרות ללא התחייבות.',
     waText:
-      'היי, סיימתי הערכת שווי ב-equify בהקשר משפטי / ירושה. אשמח לשיחה.',
+      'היי, סיימתי הערכת שווי ב equify בהקשר משפטי / ירושה. אשמח לשיחה.',
   },
 };
 
 const EN: Record<EquifyGoalId, GoalStandardCopy> = {
   negotiation: {
     insight:
-      'The report uses a Market Value standard. Closed-deal multiples and what a strategic buyer examines are emphasized.',
+      'The report uses a Market Value standard. Market multiples and what a strategic buyer examines are emphasized.',
     standardOfValue:
-      'Standard of value: Market Value, per the selected purpose (sale / M&A). The report emphasizes closed-deal multiples and factors a strategic buyer examines. Algorithmic indication only, not a signed opinion.',
+      'Standard of value: Market Value, per the selected purpose (sale / M&A). The report emphasizes market multiples (public companies, Damodaran) and factors a strategic buyer examines. Algorithmic indication only, not a signed opinion.',
     sbcHeadline: 'Planning a sale?',
     sbcBody:
       'SBC advises Israeli M&A transactions. Introductory call, no commitment.',
@@ -119,9 +119,9 @@ const EN: Record<EquifyGoalId, GoalStandardCopy> = {
   },
   bank: {
     insight:
-      'Cash-flow stability and asset mix are emphasized: what a lender examines.',
+      'Cash-flow stability and net debt are emphasized: what a lender examines.',
     standardOfValue:
-      'Standard of value: Collateral / Going-Concern Value for bank financing. The report emphasizes cash-flow stability and asset mix. Algorithmic indication only, not a signed opinion.',
+      'Standard of value: Collateral / Going-Concern Value for bank financing. The report emphasizes cash-flow stability and net debt. Algorithmic indication only, not a signed opinion.',
     sbcHeadline: 'Seeking financing?',
     sbcBody:
       'SBC helps prepare a lender package. Introductory call, no commitment.',

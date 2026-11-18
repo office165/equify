@@ -57,7 +57,6 @@ import {
   type SensitivityContext,
 } from './sensitivity';
 import {
-  formatCurrencyNarrativeHe,
   formatCurrencyShort,
   normalizeCurrencyCode,
   resolveActiveCurrency,
@@ -137,7 +136,7 @@ function blendedEbitdaNote(
   const w = BLENDED_EBITDA_WEIGHTS;
   const fmt = (k: number) => formatCurrencyShort(k * 1000, currency);
   const fmtBlendAmount = (k: number | null | undefined): string => {
-    if (k == null || !Number.isFinite(k)) return locale === 'en' ? '—' : '—';
+    if (k == null || !Number.isFinite(k)) return locale === 'en' ? 'n/a' : 'אין נתון';
     return fmt(k);
   };
   const pctPast = Math.round(w.past * 100);
@@ -145,9 +144,9 @@ function blendedEbitdaNote(
   const pctProj = Math.round(w.projected * 100);
   const growth = blend.dcfGrowthPct.toFixed(1);
   if (locale === 'en') {
-    return `${pctPast}/${pctCur}/${pctProj} weighted · past ${fmtBlendAmount(blend.past)} · current ${fmt(blend.current)} · projected (+${growth}%) ${fmt(blend.projected)} · base ${fmt(blend.blended)}`;
+    return `${pctPast}/${pctCur}/${pctProj} weighted, past ${fmtBlendAmount(blend.past)}, current ${fmt(blend.current)}, projected (+${growth}%) ${fmt(blend.projected)}, base ${fmt(blend.blended)}`;
   }
-  return `שקלול ${pctPast}/${pctCur}/${pctProj} · עבר ${fmtBlendAmount(blend.past)} · נוכחי ${fmt(blend.current)} · תחזית (+${growth}%) ${fmt(blend.projected)} · בסיס ${fmt(blend.blended)}`;
+  return `שקלול ${pctPast}/${pctCur}/${pctProj}, עבר ${fmtBlendAmount(blend.past)}, נוכחי ${fmt(blend.current)}, תחזית (+${growth}%) ${fmt(blend.projected)}, בסיס ${fmt(blend.blended)}`;
 }
 
 function formatNetDebtNoteHe(
@@ -160,7 +159,8 @@ function formatNetDebtNoteHe(
   const net = wizardFinancialAbsFromK(netDebtK);
   const gross = wizardFinancialAbsFromK(grossDebtK);
   const cash = wizardFinancialAbsFromK(cashK);
-  return `${line.labelHe} ליום ההערכה: ${formatCurrencyNarrativeHe(Math.abs(net), currency)} (חוב ברוטו ${formatCurrencyNarrativeHe(gross, currency)} פחות מזומן ${formatCurrencyNarrativeHe(cash, currency)}).`;
+  // Round 5: the same currency format as the tables and cards ("2.8M ₪", not "2.8M ש״ח").
+  return `${line.labelHe} ליום ההערכה: ${formatCurrencyShort(Math.abs(net), currency)} (חוב ברוטו ${formatCurrencyShort(gross, currency)} פחות מזומן ${formatCurrencyShort(cash, currency)}).`;
 }
 
 function buildSpecificRiskSubRows(
@@ -192,19 +192,19 @@ function buildSpecificRiskSubRows(
   }
   return [
     {
-      label: `ריכוזיות לקוחות (${topCustomerPct}%):`,
+      label: `ריכוז לקוחות (${topCustomerPct}%)`,
       pct: pct(b.concentrationRisk),
     },
-    { label: 'תלות במייסד:', pct: pct(b.founderRisk) },
+    { label: 'תלות במייסד', pct: pct(b.founderRisk) },
     {
-      label: b.ipRisk > 0 ? 'הגנת קניין רוחני: לא מוגן' : 'הגנת קניין רוחני: מוגן',
+      label: b.ipRisk > 0 ? 'קניין רוחני: לא מוגן' : 'קניין רוחני: מוגן',
       pct: pct(b.ipRisk),
     },
     {
       label:
         b.contractRisk > 0
-          ? 'יציבות חוזים: ללא חוזים ארוכי טווח'
-          : 'יציבות חוזים: חוזים ארוכי טווח',
+          ? 'חוזים ארוכי טווח: ללא'
+          : 'חוזים ארוכי טווח: קיימים',
       pct: pct(b.contractRisk),
     },
   ];
@@ -485,13 +485,13 @@ function buildQualityFactors(inputs: ValuationInputs): QualityFactorRow[] {
     },
     {
       label: 'קניין רוחני',
-      finding: ip ? 'מוגן' : 'ללא',
+      finding: ip ? 'מוגן' : 'לא מוגן',
       score: ip ? 12 : 0,
       maxScore: 12,
     },
     {
       label: 'חוזים ארוכי טווח',
-      finding: contracts ? 'קיימים' : 'חלקיים',
+      finding: contracts ? 'קיימים' : 'ללא',
       score: contracts ? 10 : 0,
       maxScore: 10,
     },
@@ -610,8 +610,8 @@ function buildModelBlendRows(
     {
       name:
         locale === 'en'
-          ? `EBITDA multiple × ${computed.effectiveMult.toFixed(1)}`
-          : `מכפיל EBITDA × ${computed.effectiveMult.toFixed(1)}`,
+          ? `EBITDA multiple ×${computed.effectiveMult.toFixed(1)}`
+          : `מכפיל EBITDA ×${computed.effectiveMult.toFixed(1)}`,
       ev: kToNis(computed.ebtMult),
       weightPct: ebitdaWeight,
       contribution: kToNis(contributions.ebitda),
@@ -625,8 +625,8 @@ function buildModelBlendRows(
     rows.push({
       name:
         locale === 'en'
-          ? `Revenue multiple × ${revMultDisplay.toFixed(1)}`
-          : `מכפיל הכנסות × ${revMultDisplay.toFixed(1)}`,
+          ? `Revenue multiple ×${revMultDisplay.toFixed(1)}`
+          : `מכפיל הכנסות ×${revMultDisplay.toFixed(1)}`,
       ev: kToNis(computed.revMult),
       weightPct: revWeight,
       contribution: kToNis(contributions.rev),
@@ -953,7 +953,7 @@ export function mapEngineResultToValuationData(
       financials.cashK,
       reportingCurrency,
     ),
-    keyFindings: `Quality ${fxComputed.qsGrade} · WACC ${fxComputed.wacc.toFixed(1)}% · EBITDA מדווח 2026 ${formatCurrencyShort(financialCore.auditedEbitda2026Abs, reportingCurrency)} · בסיס מכפיל ${formatCurrencyShort(financialCore.multipleLegEbitdaBaseAbs, reportingCurrency)} ×${fxComputed.effectiveMult.toFixed(1)} · TV ${terminalSharePct.toFixed(0)}% מ-DCF.`,
+    keyFindings: `Quality ${fxComputed.qsGrade}, WACC ${fxComputed.wacc.toFixed(1)}%, EBITDA מדווח 2026 ${formatCurrencyShort(financialCore.auditedEbitda2026Abs, reportingCurrency)}, בסיס מכפיל ${formatCurrencyShort(financialCore.multipleLegEbitdaBaseAbs, reportingCurrency)} ×${fxComputed.effectiveMult.toFixed(1)}, TV ${terminalSharePct.toFixed(0)}% מה DCF.`,
     // Round 2: the note states the weights shown in the blend table (it used the regime's
     // pre-scale weights, e.g. 45/14/42 next to a table of 48.5/22.7/28.8).
     profitabilityMethodologyNote: fxComputed.profitabilityRegime

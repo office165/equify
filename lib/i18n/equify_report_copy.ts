@@ -19,7 +19,7 @@ export interface ScenarioNarrativeParams {
 
 const SECTOR_MARKET_HE: Record<EquifySectorKey, string> = {
   hospitality: 'שוק המלונאות והאירוח',
-  saas: 'שוק התוכנה וה-SaaS',
+  saas: 'שוק התוכנה וה SaaS',
   fintech: 'שוק הפינטק והשירותים הפיננסיים',
   cyber: 'שוק הסייבר והטכנולוגיה',
   health: 'שוק הבריאות והביוטק',
@@ -49,68 +49,63 @@ const SECTOR_MARKET_EN: Record<EquifySectorKey, string> = {
   other: 'the relevant market',
 };
 
-function bearFullDescriptionEn(
-  sectorKey: EquifySectorKey,
-  growthPct: number,
-  ebitdaDelta: number,
-): string {
-  const delta = Math.max(1, Math.round(ebitdaDelta));
-  const growth = Math.round(growthPct);
-  if (sectorKey === 'hospitality') {
-    return `In this scenario, hospitality and services compress, clients use bargaining power to improve terms, and cash flows contract. EBITDA falls ${delta} percentage points, growth slows to ${growth}%, and specific risk rises.`;
-  }
-  const market = SECTOR_MARKET_EN[sectorKey];
-  return `In this scenario, ${market} contracts, pricing pressure intensifies, and cash flows contract. EBITDA falls ${delta} percentage points, growth slows to ${growth}%, and specific risk rises.`;
+/**
+ * Round 5 (display only): the narrative says only what the scenario row shows. In every case the
+ * scenarios change the EBITDA margin; growth and WACC are the same as the base (checked over the
+ * 385 test cases), so growth is described from the numbers and "specific risk rises" is gone.
+ */
+function pointsHe(delta: number): string {
+  return `${delta.toFixed(1)} נקודות אחוז`;
+}
+
+function growthPhraseHe(growthPct: number, baseGrowthPct: number, direction: 'down' | 'up'): string {
+  const g = Math.round(growthPct);
+  const b = Math.round(baseGrowthPct);
+  if (g === b) return `הצמיחה נשארת ${g}%, כמו בתרחיש הבסיס`;
+  if (direction === 'down') return g < b ? `הצמיחה יורדת ל ${g}%` : `הצמיחה ${g}%`;
+  return g > b ? `הצמיחה עולה ל ${g}%` : `הצמיחה ${g}%`;
+}
+
+function growthPhraseEn(growthPct: number, baseGrowthPct: number, direction: 'down' | 'up'): string {
+  const g = Math.round(growthPct);
+  const b = Math.round(baseGrowthPct);
+  if (g === b) return `growth stays at ${g}%, as in the base case`;
+  if (direction === 'down') return g < b ? `growth slows to ${g}%` : `growth is ${g}%`;
+  return g > b ? `growth rises to ${g}%` : `growth is ${g}%`;
+}
+
+function bearFullDescriptionEn(sectorKey: EquifySectorKey, p: ScenarioNarrativeParams, delta: number): string {
+  const market = sectorKey === 'hospitality' ? 'hospitality and services' : SECTOR_MARKET_EN[sectorKey];
+  return `In this scenario, ${market} slows, pricing pressure intensifies, and cash flows contract. The EBITDA margin falls ${delta.toFixed(1)} percentage points and ${growthPhraseEn(p.growthPct, p.baseGrowthPct, 'down')}.`;
 }
 
 function baseFullDescriptionEn(): string {
   return 'Neutral case: the market continues at its current pace, management holds course, and no structural shifts occur. Your inputs are the baseline.';
 }
 
-function bullFullDescriptionEn(
-  sectorKey: EquifySectorKey,
-  growthPct: number,
-  ebitdaDelta: number,
-): string {
-  const delta = Math.max(1, Math.round(ebitdaDelta));
-  const growth = Math.round(growthPct);
-  if (sectorKey === 'hospitality') {
-    return `In an optimistic scenario, management expands facilities or service capacity, wins clients on better terms, and cash flows improve. EBITDA rises ${delta} percentage points and growth accelerates to ${growth}%.`;
-  }
-  const market = SECTOR_MARKET_EN[sectorKey];
-  return `In an optimistic scenario, management expands in ${market}, wins strategic clients on better terms, and cash flows improve. EBITDA rises ${delta} percentage points and growth accelerates to ${growth}%.`;
+function bullFullDescriptionEn(sectorKey: EquifySectorKey, p: ScenarioNarrativeParams, delta: number): string {
+  const market = sectorKey === 'hospitality' ? 'hospitality and services' : SECTOR_MARKET_EN[sectorKey];
+  return `In an optimistic scenario, management expands in ${market}, wins strategic clients on better terms, and cash flows improve. The EBITDA margin rises ${delta.toFixed(1)} percentage points and ${growthPhraseEn(p.growthPct, p.baseGrowthPct, 'up')}.`;
 }
 
-function bearFullDescriptionHe(
-  sectorKey: EquifySectorKey,
-  growthPct: number,
-  ebitdaDelta: number,
-): string {
-  const delta = Math.max(1, Math.round(ebitdaDelta));
-  const growth = Math.round(growthPct);
+function bearFullDescriptionHe(sectorKey: EquifySectorKey, p: ScenarioNarrativeParams, delta: number): string {
   if (sectorKey === 'hospitality') {
-    return `בתרחיש זה, שוק האירוח והשירותים מתכנס, מתן לקוחות משתמשים בכוח מיקוח כדי לשפר תנאים, ותזרימים מתכווצים. EBITDA יורד ב-${delta} נקודות אחוז, צמיחה מאטה ל-${growth}%, וסיכון ספציפי עולה.`;
+    return `בתרחיש זה, שוק האירוח והשירותים מתכנס, לקוחות משתמשים בכוח המיקוח שלהם כדי לשפר תנאים, ותזרימים מתכווצים. שיעור EBITDA יורד ב ${pointsHe(delta)}, ו${growthPhraseHe(p.growthPct, p.baseGrowthPct, 'down')}.`;
   }
   const market = SECTOR_MARKET_HE[sectorKey];
-  return `בתרחיש זה, ${market} מתכנס, לחץ מחירים מחמיר, ותזרימים מתכווצים. EBITDA יורד ב-${delta} נקודות אחוז, צמיחה מאטה ל-${growth}%, וסיכון ספציפי עולה.`;
+  return `בתרחיש זה, ${market} מתכנס, לחץ מחירים מחמיר, ותזרימים מתכווצים. שיעור EBITDA יורד ב ${pointsHe(delta)}, ו${growthPhraseHe(p.growthPct, p.baseGrowthPct, 'down')}.`;
 }
 
 function baseFullDescriptionHe(): string {
-  return 'תרחיש ניטרלי: השוק ממשיך בקצב הנוכחי, הנהלה משמרת מטבח, ולא קורים שינויים מבניים. הנתונים שהזנת הם הבסיס.';
+  return 'תרחיש ניטרלי: השוק ממשיך בקצב הנוכחי, ההנהלה שומרת על הכיוון, ולא קורים שינויים מבניים. הנתונים שהזנת הם הבסיס.';
 }
 
-function bullFullDescriptionHe(
-  sectorKey: EquifySectorKey,
-  growthPct: number,
-  ebitdaDelta: number,
-): string {
-  const delta = Math.max(1, Math.round(ebitdaDelta));
-  const growth = Math.round(growthPct);
+function bullFullDescriptionHe(sectorKey: EquifySectorKey, p: ScenarioNarrativeParams, delta: number): string {
   if (sectorKey === 'hospitality') {
-    return `בתרחיש אופטימי, הנהלה מרחיבה את המתקנים או שירותי הליווי, מושכת לקוחות עם שיעורי טוב יותר, ותזרימים משתפרים. EBITDA עולה ב-${delta} נקודות אחוז, צמיחה מתנווה ל-${growth}%.`;
+    return `בתרחיש אופטימי, ההנהלה מרחיבה את המתקנים או את שירותי הליווי, מושכת לקוחות בתנאים טובים יותר, ותזרימים משתפרים. שיעור EBITDA עולה ב ${pointsHe(delta)}, ו${growthPhraseHe(p.growthPct, p.baseGrowthPct, 'up')}.`;
   }
   const market = SECTOR_MARKET_HE[sectorKey];
-  return `בתרחיש אופטימי, הנהלה מרחיבה את הפעילות ב${market}, מושכת לקוחות אסטרטגיים עם תנאים טובים יותר, ותזרימים משתפרים. EBITDA עולה ב-${delta} נקודות אחוז, צמיחה מתנווה ל-${growth}%.`;
+  return `בתרחיש אופטימי, ההנהלה מרחיבה את הפעילות ב${market}, מושכת לקוחות אסטרטגיים בתנאים טובים יותר, ותזרימים משתפרים. שיעור EBITDA עולה ב ${pointsHe(delta)}, ו${growthPhraseHe(p.growthPct, p.baseGrowthPct, 'up')}.`;
 }
 
 /** Per-scenario short + narrative copy for PDF and results */
@@ -120,38 +115,32 @@ export function getScenarioNarrative(
   params: ScenarioNarrativeParams,
   locale: 'he' | 'en' = 'he',
 ): ScenarioNarrativeCopy {
-  const bearDelta = Math.max(
-    0,
-    params.baseEbitdaMarginPct - params.ebitdaMarginPct,
-  );
-  const bullDelta = Math.max(
-    0,
-    params.ebitdaMarginPct - params.baseEbitdaMarginPct,
-  );
+  const bearDelta = Math.max(0, params.baseEbitdaMarginPct - params.ebitdaMarginPct);
+  const bullDelta = Math.max(0, params.ebitdaMarginPct - params.baseEbitdaMarginPct);
 
   if (scenarioKey === 'bear') {
     const delta = bearDelta || 2;
     if (locale === 'en') {
       return {
-        description: `Sector slowdown · Pricing pressure · −${Math.round(delta)}% EBITDA`,
-        fullDescription: bearFullDescriptionEn(sectorKey, params.growthPct, delta),
+        description: `Sector slowdown, pricing pressure, EBITDA margin down ${delta.toFixed(1)} points`,
+        fullDescription: bearFullDescriptionEn(sectorKey, params, delta),
       };
     }
     return {
-      description: `האטה ענפית · לחץ מחירים · −${Math.round(delta)}% EBITDA`,
-      fullDescription: bearFullDescriptionHe(sectorKey, params.growthPct, delta),
+      description: `האטה ענפית, לחץ מחירים, שיעור EBITDA נמוך ב ${pointsHe(delta)}`,
+      fullDescription: bearFullDescriptionHe(sectorKey, params, delta),
     };
   }
 
   if (scenarioKey === 'base') {
     if (locale === 'en') {
       return {
-        description: 'Current trend continues · Stable EBITDA · Unchanged customer concentration',
+        description: 'Current trend continues, stable EBITDA, unchanged customer concentration',
         fullDescription: baseFullDescriptionEn(),
       };
     }
     return {
-      description: 'המשך מגמה נוכחית · EBITDA יציב · ריכוז לקוחות ללא שינוי',
+      description: 'המשך המגמה הנוכחית, שיעור EBITDA יציב, ריכוז לקוחות ללא שינוי',
       fullDescription: baseFullDescriptionHe(),
     };
   }
@@ -159,13 +148,13 @@ export function getScenarioNarrative(
   const delta = bullDelta || 2;
   if (locale === 'en') {
     return {
-      description: `Capacity expansion · Strategic client wins · +${Math.round(delta)}% EBITDA`,
-      fullDescription: bullFullDescriptionEn(sectorKey, params.growthPct, delta),
+      description: `Capacity expansion, strategic client wins, EBITDA margin up ${delta.toFixed(1)} points`,
+      fullDescription: bullFullDescriptionEn(sectorKey, params, delta),
     };
   }
   return {
-    description: `הרחבת קיבולת · גיוס לקוחות אסטרטגי · +${Math.round(delta)}% EBITDA`,
-    fullDescription: bullFullDescriptionHe(sectorKey, params.growthPct, delta),
+    description: `הרחבת קיבולת, גיוס לקוחות אסטרטגיים, שיעור EBITDA גבוה ב ${pointsHe(delta)}`,
+    fullDescription: bullFullDescriptionHe(sectorKey, params, delta),
   };
 }
 
@@ -256,25 +245,25 @@ export function ebitdaMultipleInterpretationCopy(
   const penalty = params.multipleConcentrationPenalty ?? 0;
 
   if (params.locale === 'en') {
-    let text = `The multiple was calibrated to ${mult}× based on the company's quality score (${score}/${grade}), reflecting its normalized risk profile versus the market.`;
+    let text = `The multiple was calibrated to ×${mult} based on the company's quality score (${score}/100, ${grade}), reflecting its normalized risk profile versus the market.`;
     if (penalty > 0) {
-      text += ` Reduced by ${penalty.toFixed(1)}× due to customer concentration.`;
+      text += ` Reduced by ×${penalty.toFixed(1)} due to customer concentration.`;
     }
     return text;
   }
 
-  let text = `המכפיל הותאם לרמה של ${mult}× על בסיס ציון האיכות של החברה (${score}/${grade}), המשקף את פרופיל הסיכון המנורמל שלה מול השוק.`;
+  let text = `המכפיל הותאם לרמה של ×${mult} על בסיס ציון האיכות של החברה (\u2066${score}/100, ${grade}\u2069), המשקף את פרופיל הסיכון המנורמל שלה מול השוק.`;
   if (penalty > 0) {
-    text += ` הופחת ב-${penalty.toFixed(1)}× בשל ריכוז לקוחות.`;
+    text += ` הופחת ב ×${penalty.toFixed(1)} בשל ריכוז הלקוחות.`;
   }
   return text;
 }
 
 export const QUALITY_METHODOLOGY_COPY =
-  'ציון האיכות משקלל שבעה גורמים שמשפיעים על סיכון התזרים: יציבות הכנסות (חוזרות מול חד-פעמיות), גיוון לקוחות (ריכוז מול פיזור), תלות במנהיגות או מייסדים, עוצמת התחרות בענף, הגנות קניין רוחני, אורך החוזים עם לקוחות, וקצב הצמיחה הצפוי. כל גורם קיבל משקל על בסיס רלוונטיות לעסק שלך.' as const;
+  'ציון האיכות משקלל שבעה גורמים שמשפיעים על סיכון התזרים: יציבות הכנסות (חוזרות מול חד פעמיות), גיוון לקוחות (ריכוז מול פיזור), תלות במנהיגות או מייסדים, עוצמת התחרות בענף, הגנות קניין רוחני, אורך החוזים עם לקוחות, וקצב הצמיחה הצפוי. הציון הוא סכום הנקודות של הגורמים (עד 110), עם תקרה של 100.' as const;
 
 export const QUALITY_METHODOLOGY_COPY_EN =
-  'The Quality Score blends seven factors that affect cash-flow risk: revenue stability (recurring vs. one-off), customer diversification (concentration vs. spread), leadership or founder dependency, sector competition intensity, intellectual property protections, contract length with customers, and expected growth rate. Each factor is weighted by relevance to your business.' as const;
+  'The Quality Score blends seven factors that affect cash-flow risk: revenue stability (recurring vs. one-off), customer diversification (concentration vs. spread), leadership or founder dependency, sector competition intensity, intellectual property protections, contract length with customers, and expected growth rate. The score is the sum of the factor points (up to 110), capped at 100.' as const;
 
 function qualityScoreInterpretationHe(grade: string): string {
   if (grade === 'A') return 'משמעו: עסק באיכות גבוהה, עם יציבות תזרים מובחנת.';
@@ -373,19 +362,24 @@ export interface ScenariosIntroInput {
 
 function bearEbitdaPhrase(baseMargin: number, bearMargin: number): string {
   const delta = baseMargin - bearMargin;
-  if (delta >= 0.5) return `ירידה של ${delta.toFixed(1)}% בשיעור EBITDA`;
+  if (delta >= 0.5) return `ירידה של ${delta.toFixed(1)} נקודות אחוז בשיעור EBITDA`;
   return 'ירידה בשיעור EBITDA';
 }
 
 function bullEbitdaPhrase(baseMargin: number, bullMargin: number): string {
   const delta = bullMargin - baseMargin;
-  if (delta >= 0.5) return `ושיפור של ${delta.toFixed(1)}% בשיעור EBITDA`;
+  if (delta >= 0.5) return `ושיפור של ${delta.toFixed(1)} נקודות אחוז בשיעור EBITDA`;
   return 'ושיפור בשיעור EBITDA';
 }
 
 /** PDF / results — scenarios narrative with live assumptions */
 export function scenariosIntroCopy(input: ScenariosIntroInput): string {
-  return `שלושה תרחישים משקפים מסלולים עתידיים אפשריים, בלי להניח לאחד מהם אותה מידת סבירות: דב (Bear) מניח האטה בענף, ${bearEbitdaPhrase(input.baseEbitdaMarginPct, input.bearEbitdaMarginPct)}, וצמיחה של ${Math.round(input.bearGrowthPct)}% בלבד. תרחיש בסיס (Base) משקף המשך המגמה הנוכחית בצמיחה של ${Math.round(input.baseGrowthPct)}%. שור (Bull) משקף הרחבת קיבולת, גיוס לקוחות אסטרטגיים, ${bullEbitdaPhrase(input.baseEbitdaMarginPct, input.bullEbitdaMarginPct)}. ${SENSITIVITY_METHODOLOGY_COPY}`;
+  const g = (x: number) => Math.round(x);
+  const sameGrowth = g(input.bearGrowthPct) === g(input.baseGrowthPct) && g(input.bullGrowthPct) === g(input.baseGrowthPct);
+  const bearGrowth = sameGrowth ? '' : `, וצמיחה של ${g(input.bearGrowthPct)}%`;
+  const bullGrowth = sameGrowth ? '' : `, וצמיחה של ${g(input.bullGrowthPct)}%`;
+  const growthNote = sameGrowth ? ` בשלושת התרחישים הצמיחה ${g(input.baseGrowthPct)}%, ומה שמשתנה הוא שיעור ה EBITDA.` : '';
+  return `שלושה תרחישים משקפים מסלולים עתידיים אפשריים, בלי להניח לאחד מהם אותה מידת סבירות: דב (Bear) מניח האטה בענף ו${bearEbitdaPhrase(input.baseEbitdaMarginPct, input.bearEbitdaMarginPct)}${bearGrowth}. תרחיש בסיס (Base) משקף המשך המגמה הנוכחית בצמיחה של ${g(input.baseGrowthPct)}%. שור (Bull) משקף הרחבת קיבולת, גיוס לקוחות אסטרטגיים, ${bullEbitdaPhrase(input.baseEbitdaMarginPct, input.bullEbitdaMarginPct)}${bullGrowth}.${growthNote} ${SENSITIVITY_METHODOLOGY_COPY}`;
 }
 
 export function scenariosIntroFromRows(

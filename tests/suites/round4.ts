@@ -232,11 +232,11 @@ function creditChapterChecks(s: Suite, cases: CaseSpec[]): void {
       const html = withQuietConsole(() => buildEquifyPdfPages(d));
       const pages = (html.match(/<div class="page[ "]/g) ?? []).length;
       const body = chapterBody(html);
-      // The eyebrow keeps the report's shared "0N · title" pattern; the rules apply to the page text.
+      // The eyebrow keeps the report's shared "0N | title" pattern; the rules apply to the page text.
       const text = visibleText(body.replace(/<span class="eyebrow"[^>]*>[^<]*<\/span>/, ''));
       const summaryOk = html.includes(c!.summaryLineHe) && (c!.status !== 'ok' || (text.includes(formatCreditAmount(c!.firstStage, c!.currency)) && text.includes(formatCreditAmount(c!.firstStageAnnual, c!.currency)) && text.includes(c!.dscr!.toFixed(2))));
       s.check('chapter-summary-line', spec.id, summaryOk, c!.summaryLineHe);
-      const footOk = (html.match(/עמוד <b>\d+<\/b> \/ 9/g) ?? []).length === 9 && html.includes('05 · היוון תזרימי מזומנים') && html.includes('09 · שווי משולב');
+      const footOk = (html.match(/עמוד <b>\d+<\/b> \/ 9/g) ?? []).length === 9 && html.includes('05 | היוון תזרימי מזומנים') && html.includes('09 | שווי משולב');
       s.check('chapter-numbering', spec.id, pages === 9 && footOk, `pages ${pages}`);
       const terms = c!.status === 'no_capacity' ? ['כושר החזר'] : c!.status === 'no_room' ? ['כושר החזר', 'יחס כיסוי', 'שלב ראשון'] : ['כושר החזר', 'יחס כיסוי', 'שלב ראשון'];
       const synonyms = ['יכולת החזר', 'כושר פירעון', 'יחס שירות חוב', 'DSCR', 'מסגרת ראשונה', 'שלב א ', 'תיווך', 'מתווך', 'מובטח', 'מבטיחים', 'מבטיח לך', 'מאושר מראש', '—', '–', '·'];

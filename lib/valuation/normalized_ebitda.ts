@@ -150,28 +150,22 @@ export function buildNormalizedEbitdaNoteHe(
 
   const w = normalized.weightsUsed;
   // Round 2 (finding 15): named "EBITDA מנורמל למכפיל", weights are the ones the engine used.
-  const lines: string[] = ['EBITDA מנורמל למכפיל'];
+  // Round 5 (display only): one sentence with commas instead of middle dots.
+  const years: string[] = [];
 
   if (w.prior2 > 0 && inputs.ebitda2024K != null) {
-    lines.push(
-      `2024: ${fmtK(inputs.ebitda2024K)} (${Math.round(w.prior2 * 100)}%)`,
-    );
+    years.push(`2024: ${fmtK(inputs.ebitda2024K)} (${Math.round(w.prior2 * 100)}%)`);
   }
   if (w.prior1 > 0 && inputs.ebitda2025K != null) {
-    lines.push(
-      `2025: ${fmtK(inputs.ebitda2025K)} (${Math.round(w.prior1 * 100)}%)`,
-    );
+    years.push(`2025: ${fmtK(inputs.ebitda2025K)} (${Math.round(w.prior1 * 100)}%)`);
   }
   if (inputs.ebitda2026K != null) {
-    lines.push(
-      `2026: ${fmtK(inputs.ebitda2026K)} (${Math.round(w.current * 100)}%)`,
-    );
+    years.push(`2026: ${fmtK(inputs.ebitda2026K)} (${Math.round(w.current * 100)}%)`);
   }
 
-  lines.push(`EBITDA מנורמל למכפיל: ${fmtK(normalized.normalizedEbitdaK)}`);
+  let text = `EBITDA מנורמל למכפיל: ${fmtK(normalized.normalizedEbitdaK)}, שקלול של ${years.join(', ')}.`;
   if (normalized.isCurrentYearAnomalous) {
-    lines.push('השנה הנוכחית חריגה, ולכן שנות העבר מקבלות משקל גבוה יותר');
+    text += ' השנה הנוכחית חריגה, ולכן שנות העבר מקבלות משקל גבוה יותר.';
   }
-
-  return lines.join(' · ');
+  return text;
 }

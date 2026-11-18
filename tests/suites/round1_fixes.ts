@@ -143,9 +143,11 @@ async function fxChecks(suite: Suite): Promise<void> {
     });
   }
   const fbHtml = equityTriCurrencyCoverHtml({ equity: 1_000_000, equityIls: 1_000_000, equityUsd: 300_000, fxUsdRate: 3, fxAsOf: FX_FALLBACK_AS_OF, fxSource: 'fallback' });
-  suite.check('fx-footnote-fallback', 'c2', fbHtml.includes('שער גיבוי') && fbHtml.includes(FX_FALLBACK_AS_OF), fbHtml.slice(-200));
+  // Round 5: the date is shown as dd.mm.yyyy, like the rest of the report.
+  const shown = (iso: string) => iso.replace(/^(\d{4})-(\d{2})-(\d{2}).*$/, '$3.$2.$1');
+  suite.check('fx-footnote-fallback', 'c2', fbHtml.includes('שער גיבוי') && fbHtml.includes(shown(FX_FALLBACK_AS_OF)), fbHtml.slice(-200));
   const liveHtml = equityTriCurrencyCoverHtml({ equity: 1_000_000, equityIls: 1_000_000, equityUsd: 270_000, fxUsdRate: 3.7, fxAsOf: '2026-11-16', fxSource: 'live' });
-  suite.check('fx-footnote-live', 'c2', !liveHtml.includes('שער גיבוי') && liveHtml.includes('2026-11-16'), liveHtml.slice(-200));
+  suite.check('fx-footnote-live', 'c2', !liveHtml.includes('שער גיבוי') && liveHtml.includes('16.11.2026'), liveHtml.slice(-200));
 }
 
 async function healthChecks(suite: Suite): Promise<void> {

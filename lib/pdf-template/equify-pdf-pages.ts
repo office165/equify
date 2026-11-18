@@ -4,7 +4,6 @@ import {
   equityTriCurrencyCoverHtml,
   fmtMoneyCompactHtml,
   fmtMoneyCompactSignedHtml,
-  fmtMoneyNarrativeHe,
   fmtMultipleHtml,
   fmtPercentHtml,
   multHtml,
@@ -63,10 +62,9 @@ function pdfFmt(data: Pick<ValuationData, 'locale' | 'currency' | 'activeCurrenc
   return {
     money: (v: number | null | undefined) =>
       fmtMoneyCompactHtml(v, locale, currency, activeCurrency),
+    // Round 5: prose uses the same currency format as the tables and cards ("10.9M ₪").
     moneyNarrative: (v: number | null | undefined) =>
-      pdfLocale === 'en'
-        ? fmtMoneyCompactHtml(v, locale, currency, activeCurrency)
-        : escHtml(fmtMoneyNarrativeHe(v, currency)),
+      fmtMoneyCompactHtml(v, locale, currency, activeCurrency),
     moneySigned: (v: number) =>
       fmtMoneyCompactSignedHtml(v, locale, currency, activeCurrency),
     equityCover: (v: number) => equityCoverValHtml(v, locale, currency, activeCurrency),
@@ -90,6 +88,17 @@ function weightPctHtml(f: ReturnType<typeof pdfFmt>, w: number): string {
   return f.pct(w, Number.isInteger(Math.round(w * 10) / 10) && Math.abs(w - Math.round(w)) < 1e-9 ? 0 : 1);
 }
 
+/** The backlog uplift row of the blend table is an addition to EV, not a weight. */
+function isBacklogRow(name: string): boolean {
+  return /צבר|backlog/i.test(name);
+}
+
+/** Scenario name in the table and the narratives (round 5: words instead of emoji). */
+function scenarioLabel(key: string, locale?: ValuationData['locale']): string {
+  if (locale === 'en') return key === 'bear' ? 'Bear' : key === 'bull' ? 'Bull' : 'Base';
+  return key === 'bear' ? 'דב (Bear)' : key === 'bull' ? 'שור (Bull)' : 'בסיס (Base)';
+}
+
 function head(rid: string): string {
   return `<div class="head">${equifyLogoHtml('light-bg', { heightPt: 28 })}<span class="rid">${rid}</span></div>`;
 }
@@ -99,7 +108,7 @@ function foot(page: number, locale?: ValuationData['locale']): string {
   const pageInner = en
     ? `Page <b>${page}</b> / ${TOTAL_PAGES}`
     : `עמוד <b>${page}</b> / ${TOTAL_PAGES}`;
-  return `<div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC · CONFIDENTIAL</span><span class="foot-r foot-pg">${pageInner}</span></div>`;
+  return `<div class="foot"><span class="foot-l">EQUIFY VALUATION ENGINE © 2026 equify BY SBC | CONFIDENTIAL</span><span class="foot-r foot-pg">${pageInner}</span></div>`;
 }
 
 function wrapSheet(
@@ -117,7 +126,7 @@ function metaLine(data: ValuationData): string {
     `ענף: ${escHtml(data.sectorLabel)}`,
     `מטרת ההערכה: ${escHtml(data.goalLabel)}`,
   ].filter(Boolean);
-  return parts.join(' · ');
+  return parts.join(' | ');
 }
 
 function identityLine(data: ValuationData): string {
@@ -126,14 +135,15 @@ function identityLine(data: ValuationData): string {
     escHtml(data.phone),
     escHtml(data.email),
   ].filter((p) => p && p !== '');
-  return parts.join(' · ');
+  return parts.join(' | ');
 }
 
 function defaultExecutiveSummary(data: ValuationData): string {
   const f = pdfFmt(data);
-  const parts = data.modelBlend.map(
-    (r) => `${escHtml(r.name)} (${weightPctHtml(f, r.weightPct)})`,
-  );
+  // Round 5: "<model> במשקל <w>" (it read "DCF + WACC (13.4%) (36.1%)"); the backlog row is an addition, not a weight.
+  const parts = data.modelBlend
+    .filter((r) => !isBacklogRow(r.name))
+    .map((r) => `${escHtml(r.name)} במשקל ${weightPctHtml(f, r.weightPct)}`);
   if (data.nonOperatingAssets) {
     return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. בניכוי חוב נטו של ${f.moneyNarrative(data.netDebt)} ובתוספת נכסים שלא בפעילות של ${f.moneyNarrative(data.nonOperatingAssets.value)} (הערכה), השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
   }
@@ -141,7 +151,7 @@ function defaultExecutiveSummary(data: ValuationData): string {
 }
 
 function defaultDisclaimer(): string {
-  return 'דוח זה הינו אינדיקציית שווי אלגוריתמית שהופקה על ידי מנוע equify, על בסיס נתונים שהוזנו על ידי המשתמש ונתוני שוק פומביים. הדוח אינו מהווה ייעוץ השקעות, חוות דעת חשבונאית, הערכת שווי לצרכים סטטוטוריים או תחליף לבדיקת נאותות. SBC ו-equify אינן נושאות באחריות להחלטות שיתקבלו על בסיס דוח זה. © 2026 equify BY SBC. כל הזכויות שמורות.';
+  return 'דוח זה הינו אינדיקציית שווי אלגוריתמית שהופקה על ידי מנוע equify, על בסיס נתונים שהוזנו על ידי המשתמש ונתוני שוק פומביים. הדוח אינו מהווה ייעוץ השקעות, חוות דעת חשבונאית, הערכת שווי לצרכים סטטוטוריים או תחליף לבדיקת נאותות. SBC ו equify אינן נושאות באחריות להחלטות שיתקבלו על בסיס דוח זה. © 2026 equify BY SBC. כל הזכויות שמורות.';
 }
 
 function companyLogoCoverHtml(dataUrl?: string): string {
@@ -154,12 +164,12 @@ function buildPage1Cover(data: ValuationData): string {
   const dateLabel = reportDateHe(data.valuationDate);
   const logoHtml = companyLogoCoverHtml(data.customLogoDataUrl);
   const body = `
-  ${head(`VALUATION REPORT · #${escHtml(data.reportId)}`)}
+  ${head(`VALUATION REPORT | <bdi>#${escHtml(data.reportId)}</bdi>`)}
   <div class="rule-grad"></div>
   <div class="body cover-layout">
     <div class="cover-hero-zone">
       <div class="cover-header">
-        <span class="eyebrow cover-eyebrow">דוח הערכת שווי · ${escHtml(dateLabel)}</span>
+        <span class="eyebrow cover-eyebrow">דוח הערכת שווי | ${escHtml(dateLabel)}</span>
         ${logoHtml}
         <div class="c-comp">${escHtml(data.companyName)}</div>
         <div class="c-meta">${metaLine(data)}</div>
@@ -168,10 +178,10 @@ function buildPage1Cover(data: ValuationData): string {
       ${buildCoverCircleStageHtml(equityTriCurrencyCoverHtml(data), data.equityIls ?? data.equity)}
     </div>
     <div class="cover-lower-stack">
-      <div class="c-cap">שווי לבעלים (Equity Value) · תרחיש בסיס · טווח ${f.money(data.bearEquity)} – ${f.money(data.bullEquity)}</div>
-      <div class="seal"><i></i>ALGORITHMIC EQUITY INDICATION · SBC METHOD</div>
+      <div class="c-cap">שווי לבעלים (Equity Value), תרחיש בסיס, טווח ${f.money(data.bearEquity)} עד ${f.money(data.bullEquity)}</div>
+      <div class="seal"><i></i>ALGORITHMIC EQUITY INDICATION | SBC METHOD</div>
       <div class="cover-metrics c-grid c-grid--cover">
-        <div><b class="hl">${f.money(data.equity)}</b><span>שווי לבעלים · בסיס</span></div>
+        <div><b class="hl">${f.money(data.equity)}</b><span>שווי לבעלים (בסיס)</span></div>
         <div><b>${f.pct(data.waccPct)}</b><span>WACC אפקטיבי</span></div>
         <div><b class="gd">${f.int(data.qualityScore)} / ${escHtml(data.qualityGrade)}</b><span>Quality Score</span></div>
       </div>
@@ -215,7 +225,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
   const blendRows = data.modelBlend
     .map(
       (r) =>
-        `<tr><td>${escHtml(r.name)}${r.detail ? `<br><span class="blend-leg-note">${escHtml(r.detail)}</span>` : ''}</td><td class="n">${f.money(r.ev)}</td><td class="n">${weightPctHtml(f, r.weightPct)}</td><td class="n">${f.money(r.contribution)}</td></tr>`,
+        `<tr><td>${escHtml(r.name)}${r.detail ? `<br><span class="blend-leg-note">${escHtml(r.detail)}</span>` : ''}</td><td class="n">${f.money(r.ev)}</td><td class="n">${isBacklogRow(r.name) ? 'תוספת' : weightPctHtml(f, r.weightPct)}</td><td class="n">${f.money(r.contribution)}</td></tr>`,
     )
     .join('');
   const noteDate = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
@@ -225,11 +235,11 @@ function buildPage2ExecSummary(data: ValuationData): string {
     : '';
 
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body page-body--exec page-body--distributed">
     <div class="page-intro">
-      <span class="eyebrow">02 · תקציר מנהלים</span>
+      <span class="eyebrow">02 | תקציר מנהלים</span>
       <h2>תקציר מנהלים</h2>
       ${sovHtml}
       <p class="sub">${summary}</p>
@@ -238,15 +248,15 @@ function buildPage2ExecSummary(data: ValuationData): string {
     <div class="page-stack">
       <section class="page-section page-section--kpi">
         <div class="kgrid">
-          <div class="kcard"><div class="kv hl">${f.money(data.equity)}</div><div class="kl">שווי לבעלים · בסיס</div></div>
+          <div class="kcard"><div class="kv hl">${f.money(data.equity)}</div><div class="kl">שווי לבעלים (בסיס)</div></div>
           <div class="kcard"><div class="kv">${f.money(data.enterpriseValue)}</div><div class="kl">שווי פעילות (EV)</div></div>
           <div class="kcard"><div class="kv">${f.pct(data.waccPct)}</div><div class="kl">WACC אפקטיבי</div></div>
-          <div class="kcard"><div class="kv gd">${escHtml(data.qualityGrade)} · ${f.int(data.qualityScore)}</div><div class="kl">Quality Score</div></div>
+          <div class="kcard"><div class="kv gd">${f.int(data.qualityScore)} / ${escHtml(data.qualityGrade)}</div><div class="kl">Quality Score</div></div>
         </div>
       </section>
       <section class="page-section page-section--waterfall">
         <div class="box">
-          <h3>מ-EV לשווי לבעלים</h3>
+          <h3>משווי פעילות (EV) לשווי לבעלים</h3>
           <div class="wf-row"><span class="lbl">שווי פעילות</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${f.money(data.enterpriseValue)}</b></div>
           <div class="wf-row"><span class="lbl">${netDebtRow.label}</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${wf.debtPct.toFixed(1)}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div>${netDebtRow.valueHtml}</div>
           ${data.nonOperatingAssets ? `<div class="wf-row"><span class="lbl">נכסים שלא בפעילות (הערכה)</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.nonOperatingPct.toFixed(1)}%;background:linear-gradient(90deg,#E8D9A8,#C9A84C)"></div></div><b>${f.money(data.nonOperatingAssets.value)}</b></div>` : ''}
@@ -263,7 +273,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
         </table>
         ${methodologyNoteHtml}
         ${normalizedEbitdaHtml}
-        <p class="note">הערכה זו בוצעה ב-${escHtml(noteDate)} על בסיס נתונים שהוזנו על ידי המשתמש ותחזיות הנהלה.</p>
+        <p class="note">הערכה זו בוצעה בתאריך ${escHtml(noteDate)} על בסיס נתונים שהוזנו על ידי המשתמש ותחזיות הנהלה. הסכומים בדוח מעוגלים, ולכן סכום של שורות עשוי להיות שונה מהסך בעיגול.</p>
       </section>
     </div>
   </div>`;
@@ -273,8 +283,11 @@ function buildPage2ExecSummary(data: ValuationData): string {
 function buildPage3Financials(data: ValuationData): string {
   const f = pdfFmt(data);
   const cols = data.trajectory.map((t) => `<th>${escHtml(t.label)}</th>`).join('');
-  const revRow = data.trajectory.map((t) => `<td class="n">${f.fixed(t.revenueM, 1)}</td>`).join('');
-  const ebtRow = data.trajectory.map((t) => `<td class="n">${f.fixed(t.ebitdaM, 2)}</td>`).join('');
+  // Round 5: one number format for both rows (it was 1 decimal for revenue and 2 for EBITDA).
+  const maxAbs = Math.max(0, ...data.trajectory.map((t) => Math.max(Math.abs(t.revenueM), Math.abs(t.ebitdaM))));
+  const dec = maxAbs >= 100 ? 1 : 2;
+  const revRow = data.trajectory.map((t) => `<td class="n">${f.fixed(t.revenueM, dec)}</td>`).join('');
+  const ebtRow = data.trajectory.map((t) => `<td class="n">${f.fixed(t.ebitdaM, dec)}</td>`).join('');
   const marginRow = data.trajectory
     .map((t) => {
       const m = t.revenueM > 0 ? (t.ebitdaM / t.revenueM) * 100 : 0;
@@ -291,18 +304,18 @@ function buildPage3Financials(data: ValuationData): string {
       : data.marginPct;
 
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body">
-    <span class="eyebrow">03 · נתונים פיננסיים</span>
+    <span class="eyebrow">03 | נתונים פיננסיים</span>
     <h2>נתונים פיננסיים</h2>
     <p class="sub">${escHtml(data.dcfEbitdaWeights ? financialDataCopy(data.dcfEbitdaWeights) : FINANCIAL_DATA_COPY)}</p>
-    <div class="box"><h3>הכנסות מול EBITDA · ${unitLabel}</h3>${buildEquifyFinancialBarChartSvg(data.trajectory)}</div>
+    <div class="box"><h3>הכנסות מול EBITDA (${unitLabel})</h3>${buildEquifyFinancialBarChartSvg(data.trajectory)}</div>
     <table class="report-table report-table--trajectory">
       ${reportColgroup(trajectoryTableWidths(data.trajectory.length))}
       <tr><th>${unitLabel}</th>${cols}</tr><tr><td>הכנסות</td>${revRow}</tr><tr><td>EBITDA</td>${ebtRow}</tr><tr class="sum"><td>שיעור EBITDA</td>${marginRow}</tr>
     </table>
-    <p class="note">CAGR ${f.pct(data.growthPct, 0)} · שיעור EBITDA ${f.pct(currentMarginPct)}. ${data.netDebtNote ? escHtml(data.netDebtNote) : `חוב נטו: ${f.money(data.netDebt)}.`}</p>
+    <p class="note">CAGR ${f.pct(data.growthPct, 0)}, שיעור EBITDA ${f.pct(currentMarginPct)}. ${data.netDebtNote ? escHtml(data.netDebtNote) : `חוב נטו: ${f.money(data.netDebt)}.`}</p>
   </div>`;
   return wrapSheet(3, '', body, data.locale);
 }
@@ -343,11 +356,11 @@ function buildPage4Dcf(data: ValuationData): string {
   const unitLabel = f.unitLabel;
 
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body page-body--dcf page-body--distributed">
     <div class="page-intro">
-      <span class="eyebrow">04 · היוון תזרימי מזומנים</span>
+      <span class="eyebrow">04 | היוון תזרימי מזומנים</span>
       <h2>DCF + WACC</h2>
       <p class="sub">${escHtml(WACC_DCF_METHODOLOGY_COPY)}</p>
     </div>
@@ -368,9 +381,9 @@ function buildPage4Dcf(data: ValuationData): string {
         <table class="report-table report-table--dcf">
           ${reportColgroup(dcfHorizonTableWidths(data.dcfRows.length))}
           <tr><th>${unitLabel}</th>${dcfCols}<th>טרמינלי</th></tr>
-          <tr><td>FCFF חזוי</td>${fcffRow}<td class="n">${data.dcfRows.at(-1) ? f.fixed(data.dcfRows.at(-1)!.fcffM, 2) : numHtml('—')}</td></tr>
-          <tr><td>פקטור היוון</td>${dfRow}<td class="n">${numHtml('—')}</td></tr>
-          <tr><td>שווי נוכחי</td>${pvRow}<td class="n">${f.fixed(data.terminalPvM, 1)}*</td></tr>
+          <tr><td>FCFF חזוי</td>${fcffRow}<td class="n">${data.dcfRows.at(-1) ? f.fixed(data.dcfRows.at(-1)!.fcffM, 2) : ''}</td></tr>
+          <tr><td>פקטור היוון (אמצע שנה)</td>${dfRow}<td class="n"></td></tr>
+          <tr><td>שווי נוכחי</td>${pvRow}<td class="n">${f.fixed(data.terminalPvM, 2)}*</td></tr>
           <tr class="sum"><td>${data.dcfMarketableEv != null ? 'שווי DCF לפני הנחת סחירות' : 'שווי פעילות לפי DCF'}</td>${emptyCells(data.dcfRows.length)}<td class="n">${f.money(data.dcfMarketableEv ?? data.dcfEv)}</td></tr>
         </table>
         <p class="note">* ערך טרמינלי מהווה ${f.pct(data.terminalSharePct, 0)} מסך שווי ה DCF.${data.dcfNote ? ` ${escHtml(data.dcfNote)}` : ''}</p>
@@ -394,8 +407,8 @@ function multiplesInterpretation(data: ValuationData): string {
   const im = data.industryMultiples;
   if (!im) {
     // No sourced industry data: show the company multiples only (finding 7).
-    return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${numHtml('—')}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
-    <tr><td>מכפיל הכנסות</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">${numHtml('—')}</td><td class="interp-cell">אין נתון ענפי עם מקור</td></tr>`;
+    return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">אין נתון</td><td class="interp-cell">${ebitdaInterp}</td></tr>
+    <tr><td>מכפיל הכנסות</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">אין נתון</td><td class="interp-cell">אין נתון ענפי עם מקור</td></tr>`;
   }
   // Round 4 (part D, display only): the raw Damodaran range is public companies; when the engine
   // applies private company factors, the adjusted range is shown next to it, and the position is
@@ -437,11 +450,11 @@ function buildCompsTable(data: ValuationData): string {
 function buildPage5Multiples(data: ValuationData): string {
   const compsTable = buildCompsTable(data);
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body page-body--multiples page-body--distributed">
     <div class="page-intro">
-      <span class="eyebrow">05 · מכפילי שוק</span>
+      <span class="eyebrow">05 | מכפילי שוק</span>
       <h2>מיקום מול מכפילי הענף</h2>
       <p class="sub">${escHtml(data.multiplesIntro ?? multiplesMethodologyCopy(`בענף ${data.sectorLabel || data.sector || 'הרלוונטי'}`))}</p>
     </div>
@@ -478,12 +491,12 @@ function buildScenarioNarrativesBlock(data: ValuationData): string {
   const blocks = data.scenarios
     .map((s) => {
       const label =
-        s.key === 'bear' ? '🐻 Bear' : s.key === 'bull' ? '🚀 Bull' : '◆ Base';
+        scenarioLabel(s.key, data.locale);
       const tag = s.description ?? s.narrative;
       const full = s.fullDescription;
       if (!tag && !full) return '';
       return `<div class="narrative-block">
-        <div class="narrative-title">${escHtml(label)}${tag ? ` · ${escHtml(tag)}` : ''}</div>
+        <div class="narrative-title">${escHtml(label)}${tag ? `: ${escHtml(tag)}` : ''}</div>
         ${full ? `<div class="narrative-body">${escHtml(full)}</div>` : ''}
       </div>`;
     })
@@ -499,7 +512,7 @@ function buildPage6Scenarios(data: ValuationData): string {
   const scenarioRows = data.scenarios
     .map((s) => {
       const label =
-        s.key === 'bear' ? '🐻 Bear' : s.key === 'bull' ? '🚀 Bull' : '◆ Base';
+        scenarioLabel(s.key, data.locale);
       const nameCell = s.key === 'base' ? `<td><b>${label}</b></td>` : `<td>${label}</td>`;
       const rowStyle = s.key === 'base' ? ' style="background:var(--tint)"' : '';
       return `<tr${rowStyle}>${nameCell}<td class="n">${f.pct(s.growthPct, 0)}</td><td class="n">${f.pct(s.ebitdaMarginPct)}</td><td class="n">${f.pct(s.waccPct)}</td><td class="n">${f.mult(s.multiple)}</td><td class="n">${f.money(s.ev)}</td><td class="n"${scenarioEquityStyle(s.key)}>${f.money(s.equity)}</td></tr>`;
@@ -507,10 +520,10 @@ function buildPage6Scenarios(data: ValuationData): string {
     .join('');
 
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body">
-    <span class="eyebrow">${en ? '06 · Scenarios' : '06 · תרחישים'}</span>
+    <span class="eyebrow">${en ? '06 | Scenarios' : '06 | תרחישים'}</span>
     <h2>${en ? 'Equity range by scenario' : 'טווח שווי לפי תרחיש'}</h2>
     <p class="sub">${escHtml(scenariosIntroFromRows(data.scenarios, data.locale))}</p>
     <table class="report-table report-table--scenarios">
@@ -548,20 +561,20 @@ function buildPage7QualitySensitivity(data: ValuationData): string {
     : qualityScoreIntroCopy(data.qualityScore, data.qualityGrade);
   const sensHeader =
     data.locale === 'en'
-      ? `Sensitivity: equity value (${f.unitLabel}) · WACC × terminal growth`
-      : `רגישות: שווי לבעלים (${f.unitLabel}) · WACC × צמיחה טרמינלית`;
+      ? `Sensitivity: equity value (${f.unitLabel}), WACC × terminal growth`
+      : `רגישות: שווי לבעלים (${f.unitLabel}), WACC × צמיחה טרמינלית`;
   const revenueKind = data.sensitivityEbitdaMult?.multipleKind === 'revenue';
   const ebitdaSensHeader =
     data.locale === 'en'
-      ? `Sensitivity: equity value (${f.unitLabel}) · EBITDA × ${revenueKind ? 'revenue multiple' : 'EBITDA multiple'}`
-      : `רגישות: שווי לבעלים (${f.unitLabel}) · EBITDA × ${revenueKind ? 'מכפיל הכנסות' : 'מכפיל EBITDA'}`;
+      ? `Sensitivity: equity value (${f.unitLabel}), EBITDA × ${revenueKind ? 'revenue multiple' : 'EBITDA multiple'}`
+      : `רגישות: שווי לבעלים (${f.unitLabel}), EBITDA × ${revenueKind ? 'מכפיל הכנסות' : 'מכפיל EBITDA'}`;
   const sensNote = (note?: string) => (note ? `<p class="note sens-note">${escHtml(note)}</p>` : '');
 
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
     <div class="body page-body--quality">
-    <span class="eyebrow">${en ? '07 · Quality & sensitivity' : '07 · איכות ורגישות'}</span>
+    <span class="eyebrow">${en ? '07 | Quality & sensitivity' : '07 | איכות ורגישות'}</span>
     <h2>${en ? 'Quality Score & sensitivity analysis' : 'Quality Score וניתוח רגישות'}</h2>
     <p class="sub">${escHtml(qualityIntro)}</p>
     <div class="quality-split">
@@ -585,9 +598,9 @@ function blendWeightBar(data: ValuationData): string {
       const fg = i === 0 ? '#fff' : '#0F2E29';
       const short = /dcf/i.test(r.name) ? 'DCF' : /ebitda/i.test(r.name) ? 'EBITDA' : 'REV';
       // Weight segments only: the backlog uplift row is an addition, not a weight.
-      if (r.weightPct <= 0 || /צבר|backlog/i.test(r.name)) return '';
+      if (r.weightPct <= 0 || isBacklogRow(r.name)) return '';
       // Labels of narrow segments do not fit; they are hidden instead of being clipped.
-      const label = r.weightPct >= 8 ? `${short} · ${weightPctHtml(f, r.weightPct)}` : '';
+      const label = r.weightPct >= 8 ? `${short} ${weightPctHtml(f, r.weightPct)}` : '';
       return `<div class="blend-weight-bar" style="width:${r.weightPct.toFixed(1)}%;background:${bg};display:grid;place-items:center;color:${fg}">${label}</div>`;
     })
     .join('');
@@ -597,15 +610,15 @@ function buildPage8Combined(data: ValuationData): string {
   const f = pdfFmt(data);
   const dateLabel = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body" style="text-align:center;display:flex;flex-direction:column;justify-content:center">
-    <span class="eyebrow" style="justify-content:center">08 · שווי משולב</span>
+    <span class="eyebrow" style="justify-content:center">08 | שווי משולב</span>
     <h2>שווי משולב</h2>
     <div style="display:flex;height:13mm;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:5mm auto 0;max-width:150mm;width:100%">${blendWeightBar(data)}</div>
     <div class="c-val" style="margin:10mm 0 2mm">${equityTriCurrencyCoverHtml(data)}</div>
-    <div class="c-cap">שווי לבעלים · תרחיש בסיס · טווח ${f.money(data.bearEquity)} – ${f.money(data.bullEquity)} · נכון ל-${escHtml(dateLabel)}</div>
-    <div class="seal" style="margin:9mm auto 0"><i></i>ALGORITHMIC EQUITY INDICATION · SBC METHOD</div>
+    <div class="c-cap">שווי לבעלים, תרחיש בסיס, טווח ${f.money(data.bearEquity)} עד ${f.money(data.bullEquity)}, נכון ליום ${escHtml(dateLabel)}</div>
+    <div class="seal" style="margin:9mm auto 0"><i></i>ALGORITHMIC EQUITY INDICATION | SBC METHOD</div>
     <p class="note" style="text-align:right;margin-top:8mm"><b>גילוי נאות:</b> ${escHtml(data.disclaimer ?? defaultDisclaimer())}</p>
   </div>`;
   return wrapSheet(8, '', body, data.locale);
@@ -672,10 +685,10 @@ function buildCreditChapterPage(data: ValuationData): string {
   const cta = `<div class="callout gold credit-cta"><b>רוצים שנבדוק את זה מול כ 40 גופים מממנים?</b> ב SBC אנחנו מלווים עסקים בייעוץ מימון: בונים את בקשת האשראי, מתאימים את מבנה המימון לעסק ומציגים אותו לגופים המממנים המתאימים. הבדיקה לא מבטיחה אישור, סכום או ריבית. <a href="${escHtml(SBC_SITE_URL)}" style="color:var(--pine);font-weight:700">${escHtml(SBC_SITE_URL.replace(/^https?:\/\//, ''))}</a></div>`;
 
   const body = `
-  ${head(`#${escHtml(data.reportId)} · ${escHtml(data.companyName)}`)}
+  ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body credit-chapter">
-    <span class="eyebrow">04 · כושר האשראי של העסק</span>
+    <span class="eyebrow">04 | כושר האשראי של העסק</span>
     <h2>כושר האשראי של העסק</h2>
     <p class="sub">כמה אשראי העסק יכול לשאת לפי התזרים שלו, בשיטת תקן SBC לבקשות אשראי. כושר החזר הוא הסכום שהתזרים לשירות חוב של היום מחזיר על פני תקופת ההלוואה המקובלת בענף. שלב ראשון הוא סכום שמרני: בתוך התקרה של הענף, ובלי שיחס הכיסוי ירד מהרף שלו.</p>
     ${blocker}
@@ -692,7 +705,7 @@ function buildCreditChapterPage(data: ValuationData): string {
 function renumberPage(html: string, newPage: number | null, total: number): string {
   let out = html.replace(/(<span class="foot-r foot-pg">(?:עמוד|Page) <b>)(\d+)(<\/b> \/ )(\d+)/, (_m, a, p, b) => `${a}${newPage ?? p}${b}${total}`);
   if (newPage != null) {
-    out = out.replace(/(<span class="eyebrow"[^>]*>(?:[^<]*?))(\d{2})( · )/, (_m, a, _n, b) => `${a}${String(newPage).padStart(2, '0')}${b}`);
+    out = out.replace(/(<span class="eyebrow"[^>]*>(?:[^<]*?))(\d{2})( \| )/, (_m, a, _n, b) => `${a}${String(newPage).padStart(2, '0')}${b}`);
   }
   return out;
 }
