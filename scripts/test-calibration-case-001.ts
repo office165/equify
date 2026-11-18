@@ -1,6 +1,6 @@
 /**
- * Omwise ("הומייז") calibration validation — temporary simulation.
- * Usage: npx tsx scripts/test-omwise-calibration.ts
+ * CAL-001 calibration validation (calibration-case-001) — temporary simulation.
+ * Usage: npx tsx scripts/test-calibration-case-001.ts
  */
 
 import {
@@ -9,8 +9,8 @@ import {
   runValuationEngine,
   SECTOR_MULTIPLIERS,
   LIFECYCLE_ADJ,
-  OMWISE_BASELINE_VARIANCE_PCT,
-  OMWISE_CALIBRATION_QS,
+  CALIBRATION_CASE_001_BASELINE_VARIANCE_PCT,
+  CALIBRATION_CASE_001_CALIBRATION_QS,
   buildVarianceRibbon,
   type ValuationInputs,
 } from '../lib/valuation';
@@ -20,8 +20,8 @@ import { BACKLOG_INFLECTION_TARGETS } from '../lib/valuation/backlog_inflection_
 /** Absolute ₪ → engine ₪K */
 const toK = (nis: number) => nis / 1000;
 
-const OMWISE = {
-  company: 'Omwise / הומייז',
+const CASE = {
+  company: 'CAL-001',
   revenue2024: 25_779_621,
   ebitda2024: 3_377_021,
   revenue2025: 38_000_000,
@@ -44,22 +44,22 @@ function moneyK(k: number): string {
   return `₪${(k / 1000).toFixed(2)}M (${k.toFixed(0)}K)`;
 }
 
-function buildOmwiseInputs(): ValuationInputs {
-  const rev2026K = toK(OMWISE.revenue2026);
+function buildCaseInputs(): ValuationInputs {
+  const rev2026K = toK(CASE.revenue2026);
   const margin2026 =
-    OMWISE.revenue2026 > 0
-      ? (OMWISE.ebitda2026 / OMWISE.revenue2026) * 100
+    CASE.revenue2026 > 0
+      ? (CASE.ebitda2026 / CASE.revenue2026) * 100
       : 0;
-  const projected2027K = OMWISE.ebitda2026 * (1 + 0.12);
+  const projected2027K = CASE.ebitda2026 * (1 + 0.12);
 
   return {
     rev: rev2026K,
     margin: margin2026,
     growth: 12,
-    debt: toK(OMWISE.netDebt),
-    grossDebt: toK(OMWISE.grossDebt),
-    cash: toK(OMWISE.cash),
-    sector: OMWISE.sector,
+    debt: toK(CASE.netDebt),
+    grossDebt: toK(CASE.grossDebt),
+    cash: toK(CASE.cash),
+    sector: CASE.sector,
     sectorMult: SECTOR_MULTIPLIERS.industry,
     subSectorMult: 1,
     lifecycleAdj: LIFECYCLE_ADJ.growth,
@@ -71,13 +71,13 @@ function buildOmwiseInputs(): ValuationInputs {
     contracts: true,
     normalizedOwnerSalary: 0,
     capexLevelPct: 6,
-    revenue2024K: toK(OMWISE.revenue2024),
-    revenue2025K: toK(OMWISE.revenue2025),
+    revenue2024K: toK(CASE.revenue2024),
+    revenue2025K: toK(CASE.revenue2025),
     revenue2026K: rev2026K,
-    ebitda2024K: toK(OMWISE.ebitda2024),
-    ebitda2025K: toK(OMWISE.ebitda2025),
-    ebitda2026K: toK(OMWISE.ebitda2026),
-    backlogSignedK: toK(OMWISE.backlogSigned),
+    ebitda2024K: toK(CASE.ebitda2024),
+    ebitda2025K: toK(CASE.ebitda2025),
+    ebitda2026K: toK(CASE.ebitda2026),
+    backlogSignedK: toK(CASE.backlogSigned),
     projectedEbitdaK: [toK(projected2027K), 0, 0],
     ebitda2027K: toK(projected2027K),
   };
@@ -94,15 +94,15 @@ function divider(title: string): void {
 }
 
 function main(): void {
-  divider(`OMWISE CALIBRATION SIMULATION — ${OMWISE.company}`);
+  divider(`CALIBRATION SIMULATION — ${CASE.company}`);
 
-  const inputs = buildOmwiseInputs();
-  const sectorConfig = resolveSectorMethodologyConfig(OMWISE.sector);
+  const inputs = buildCaseInputs();
+  const sectorConfig = resolveSectorMethodologyConfig(CASE.sector);
 
   console.log('\n── Raw input margins (pre-engine) ──');
-  const m2024 = rawMarginPct(OMWISE.revenue2024, OMWISE.ebitda2024);
-  const m2025 = rawMarginPct(OMWISE.revenue2025, OMWISE.ebitda2025);
-  const m2026 = rawMarginPct(OMWISE.revenue2026, OMWISE.ebitda2026);
+  const m2024 = rawMarginPct(CASE.revenue2024, CASE.ebitda2024);
+  const m2025 = rawMarginPct(CASE.revenue2025, CASE.ebitda2025);
+  const m2026 = rawMarginPct(CASE.revenue2026, CASE.ebitda2026);
   console.log(`  2024: ${pct(m2024)}  (NOT 54% bug baseline)`);
   console.log(`  2025: ${pct(m2025)}`);
   console.log(`  2026: ${pct(m2026)}`);
@@ -135,7 +135,7 @@ function main(): void {
 
   divider('2 · BACKLOG INFLECTION ACCELERATOR');
   const backlogRatio =
-    OMWISE.backlogSigned / OMWISE.revenue2026;
+    CASE.backlogSigned / CASE.revenue2026;
   console.log(`  backlog_signed / revenue_2026 = ${(backlogRatio * 100).toFixed(1)}% (threshold 50%)`);
 
   const { computed, scenarios } = runValuationEngine(inputs);
@@ -167,19 +167,19 @@ function main(): void {
 
   console.log(`\n  forwardEbitda2027K (organic): ${moneyK(computed.forwardEbitda2027K)}`);
   console.log(
-    `  Formula: ebitda_2026 × (1 + growth) = ${moneyK(toK(OMWISE.ebitda2026 * 1.09))}`,
+    `  Formula: ebitda_2026 × (1 + growth) = ${moneyK(toK(CASE.ebitda2026 * 1.09))}`,
   );
   console.log(
-    `  Backlog coverage (backlog ÷ organic 2027F rev): ${((OMWISE.backlogSigned / (OMWISE.revenue2026 * 1.09)) * 100).toFixed(1)}% → WACC −${Math.abs(computed.waccBacklogAdjustment).toFixed(1)}pp specific risk`,
+    `  Backlog coverage (backlog ÷ organic 2027F rev): ${((CASE.backlogSigned / (CASE.revenue2026 * 1.09)) * 100).toFixed(1)}% → WACC −${Math.abs(computed.waccBacklogAdjustment).toFixed(1)}pp specific risk`,
   );
 
   divider('3 · DYNAMIC MULTIPLE (Linear Interpolation)');
   console.log(`  Engine qualityScore (computed): ${computed.qs} (${computed.qsGrade})`);
-  console.log(`  User target qualityScore: ${OMWISE.targetQualityScore}`);
+  console.log(`  User target qualityScore: ${CASE.targetQualityScore}`);
 
   const atTargetQs = computeDynamicMultiple({
     config: sectorConfig,
-    qualityScore: OMWISE.targetQualityScore,
+    qualityScore: CASE.targetQualityScore,
     topCustomerPct: inputs.topCustomer,
   });
 
@@ -190,7 +190,7 @@ function main(): void {
   );
   console.log(`    effectiveMult (final): ${computed.effectiveMult.toFixed(3)}×`);
 
-  console.log(`\n  At target QS=${OMWISE.targetQualityScore} (reference):`);
+  console.log(`\n  At target QS=${CASE.targetQualityScore} (reference):`);
   console.log(`    multipleBase: ${atTargetQs.baseMultiple.toFixed(3)}×`);
   console.log(
     `    multipleConcentrationPenalty: ${atTargetQs.concentrationPenalty.toFixed(3)}×`,
@@ -218,7 +218,7 @@ function main(): void {
     `  Ribbon: ±${(e.relativeVariancePct * 100).toFixed(1)}% · QS ${e.qualityScore} · tier ${e.valuationTier} · bear ×${e.bearMultiplier.toFixed(2)} · bull ×${e.bullMultiplier.toFixed(2)}`,
   );
   console.log(
-    `  Omwise target: Base ~₪19.5M · Bear ~₪18M · Bull ~₪22.5M at QS ${OMWISE_CALIBRATION_QS} (±${(OMWISE_BASELINE_VARIANCE_PCT * 100).toFixed(0)}%)`,
+    `  CAL-001 target: Base ~₪19.5M · Bear ~₪18M · Bull ~₪22.5M at QS ${CALIBRATION_CASE_001_CALIBRATION_QS} (±${(CALIBRATION_CASE_001_BASELINE_VARIANCE_PCT * 100).toFixed(0)}%)`,
   );
   for (const row of scenarios.rows) {
     console.log(
@@ -233,7 +233,7 @@ function main(): void {
   const enterpriseRibbon = buildVarianceRibbon({
     baseEquityK: enterpriseBaseEqK,
     debtK: 50_000,
-    qualityScore: OMWISE.targetQualityScore,
+    qualityScore: CASE.targetQualityScore,
     sector: inputs.sector,
     revenueK: enterpriseBaseEqK * 2,
   });

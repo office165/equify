@@ -121,9 +121,9 @@ function caseTable(title: string, rows: Row[]): string[] {
   return out;
 }
 
-function omwise(method: 'v1' | 'v2'): Record<string, string> {
+function calibrationCase001(method: 'v1' | 'v2'): Record<string, string> {
   const tsxCli = path.join(ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs');
-  const res = spawnSync(process.execPath, [tsxCli, path.join('scripts', 'test-omwise-calibration.ts')], {
+  const res = spawnSync(process.execPath, [tsxCli, path.join('scripts', 'test-calibration-case-001.ts')], {
     cwd: ROOT,
     encoding: 'utf8',
     env: { ...process.env, METHOD_V2: method === 'v2' ? 'on' : 'off', FORCE_COLOR: '0', OFFICE_ALERTS_DISABLED: 'true' },
@@ -259,10 +259,10 @@ function main(): void {
   }
   out.push('');
 
-  out.push('## 4. כיול מול אומוייז (`scripts/test-omwise-calibration.ts`)');
+  out.push('## 4. כיול מול CAL-001 (`scripts/test-calibration-case-001.ts`)');
   out.push('');
-  const o1 = omwise('v1');
-  const o2 = omwise('v2');
+  const o1 = calibrationCase001('v1');
+  const o2 = calibrationCase001('v2');
   out.push('| | V1 | V2 |');
   out.push('|---|---|---|');
   out.push(`| WACC אחרי התאמת צבר | ${o1.wacc} | ${o2.wacc} |`);
@@ -271,7 +271,7 @@ function main(): void {
   out.push(`| EV | ${o1.ev} | ${o2.ev} |`);
   out.push(`| שווי לבעלים | ${o1.equity} | ${o2.equity} |`);
   out.push(`| דוב עד שור | ${o1.bear} עד ${o1.bull} | ${o2.bear} עד ${o2.bull} |`);
-  out.push('| יעד אומוייז | כ 19.5M (18M עד 22.5M) | כ 19.5M (18M עד 22.5M) |');
+  out.push('| יעד CAL-001 | כ 19.5M (18M עד 22.5M) | כ 19.5M (18M עד 22.5M) |');
   out.push('');
 
   // Level parameter (part D item 5)
@@ -337,7 +337,7 @@ function main(): void {
   out.push('| R1 בתתי ענפים שבהם מכפיל ההכנסות הוא השיטה הראשית (A או B) | | | |');
   out.push('| רמת השווי אחרי T1 (לקבל, או פרמטר אחד עם מקור) | | | |');
   out.push('| ממצא 26: מונוטוניות במרווח ברצועת הרווח הדק | | | |');
-  out.push('| כיול מחדש מול אומוייז ותיקים אמיתיים נוספים | | | |');
+  out.push('| כיול מחדש מול CAL-001 ותיקים אמיתיים נוספים | | | |');
   out.push('| מתי להדליק METHOD_V2 | | | |');
   out.push('');
 

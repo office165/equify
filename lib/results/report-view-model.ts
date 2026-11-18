@@ -37,7 +37,7 @@ export const WACC_COMPONENTS = {
   size: 3.1,
 } as const;
 
-/** @deprecated Prefer scenario rows or resolveScenarioElasticity() — Omwise baseline bear offset. */
+/** @deprecated Prefer scenario rows or resolveScenarioElasticity() — CAL-001 baseline bear offset. */
 export const SCENARIO_WACC_OFFSET: Record<ValuationScenario, number> = {
   bear: 0.5,
   base: 0,

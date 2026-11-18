@@ -21,7 +21,7 @@
     "test:canonical": "tsx scripts/test-canonical-reconciliation.ts",
     "test:report-coherence": "tsx scripts/test-report-financial-coherence.ts",
     "test:engine": "tsx scripts/test-valuation-engine.ts",
-    "test:omwise-calibration": "tsx scripts/test-omwise-calibration.ts",
+    "test:calibration-case-001": "tsx scripts/test-calibration-case-001.ts",
     "test:scale-modifier": "tsx scripts/test-scale-modifier-pipeline.ts",
     "test:currency-normalize": "tsx scripts/test-currency-normalize.ts",
     "test:monday-leads": "tsx scripts/test-monday-leads-e2e.ts",

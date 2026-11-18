@@ -358,7 +358,7 @@ function main(): void {
   out.push('');
   out.push('נימוק במספרים:');
   out.push('');
-  out.push(`1. שמירה על הכיול: בארבעת תיקי העוגן הרווחיים (מסעדה, SaaS, קבלן, רו"ח), שכוילו מול אומוייז ודני, השינוי החציוני המוחלט הוא ${S['T1+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%, הנמוך מכל השילובים שכוללים R1 (T2+W1+R1: ${S['T2+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%, T1+G1+W1+R1: ${S['T1+G1+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%, T2+G1+W1+R1: ${S['T2+G1+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%). חריג אחד: המסעדה עולה ב 23%, כי היום הערך הטרמינלי שלה נחתך מ כ 1.55M ל 0.71M.`);
+  out.push(`1. שמירה על הכיול: בארבעת תיקי העוגן הרווחיים (מסעדה, SaaS, קבלן, רו"ח), שכוילו מול CAL-001 ותיק כיול שני, השינוי החציוני המוחלט הוא ${S['T1+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%, הנמוך מכל השילובים שכוללים R1 (T2+W1+R1: ${S['T2+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%, T1+G1+W1+R1: ${S['T1+G1+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%, T2+G1+W1+R1: ${S['T2+G1+W1+R1'].healthyAnchorsMedAbs.toFixed(1)}%). חריג אחד: המסעדה עולה ב 23%, כי היום הערך הטרמינלי שלה נחתך מ כ 1.55M ל 0.71M.`);
   out.push(`2. עקביות עם מה שהדוח מצהיר: T1 הוא Gordon כמו שכתוב בדוח, בלי תקרה נסתרת (ממצא 3). W1 מכניס את ה CRP שהגרף כבר מציג, כך שהגרף והטבלה יכולים להיות שווים (ממצא 2). R1 מפריד את מכפיל ההכנסות מגבולות ה EBITDA (ממצא 5).`);
   out.push(`3. R1 מתקן את ההיפוך של ממצא 5: מפעלי ההפסד והרווח הדק יורדים (${lossAnchors}). היום מפעל מפסיד שווה יותר ממפעל רווחי באותו גודל. אחרי R1 הסדר מתהפך לסדר הנכון. זה שינוי גדול בתיקים האלה, והוא מכוון.`);
   out.push(`4. מכפילים משתמעים: ${S['T1+W1+R1'].inRange} מתוך ${pos.length} תיקים בטווח הענף, לעומת ${inRangeToday} היום.`);
@@ -381,7 +381,7 @@ function main(): void {
   out.push('| צמיחה (G0, G1) | | | |');
   out.push('| WACC (W0, W1), כולל מקור ל D/E ול CRP | | | |');
   out.push('| מכפיל הכנסות (R0, R1) | | | |');
-  out.push('| כיול מחדש מול אומוייז ודני אחרי השינוי | | | |');
+  out.push('| כיול מחדש מול CAL-001 ותיק כיול שני אחרי השינוי | | | |');
   out.push('');
   fs.writeFileSync(path.join(__dirname, '..', '..', 'reports', 'round-1-what-if.md'), out.join('\n'), 'utf8');
   console.log(JSON.stringify(summary, null, 1));

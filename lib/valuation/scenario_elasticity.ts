@@ -2,26 +2,26 @@ import type { EquifySectorKey } from '../valuation';
 import type { SectorMethodologyConfig } from './sector_methodology_matrix';
 import { resolveSectorMethodologyConfig } from './sector_methodology_resolver';
 
-/** Omwise-calibrated SMB revenue anchor (₪36M trailing run-rate). */
-export const OMWISE_CALIBRATION_REVENUE_NIS = 36_000_000;
+/** CAL-001 calibrated SMB revenue anchor (₪36M trailing run-rate). */
+export const CALIBRATION_CASE_001_CALIBRATION_REVENUE_NIS = 36_000_000;
 
-/** Quality Score anchor for ±14% M&A transaction variance (B+ / Omwise deck). */
-export const OMWISE_CALIBRATION_QS = 67;
+/** Quality Score anchor for ±14% M&A transaction variance (B+ / CAL-001). */
+export const CALIBRATION_CASE_001_CALIBRATION_QS = 67;
 
-/** Standard implied ± equity variance at {@link OMWISE_CALIBRATION_QS} (Tier 3 mid-market). */
-export const OMWISE_BASELINE_VARIANCE_PCT = 0.14;
+/** Standard implied ± equity variance at {@link CALIBRATION_CASE_001_CALIBRATION_QS} (Tier 3 mid-market). */
+export const CALIBRATION_CASE_001_BASELINE_VARIANCE_PCT = 0.14;
 
-/** @deprecated Use OMWISE_BASELINE_VARIANCE_PCT — legacy absolute WACC step reference. */
-export const OMWISE_BASELINE_WACC_DELTA_PP = 0.5;
+/** @deprecated Use CALIBRATION_CASE_001_BASELINE_VARIANCE_PCT — legacy absolute WACC step reference. */
+export const CALIBRATION_CASE_001_BASELINE_WACC_DELTA_PP = 0.5;
 
-/** @deprecated Use OMWISE_BASELINE_VARIANCE_PCT — legacy absolute multiple step reference. */
-export const OMWISE_BASELINE_MULTIPLE_DELTA = 0.4;
-
-/** @deprecated Use resolveVarianceRibbon(). */
-export const SCENARIO_WACC_DELTA_PP = OMWISE_BASELINE_WACC_DELTA_PP;
+/** @deprecated Use CALIBRATION_CASE_001_BASELINE_VARIANCE_PCT — legacy absolute multiple step reference. */
+export const CALIBRATION_CASE_001_BASELINE_MULTIPLE_DELTA = 0.4;
 
 /** @deprecated Use resolveVarianceRibbon(). */
-export const SCENARIO_MULTIPLE_DELTA = OMWISE_BASELINE_MULTIPLE_DELTA;
+export const SCENARIO_WACC_DELTA_PP = CALIBRATION_CASE_001_BASELINE_WACC_DELTA_PP;
+
+/** @deprecated Use resolveVarianceRibbon(). */
+export const SCENARIO_MULTIPLE_DELTA = CALIBRATION_CASE_001_BASELINE_MULTIPLE_DELTA;
 
 export type ValuationTier =
   | 'tier1_enterprise'
@@ -77,11 +77,11 @@ export function computeRelativeVariancePct(params: {
 }): ScenarioElasticity {
   const qs = clamp(params.qualityScore, 0, 100);
   const multipleVolatilityFactor = 1 - qs / 100;
-  const anchorRisk = 1 - OMWISE_CALIBRATION_QS / 100;
+  const anchorRisk = 1 - CALIBRATION_CASE_001_CALIBRATION_QS / 100;
 
   const sectorRiskMod = params.sectorConfig.maxMultipleSpread / 1.25;
   let relativeVariancePct =
-    OMWISE_BASELINE_VARIANCE_PCT *
+    CALIBRATION_CASE_001_BASELINE_VARIANCE_PCT *
     (multipleVolatilityFactor / Math.max(anchorRisk, 0.05)) *
     sectorRiskMod;
 
@@ -94,7 +94,7 @@ export function computeRelativeVariancePct(params: {
     qs >= 55 &&
     qs <= 80
   ) {
-    relativeVariancePct = OMWISE_BASELINE_VARIANCE_PCT;
+    relativeVariancePct = CALIBRATION_CASE_001_BASELINE_VARIANCE_PCT;
   }
 
   return {
@@ -174,7 +174,7 @@ export function buildVarianceRibbon(params: {
 /** @deprecated Use relativeVariancePct from resolveScenarioElasticity(). */
 export function computeValuationScaleFactor(revenueK: number): number {
   const revNis = Math.max(revenueK * 1000, 1);
-  const ratio = revNis / OMWISE_CALIBRATION_REVENUE_NIS;
+  const ratio = revNis / CALIBRATION_CASE_001_CALIBRATION_REVENUE_NIS;
   const logScale = Math.log10(Math.max(ratio, 0.01));
   return clamp(1 - logScale * 0.12, 0.65, 1.35);
 }
