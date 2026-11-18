@@ -27,7 +27,9 @@ import {
 } from '../../../lib/wizard/build_valuation_inputs';
 import {
   computeNetDebtK,
+  DEFAULT_EQUIFY_WIZARD_CREDIT,
   DEFAULT_EQUIFY_WIZARD_STATE,
+  type EquifyWizardCredit,
   type EquifyWizardFinancials,
   type EquifyWizardProfile,
   type EquifyWizardRisk,
@@ -64,6 +66,8 @@ export interface WizardValuationContextValue {
   updateProfile: (patch: Partial<EquifyWizardProfile>) => void;
   updateFinancials: (patch: Partial<EquifyWizardFinancials>) => void;
   updateRisk: (patch: Partial<EquifyWizardRisk>) => void;
+  /** Round 4 (CREDIT_CHAPTER): the optional credit questions of step 2. */
+  updateCredit: (patch: Partial<EquifyWizardCredit>) => void;
   setReportingCurrency: (currency: ReportingCurrencyCode) => void;
   setSector: (sector: EquifySectorKey) => void;
   /** Atomic sector + sub-sector update (avoids firstSub flash between setState calls). */
@@ -177,6 +181,13 @@ export function WizardValuationProvider({
 
   const updateRisk = useCallback((patch: Partial<EquifyWizardRisk>) => {
     setState((prev) => ({ ...prev, risk: { ...prev.risk, ...patch } }));
+  }, []);
+
+  const updateCredit = useCallback((patch: Partial<EquifyWizardCredit>) => {
+    setState((prev) => ({
+      ...prev,
+      credit: { ...DEFAULT_EQUIFY_WIZARD_CREDIT, ...prev.credit, ...patch },
+    }));
   }, []);
 
   const applySectorMarketDefaults = useCallback(async (sector: EquifySectorKey) => {
@@ -310,6 +321,7 @@ export function WizardValuationProvider({
       updateProfile,
       updateFinancials,
       updateRisk,
+      updateCredit,
       setReportingCurrency,
       setSector,
       setSectorSelection,
@@ -342,6 +354,7 @@ export function WizardValuationProvider({
       updateFinancials,
       updateProfile,
       updateRisk,
+      updateCredit,
     ],
   );
 

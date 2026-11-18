@@ -478,7 +478,10 @@ export function buildValuationScenarios(
   inputs: ScenarioInputs,
 ): ValuationScenarios {
   const revenueK = inputs.revenue2026K ?? inputs.rev ?? 0;
-  const baseEquityK = computed.equity;
+  // Round 4: non-operating assets sit outside the ribbon (it is built on the operating equity and
+  // its EV), and are added to every scenario equity. Zero when there are none.
+  const nonOperatingK = computed.nonOperatingAssets?.valueK ?? 0;
+  const baseEquityK = computed.equity - nonOperatingK;
   const organicForwardRevenue2027K =
     revenueK * (1 + Math.max(-0.05, (inputs.growth ?? 0) / 100));
   const backlogCoverageRatio = computeBacklogCoverageRatio(
@@ -503,7 +506,7 @@ export function buildValuationScenarios(
         }
       : calibrateCenterOfGravity({
           rawEvK: computed.ev,
-          rawEquityK: computed.equity,
+          rawEquityK: baseEquityK,
           debtK: inputs.debt,
           revenue2026K: revenueK,
           revK: inputs.rev ?? revenueK,
@@ -521,6 +524,11 @@ export function buildValuationScenarios(
     revenueK,
   });
 
+  if (nonOperatingK !== 0) {
+    ribbon.bearEquityK += nonOperatingK;
+    ribbon.bullEquityK += nonOperatingK;
+    ribbon.baseEquityK += nonOperatingK;
+  }
   const { elasticity } = ribbon;
   const bearMetrics = impliedDisplayMetrics(computed, 'bear', elasticity);
   const baseMetrics = impliedDisplayMetrics(computed, 'base', elasticity);

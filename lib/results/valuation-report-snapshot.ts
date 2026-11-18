@@ -94,6 +94,8 @@ export function buildSnapshotInputsDigest(state: EquifyWizardState): string {
     },
     risk: synced.risk,
     goal: synced.goal,
+    // Round 4: only when the credit questions were answered (flag on), so the digest is unchanged otherwise.
+    ...(synced.credit ? { credit: synced.credit } : {}),
   };
 
   return fnv1aHex(stableStringify(payload));

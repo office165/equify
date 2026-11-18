@@ -270,6 +270,8 @@ export interface ValuationInputs {
   marketEvEbitda?: number;
   /** Live EV/Revenue (×) from wizard market context — sub-sector default baseline. */
   marketEvRevenue?: number;
+  /** Round 4 (CREDIT_CHAPTER): holdings and assets outside the operations, added after net debt. */
+  nonOperatingAssets?: import('./valuation/non_operating_assets').NonOperatingAssetsInput;
 }
 
 export interface ValuationComputed {
@@ -343,6 +345,8 @@ export interface ValuationComputed {
   dcfDetail?: import('./valuation/scenario_matrix').DcfWithGuard;
   /** Methodology 2 detail. Absent in methodology 1. */
   v2?: import('./valuation/method_v2').ValuationV2Detail;
+  /** Round 4 (CREDIT_CHAPTER): non-operating assets included in {@link equity}. Absent when none. */
+  nonOperatingAssets?: import('./valuation/non_operating_assets').NonOperatingAssetsResult;
 }
 
 export interface ScenarioRow {

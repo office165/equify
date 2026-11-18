@@ -75,12 +75,39 @@ export interface EquifyWizardRisk {
   contracts: boolean;
 }
 
+/**
+ * Round 4 (CREDIT_CHAPTER): four short optional questions in the debt part of step 2. Absent when
+ * the flag is off. Amounts in the reporting currency, thousands (like the other step 2 fields).
+ */
+export interface EquifyWizardCredit {
+  /** What the business pays today on loans, per month (K). */
+  monthlyDebtServiceK: number;
+  /** Owner or related company loans (part of the gross debt). */
+  ownerLoans: { has: boolean; amountK: number };
+  liens: {
+    has: boolean;
+    holder: 'bank' | 'non_bank' | 'other' | '';
+    type: 'floating' | 'specific' | 'all_assets' | '';
+  };
+  /** Holdings in other companies or assets outside the operations. */
+  nonOperating: { has: boolean; holdingPct: number; preTaxProfitK: number; estimatedValueK: number };
+}
+
+export const DEFAULT_EQUIFY_WIZARD_CREDIT: EquifyWizardCredit = {
+  monthlyDebtServiceK: 0,
+  ownerLoans: { has: false, amountK: 0 },
+  liens: { has: false, holder: '', type: '' },
+  nonOperating: { has: false, holdingPct: 0, preTaxProfitK: 0, estimatedValueK: 0 },
+};
+
 export interface EquifyWizardState {
   profile: EquifyWizardProfile;
   financials: EquifyWizardFinancials;
   risk: EquifyWizardRisk;
   goal: EquifyGoalKey;
   agreedToTerms: boolean;
+  /** Round 4: only with CREDIT_CHAPTER on. */
+  credit?: EquifyWizardCredit;
 }
 
 import { getIndustryConfig, getSubSectorLabel } from '../constants/industry_config';

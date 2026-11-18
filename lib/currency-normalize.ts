@@ -223,5 +223,14 @@ export function normalizeValuationInputsToIls(
     ebitda2027K: scale(inputs.ebitda2027K ?? undefined),
     projectedEbitdaK: scaleArray(inputs.projectedEbitdaK),
     backlogSignedK: scaleK(inputs.backlogSignedK ?? 0, m),
+    ...(inputs.nonOperatingAssets
+      ? {
+          nonOperatingAssets: {
+            ...inputs.nonOperatingAssets,
+            estimatedValueK: scale(inputs.nonOperatingAssets.estimatedValueK),
+            preTaxProfitK: scale(inputs.nonOperatingAssets.preTaxProfitK),
+          },
+        }
+      : {}),
   };
 }

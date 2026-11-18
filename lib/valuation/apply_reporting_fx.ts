@@ -79,6 +79,18 @@ export function applyReportingFxToComputed(
           spotEbitdaK: scaleK(computed.normalizedEbitda.spotEbitdaK, multiplier),
         }
       : computed.normalizedEbitda,
+    ...(computed.nonOperatingAssets
+      ? {
+          nonOperatingAssets: {
+            ...computed.nonOperatingAssets,
+            valueK: scaleK(computed.nonOperatingAssets.valueK, multiplier),
+            companyValueK: scaleK(computed.nonOperatingAssets.companyValueK, multiplier),
+            ...(computed.nonOperatingAssets.preTaxProfitK != null
+              ? { preTaxProfitK: scaleK(computed.nonOperatingAssets.preTaxProfitK, multiplier) }
+              : {}),
+          },
+        }
+      : {}),
   };
 }
 

@@ -16,6 +16,7 @@ import type { EquifyWizardState } from './map_equify_wizard';
 import { computeNetDebtK } from './map_equify_wizard';
 import { syncFinancialsDerived } from './financial_history';
 import { resolveLiveSectorMult } from './sector_market_defaults';
+import { isCreditChapterOn } from '../credit/flag';
 
 /** Single builder for wizard valuation inputs — live UI, PDF, matrix patch. */
 export function buildValuationInputsFromEquifyState(
@@ -71,6 +72,16 @@ export function buildValuationInputsFromEquifyState(
     ebitda2026K: y2026.ebitdaK,
     ebitda2027K:
       financials.projectedEbitdaK[0] > 0 ? financials.projectedEbitdaK[0] : undefined,
+    // Round 4: holdings outside the operations enter the value bridge only with CREDIT_CHAPTER on.
+    ...(isCreditChapterOn() && state.credit?.nonOperating?.has
+      ? {
+          nonOperatingAssets: {
+            holdingPct: state.credit.nonOperating.holdingPct,
+            estimatedValueK: state.credit.nonOperating.estimatedValueK,
+            preTaxProfitK: state.credit.nonOperating.preTaxProfitK,
+          },
+        }
+      : {}),
   };
 
   return normalizeValuationInputsToIls(rawInputs, profile.currency, fxRates);

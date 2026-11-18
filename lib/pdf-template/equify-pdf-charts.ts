@@ -215,10 +215,12 @@ export function computeWaterfallFills(data: {
   enterpriseValue: number;
   netDebt: number;
   equity: number;
-}): { debtPct: number; equityPct: number } {
+  nonOperatingAssets?: { value: number };
+}): { debtPct: number; equityPct: number; nonOperatingPct: number } {
   const ev = Math.max(data.enterpriseValue, 1);
   return {
     debtPct: Math.min(100, (Math.max(data.netDebt, 0) / ev) * 100),
     equityPct: Math.min(100, (Math.max(data.equity, 0) / ev) * 100),
+    nonOperatingPct: Math.min(100, (Math.max(data.nonOperatingAssets?.value ?? 0, 0) / ev) * 100),
   };
 }

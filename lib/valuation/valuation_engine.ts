@@ -64,6 +64,7 @@ import {
 } from './normalized_ebitda';
 import { resolveSubSectorRevenueMultiple } from './sub_sector_default_multiple';
 import type { TurnaroundDcfParams } from './scenario_matrix';
+import { resolveNonOperatingAssets } from './non_operating_assets';
 
 function qualityScoreGrade(qs: number): QualityGrade {
   if (qs >= 85) return 'A';
@@ -629,8 +630,16 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     equityBeforeUpliftK: cog.calibratedEquityK,
     debtK: debt,
   });
-  const calibratedEquityK = finalEv.equityK;
   const calibratedEvK = finalEv.enterpriseValueK;
+  // Round 4 (CREDIT_CHAPTER): EV - net debt + non-operating assets = equity to the owners.
+  // Absent input: nothing changes. Multiple for a profit-only holding: the industry multiple after
+  // the marketability discount (no size discount).
+  const nonOperatingAssets = resolveNonOperatingAssets(
+    inputs.nonOperatingAssets,
+    automaticNormalization.breakdown.rawMultiple * automaticNormalization.breakdown.dlomFactor,
+  );
+  const operatingEquityK = finalEv.equityK;
+  const calibratedEquityK = operatingEquityK + (nonOperatingAssets?.valueK ?? 0);
 
   let v2Detail: ValuationV2Detail | undefined;
   if (methodVersion === 'v2') {
@@ -651,7 +660,7 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
           })
         : undefined,
       manualReview: v2c.manualReview
-        ? resolveManualReview({ evK: calibratedEvK, debtK: debt, equityK: calibratedEquityK, revenueK: revK })
+        ? resolveManualReview({ evK: calibratedEvK, debtK: debt, equityK: operatingEquityK, revenueK: revK })
         : undefined,
       weightsBeforeZeroLeg: blendWeights !== resolvedBlendWeights ? { ...resolvedBlendWeights } : undefined,
       dcfMarketability: v2c.dcfMarketability ? { factor: dcfMarketabilityFactor, marketableK: dcfMarketableK } : undefined,
@@ -743,6 +752,7 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     methodVersion,
     dcfDetail: dcfDetailed,
     v2: v2Detail,
+    ...(nonOperatingAssets ? { nonOperatingAssets } : {}),
   };
 }
 

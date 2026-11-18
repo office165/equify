@@ -12,6 +12,8 @@ import { SmartFieldLabel } from '../../ui/SmartFieldLabel';
 import { SmartInput } from '../../ui/SmartInput';
 import { SmartSlider } from '../../ui/SmartSlider';
 import { LiveValuationCard } from '../LiveValuationCard';
+import { isCreditChapterOn } from '../../../../lib/credit/flag';
+import { CreditQuestions } from './CreditQuestions';
 import { useReportingCurrency, useWizardValuation } from '../WizardValuationContext';
 
 export interface Step2FinancialsProps {
@@ -348,6 +350,8 @@ export function Step2Financials({ onBack, onNext }: Step2FinancialsProps) {
               {netBridge.display}
             </b>
           </div>
+
+          {isCreditChapterOn() ? <CreditQuestions locale={locale === 'en' ? 'en' : 'he'} /> : null}
 
           <div className="fin-field-grid fin-field-grid--meta grid grid-cols-1 md:grid-cols-2">
             <div className="field">

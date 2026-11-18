@@ -827,6 +827,17 @@ export function mapEngineResultToValuationData(
     bearEquity: kToNis(fxScenarios.bearEq),
     bullEquity: kToNis(fxScenarios.bullEq),
     netDebt: wizardFinancialAbsFromK(netDebtK),
+    ...(fxComputed.nonOperatingAssets
+      ? {
+          nonOperatingAssets: {
+            value: kToNis(fxComputed.nonOperatingAssets.valueK),
+            basis: fxComputed.nonOperatingAssets.basis,
+            holdingPct: fxComputed.nonOperatingAssets.holdingPct,
+            companyValue: kToNis(fxComputed.nonOperatingAssets.companyValueK),
+            multiple: fxComputed.nonOperatingAssets.multiple,
+          },
+        }
+      : {}),
     dcfEv: kToNis(fxComputed.dcf),
     ebitdaEv: kToNis(fxComputed.ebtMult),
     revenueEv: kToNis(fxComputed.revMult),

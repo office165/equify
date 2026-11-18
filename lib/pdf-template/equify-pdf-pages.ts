@@ -133,6 +133,9 @@ function defaultExecutiveSummary(data: ValuationData): string {
   const parts = data.modelBlend.map(
     (r) => `${escHtml(r.name)} (${weightPctHtml(f, r.weightPct)})`,
   );
+  if (data.nonOperatingAssets) {
+    return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. בניכוי חוב נטו של ${f.moneyNarrative(data.netDebt)} ובתוספת נכסים שלא בפעילות של ${f.moneyNarrative(data.nonOperatingAssets.value)} (הערכה), השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
+  }
   return `שקלול של ${parts.join(', ')} מניב שווי פעילות של ${f.moneyNarrative(data.enterpriseValue)}. בניכוי חוב נטו של ${f.moneyNarrative(data.netDebt)}, השווי לבעלים בתרחיש הבסיס עומד על ${f.moneyNarrative(data.equity)}.`;
 }
 
@@ -245,6 +248,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
           <h3>מ-EV לשווי לבעלים</h3>
           <div class="wf-row"><span class="lbl">שווי פעילות</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${f.money(data.enterpriseValue)}</b></div>
           <div class="wf-row"><span class="lbl">${netDebtRow.label}</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${wf.debtPct.toFixed(1)}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div>${netDebtRow.valueHtml}</div>
+          ${data.nonOperatingAssets ? `<div class="wf-row"><span class="lbl">נכסים שלא בפעילות (הערכה)</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.nonOperatingPct.toFixed(1)}%;background:linear-gradient(90deg,#E8D9A8,#C9A84C)"></div></div><b>${f.money(data.nonOperatingAssets.value)}</b></div>` : ''}
           <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:'Assistant'">שווי לבעלים</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.equityPct.toFixed(1)}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${f.money(data.equity)}</b></div>
         </div>
       </section>

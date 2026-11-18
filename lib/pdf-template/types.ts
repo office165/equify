@@ -204,6 +204,17 @@ export interface ValuationData {
   dcfMarketabilityFactor?: number;
   /** Methodology 2: private company layer lines for page 4 (one line each). */
   privateLayerLines?: string[];
+  /**
+   * Round 4 (CREDIT_CHAPTER): non-operating assets in the value bridge, absolute amounts in the
+   * report currency. EV - net debt + value = equity. Marked as an estimate in the report.
+   */
+  nonOperatingAssets?: {
+    value: number;
+    basis: 'value' | 'profit';
+    holdingPct: number;
+    companyValue: number;
+    multiple?: number;
+  };
   ebitdaEv: number;
   revenueEv: number;
   waccPct: number;
