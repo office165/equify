@@ -299,3 +299,215 @@ sub-industry-food_bev          | dcfEv           | 10771999.7    | 8676845.76   
 ... and 1931 more rows
 ```
 
+## 2026-11-18
+
+סיבה: Round 4 part E (V2 only): finding 29, the backlog Ke reduction no longer offsets the concentration and founder premiums (sized on the IP and contracts part, times (1 - top customer) above 50%); finding 30, the multiple concentration penalty enters the EBITDA leg (not in the revenue strategy, not on a manual multiple). Median V2 change -1.8%. V1 unchanged (value-lock passes).
+
+תיקים חדשים: 0. שדות שהשתנו: 1989. מפת מתודולוגיה השתנתה: לא.
+
+```
+case                                   | field            | before                                                       | after                                                        | diff    
+---------------------------------------|------------------|--------------------------------------------------------------|--------------------------------------------------------------|---------
+anchor-1-restaurant                    | equity           | 1368130                                                      | 1327250                                                      | -2.99%  
+anchor-1-restaurant                    | enterpriseValue  | 1968130                                                      | 1927250                                                      | -2.08%  
+anchor-1-restaurant                    | bearEquity       | 1000376.66                                                   | 970485.2                                                     | -2.99%  
+anchor-1-restaurant                    | bullEquity       | 1735883.34                                                   | 1684014.8                                                    | -2.99%  
+anchor-1-restaurant                    | ebitdaEv         | 1406190                                                      | 1343300                                                      | -4.47%  
+anchor-1-restaurant                    | effectiveMult    | 2.47                                                         | 2.36                                                         | -4.45%  
+anchor-1-restaurant                    | keyFindings      | Quality C+ · WACC 13.5% · EBITDA מדווח 2026 615K ₪ · בסיס... | Quality C+ · WACC 13.5% · EBITDA מדווח 2026 615K ₪ · בסיס... | text    
+anchor-3-contractor                    | equity           | 3977110                                                      | 3412720                                                      | -14.19% 
+anchor-3-contractor                    | enterpriseValue  | 8477110                                                      | 7912720                                                      | -6.66%  
+anchor-3-contractor                    | bearEquity       | 3426388.73                                                   | 2940151.35                                                   | -14.19% 
+anchor-3-contractor                    | bullEquity       | 4527831.27                                                   | 3885288.65                                                   | -14.19% 
+anchor-3-contractor                    | dcfEv            | 7063186.78                                                   | 6333328.96                                                   | -10.33% 
+anchor-3-contractor                    | ebitdaEv         | 8635200                                                      | 8304120                                                      | -3.83%  
+anchor-3-contractor                    | waccPct          | 10.49                                                        | 11.57                                                        | 10.30%  
+anchor-3-contractor                    | effectiveMult    | 4.11                                                         | 3.95                                                         | -3.89%  
+anchor-3-contractor                    | terminalPvM      | 5.29                                                         | 4.46                                                         | -15.69% 
+anchor-3-contractor                    | terminalSharePct | 60.41                                                        | 56.84                                                        | -5.91%  
+anchor-3-contractor                    | keyFindings      | Quality C+ · WACC 10.5% · EBITDA מדווח 2026 2.4M ₪ · בסיס... | Quality C+ · WACC 11.6% · EBITDA מדווח 2026 2.4M ₪ · בסיס... | text    
+anchor-4-accounting                    | equity           | 2928910                                                      | 2889820                                                      | -1.33%  
+anchor-4-accounting                    | enterpriseValue  | 2628910                                                      | 2589820                                                      | -1.49%  
+anchor-4-accounting                    | bearEquity       | 2518862.6                                                    | 2485245.2                                                    | -1.33%  
+anchor-4-accounting                    | bullEquity       | 3338957.4                                                    | 3294394.8                                                    | -1.33%  
+anchor-4-accounting                    | ebitdaEv         | 2632110                                                      | 2579990                                                      | -1.98%  
+anchor-4-accounting                    | effectiveMult    | 5.5                                                          | 5.39                                                         | -2.00%  
+anchor-4-accounting                    | keyFindings      | Quality B · WACC 14.8% · EBITDA מדווח 2026 500K ₪ · בסיס ... | Quality B · WACC 14.8% · EBITDA מדווח 2026 500K ₪ · בסיס ... | text    
+anchor-5-young-factory                 | enterpriseValue  | 1329760                                                      | 1196780                                                      | -10.00% 
+anchor-5-young-factory                 | revenueEv        | 2582560                                                      | 2324300                                                      | -10.00% 
+anchor-5-young-factory                 | effectiveMult    | 4.49                                                         | 4.04                                                         | -10.02% 
+anchor-5-young-factory                 | revenueMultiple  | 0.22                                                         | 0.19                                                         | -13.64% 
+anchor-5-young-factory                 | keyFindings      | Quality B · WACC 17.3% · EBITDA מדווח 2026 200K ₪ · בסיס ... | Quality B · WACC 17.3% · EBITDA מדווח 2026 200K ₪ · בסיס ... | text    
+anchor-6-loss-factory                  | equity           | 35810                                                        | 0                                                            | -100.00%
+anchor-6-loss-factory                  | enterpriseValue  | 835810                                                       | 759570                                                       | -9.12%  
+anchor-6-loss-factory                  | bearEquity       | 27302.41                                                     | 0                                                            | -100.00%
+anchor-6-loss-factory                  | bullEquity       | 44317.59                                                     | 0                                                            | -100.00%
+anchor-6-loss-factory                  | revenueEv        | 1407140                                                      | 1266430                                                      | -10.00% 
+anchor-6-loss-factory                  | effectiveMult    | 4.41                                                         | 3.97                                                         | -9.98%  
+anchor-6-loss-factory                  | revenueMultiple  | 0.2                                                          | 0.18                                                         | -10.00% 
+anchor-6-loss-factory                  | keyFindings      | Quality C+ · WACC 18.6% · EBITDA מדווח 2026 -200K ₪ · בסי... | Quality C+ · WACC 18.6% · EBITDA מדווח 2026 -200K ₪ · בסי... | text    
+anchor-7-thin-factory                  | enterpriseValue  | 1346720                                                      | 1212050                                                      | -10.00% 
+anchor-7-thin-factory                  | ebitdaEv         | 1104210                                                      | 993790                                                       | -10.00% 
+anchor-7-thin-factory                  | revenueEv        | 3294160                                                      | 2964750                                                      | -10.00% 
+anchor-7-thin-factory                  | effectiveMult    | 4.51                                                         | 4.06                                                         | -9.98%  
+anchor-7-thin-factory                  | revenueMultiple  | 0.27                                                         | 0.25                                                         | -7.41%  
+anchor-7-thin-factory                  | keyFindings      | Quality B− · WACC 16.8% · EBITDA מדווח 2026 200K ₪ · בסיס... | Quality B− · WACC 16.8% · EBITDA מדווח 2026 200K ₪ · בסיס... | text    
+sub-hospitality-boutique_hotel         | equity           | 7356880                                                      | 7143750                                                      | -2.90%  
+sub-hospitality-boutique_hotel         | enterpriseValue  | 7896880                                                      | 7683750                                                      | -2.70%  
+sub-hospitality-boutique_hotel         | bearEquity       | 5469238.35                                                   | 5310793.64                                                   | -2.90%  
+sub-hospitality-boutique_hotel         | bullEquity       | 9244521.65                                                   | 8976706.36                                                   | -2.90%  
+sub-hospitality-boutique_hotel         | ebitdaEv         | 8288190                                                      | 7917540                                                      | -4.47%  
+sub-hospitality-boutique_hotel         | effectiveMult    | 6.74                                                         | 6.44                                                         | -4.45%  
+sub-hospitality-boutique_hotel         | keyFindings      | Quality B− · WACC 12.5% · EBITDA מדווח 2026 1.3M ₪ · בסיס... | Quality B− · WACC 12.5% · EBITDA מדווח 2026 1.3M ₪ · בסיס... | text    
+sub-hospitality-hotel_chain            | equity           | 1162343190                                                   | 1139598260                                                   | -1.96%  
+sub-hospitality-hotel_chain            | enterpriseValue  | 1220843190                                                   | 1198098260                                                   | -1.86%  
+sub-hospitality-hotel_chain            | bearEquity       | 864107060.96                                                 | 847198066.45                                                 | -1.96%  
+sub-hospitality-hotel_chain            | bullEquity       | 1460579319.04                                                | 1431998453.55                                                | -1.96%  
+sub-hospitality-hotel_chain            | ebitdaEv         | 1255783480                                                   | 1199623140                                                   | -4.47%  
+sub-hospitality-hotel_chain            | effectiveMult    | 9.43                                                         | 9.01                                                         | -4.45%  
+sub-hospitality-hotel_chain            | keyFindings      | Quality B− · WACC 9.8% · EBITDA מדווח 2026 143.0M ₪ · בסי... | Quality B− · WACC 9.8% · EBITDA מדווח 2026 143.0M ₪ · בסי... | text    
+sub-hospitality-vacation               | equity           | 213849190                                                    | 210087190                                                    | -1.76%  
+sub-hospitality-vacation               | enterpriseValue  | 226449190                                                    | 222687190                                                    | -1.66%  
+sub-hospitality-vacation               | bearEquity       | 158979376.01                                                 | 156182636.81                                                 | -1.76%  
+sub-hospitality-vacation               | bullEquity       | 268719003.99                                                 | 263991743.19                                                 | -1.76%  
+sub-hospitality-vacation               | ebitdaEv         | 207705680                                                    | 198416800                                                    | -4.47%  
+sub-hospitality-vacation               | effectiveMult    | 7.24                                                         | 6.92                                                         | -4.42%  
+sub-hospitality-vacation               | keyFindings      | Quality B− · WACC 9.8% · EBITDA מדווח 2026 30.8M ₪ · בסיס... | Quality B− · WACC 9.8% · EBITDA מדווח 2026 30.8M ₪ · בסיס... | text    
+sub-hospitality-airbnb_mgmt            | equity           | 1097330                                                      | 1067700                                                      | -2.70%  
+sub-hospitality-airbnb_mgmt            | enterpriseValue  | 1178330                                                      | 1148700                                                      | -2.51%  
+sub-hospitality-airbnb_mgmt            | bearEquity       | 790077.6                                                     | 768744                                                       | -2.70%  
+sub-hospitality-airbnb_mgmt            | bullEquity       | 1404582.4                                                    | 1366656                                                      | -2.70%  
+sub-hospitality-airbnb_mgmt            | ebitdaEv         | 1103880                                                      | 1054510                                                      | -4.47%  
+sub-hospitality-airbnb_mgmt            | effectiveMult    | 5.99                                                         | 5.72                                                         | -4.51%  
+sub-hospitality-airbnb_mgmt            | keyFindings      | Quality C+ · WACC 11.0% · EBITDA מדווח 2026 198K ₪ · בסיס... | Quality C+ · WACC 11.0% · EBITDA מדווח 2026 198K ₪ · בסיס... | text    
+sub-health-medtech                     | equity           | 138090670                                                    | 135574500                                                    | -1.82%  
+sub-health-medtech                     | enterpriseValue  | 150690670                                                    | 148174500                                                    | -1.67%  
+sub-health-medtech                     | bearEquity       | 126373885.88                                                 | 124071209.09                                                 | -1.82%  
+sub-health-medtech                     | bullEquity       | 149807454.12                                                 | 147077790.91                                                 | -1.82%  
+sub-health-medtech                     | ebitdaEv         | 185620500                                                    | 180588160                                                    | -2.71%  
+sub-health-medtech                     | effectiveMult    | 10.02                                                        | 9.75                                                         | -2.69%  
+sub-health-medtech                     | keyFindings      | Quality A− · WACC 12.6% · EBITDA מדווח 2026 21.0M ₪ · בסי... | Quality A− · WACC 12.6% · EBITDA מדווח 2026 21.0M ₪ · בסי... | text    
+sub-health-biotech                     | equity           | 7767190                                                      | 7623330                                                      | -1.85%  
+sub-health-biotech                     | enterpriseValue  | 8577190                                                      | 8433330                                                      | -1.68%  
+sub-health-biotech                     | bearEquity       | 6679783.4                                                    | 6556063.8                                                    | -1.85%  
+sub-health-biotech                     | bullEquity       | 8854596.6                                                    | 8690596.2                                                    | -1.85%  
+sub-health-biotech                     | ebitdaEv         | 11792390                                                     | 11472690                                                     | -2.71%  
+sub-health-biotech                     | effectiveMult    | 9.9                                                          | 9.63                                                         | -2.73%  
+sub-health-biotech                     | keyFindings      | Quality A− · WACC 15.3% · EBITDA מדווח 2026 1.4M ₪ · בסיס... | Quality A− · WACC 15.3% · EBITDA מדווח 2026 1.4M ₪ · בסיס... | text    
+sub-health-digital_health              | equity           | 2080130                                                      | 2030620                                                      | -2.38%  
+sub-health-digital_health              | enterpriseValue  | 2278130                                                      | 2228620                                                      | -2.17%  
+sub-health-digital_health              | bearEquity       | 1788911.8                                                    | 1746333.2                                                    | -2.38%  
+sub-health-digital_health              | bullEquity       | 2371348.2                                                    | 2314906.8                                                    | -2.38%  
+sub-health-digital_health              | ebitdaEv         | 2705100                                                      | 2631760                                                      | -2.71%  
+sub-health-digital_health              | effectiveMult    | 9.29                                                         | 9.04                                                         | -2.69%  
+sub-health-digital_health              | keyFindings      | Quality B · WACC 16.0% · EBITDA מדווח 2026 330K ₪ · בסיס ... | Quality B · WACC 16.0% · EBITDA מדווח 2026 330K ₪ · בסיס ... | text    
+sub-health-services_health             | equity           | 185383990                                                    | 181794750                                                    | -1.94%  
+sub-health-services_health             | enterpriseValue  | 202483990                                                    | 198894750                                                    | -1.77%  
+sub-health-services_health             | bearEquity       | 169654439.33                                                 | 166369740.91                                                 | -1.94%  
+sub-health-services_health             | bullEquity       | 201113540.67                                                 | 197219759.09                                                 | -1.94%  
+sub-health-services_health             | ebitdaEv         | 206860810                                                    | 201252630                                                    | -2.71%  
+sub-health-services_health             | effectiveMult    | 8.23                                                         | 8                                                            | -2.79%  
+sub-health-services_health             | keyFindings      | Quality A− · WACC 10.5% · EBITDA מדווח 2026 28.5M ₪ · בסי... | Quality A− · WACC 10.5% · EBITDA מדווח 2026 28.5M ₪ · בסי... | text    
+sub-services-consulting                | equity           | 8992570                                                      | 8805910                                                      | -2.08%  
+sub-services-consulting                | enterpriseValue  | 10072570                                                     | 9885910                                                      | -1.85%  
+sub-services-consulting                | bearEquity       | 7733610.2                                                    | 7573082.6                                                    | -2.08%  
+sub-services-consulting                | bullEquity       | 10251529.8                                                   | 10038737.4                                                   | -2.08%  
+sub-services-consulting                | ebitdaEv         | 10263380                                                     | 10014510                                                     | -2.42%  
+sub-services-consulting                | effectiveMult    | 6.18                                                         | 6.03                                                         | -2.43%  
+sub-services-consulting                | keyFindings      | Quality B · WACC 14.2% · EBITDA מדווח 2026 1.8M ₪ · בסיס ... | Quality B · WACC 14.2% · EBITDA מדווח 2026 1.8M ₪ · בסיס ... | text    
+sub-services-legal                     | equity           | 1038030                                                      | 1015770                                                      | -2.14%  
+sub-services-legal                     | enterpriseValue  | 1173030                                                      | 1150770                                                      | -1.90%  
+sub-services-legal                     | bearEquity       | 858356.44                                                    | 839949.45                                                    | -2.14%  
+sub-services-legal                     | bullEquity       | 1217703.56                                                   | 1191590.55                                                   | -2.14%  
+sub-services-legal                     | ebitdaEv         | 1184530                                                      | 1155810                                                      | -2.42%  
+sub-services-legal                     | effectiveMult    | 5.71                                                         | 5.57                                                         | -2.45%  
+sub-services-legal                     | keyFindings      | Quality B− · WACC 14.8% · EBITDA מדווח 2026 225K ₪ · בסיס... | Quality B− · WACC 14.8% · EBITDA מדווח 2026 225K ₪ · בסיס... | text    
+sub-services-accounting                | equity           | 226576260                                                    | 223282770                                                    | -1.45%  
+sub-services-accounting                | enterpriseValue  | 249076260                                                    | 245782770                                                    | -1.32%  
+sub-services-accounting                | bearEquity       | 198123774.5                                                  | 195243867                                                    | -1.45%  
+sub-services-accounting                | bullEquity       | 255028745.5                                                  | 251321673                                                    | -1.45%  
+sub-services-accounting                | ebitdaEv         | 227316300                                                    | 221804180                                                    | -2.42%  
+sub-services-accounting                | effectiveMult    | 6.57                                                         | 6.41                                                         | -2.44%  
+sub-services-accounting                | keyFindings      | Quality B · WACC 11.1% · EBITDA מדווח 2026 37.5M ₪ · בסיס... | Quality B · WACC 11.1% · EBITDA מדווח 2026 37.5M ₪ · בסיס... | text    
+sub-services-marketing                 | equity           | 1773130                                                      | 1737550                                                      | -2.01%  
+sub-services-marketing                 | enterpriseValue  | 1998130                                                      | 1962550                                                      | -1.78%  
+sub-services-marketing                 | bearEquity       | 1466217.32                                                   | 1436795.89                                                   | -2.01%  
+sub-services-marketing                 | bullEquity       | 2080042.68                                                   | 2038304.11                                                   | -2.01%  
+sub-services-marketing                 | ebitdaEv         | 2023700                                                      | 1974630                                                      | -2.42%  
+sub-services-marketing                 | effectiveMult    | 5.85                                                         | 5.71                                                         | -2.39%  
+sub-services-marketing                 | keyFindings      | Quality B− · WACC 14.5% · EBITDA מדווח 2026 375K ₪ · בסיס... | Quality B− · WACC 14.5% · EBITDA מדווח 2026 375K ₪ · בסיס... | text    
+sub-industry-manufacturing             | equity           | 944527700                                                    | 928924480                                                    | -1.65%  
+sub-industry-manufacturing             | enterpriseValue  | 1169527700                                                   | 1153924480                                                   | -1.33%  
+sub-industry-manufacturing             | bearEquity       | 756194601.03                                                 | 743702568.53                                                 | -1.65%  
+sub-industry-manufacturing             | bullEquity       | 1132860798.97                                                | 1114146391.47                                                | -1.65%  
+sub-industry-manufacturing             | ebitdaEv         | 1545508110                                                   | 1497126060                                                   | -3.13%  
+sub-industry-manufacturing             | effectiveMult    | 5.58                                                         | 5.41                                                         | -3.05%  
+sub-industry-manufacturing             | keyFindings      | Quality B− · WACC 13.0% · EBITDA מדווח 2026 300.0M ₪ · בס... | Quality B− · WACC 13.0% · EBITDA מדווח 2026 300.0M ₪ · בס... | text    
+sub-industry-distribution              | equity           | 147249730                                                    | 145261480                                                    | -1.35%  
+sub-industry-distribution              | enterpriseValue  | 174249730                                                    | 172261480                                                    | -1.14%  
+sub-industry-distribution              | bearEquity       | 117889026.26                                                 | 116297221.26                                                 | -1.35%  
+sub-industry-distribution              | bullEquity       | 176610433.74                                                 | 174225738.74                                                 | -1.35%  
+sub-industry-distribution              | ebitdaEv         | 168244330                                                    | 162977450                                                    | -3.13%  
+sub-industry-distribution              | effectiveMult    | 5.06                                                         | 4.9                                                          | -3.16%  
+sub-industry-distribution              | keyFindings      | Quality B− · WACC 9.4% · EBITDA מדווח 2026 36.0M ₪ · בסיס... | Quality B− · WACC 9.4% · EBITDA מדווח 2026 36.0M ₪ · בסיס... | text    
+sub-industry-food_bev                  | equity           | 8001550                                                      | 7798610                                                      | -2.54%  
+sub-industry-food_bev                  | enterpriseValue  | 9981550                                                      | 9778610                                                      | -2.03%  
+sub-industry-food_bev                  | bearEquity       | 6406089.42                                                   | 6243614.43                                                   | -2.54%  
+sub-industry-food_bev                  | bullEquity       | 9597010.58                                                   | 9353605.57                                                   | -2.54%  
+sub-industry-food_bev                  | ebitdaEv         | 10863270                                                     | 10523190                                                     | -3.13%  
+sub-industry-food_bev                  | effectiveMult    | 4.46                                                         | 4.32                                                         | -3.14%  
+sub-industry-food_bev                  | keyFindings      | Quality B− · WACC 12.0% · EBITDA מדווח 2026 2.6M ₪ · בסיס... | Quality B− · WACC 12.0% · EBITDA מדווח 2026 2.6M ₪ · בסיס... | text    
+sub-industry-traditional               | equity           | 35569410                                                     | 34936460                                                     | -1.78%  
+sub-industry-traditional               | enterpriseValue  | 44569410                                                     | 43936460                                                     | -1.42%  
+sub-industry-traditional               | bearEquity       | 28477085.22                                                  | 27970341.61                                                  | -1.78%  
+sub-industry-traditional               | bullEquity       | 42661734.78                                                  | 41902578.39                                                  | -1.78%  
+sub-industry-traditional               | ebitdaEv         | 48060310                                                     | 46555790                                                     | -3.13%  
+sub-industry-traditional               | effectiveMult    | 4.34                                                         | 4.2                                                          | -3.23%  
+sub-industry-traditional               | keyFindings      | Quality B− · WACC 11.6% · EBITDA מדווח 2026 12.0M ₪ · בסי... | Quality B− · WACC 11.6% · EBITDA מדווח 2026 12.0M ₪ · בסי... | text    
+sub-retail_unified-retail-supermarkets | equity           | 1685054680                                                   | 1660269860                                                   | -1.47%  
+sub-retail_unified-retail-supermarkets | enterpriseValue  | 2135054680                                                   | 2110269860                                                   | -1.16%  
+sub-retail_unified-retail-supermarkets | bearEquity       | 1326475044.1                                                 | 1306964433.79                                                | -1.47%  
+sub-retail_unified-retail-supermarkets | bullEquity       | 2043634315.9                                                 | 2013575286.21                                                | -1.47%  
+sub-retail_unified-retail-supermarkets | ebitdaEv         | 1467642890                                                   | 1416802250                                                   | -3.46%  
+sub-retail_unified-retail-supermarkets | effectiveMult    | 4.05                                                         | 3.91                                                         | -3.46%  
+sub-retail_unified-retail-supermarkets | keyFindings      | Quality C+ · WACC 9.9% · EBITDA מדווח 2026 400.0M ₪ · בסי... | Quality C+ · WACC 9.9% · EBITDA מדווח 2026 400.0M ₪ · בסי... | text    
+sub-retail_unified-d2c                 | equity           | 7044500                                                      | 6819860                                                      | -3.19%  
+sub-retail_unified-d2c                 | enterpriseValue  | 9744500                                                      | 9519860                                                      | -2.31%  
+sub-retail_unified-d2c                 | bearEquity       | 5545430.4                                                    | 5368593.79                                                   | -3.19%  
+sub-retail_unified-d2c                 | bullEquity       | 8543569.6                                                    | 8271126.21                                                   | -3.19%  
+sub-retail_unified-d2c                 | ebitdaEv         | 9786570                                                      | 9447550                                                      | -3.46%  
+sub-retail_unified-d2c                 | effectiveMult    | 4.5                                                          | 4.35                                                         | -3.33%  
+sub-retail_unified-d2c                 | keyFindings      | Quality C+ · WACC 14.7% · EBITDA מדווח 2026 2.4M ₪ · בסיס... | Quality C+ · WACC 14.7% · EBITDA מדווח 2026 2.4M ₪ · בסיס... | text    
+sub-retail_unified-retail-fashion      | equity           | 531100                                                       | 514370                                                       | -3.15%  
+sub-retail_unified-retail-fashion      | enterpriseValue  | 891100                                                       | 874370                                                       | -1.88%  
+sub-retail_unified-retail-fashion      | bearEquity       | 390323.09                                                    | 378027.66                                                    | -3.15%  
+sub-retail_unified-retail-fashion      | bullEquity       | 671876.91                                                    | 650712.34                                                    | -3.15%  
+sub-retail_unified-retail-fashion      | ebitdaEv         | 715210                                                       | 690430                                                       | -3.46%  
+sub-retail_unified-retail-fashion      | effectiveMult    | 2.47                                                         | 2.38                                                         | -3.64%  
+sub-retail_unified-retail-fashion      | keyFindings      | Quality C+ · WACC 15.0% · EBITDA מדווח 2026 320K ₪ · בסיס... | Quality C+ · WACC 15.0% · EBITDA מדווח 2026 320K ₪ · בסיס... | text    
+sub-retail_unified-specialty           | equity           | 152860                                                       | 147890                                                       | -3.25%  
+sub-retail_unified-specialty           | enterpriseValue  | 224860                                                       | 219890                                                       | -2.21%  
+sub-retail_unified-specialty           | bearEquity       | 112341.91                                                    | 108689.29                                                    | -3.25%  
+sub-retail_unified-specialty           | bullEquity       | 193378.09                                                    | 187090.71                                                    | -3.25%  
+sub-retail_unified-specialty           | ebitdaEv         | 212290                                                       | 204930                                                       | -3.47%  
+sub-retail_unified-specialty           | effectiveMult    | 3.66                                                         | 3.54                                                         | -3.28%  
+sub-retail_unified-specialty           | keyFindings      | Quality C+ · WACC 15.0% · EBITDA מדווח 2026 64K ₪ · בסיס ... | Quality C+ · WACC 15.0% · EBITDA מדווח 2026 64K ₪ · בסיס ... | text    
+sub-food_service-restaurant            | equity           | 113392480                                                    | 111855570                                                    | -1.36%  
+sub-food_service-restaurant            | enterpriseValue  | 130492480                                                    | 128955570                                                    | -1.18%  
+sub-food_service-restaurant            | bearEquity       | 89378014.42                                                  | 88166594.01                                                  | -1.36%  
+sub-food_service-restaurant            | bullEquity       | 137406945.58                                                 | 135544545.99                                                 | -1.36%  
+sub-food_service-restaurant            | ebitdaEv         | 70494600                                                     | 67341980                                                     | -4.47%  
+sub-food_service-restaurant            | effectiveMult    | 2.88                                                         | 2.75                                                         | -4.51%  
+sub-food_service-restaurant            | keyFindings      | Quality B− · WACC 10.2% · EBITDA מדווח 2026 26.6M ₪ · בסי... | Quality B− · WACC 10.2% · EBITDA מדווח 2026 26.6M ₪ · בסי... | text    
+sub-food_service-cafe                  | equity           | 228900                                                       | 222570                                                       | -2.77%  
+sub-food_service-cafe                  | enterpriseValue  | 282900                                                       | 276570                                                       | -2.24%  
+sub-food_service-cafe                  | bearEquity       | 167371.68                                                    | 162743.18                                                    | -2.77%  
+sub-food_service-cafe                  | bullEquity       | 290428.32                                                    | 282396.82                                                    | -2.77%  
+sub-food_service-cafe                  | ebitdaEv         | 217870                                                       | 208120                                                       | -4.48%  
+sub-food_service-cafe                  | effectiveMult    | 2.82                                                         | 2.69                                                         | -4.61%  
+sub-food_service-cafe                  | keyFindings      | Quality C+ · WACC 13.5% · EBITDA מדווח 2026 84K ₪ · בסיס ... | Quality C+ · WACC 13.5% · EBITDA מדווח 2026 84K ₪ · בסיס ... | text    
+sub-food_service-catering              | equity           | 740170                                                       | 718780                                                       | -2.89%  
+sub-food_service-catering              | enterpriseValue  | 902170                                                       | 880780                                                       | -2.37%  
+... and 1789 more rows
+```
+

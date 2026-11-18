@@ -26,8 +26,13 @@ import { Suite, type SuiteResult } from '../lib/harness';
 import { withQuietConsole } from '../lib/quiet';
 import { TEST_FX } from '../lib/run_case';
 import { checkCreditChapterConsistency, formatCreditAmount } from '../../lib/credit/credit_chapter';
+import { computeValuation } from '../../lib/valuation';
+import { resolveMethodVersion } from '../../lib/valuation/method_v2';
+import { buildValuationInputsFromEquifyState } from '../../lib/wizard/build_valuation_inputs';
+import { syncFinancialsDerived } from '../../lib/wizard/financial_history';
 import { reportPageCount } from '../../lib/pdf-template';
 import { CREDIT_FULL_CASE_ID, caseCredit } from '../pdf/pdf_harness';
+import { caseStateFor, evaluateCase, validateCase } from '../../scripts/calibration/run';
 
 export const FULL_CREDIT: EquifyWizardCredit = {
   monthlyDebtServiceK: 45,
@@ -142,7 +147,52 @@ export function run(): SuiteResult {
   s.check('non-operating', 'bridge-row', html.includes('נכסים שלא בפעילות (הערכה)') && html.includes('ובתוספת נכסים שלא בפעילות'), '');
 
   creditChapterChecks(s, cases);
+  calibrationHoldingCheck(s);
+  if (resolveMethodVersion() === 'v2') findings29And30Checks(s, cases);
   return s.result;
+}
+
+function equityOf(spec: CaseSpec, risk: { topCustomer?: number; founderDep?: boolean }, backlogShare?: number): number {
+  const state = buildWizardState(spec);
+  state.risk = { ...state.risk, ...(risk.topCustomer != null ? { topCustomer: risk.topCustomer } : {}), ...(risk.founderDep != null ? { founderDep: risk.founderDep } : {}) };
+  if (backlogShare != null) state.financials = { ...state.financials, backlogSignedK: Math.round(state.financials.y2026.revenueK * backlogShare) };
+  state.financials = syncFinancialsDerived(state.financials);
+  return withQuietConsole(() => computeValuation(buildValuationInputsFromEquifyState(state, TEST_FX), { silent: true }).equity);
+}
+
+/**
+ * Part E (methodology 2 only): findings 29 and 30.
+ *   v2-top-customer-monotonic: a larger top customer never gives a higher equity (0% to 100% in
+ *     steps of 10, with and without a full backlog).
+ *   v2-founder-monotonic: founder dependency never gives a higher equity.
+ *   v2-80-founder-below-20: 80% customer with founder dependency is below 20% without it, also
+ *     with a full backlog (strictly below when the equity is positive).
+ */
+function findings29And30Checks(s: Suite, cases: CaseSpec[]): void {
+  const tops = [0, 10, 20, 30, 40, 50, 55, 60, 70, 80, 90, 100];
+  let equalCases = 0;
+  for (const spec of cases) {
+    for (const backlog of [undefined, 1.0]) {
+      const tag = `${spec.id}${backlog ? '/backlog' : ''}`;
+      let prev = Infinity;
+      let worst = '';
+      for (const top of tops) {
+        const e = equityOf(spec, { topCustomer: top }, backlog);
+        if (e > prev + Math.max(1e-6, Math.abs(prev) * 1e-9)) worst = `top ${top}: ${e.toFixed(1)} > ${prev.toFixed(1)}`;
+        prev = e;
+      }
+      s.check('v2-top-customer-monotonic', tag, worst === '', worst);
+      const withF = equityOf(spec, { founderDep: true }, backlog);
+      const withoutF = equityOf(spec, { founderDep: false }, backlog);
+      s.check('v2-founder-monotonic', tag, withF <= withoutF + Math.max(1e-6, Math.abs(withoutF) * 1e-9), `${withF} > ${withoutF}`);
+      const risky = equityOf(spec, { topCustomer: 80, founderDep: true }, backlog);
+      const safe = equityOf(spec, { topCustomer: 20, founderDep: false }, backlog);
+      const ok = safe > 0 ? risky < safe : risky <= safe;
+      if (ok && !(risky < safe)) equalCases += 1;
+      s.check('v2-80-founder-below-20', tag, ok, `${risky.toFixed(1)} vs ${safe.toFixed(1)}`);
+    }
+  }
+  s.note(`v2-80-founder-below-20: ${equalCases} case(s) equal at zero equity`);
 }
 
 /** Text of the credit chapter page body (without the shared header and footer). */
@@ -226,4 +276,29 @@ function creditChapterChecks(s: Suite, cases: CaseSpec[]): void {
     { ...c, ceiling: c.ceiling + 5 },
   ];
   s.check('chapter-guard', 'tampered', tampered.every((t) => checkCreditChapterConsistency(t).length > 0), '');
+}
+
+/**
+ * Part F: a calibration case that gives its holding the wizard way is valued by the engine, exactly
+ * as in the product (the same nonOperatingAssets value, added once).
+ */
+function calibrationHoldingCheck(s: Suite): void {
+  const raw = {
+    caseCode: 'CAL-TEST',
+    wizard: {
+      sector: 'industry', subSector: 'manufacturing', lifecycle: 'mature',
+      years: { '2024': { revenue: 40e6, ebitda: 5e6 }, '2025': { revenue: 44e6, ebitda: 5.5e6 }, '2026': { revenue: 48e6, ebitda: 6e6 } },
+      growthPct: 6, grossDebt: 4e6, cash: 1e6, ownerSalaryNormalization: 0, capexLevelPct: 3, backlogSigned: 0,
+      recurringPct: 60, topCustomerPct: 30, founderDependency: false, strongCompetition: false, ipProtection: true, longTermContracts: true,
+    },
+    nonOperatingAssets: { value: 3e6, engine: { holdingPct: 75, preTaxProfit: 1e6 } },
+    target: { value: 40e6, low: 35e6, high: 45e6, by: 'TEST', method: 'test', source: 'test', date: null },
+  };
+  const c = validateCase(raw);
+  const r = evaluateCase(c, 'test.json');
+  const d = withCreditFlag(true, () => reportData(caseStateFor(c), 'CAL-TEST'));
+  const engine = d.nonOperatingAssets?.value ?? NaN;
+  s.check('calibration-holding', 'engine-way', r.nonOperatingSource === 'engine' && Math.abs(r.nonOperating - engine) < 1e-6 && Math.abs((resolveMethodVersion() === 'v2' ? r.v2 : r.v1) - d.equity) < 1e-3 * Math.max(1, Math.abs(d.equity)) && engine !== 3e6, `${r.nonOperating} vs ${engine}, v1 ${r.v1} vs ${d.equity}`);
+  const fixed = evaluateCase(validateCase({ ...raw, nonOperatingAssets: { value: 3e6 } }), 'test.json');
+  s.check('calibration-holding', 'fixed-way', fixed.nonOperatingSource === 'fixed' && fixed.nonOperating === 3e6, `${fixed.nonOperating}`);
 }

@@ -20,6 +20,7 @@ import { mapWizardToValuationData } from '../../lib/pdf-template/map-from-wizard
 import type { ValuationData } from '../../lib/pdf-template/types';
 import type { EquifyGoalKey, EquifyLifecycleKey, EquifySectorKey } from '../../lib/valuation';
 import { buildWizardState, type CaseSpec } from '../../tests/lib/fixtures';
+import type { EquifyWizardState } from '../../lib/wizard/map_equify_wizard';
 import { withQuietConsole } from '../../tests/lib/quiet';
 import { TEST_FX } from '../../tests/lib/run_case';
 
@@ -63,6 +64,12 @@ export interface CalibrationCase {
     low?: number;
     high?: number;
     note?: string;
+    /**
+     * Round 4: the holding as the wizard asks it. When given, the value comes from the engine
+     * (CREDIT_CHAPTER path: estimated value x share, or pre-tax profit x the industry multiple after
+     * marketability x share), the same way as in the product, and `value` is shown for reference.
+     */
+    engine?: { holdingPct: number; preTaxProfit?: number; estimatedValue?: number };
   };
   target: {
     /** Center of the target (full currency units). */
@@ -89,6 +96,10 @@ export interface CaseResult {
   v2Engine: number;
   /** Non-operating assets added to the engine value (0 when the case has none). */
   nonOperating: number;
+  /** Round 4: 'engine' when the engine valued the holding, 'fixed' when the case value was added. */
+  nonOperatingSource?: 'engine' | 'fixed';
+  /** Round 4: the case's own value, shown next to the engine's. */
+  nonOperatingFixed?: number;
   nonOperatingLow?: number;
   nonOperatingHigh?: number;
   /** Engine value plus non-operating assets: what is compared with the target. */
@@ -156,6 +167,11 @@ export function validateCase(raw: unknown): CalibrationCase {
     if (n.low != null) num(n.low, 'nonOperatingAssets.low');
     if (n.high != null) num(n.high, 'nonOperatingAssets.high');
     if (n.low != null && n.high != null && !(n.low <= n.value && n.value <= n.high)) fail('nonOperatingAssets: low <= value <= high expected');
+    if (n.engine != null) {
+      num(n.engine.holdingPct, 'nonOperatingAssets.engine.holdingPct');
+      if (n.engine.holdingPct <= 0 || n.engine.holdingPct > 100) fail('nonOperatingAssets.engine.holdingPct: 0 to 100 expected');
+      if (n.engine.preTaxProfit == null && n.engine.estimatedValue == null) fail('nonOperatingAssets.engine: preTaxProfit or estimatedValue expected');
+    }
   }
   return c;
 }
@@ -192,26 +208,50 @@ export function caseSpecFor(c: CalibrationCase): CaseSpec {
   };
 }
 
-function runPath(spec: CaseSpec, method: 'v1' | 'v2'): ValuationData {
+/** The wizard state of a case; with an engine holding, the round 4 credit answer for it. */
+export function caseStateFor(c: CalibrationCase): EquifyWizardState {
+  const state = buildWizardState(caseSpecFor(c));
+  const e = c.nonOperatingAssets?.engine;
+  if (e) {
+    state.credit = {
+      monthlyDebtServiceK: 0,
+      ownerLoans: { has: false, amountK: 0 },
+      liens: { has: false, holder: '', type: '' },
+      nonOperating: { has: true, holdingPct: e.holdingPct, preTaxProfitK: k(e.preTaxProfit ?? 0), estimatedValueK: k(e.estimatedValue ?? 0) },
+    };
+  }
+  return state;
+}
+
+function runPath(c: CalibrationCase, method: 'v1' | 'v2'): ValuationData {
   const before = process.env.METHOD_V2;
+  const beforeCredit = process.env.CREDIT_CHAPTER;
   process.env.METHOD_V2 = method === 'v2' ? 'on' : 'off';
+  // The holding goes through the engine only when the case gives it the wizard way.
+  process.env.CREDIT_CHAPTER = c.nonOperatingAssets?.engine ? 'on' : 'off';
   try {
-    return withQuietConsole(() => mapWizardToValuationData(buildWizardState(spec), `CAL-${spec.id}`, 'he', TEST_FX));
+    return withQuietConsole(() => mapWizardToValuationData(caseStateFor(c), `CAL-${c.caseCode}`, 'he', TEST_FX));
   } finally {
     if (before == null) delete process.env.METHOD_V2;
     else process.env.METHOD_V2 = before;
+    if (beforeCredit == null) delete process.env.CREDIT_CHAPTER;
+    else process.env.CREDIT_CHAPTER = beforeCredit;
   }
 }
 
 export function evaluateCase(c: CalibrationCase, file: string): CaseResult {
-  const spec = caseSpecFor(c);
   const basis = c.target.basis ?? 'equity';
-  const pick = (d: ValuationData) => (basis === 'ev' ? d.enterpriseValue : d.equity);
-  const v1Engine = pick(runPath(spec, 'v1'));
-  const v2Engine = pick(runPath(spec, 'v2'));
-  const nonOperating = c.nonOperatingAssets?.value ?? 0;
+  const d1 = runPath(c, 'v1');
+  const d2 = runPath(c, 'v2');
+  const engineHolding = Boolean(c.nonOperatingAssets?.engine) && basis === 'equity';
+  // Engine value without the holding; the holding is added once, from the engine or from the case.
+  const pick = (d: ValuationData) => (basis === 'ev' ? d.enterpriseValue : d.equity - (engineHolding ? d.nonOperatingAssets?.value ?? 0 : 0));
+  const v1Engine = pick(d1);
+  const v2Engine = pick(d2);
+  const nonOperating = engineHolding ? d1.nonOperatingAssets?.value ?? 0 : c.nonOperatingAssets?.value ?? 0;
+  const nonOperatingV2 = engineHolding ? d2.nonOperatingAssets?.value ?? 0 : nonOperating;
   const v1 = v1Engine + nonOperating;
-  const v2 = v2Engine + nonOperating;
+  const v2 = v2Engine + nonOperatingV2;
   const t = c.target.value;
   const inRange = (v: number) => (c.target.low != null && c.target.high != null ? v >= c.target.low && v <= c.target.high : null);
   const v2DevPct = ((v2 - t) / t) * 100;
@@ -221,6 +261,7 @@ export function evaluateCase(c: CalibrationCase, file: string): CaseResult {
     v1Engine,
     v2Engine,
     nonOperating,
+    ...(c.nonOperatingAssets ? { nonOperatingSource: engineHolding ? ('engine' as const) : ('fixed' as const), nonOperatingFixed: c.nonOperatingAssets.value } : {}),
     nonOperatingLow: c.nonOperatingAssets?.low,
     nonOperatingHigh: c.nonOperatingAssets?.high,
     v1,
@@ -274,7 +315,7 @@ const fmtM = (x: number) => `${(x / 1e6).toFixed(2)}M`;
 const fmtPct = (p: number) => (Number.isFinite(p) ? `${p >= 0 ? '+' : ''}${p.toFixed(1)}%` : 'n/a');
 const fmtNonOp = (r: CaseResult) =>
   r.nonOperating > 0 || r.nonOperatingLow != null
-    ? `${fmtM(r.nonOperating)}${r.nonOperatingLow != null && r.nonOperatingHigh != null ? ` (${fmtM(r.nonOperatingLow)} עד ${fmtM(r.nonOperatingHigh)})` : ''}`
+    ? `${fmtM(r.nonOperating)}${r.nonOperatingSource === 'engine' ? ` (מנוע; בתיק ${fmtM(r.nonOperatingFixed ?? 0)})` : ''}${r.nonOperatingLow != null && r.nonOperatingHigh != null ? ` (${fmtM(r.nonOperatingLow)} עד ${fmtM(r.nonOperatingHigh)})` : ''}`
     : 'אין';
 const fmtAbs = (p: number) => (Number.isFinite(p) ? `${p.toFixed(1)}%` : 'n/a');
 const yesNo = (b: boolean | null) => (b == null ? 'אין טווח' : b ? 'כן' : 'לא');

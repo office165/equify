@@ -75,6 +75,14 @@ export interface V2Components {
    * overlay. Not in V2_ALL: the premium as a function of size is not verified.
    */
   sizePremiumDecile: boolean;
+  /**
+   * Round 4, finding 29: the backlog Ke reduction no longer offsets the concentration and founder
+   * premiums. It is sized on the rest of the specific premium (general forecast risk), and above a
+   * 50% top customer it is multiplied by (1 - top customer share).
+   */
+  backlogNoOffset: boolean;
+  /** Round 4, finding 30: the multiple's concentration penalty enters the EBITDA leg. */
+  concentrationMultiple: boolean;
 }
 
 export const V2_ALL: Readonly<V2Components> = Object.freeze({
@@ -89,6 +97,8 @@ export const V2_ALL: Readonly<V2Components> = Object.freeze({
   dcfMarketability: true,
   r1GradualFloor: true,
   sizePremiumDecile: false,
+  backlogNoOffset: true,
+  concentrationMultiple: true,
 });
 
 export const V1_NONE: Readonly<V2Components> = Object.freeze({
@@ -103,6 +113,8 @@ export const V1_NONE: Readonly<V2Components> = Object.freeze({
   dcfMarketability: false,
   r1GradualFloor: false,
   sizePremiumDecile: false,
+  backlogNoOffset: false,
+  concentrationMultiple: false,
 });
 
 /**
@@ -570,4 +582,27 @@ export interface ValuationV2Detail {
   r1FloorFade?: R1FloorFade;
   /** Round 3: size premium inside Ke (pp) and where it comes from. */
   sizePremium?: { pp: number; basis: 'overlay' | 'damodaran-decile' };
+  /** Round 4, finding 29: backlog Ke reduction before and after (pp, negative). */
+  backlogReduction?: { v1Pp: number; v2Pp: number; generalShare: number; topCustomerFactor: number };
+  /** Round 4, finding 30: factor on the EBITDA multiple from the concentration penalty (1 = none). */
+  concentrationMultipleFactor?: number;
+}
+
+/**
+ * Finding 29 (round 4): the backlog reduces only general forecast risk. The V1 reduction is sized on
+ * the whole specific premium (and so offsets concentration and founder dependency); here it is sized
+ * on the part without them, and above a 50% top customer multiplied by (1 - share), since the
+ * backlog likely comes from that customer. With no specific premium at all the V1 reduction stays.
+ */
+export function backlogReductionV2(params: {
+  v1ReductionPp: number;
+  breakdownPp: { concentrationRisk: number; founderRisk: number; ipRisk: number; contractRisk: number };
+  topCustomerPct: number;
+}): { v2Pp: number; generalShare: number; topCustomerFactor: number } {
+  const b = params.breakdownPp;
+  const parts = b.concentrationRisk + b.founderRisk + b.ipRisk + b.contractRisk;
+  const generalShare = parts > 0 ? (b.ipRisk + b.contractRisk) / parts : 1;
+  const top = Math.max(0, Math.min(100, params.topCustomerPct)) / 100;
+  const topCustomerFactor = top > 0.5 ? 1 - top : 1;
+  return { v2Pp: params.v1ReductionPp * generalShare * topCustomerFactor, generalShare, topCustomerFactor };
 }

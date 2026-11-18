@@ -36,6 +36,7 @@ import {
 import { sizePremiumDecilePp } from './private_company_layer';
 import { computeCapmWacc } from './capm_wacc';
 import {
+  backlogReductionV2,
   computeWaccV2,
   exitMultipleCrossCheck,
   fadeR1Floor,
@@ -313,7 +314,22 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
       ? ebitdaBlend.blended + BASELINE_OWNER_SALARY_NORM_K
       : ebitdaBlend.blended;
 
-  const waccBacklogAdjustment = backlog.waccAdjustmentPct;
+  // Finding 29 (methodology 2): the backlog reduction no longer offsets concentration and founder
+  // dependency, and is cut when the top customer is above 50%.
+  const backlogV2 =
+    v2c.backlogNoOffset && backlog.waccAdjustmentPct !== 0
+      ? backlogReductionV2({
+          v1ReductionPp: backlog.waccAdjustmentPct,
+          breakdownPp: {
+            concentrationRisk: specificRisk.breakdown.concentrationRisk * 100,
+            founderRisk: specificRisk.breakdown.founderRisk * 100,
+            ipRisk: specificRisk.breakdown.ipRisk * 100,
+            contractRisk: specificRisk.breakdown.contractRisk * 100,
+          },
+          topCustomerPct: topCustomer,
+        })
+      : undefined;
+  const waccBacklogAdjustment = backlogV2 ? backlogV2.v2Pp : backlog.waccAdjustmentPct;
   const backlogAlphaReductionPp = Math.abs(waccBacklogAdjustment);
   const capm = computeCapmWacc({
     sector: inputs.sector,
@@ -399,7 +415,17 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
     isManualOverride: multipleResolution.isManual,
     continuousScale: v2c.continuousSize,
   });
-  const effectiveMult = overrides.effectiveMultiple ?? normalization.adjustedMultiple;
+  // Finding 30 (methodology 2): the multiple's concentration penalty enters the EBITDA leg (not in
+  // the revenue strategy, where the effective multiple is a revenue multiple, and not on a manual
+  // multiple). The quality score itself still only sets the width of the range.
+  const concentrationMultipleFactor =
+    v2c.concentrationMultiple &&
+    !multipleResolution.isManual &&
+    sectorConfig.strategy !== 'current_run_rate_revenue' &&
+    multipleResult.baseMultiple > 0
+      ? Math.min(1, multipleResult.multiple / multipleResult.baseMultiple)
+      : 1;
+  const effectiveMult = overrides.effectiveMultiple ?? normalization.adjustedMultiple * concentrationMultipleFactor;
 
   const automaticNormalization = normalizeMultipleForPrivateCompany({
     rawMultiple: multipleResolution.automaticMultiple,
@@ -666,6 +692,17 @@ export function computeValuation(inputs: ValuationInputs, overrides: EngineOverr
       dcfMarketability: v2c.dcfMarketability ? { factor: dcfMarketabilityFactor, marketableK: dcfMarketableK } : undefined,
       r1FloorFade,
       sizePremium: { pp: waccBreakdown.alpha, basis: v2c.sizePremiumDecile ? 'damodaran-decile' : 'overlay' },
+      ...(backlogV2
+        ? {
+            backlogReduction: {
+              v1Pp: backlog.waccAdjustmentPct,
+              v2Pp: backlogV2.v2Pp,
+              generalShare: backlogV2.generalShare,
+              topCustomerFactor: backlogV2.topCustomerFactor,
+            },
+          }
+        : {}),
+      ...(v2c.concentrationMultiple ? { concentrationMultipleFactor } : {}),
     };
   }
 
