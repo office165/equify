@@ -1,6 +1,6 @@
 # אקוויפי: מצב בעמוד אחד
 
-עודכן: 18.11.2026, 23:00, אחרי סבב 8 (לילה של סבבים 5 עד 9). פירוט: `reports/round-5.md` עד `reports/round-8.md`, ו `reports/legal-gaps.md`.
+עודכן: 18.11.2026, 22:54, אחרי סבב 8 (לילה של סבבים 5 עד 9). פירוט: `reports/round-5.md` עד `reports/round-8.md`, ו `reports/legal-gaps.md`.
 
 ## לילה 18.11: סבבים 5 עד 9
 
