@@ -1,0 +1,29 @@
+[
+ {
+  "success": true,
+  "header": {
+   "errorcode": "20001000",
+   "errormessage": "LOGIN_OK"
+  },
+  "result": {
+   "sessionid": "TESTSESSION"
+  }
+ },
+ {
+  "success": true,
+  "header": {
+   "errorcode": "30001400",
+   "errormessage": "REDIRECTDEPOSITCREDITCARDTRANSFER_OK"
+  },
+  "result": {
+   "transactions": [
+    {
+     "cashierid": 305305,
+     "totalamount": "999.00",
+     "url": "https://app.upay.co.il/BANKRESOURCES/UPAY/redirectpages/TESTPAGEequal.html"
+    }
+   ],
+   "sessionid": "TESTSESSION"
+  }
+ }
+]

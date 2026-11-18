@@ -12,6 +12,9 @@ export const FEATURE_FLAGS = [
   'NEXT_PUBLIC_ANALYTICS',
   'EXCEL_APPENDIX',
   'OPUS_NARRATIVE',
+  'UPAY',
+  'NEXT_PUBLIC_UPAY',
+  'GREEN_INVOICE',
 ] as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number];

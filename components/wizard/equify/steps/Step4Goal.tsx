@@ -5,6 +5,7 @@ import type { EquifyGoalKey } from '../../../../lib/valuation';
 import { useEquifyStrings } from '../../../../lib/i18n/use_equify_strings';
 import { useWizardValuation } from '../WizardValuationContext';
 import { PayPalHostedButton } from '../../../payments/PayPalHostedButton';
+import { UpayCheckout, isUpayUiEnabled } from '../../../payments/UpayCheckout';
 import { getGoalStandardCopy } from '../../../../lib/wizard/equify_goal_copy';
 
 const GOAL_KEYS: EquifyGoalKey[] = [
@@ -369,6 +370,7 @@ export function Step4Goal({
                     : 'Email confirmed. Complete secure checkout. You will reach the report after payment.'}
                 </p>
                 <PayPalHostedButton hostedButtonId={hostedButtonId} />
+                {isUpayUiEnabled() ? <UpayCheckout email={checkoutEmail} /> : null}
               </>
             )}
           </div>

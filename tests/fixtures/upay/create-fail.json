@@ -1,0 +1,20 @@
+[
+ {
+  "success": true,
+  "header": {
+   "errorcode": "20001000",
+   "errormessage": "LOGIN_OK"
+  },
+  "result": {
+   "sessionid": "TESTSESSION"
+  }
+ },
+ {
+  "success": false,
+  "header": {
+   "errorcode": "30001401",
+   "errormessage": "REDIRECTDEPOSITCREDITCARDTRANSFER_ERROR"
+  },
+  "result": {}
+ }
+]

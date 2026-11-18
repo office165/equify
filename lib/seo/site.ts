@@ -38,7 +38,7 @@ export const PUBLIC_PAGES: ReadonlyArray<{ path: string; priority: number; chang
 ];
 
 /** Paths crawlers are asked not to visit (robots.txt), and that carry noindex. */
-export const NON_PUBLIC_PATHS = ['/api/', '/wizard', '/results', '/report'] as const;
+export const NON_PUBLIC_PATHS = ['/api/', '/wizard', '/results', '/report', '/payment'] as const;
 
 export function absoluteUrl(path: string): string {
   return `${SITE_ORIGIN}${path === '/' ? '/' : path}`;

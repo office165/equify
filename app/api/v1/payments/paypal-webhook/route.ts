@@ -11,6 +11,7 @@ import { claimPaypalCaptureAndMint } from '../../../../../lib/payments/paypal_cl
 import { appRouteMethodNotAllowed } from '../../../../../lib/api/http';
 import { isFlagOn } from '../../../../../lib/flags/round1_flags';
 import { evaluatePaypalAmount } from '../../../../../lib/payments/paypal_amount_policy';
+import { isGreenInvoiceEnabled, issueInvoiceOnce } from '../../../../../lib/invoices/green_invoice';
 
 const ON_DEMAND_AMOUNT = 999;
 const PROMO_MATCH_WINDOW_MS = 48 * 60 * 60 * 1000;
@@ -263,6 +264,20 @@ export async function POST(request: Request) {
         { error: 'mint_failed', reason: claimed.reason },
         { status: 500 },
       );
+    }
+
+    // Round 9 (GREEN_INVOICE, off by default): one tax invoice / receipt per capture. Off: no call at all.
+    if (!claimed.duplicate && isGreenInvoiceEnabled()) {
+      await issueInvoiceOnce({
+        orderKey: `paypal:${captureId}`,
+        customerName: '',
+        customerEmail: payerEmail,
+        amount: Number(parsed.amountIls) || amountIls,
+        currency: parsed.currency === 'USD' ? 'USD' : 'ILS',
+        method: 'paypal',
+        transactionId: captureId,
+        date: new Date().toISOString().slice(0, 10),
+      }).catch((err) => console.error('[paypal-webhook] green invoice failed', err instanceof Error ? err.message : err));
     }
 
     return NextResponse.json(
