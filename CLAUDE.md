@@ -48,6 +48,7 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | `NEXT_PUBLIC_GSC_VERIFICATION` | תגית אימות של Search Console, רק כשמוגדר | 6 |
 | `EXCEL_APPENDIX` | נספח Excel מצורף למייל של הדוח (`lib/excel/`) | 7 |
 | `OPUS_NARRATIVE` | תקציר, מסקנות ו "על מה השווי נשען" מ `claude-opus-5-5` (`lib/narrative/`), עם שומר מספרים. צריך את המיגרציה `20261118_report_narratives.sql` | 7 |
+| `PULSE_TOKEN` (לא דגל, מפתח) | פרטים ב `/api/pulse`. בלעדיו רק `{"ok":true}` | 8 |
 
 SEO: `app/robots.ts`, `app/sitemap.ts`, `lib/seo/` (דומיין canonical קבוע equify.co.il, metadata, JSON-LD), `public/llms.txt`.
 כללי הכתיבה בדוח נבדקים ב `npm test` (סוויטה `round5`, `lib/report/report_text_rules.ts`).
