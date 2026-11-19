@@ -26,9 +26,9 @@ function DocumentA11yAttributes() {
 }
 
 /** Global providers + floating accessibility widget on all app routes */
-export function AppProviders({ children }: { children: React.ReactNode }) {
+export function AppProviders({ children, locale }: { children: React.ReactNode; locale?: 'he' | 'en' }) {
   return (
-    <ValuationI18nProvider>
+    <ValuationI18nProvider initialLocale={locale}>
       <AccessibilityPreferencesProvider>
         <DocumentA11yAttributes />
         <AppVisitedMarker />

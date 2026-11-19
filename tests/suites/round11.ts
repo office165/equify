@@ -119,6 +119,6 @@ export async function run(): Promise<SuiteResult> {
     s.check('contrast', `${name} button text`, r >= 4.5, r.toFixed(2));
   }
   s.check('tokens', 'no-gradient-buttons', !/\.v2-btn[^{]*\{[^}]*gradient/.test(css));
-  s.check('flags-off', 'css-only-in-public', !fs.readFileSync(path.join(ROOT, 'app', 'layout.tsx'), 'utf8').match(/import ['"][^'"]*site-v2[^'"]*\.css/));
+  s.check('flags-off', 'css-only-in-public', !fs.readFileSync(path.join(ROOT, 'app', '(he)', 'layout.tsx'), 'utf8').match(/import ['"][^'"]*site-v2[^'"]*\.css/));
   return s.result;
 }

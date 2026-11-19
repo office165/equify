@@ -98,10 +98,10 @@ export async function run(): Promise<SuiteResult> {
   __setPostsFetcher(null);
 
   // pages with the flag on
-  const guidesIndex = (await import('../../app/guides/page')).default;
-  const guidePage = (await import('../../app/guides/[slug]/page')).default;
-  const articlesIndex = (await import('../../app/articles/page')).default;
-  const articlePage = (await import('../../app/articles/[slug]/page')).default;
+  const guidesIndex = (await import('../../app/(he)/guides/page')).default;
+  const guidePage = (await import('../../app/(he)/guides/[slug]/page')).default;
+  const articlesIndex = (await import('../../app/(he)/articles/page')).default;
+  const articlePage = (await import('../../app/(he)/articles/[slug]/page')).default;
   const sitemap = (await import('../../app/sitemap')).default;
   const feed = await import('../../app/feed/route');
   const llms = await import('../../app/api/llms/route');

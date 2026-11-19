@@ -91,6 +91,16 @@ function damodaranIntroHe(industry: string): string {
   return `מכפילי הענף הם נתוני Damodaran לענף ${industry}, של חברות ציבוריות בעולם (Global) ובשווקים מתעוררים (Emerging Markets). מכפיל החברה נמוך מהם בדרך כלל, כי הוא כולל הנחת סחירות וגודל לחברה פרטית.`;
 }
 
+/** Round 13: the English report's page 5 intro and footnote (the Hebrew ones are unchanged). */
+function damodaranIntroEn(industry: string): string {
+  return `The sector multiples are Damodaran data for ${industry}, for public companies globally (Global) and in emerging markets (Emerging Markets). The company multiple is usually lower, because it includes a marketability and size discount for a private company.`;
+}
+
+function damodaranFootnoteEn(industry: string): string {
+  const s = DAMODARAN_SOURCES;
+  return `Source: Damodaran, industry ${industry}, EV/EBITDA of companies with positive EBITDA and EV/Sales, data as of ${isoToHe(s.vebitdaGlobal.dataDate)} (${s.vebitdaGlobal.file}, ${s.vebitdaEmerging.file}, ${s.psGlobal.file}, ${s.psEmerging.file}), pages.stern.nyu.edu/~adamodar.`;
+}
+
 function damodaranFootnoteHe(industry: string): string {
   const s = DAMODARAN_SOURCES;
   return `מקור: Damodaran, ענף ${industry}, EV/EBITDA של חברות עם EBITDA חיובי ו EV/Sales, נתונים מ ${isoToHe(s.vebitdaGlobal.dataDate)} (${s.vebitdaGlobal.file}, ${s.vebitdaEmerging.file}, ${s.psGlobal.file}, ${s.psEmerging.file}), pages.stern.nyu.edu/~adamodar.`;
@@ -352,6 +362,8 @@ function buildDcfRows(
   computed: ValuationComputed,
   /** ILS K to reporting-currency K (methodology 2 builds the table from the engine projection). */
   fxMultiplier = 1,
+  /** Round 13: the English report gets the terminal cap note in English (the other notes are still Hebrew, see reports/round-13.md). */
+  locale: 'he' | 'en' = 'he',
 ): {
   rows: DcfYearRow[];
   terminalPvM: number;
@@ -432,7 +444,11 @@ function buildDcfRows(
       );
     }
   } else {
-    notes.push(`הערך הטרמינלי מוגבל ל ${Math.round(TERMINAL_TO_EXPLICIT_PV_MAX * 100)}% מערך התקופה המפורשת.`);
+    notes.push(
+      locale === 'en'
+        ? `The terminal value is capped at ${Math.round(TERMINAL_TO_EXPLICIT_PV_MAX * 100)}% of the value of the explicit period.`
+        : `הערך הטרמינלי מוגבל ל ${Math.round(TERMINAL_TO_EXPLICIT_PV_MAX * 100)}% מערך התקופה המפורשת.`,
+    );
   }
   if (fromZeroCapexBase) {
     notes.push(
@@ -692,6 +708,7 @@ export function mapEngineResultToValuationData(
     inputs,
     fxComputed,
     getIlsToReportingMultiplier(syncedState.profile.currency ?? 'ILS', fxRates),
+    locale === 'en' ? 'en' : 'he',
   );
   const isV2 = fxComputed.methodVersion === 'v2';
   const now = new Date();
@@ -749,7 +766,7 @@ export function mapEngineResultToValuationData(
           evSalesHigh: Math.max(damodaran.global.evSales.value, damodaran.emerging.evSales.value),
           companyRevenueMultiple,
           revenueMultipleKind: revenueLegUsed ? 'leg' : 'implied',
-          footnote: damodaranFootnoteHe(damodaranMap.industry),
+          footnote: locale === 'en' ? damodaranFootnoteEn(damodaranMap.industry) : damodaranFootnoteHe(damodaranMap.industry),
           ...(() => {
             // Round 4 (page 5, display only): the factors the engine applies to this company's multiples.
             const b = fxComputed.multipleNormalizationBreakdown;
@@ -985,7 +1002,9 @@ export function mapEngineResultToValuationData(
           )
         : undefined,
     multiplesIntro: industryMultiples
-      ? damodaranIntroHe(industryMultiples.industry)
+      ? locale === 'en'
+        ? damodaranIntroEn(industryMultiples.industry)
+        : damodaranIntroHe(industryMultiples.industry)
       : getMultiplesIntroText(syncedState.profile.sector, locale),
     dcfEbitdaWeights: (() => {
       const w = BLENDED_EBITDA_WEIGHTS;

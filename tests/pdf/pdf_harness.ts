@@ -75,7 +75,9 @@ export function pdfCases(): CaseSpec[] {
 export function caseData(spec: CaseSpec): ValuationData {
   const state = buildWizardState(spec);
   if (creditMode()) state.credit = caseCredit(spec);
-  return withQuietConsole(() => mapWizardToValuationData(state, `TEST-${spec.id}`, 'he', TEST_FX));
+  // Round 13: PDF_LOCALE=en renders the English report (pages 1, 2, 4, 5 and 6 are translated).
+  const locale = process.env.PDF_LOCALE === 'en' ? 'en' : 'he';
+  return withQuietConsole(() => mapWizardToValuationData(state, `TEST-${spec.id}`, locale, TEST_FX));
 }
 
 export function caseHtml(spec: CaseSpec): string {

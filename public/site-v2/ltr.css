@@ -1,0 +1,7 @@
+/* Round 13 (EN_SITE): the few places where the new design (v2.css) depends on the reading direction, mirrored for left to right
+   languages, as sbc-site does in app/r31.css (html[dir="ltr"] ...). Everything else in v2.css uses logical properties. */
+html[dir="ltr"] .v2-bl-val { text-align: left }
+html[dir="ltr"] .v2-hero h1, html[dir="ltr"] .v2-head h2 { letter-spacing: -0.01em }
+html[dir="ltr"] .eq-cc { right: auto; left: 16px; margin-right: 0 }
+html[dir="ltr"] .v2-sample-rows dd { text-align: right }
+@media (max-width: 520px) { html[dir="ltr"] .eq-cc { left: 12px; right: 12px } }

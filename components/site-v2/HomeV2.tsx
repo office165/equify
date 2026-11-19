@@ -5,27 +5,18 @@ import { INDUSTRY_CONFIG } from '../../lib/constants/industry_config';
 import { useSiteFlags } from '../shared/SiteFlagsContext';
 import { BidiNumberUnit, DurationValue, durationUnit } from '../landing/shared/BidiNumberUnit';
 import { MicroCalculator } from '../landing/v2/MicroCalculator';
-import { VALUATION_METHODOLOGY_COPY } from '../landing/equify/equify-data';
-import { useLandingCopy } from '../landing/equify/use_landing_copy';
-import { NavV2 } from './NavV2';
+import { NavV2, type NavItem } from './NavV2';
 import { FooterV2 } from './FooterV2';
 import { HUB_NAV } from '../../lib/content/hub_nav';
+import { siteLanguage, langPrefix } from '../../lib/i18n/site';
 
 /**
  * Round 11 (SITE_V2): the home page in the structure of the SBC site (bands with straight edges, section heads with a hairline,
  * numbers as rows, the steps as an index, cards with one radius, the footer in columns), in equify's colours, day and night.
- * Every section, word, number, price and link is today's (components/landing/equify/*, through useLandingCopy, so COPY_V2 applies
- * here too). Nothing is added and nothing is removed; the moving band, the 3D terrain, the glow and the "SCROLL" hint are not part of
- * this design language (sbc-brand), so their content is shown still: the band's items as one quiet line.
+ * Every section, word, number, price and link is today's. Nothing is added and nothing is removed; the moving band, the 3D terrain,
+ * the glow and the "SCROLL" hint are not part of this design language (sbc-brand), so their content is shown still.
+ * Round 13: the words come from the language file (lib/i18n/site/<lang>.ts); Hebrew is today's text, word for word.
  */
-const NAV_ITEMS = [
-  ['#how', 'איך זה עובד'],
-  ['#calc', 'סימולטור שווי'],
-  ['#models', 'המודלים'],
-  ['#price', 'תמחור'],
-  ['#faq', 'שאלות'],
-] as const;
-
 function countUniqueSubSectorIds(): number {
   const ids = new Set<string>();
   for (const entry of Object.values(INDUSTRY_CONFIG)) for (const sub of entry.subSectors) ids.add(sub.id);
@@ -36,82 +27,82 @@ const SUB_SECTORS = countUniqueSubSectorIds();
 /** The hero card's line: a fixed illustration (today it is drawn by the motion script from the same rising series). */
 const SPARK = 'M0 70 L40 64 L80 66 L120 58 L160 55 L200 50 L240 52 L280 41 L320 37 L360 30 L400 22';
 
-export function HomeV2() {
+export function HomeV2({ lang = 'he' }: { lang?: string }) {
   const { copyV2, consentBanner, contentHub } = useSiteFlags();
+  const L = siteLanguage(lang);
+  const t = L.dict(copyV2);
+  const { marquee, models, faq, steps, pricing } = L.lists(copyV2);
+  const he = L.def.dir === 'rtl';
+  const prefix = langPrefix(lang);
+  const loc = L.def.appLocale;
+  const arrow = he ? '←' : '→';
   // Round 12: the guides and articles are linked only when CONTENT_HUB is on.
-  const navItems = contentHub ? [...NAV_ITEMS, ...HUB_NAV] : NAV_ITEMS;
-  const { marquee, models, faq, steps, pricing } = useLandingCopy();
+  const hubItems: NavItem[] = HUB_NAV.map(([href, label]) => [`${prefix}${href}`, lang === 'he' ? label : href === '/guides' ? t.hub.guides : t.hub.articles] as const);
+  const navItems: readonly NavItem[] = contentHub ? [...t.nav, ...hubItems] : t.nav;
+  const wizard = `${prefix}/wizard`;
 
   return (
-    <div className="v2" dir="rtl" lang="he">
+    <div className="v2" dir={L.def.dir} lang={L.def.code}>
       <a className="v2-skip" href="#main">
-        דלג לתוכן הראשי
+        {t.skip}
       </a>
-      <NavV2 items={navItems} cta="התחל הערכה" />
+      <NavV2 items={navItems} cta={t.cta} ctaHref={wizard} homeHref={prefix || '/'} homeAria={t.homeAria} lang={loc} />
 
       <main id="main">
         {/* 1. hero */}
         <section className="v2-hero">
           <div className="v2-wrap v2-hero-grid">
             <div>
-              <span className="v2-label rv">{copyV2 ? 'equify BY SBC, שוק ישראל 2026' : 'equify BY SBC · שוק ישראל 2026'}</span>
+              <span className="v2-label rv">{t.hero.label}</span>
               <h1>
                 <span className="ln">
-                  <span>שווי העסק שלך.</span>
+                  <span>{t.hero.h1a}</span>
                 </span>
                 <span className="ln">
-                  <span className="hl">בנתונים.</span>
+                  <span className="hl">{t.hero.h1b}</span>
                 </span>
               </h1>
-              <p className="v2-hero-sub rv">
-                {copyV2
-                  ? 'הדוח משלב DCF, מכפילי שוק לפי Damodaran וציון איכות. השווי המוצג הוא ממוצע משוקלל, והמשקל של כל שיטה תלוי בענף, בשלב החיים ובגודל העסק.'
-                  : 'הדוח משלב DCF, מכפילי שוק מכוילים וציון איכות. השווי המוצג הוא ממוצע משוקלל שמשקף את מעשי השוק, לא תיאוריה אקדמית.'}
-              </p>
+              <p className="v2-hero-sub rv">{t.hero.sub}</p>
               <div className="v2-hero-ctas rv">
-                <Link className="v2-btn" href="/wizard">
-                  התחל הערכת שווי <span className="arr">←</span>
+                <Link className="v2-btn" href={wizard}>
+                  {t.hero.start} <span className="arr">{arrow}</span>
                 </Link>
                 <a className="v2-btn ghost" href="#calc">
-                  נסה את הסימולטור
+                  {t.hero.simulator}
                 </a>
               </div>
               <ul className="v2-hero-meta rv">
-                <li>התחל בחינם, תשלום בהפקת הדוח</li>
+                <li>{t.hero.meta[0]}</li>
                 <li>
-                  <DurationValue variant="long" />
+                  <DurationValue variant="long" locale={loc} />
                 </li>
-                <li>{copyV2 ? 'דוח PDF, 8 עמודים' : 'דוח PDF · 8 עמודים'}</li>
+                <li>{t.hero.meta[2]}</li>
               </ul>
             </div>
 
-            <figure className="v2-sample rv" aria-label={copyV2 ? 'דוגמה להמחשה, לא עסק אמיתי' : 'דוח לדוגמה · 8 עמודים'}>
+            <figure className="v2-sample rv" aria-label={t.sample.aria}>
               <div className="v2-sample-top">
-                <span>{copyV2 ? 'שווי לבעלים, תרחיש בסיס' : 'שווי לבעלים · תרחיש בסיס'}</span>
-                <span className="v2-sample-tag">{copyV2 ? 'דוגמה להמחשה, לא עסק אמיתי' : 'דוח לדוגמה · 8 עמודים'}</span>
+                <span>{t.sample.top}</span>
+                <span className="v2-sample-tag">{t.sample.tag}</span>
               </div>
               <div className="v2-sample-val num">
                 20.1M<small>₪</small>
               </div>
-              <p className="v2-sample-cap">
-                {copyV2
-                  ? 'משקלות לדוגמה: DCF 50%, EBITDA 30%, הכנסות 20%. בדוח הם לפי הענף'
-                  : 'שקלול DCF 50% · מכפיל EBITDA 30% · מכפיל הכנסות 20%'}
-              </p>
+              <p className="v2-sample-cap">{t.sample.cap}</p>
               <svg viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
                 <path d={SPARK} />
               </svg>
               <dl className="v2-sample-rows">
                 <div>
-                  <dt>שווי פעילות (EV)</dt>
+                  <dt>{t.sample.ev}</dt>
                   <dd className="num">₪24.5M</dd>
                 </div>
                 <div>
-                  <dt>חוב נטו</dt>
+                  <dt>{t.sample.netDebt}</dt>
                   <dd className="num neg">−₪4.4M</dd>
                 </div>
                 <div className="total">
-                  <dt>שווי לבעלים</dt>
+                  <dt>{t.sample.equity}</dt>
                   <dd className="num">₪20.1M</dd>
                 </div>
               </dl>
@@ -120,7 +111,7 @@ export function HomeV2() {
         </section>
 
         {/* 2. the band's items, still */}
-        <div className="v2-methods" aria-label="השיטות בדוח">
+        <div className="v2-methods" aria-label={t.methodsAria}>
           <ul className="v2-wrap">
             {marquee.map((item) => (
               <li key={item}>{item}</li>
@@ -132,31 +123,31 @@ export function HomeV2() {
         <section className="v2-band">
           <div className="v2-wrap">
             <div className="v2-head solo">
-              <h2>למה equify</h2>
+              <h2>{t.why.title}</h2>
             </div>
             <dl className="v2-bridge">
               <div className="v2-bl">
                 <dt className="v2-bl-val">8</dt>
-                <dd className="v2-bl-txt">עמודי דוח PDF</dd>
+                <dd className="v2-bl-txt">{t.why.pages}</dd>
               </div>
               <div className="v2-bl">
-                <dt className="v2-bl-val">{copyV2 ? 3 : 4}</dt>
+                <dt className="v2-bl-val">{t.why.methodsCount}</dt>
                 <dd className="v2-bl-txt">
-                  שיטות הערכה משוקללות
-                  <span>{copyV2 ? 'DCF, EBITDA והכנסות' : 'DCF · EBITDA · הכנסות · נכסים'}</span>
+                  {t.why.methods}
+                  <span>{t.why.methodsSub}</span>
                 </dd>
               </div>
               <div className="v2-bl">
                 <dt className="v2-bl-val">
-                  <BidiNumberUnit number={10} unit={<em>{durationUnit('he', 'short')}</em>} />
+                  <BidiNumberUnit number={10} unit={<em>{durationUnit(loc, 'short')}</em>} />
                 </dt>
-                <dd className="v2-bl-txt">מהזנת נתונים עד דוח</dd>
+                <dd className="v2-bl-txt">{t.why.durationLabel}</dd>
               </div>
               <div className="v2-bl">
                 <dt className="v2-bl-val">{SUB_SECTORS}</dt>
                 <dd className="v2-bl-txt">
-                  {copyV2 ? 'תתי ענפים' : 'תתי-ענפים מכוילים בנפרד'}
-                  <span>{copyV2 ? 'לכל תת ענף פרופיל מכפילים משלו' : 'פרופיל מכפילים לכל תת-ענף'}</span>
+                  {t.why.subSectors}
+                  <span>{t.why.subSectorsSub}</span>
                 </dd>
               </div>
             </dl>
@@ -166,12 +157,13 @@ export function HomeV2() {
         {/* 4. the steps */}
         <section className="v2-band alt" id="how">
           <div className="v2-wrap">
-            <span className="v2-label">תהליך הקלט</span>
+            <span className="v2-label">{t.steps.label}</span>
             <div className="v2-head">
               <h2>
-                ארבעה שלבי קלט ל<span className="hl">דוח הערכה מובנה.</span>
+                {t.steps.titleA}
+                <span className="hl">{t.steps.titleHl}</span>
               </h2>
-              <p>פרופיל, נתונים פיננסיים, מדדי סיכון ומטרת ההערכה. הדוח מופק בסיום ללא ייצוא ידני.</p>
+              <p>{t.steps.sub}</p>
             </div>
             <ol className="v2-steps">
               {steps.map(([num, title, body, tag]) => (
@@ -189,26 +181,28 @@ export function HomeV2() {
         {/* 5. the calculator */}
         <section className="v2-band" id="calc">
           <div className="v2-wrap">
-            <span className="v2-label">אינדיקציה מהירה</span>
+            <span className="v2-label">{t.calc.label}</span>
             <div className="v2-head">
               <h2>
-                מכפיל EBITDA <span className="hl">לפי ענף.</span>
+                {t.calc.titleA}
+                <span className="hl">{t.calc.titleHl}</span>
               </h2>
-              <p>הערכת שווי ראשונית לפי מכפילי שוק. הדוח המלא כולל DCF, מטריצות רגישות ותרחישי Bear/Base/Bull.</p>
+              <p>{t.calc.sub}</p>
             </div>
-            <MicroCalculator />
+            <MicroCalculator lang={loc} wizardHref={wizard} />
           </div>
         </section>
 
         {/* 6. the methods */}
         <section className="v2-band alt" id="models">
           <div className="v2-wrap">
-            <span className="v2-label">מתודולוגיה</span>
+            <span className="v2-label">{t.models.label}</span>
             <div className="v2-head">
               <h2>
-                מתודולוגיה משולבת.<span className="hl"> שווי משוקלל.</span>
+                {t.models.titleA}
+                <span className="hl">{t.models.titleHl}</span>
               </h2>
-              <p>{VALUATION_METHODOLOGY_COPY}</p>
+              <p>{t.models.sub}</p>
             </div>
             <div className="v2-cards" data-cols={models.length % 3 === 1 ? '2' : '3'}>
               {models.map((m) => (
@@ -226,19 +220,20 @@ export function HomeV2() {
           <div className="v2-wrap">
             <div className="v2-head solo" style={{ textAlign: 'center', justifyItems: 'center' }}>
               <span className="v2-label" style={{ marginBottom: 0 }}>
-                תמחור
+                {t.price.label}
               </span>
               <h2>
-                דוח הערכת שווי <span className="hl">מלא.</span>
+                {t.price.titleA}
+                <span className="hl">{t.price.titleHl}</span>
               </h2>
             </div>
             <div className="v2-price">
-              <span className="v2-price-flag">{copyV2 ? 'מומלץ, סבב נוכחי' : 'מומלץ · סבב נוכחי'}</span>
-              <h3>דוח Pro מלא</h3>
+              <span className="v2-price-flag">{t.price.flag}</span>
+              <h3>{t.price.name}</h3>
               <div className="v2-price-row">
-                <span className="v2-price-old num">₪1,990</span>
-                <span className="v2-price-new num">₪999</span>
-                <span className="v2-price-per">{copyV2 ? 'חד פעמי' : 'חד־פעמי'}</span>
+                {t.price.old ? <span className="v2-price-old num">{t.price.old}</span> : null}
+                <span className="v2-price-new num">{t.price.now}</span>
+                <span className="v2-price-per">{t.price.per}</span>
               </div>
               <ul>
                 {pricing.map((item) => (
@@ -250,12 +245,10 @@ export function HomeV2() {
                   </li>
                 ))}
               </ul>
-              <Link className="v2-btn" href="/wizard">
-                התחל הערכה <span className="arr">←</span>
+              <Link className="v2-btn" href={wizard}>
+                {t.price.cta} <span className="arr">{arrow}</span>
               </Link>
-              <p className="v2-price-disc">
-                {copyV2 ? 'אינדיקציה אלגוריתמית בלבד. לא ייעוץ השקעות.' : 'אינדיקציה אלגוריתמית בלבד · לא ייעוץ השקעות'}
-              </p>
+              <p className="v2-price-disc">{t.price.disc}</p>
             </div>
           </div>
         </section>
@@ -263,10 +256,11 @@ export function HomeV2() {
         {/* 8. questions */}
         <section className="v2-band alt" id="faq">
           <div className="v2-wrap">
-            <span className="v2-label">שאלות נפוצות</span>
+            <span className="v2-label">{t.faqTitle.label}</span>
             <div className="v2-head solo">
               <h2>
-                שאלות <span className="hl">נפוצות.</span>
+                {t.faqTitle.titleA}
+                <span className="hl">{t.faqTitle.titleHl}</span>
               </h2>
             </div>
             <div className="v2-faq">
@@ -284,21 +278,21 @@ export function HomeV2() {
         <section className="v2-band v2-final">
           <div className="v2-wrap">
             <h2>
-              שווי העסק שלך.
+              {t.final.a}
               <br />
-              <span className="hl">בנתונים.</span>
+              <span className="hl">{t.final.b}</span>
             </h2>
             <p>
-              כולל DCF, מכפילי שוק וניתוח סיכון. <DurationValue variant="long" />
+              {t.final.note} <DurationValue variant="long" locale={loc} />
             </p>
-            <Link className="v2-btn" href="/wizard">
-              התחל הערכה <span className="arr">←</span>
+            <Link className="v2-btn" href={wizard}>
+              {t.final.cta} <span className="arr">{arrow}</span>
             </Link>
           </div>
         </section>
       </main>
 
-      <FooterV2 items={navItems} consentBanner={consentBanner} />
+      <FooterV2 items={navItems} consentBanner={consentBanner} lang={lang} />
     </div>
   );
 }

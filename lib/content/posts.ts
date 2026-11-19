@@ -27,6 +27,8 @@ export type EquifyPost = {
   summary?: string | null;
   faq?: { q: string; a: string }[] | null;
   seo_title?: string | null;
+  /** Round 13: the post's language ('he' when absent). /en/guides and /en/articles show only posts with lang 'en'. */
+  lang?: string | null;
 };
 export type PostMeta = Omit<EquifyPost, 'content_html'>;
 
@@ -53,7 +55,7 @@ export const displayAuthor = (name: string | null | undefined): string =>
 const BUNDLE: EquifyPost[] = (bundled as EquifyPost[]).map((p) => ({ ...p, status: p.status || 'published' }));
 
 const LIST_COLUMNS = 'slug,title,excerpt,featured_image_url,featured_image_alt,meta_title,meta_description,desk,published_at,updated_at,author_name,status';
-const EXTRA_COLUMNS = 'summary,faq,seo_title';
+const EXTRA_COLUMNS = 'summary,faq,seo_title,lang';
 
 type Fetcher = (url: string, init: RequestInit & { next?: { revalidate: number; tags: string[] } }) => Promise<Response>;
 let fetcher: Fetcher = (url, init) => fetch(url, init as RequestInit);
@@ -111,6 +113,7 @@ export async function postBySlug(slug: string): Promise<EquifyPost | null> {
 }
 
 export const isGuide = (p: { desk: string }): boolean => p.desk === GUIDE_DESK;
+export const postLang = (p: { lang?: string | null }): string => p.lang?.trim() || 'he';
 export const postPath = (p: { slug: string; desk: string }): string => `${isGuide(p) ? '/guides' : '/articles'}/${encodeURIComponent(p.slug)}`;
 
 /** Up to `n` related posts: the same desk first, then the newest, never the post itself. */

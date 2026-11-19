@@ -31,7 +31,7 @@ import {
 } from './equify-pdf-charts';
 import { equifyLogoHtml } from '../brand/equify-logo-html';
 import { buildCoverCircleStageHtml } from './cover-circle-graphic';
-import { FINANCIAL_DATA_COPY, financialDataCopy, multiplesMethodologyCopy, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY, ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
+import { FINANCIAL_DATA_COPY, financialDataCopy, multiplesMethodologyCopy, multiplesMethodologyCopyEn, WACC_DCF_METHODOLOGY_COPY_EN, qualityScoreIntroCopy, qualityScoreIntroCopyEn, scenariosIntroFromRows, sensitivityIntroCopy, sensitivityIntroCopyEn, WACC_DCF_METHODOLOGY_COPY, ebitdaMultipleInterpretationCopy } from '../i18n/equify_report_copy';
 import { isValidLogoDataUrl } from '../utils/logo_data_url';
 import type { ValuationData } from './types';
 import { getGoalStandardCopy } from '../wizard/equify_goal_copy';
@@ -53,6 +53,18 @@ import {
 } from './report-table-layout';
 
 const TOTAL_PAGES = 8;
+
+/**
+ * Round 13 (EN_SITE): the English report. `tr(data)(he, en)` is the Hebrew text as it was, or its English version when the report's
+ * locale is 'en'. Pages 1 (cover), 2 (summary), 4 (WACC and DCF), 5 (multiples) and 6 (scenarios) are in English; the rest are listed
+ * in reports/round-13.md.
+ */
+const tr = (data: Pick<ValuationData, 'locale'>) => (he: string, en: string): string => (data.locale === 'en' ? en : he);
+
+function reportDateEn(iso?: string): string {
+  const d = iso ? new Date(iso) : new Date();
+  return (Number.isNaN(d.getTime()) ? new Date() : d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jerusalem' });
+}
 
 function pdfFmt(data: Pick<ValuationData, 'locale' | 'currency' | 'activeCurrency'>) {
   const currency = data.currency ?? 'ILS';
@@ -121,10 +133,11 @@ function wrapSheet(
 }
 
 function metaLine(data: ValuationData): string {
+  const T = tr(data);
   const parts = [
-    data.corporateId ? `ח.פ. ${escHtml(data.corporateId)}` : '',
-    `ענף: ${escHtml(data.sectorLabel)}`,
-    `מטרת ההערכה: ${escHtml(data.goalLabel)}`,
+    data.corporateId ? `${T('ח.פ.', 'Company no.')} ${escHtml(data.corporateId)}` : '',
+    `${T('ענף:', 'Sector:')} ${escHtml(data.sectorLabel)}`,
+    `${T('מטרת ההערכה:', 'Purpose:')} ${escHtml(data.goalLabel)}`,
   ].filter(Boolean);
   return parts.join(' | ');
 }
@@ -141,9 +154,15 @@ function identityLine(data: ValuationData): string {
 function defaultExecutiveSummary(data: ValuationData): string {
   const f = pdfFmt(data);
   // Round 5: "<model> במשקל <w>" (it read "DCF + WACC (13.4%) (36.1%)"); the backlog row is an addition, not a weight.
+  const en = data.locale === 'en';
   const parts = data.modelBlend
     .filter((r) => !isBacklogRow(r.name) && r.weightPct > 0)
-    .map((r) => `${escHtml(r.name)} במשקל ${weightPctHtml(f, r.weightPct)}`);
+    .map((r) => (en ? `${escHtml(r.name)} at a weight of ${weightPctHtml(f, r.weightPct)}` : `${escHtml(r.name)} במשקל ${weightPctHtml(f, r.weightPct)}`));
+  if (en) {
+    const debtEn = data.netDebt < 0 ? `adding net cash of ${f.moneyNarrative(-data.netDebt)}` : `after net debt of ${f.moneyNarrative(data.netDebt)}`;
+    const nonOp = data.nonOperatingAssets ? ` and non-operating assets of ${f.moneyNarrative(data.nonOperatingAssets.value)} (estimated)` : '';
+    return `Weighting ${parts.join(', ')} gives an enterprise value of ${f.moneyNarrative(data.enterpriseValue)}. ${debtEn[0].toUpperCase()}${debtEn.slice(1)}${nonOp}, the equity value in the base case is ${f.moneyNarrative(data.equity)}.`;
+  }
   // Round 5: net cash is added, not "deducted as a negative net debt".
   const debtPart =
     data.netDebt < 0
@@ -166,7 +185,8 @@ function companyLogoCoverHtml(dataUrl?: string): string {
 
 function buildPage1Cover(data: ValuationData): string {
   const f = pdfFmt(data);
-  const dateLabel = reportDateHe(data.valuationDate);
+  const T = tr(data);
+  const dateLabel = data.locale === 'en' ? reportDateEn(data.valuationDate) : reportDateHe(data.valuationDate);
   const logoHtml = companyLogoCoverHtml(data.customLogoDataUrl);
   const body = `
   ${head(`VALUATION REPORT | <bdi>#${escHtml(data.reportId)}</bdi>`)}
@@ -174,7 +194,7 @@ function buildPage1Cover(data: ValuationData): string {
   <div class="body cover-layout">
     <div class="cover-hero-zone">
       <div class="cover-header">
-        <span class="eyebrow cover-eyebrow">דוח הערכת שווי | ${escHtml(dateLabel)}</span>
+        <span class="eyebrow cover-eyebrow">${T('דוח הערכת שווי', 'Valuation report')} | ${escHtml(dateLabel)}</span>
         ${logoHtml}
         <div class="c-comp">${escHtml(data.companyName)}</div>
         <div class="c-meta">${metaLine(data)}</div>
@@ -183,11 +203,11 @@ function buildPage1Cover(data: ValuationData): string {
       ${buildCoverCircleStageHtml(equityTriCurrencyCoverHtml(data), data.equityIls ?? data.equity)}
     </div>
     <div class="cover-lower-stack">
-      <div class="c-cap">שווי לבעלים (Equity Value), תרחיש בסיס, טווח ${f.money(data.bearEquity)} עד ${f.money(data.bullEquity)}</div>
+      <div class="c-cap">${T('שווי לבעלים (Equity Value), תרחיש בסיס, טווח', 'Equity value, base case, range')} ${f.money(data.bearEquity)} ${T('עד', 'to')} ${f.money(data.bullEquity)}</div>
       <div class="seal"><i></i>ALGORITHMIC EQUITY INDICATION | SBC METHOD</div>
       <div class="cover-metrics c-grid c-grid--cover">
-        <div><b class="hl">${f.money(data.equity)}</b><span>שווי לבעלים (בסיס)</span></div>
-        <div><b>${f.pct(data.waccPct)}</b><span>WACC אפקטיבי</span></div>
+        <div><b class="hl">${f.money(data.equity)}</b><span>${T('שווי לבעלים (בסיס)', 'Equity value (base)')}</span></div>
+        <div><b>${f.pct(data.waccPct)}</b><span>${T('WACC אפקטיבי', 'Effective WACC')}</span></div>
         <div><b class="gd">${f.int(data.qualityScore)} / ${escHtml(data.qualityGrade)}</b><span>Quality Score</span></div>
       </div>
     </div>
@@ -217,6 +237,7 @@ function formatWaterfallNetDebtRow(
 
 function buildPage2ExecSummary(data: ValuationData): string {
   const f = pdfFmt(data);
+  const T = tr(data);
   const wf = computeWaterfallFills(data);
   const netDebtRow = formatWaterfallNetDebtRow(data.netDebt, data);
   // Round 7 (OPUS_NARRATIVE): a narrative that passed the guard replaces the template summary.
@@ -233,7 +254,7 @@ function buildPage2ExecSummary(data: ValuationData): string {
   const blendRows = data.modelBlend
     .map(
       (r) =>
-        `<tr><td>${escHtml(r.name)}${r.detail ? `<br><span class="blend-leg-note">${escHtml(r.detail)}</span>` : ''}</td><td class="n">${f.money(r.ev)}</td><td class="n">${isBacklogRow(r.name) ? 'תוספת' : weightPctHtml(f, r.weightPct)}</td><td class="n">${f.money(r.contribution)}</td></tr>`,
+        `<tr><td>${escHtml(r.name)}${r.detail ? `<br><span class="blend-leg-note">${escHtml(r.detail)}</span>` : ''}</td><td class="n">${f.money(r.ev)}</td><td class="n">${isBacklogRow(r.name) ? T('תוספת', 'Addition') : weightPctHtml(f, r.weightPct)}</td><td class="n">${f.money(r.contribution)}</td></tr>`,
     )
     .join('');
   const noteDate = data.valuationDateShort ?? reportDateShortHe(data.valuationDate);
@@ -247,8 +268,8 @@ function buildPage2ExecSummary(data: ValuationData): string {
   <div class="rule-grad"></div>
   <div class="body page-body--exec page-body--distributed">
     <div class="page-intro">
-      <span class="eyebrow">02 | תקציר מנהלים</span>
-      <h2>תקציר מנהלים</h2>
+      <span class="eyebrow">02 | ${T('תקציר מנהלים', 'Executive summary')}</span>
+      <h2>${T('תקציר מנהלים', 'Executive summary')}</h2>
       ${sovHtml}
       <p class="sub">${summary}</p>
       ${moatCallout}
@@ -256,32 +277,32 @@ function buildPage2ExecSummary(data: ValuationData): string {
     <div class="page-stack">
       <section class="page-section page-section--kpi">
         <div class="kgrid">
-          <div class="kcard"><div class="kv hl">${f.money(data.equity)}</div><div class="kl">שווי לבעלים (בסיס)</div></div>
-          <div class="kcard"><div class="kv">${f.money(data.enterpriseValue)}</div><div class="kl">שווי פעילות (EV)</div></div>
-          <div class="kcard"><div class="kv">${f.pct(data.waccPct)}</div><div class="kl">WACC אפקטיבי</div></div>
+          <div class="kcard"><div class="kv hl">${f.money(data.equity)}</div><div class="kl">${T('שווי לבעלים (בסיס)', 'Equity value (base)')}</div></div>
+          <div class="kcard"><div class="kv">${f.money(data.enterpriseValue)}</div><div class="kl">${T('שווי פעילות (EV)', 'Enterprise value (EV)')}</div></div>
+          <div class="kcard"><div class="kv">${f.pct(data.waccPct)}</div><div class="kl">${T('WACC אפקטיבי', 'Effective WACC')}</div></div>
           <div class="kcard"><div class="kv gd">${f.int(data.qualityScore)} / ${escHtml(data.qualityGrade)}</div><div class="kl">Quality Score</div></div>
         </div>
       </section>
       <section class="page-section page-section--waterfall">
         <div class="box">
-          <h3>משווי פעילות (EV) לשווי לבעלים</h3>
-          <div class="wf-row"><span class="lbl">שווי פעילות</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${f.money(data.enterpriseValue)}</b></div>
+          <h3>${T('משווי פעילות (EV) לשווי לבעלים', 'From enterprise value (EV) to equity value')}</h3>
+          <div class="wf-row"><span class="lbl">${T('שווי פעילות', 'Enterprise value')}</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:100%;background:linear-gradient(90deg,#4DD6CE,#00A89F)"></div></div><b>${f.money(data.enterpriseValue)}</b></div>
           <div class="wf-row"><span class="lbl">${netDebtRow.label}</span><div class="wf-track"><div class="wf-fill" style="inset-inline-end:0;width:${wf.debtPct.toFixed(1)}%;background:linear-gradient(90deg,#F0ADAD,#C24A4A)"></div></div>${netDebtRow.valueHtml}</div>
-          ${data.nonOperatingAssets ? `<div class="wf-row"><span class="lbl">נכסים שלא בפעילות (הערכה)</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.nonOperatingPct.toFixed(1)}%;background:linear-gradient(90deg,#E8D9A8,#C9A84C)"></div></div><b>${f.money(data.nonOperatingAssets.value)}</b></div>` : ''}
-          <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:'Assistant'">שווי לבעלים</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.equityPct.toFixed(1)}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${f.money(data.equity)}</b></div>
+          ${data.nonOperatingAssets ? `<div class="wf-row"><span class="lbl">${T('נכסים שלא בפעילות (הערכה)', 'Non-operating assets (estimated)')}</span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.nonOperatingPct.toFixed(1)}%;background:linear-gradient(90deg,#E8D9A8,#C9A84C)"></div></div><b>${f.money(data.nonOperatingAssets.value)}</b></div>` : ''}
+          <div class="wf-row"><span class="lbl"><b style="color:var(--pine);font-family:'Assistant'">${T('שווי לבעלים', 'Equity value')}</b></span><div class="wf-track"><div class="wf-fill" style="inset-inline-start:0;width:${wf.equityPct.toFixed(1)}%;background:linear-gradient(90deg,#00A89F,#163530)"></div></div><b style="color:var(--turq)">${f.money(data.equity)}</b></div>
           ${data.creditChapter ? `<p class="note credit-summary-line" style="margin:2mm 0 0">${escHtml(data.creditChapter.summaryLineHe)}</p>` : ''}
         </div>
       </section>
       <section class="page-section page-section--blend">
         <table class="report-table report-table--blend">
           ${reportColgroup([...BLEND_TABLE_WIDTHS])}
-          <tr><th>מודל</th><th>שווי פעילות</th><th>משקל</th><th>תרומה</th></tr>
+          <tr><th>${T('מודל', 'Method')}</th><th>${T('שווי פעילות', 'Enterprise value')}</th><th>${T('משקל', 'Weight')}</th><th>${T('תרומה', 'Contribution')}</th></tr>
           ${blendRows}
-          <tr class="sum"><td>שווי פעילות משולב</td><td class="n"></td><td class="n">${f.pct(100, 0)}</td><td class="n">${f.money(data.enterpriseValue)}</td></tr>
+          <tr class="sum"><td>${T('שווי פעילות משולב', 'Blended enterprise value')}</td><td class="n"></td><td class="n">${f.pct(100, 0)}</td><td class="n">${f.money(data.enterpriseValue)}</td></tr>
         </table>
         ${methodologyNoteHtml}
         ${normalizedEbitdaHtml}
-        <p class="note">הערכה זו בוצעה בתאריך ${escHtml(noteDate)} על בסיס נתונים שהוזנו על ידי המשתמש ותחזיות הנהלה. הסכומים בדוח מעוגלים, ולכן סכום של שורות עשוי להיות שונה מהסך בעיגול.</p>
+        <p class="note">${T(`הערכה זו בוצעה בתאריך ${escHtml(noteDate)} על בסיס נתונים שהוזנו על ידי המשתמש ותחזיות הנהלה. הסכומים בדוח מעוגלים, ולכן סכום של שורות עשוי להיות שונה מהסך בעיגול.`, `This indication was produced on ${escHtml(data.locale === 'en' ? reportDateEn(data.valuationDate) : noteDate)} from data entered by the user and management forecasts. It is an algorithmic indication, not a valuation opinion. Amounts are rounded, so rows may not add up exactly to the total.`)}</p>
       </section>
     </div>
   </div>`;
@@ -330,6 +351,7 @@ function buildPage3Financials(data: ValuationData): string {
 
 function buildPage4Dcf(data: ValuationData): string {
   const f = pdfFmt(data);
+  const T = tr(data);
   const swatch = (color?: string) =>
     color
       ? `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${color};margin-inline-end:6px"></span>`
@@ -368,18 +390,18 @@ function buildPage4Dcf(data: ValuationData): string {
   <div class="rule-grad"></div>
   <div class="body page-body--dcf page-body--distributed">
     <div class="page-intro">
-      <span class="eyebrow">04 | היוון תזרימי מזומנים</span>
+      <span class="eyebrow">04 | ${T('היוון תזרימי מזומנים', 'Discounted cash flow')}</span>
       <h2>DCF + WACC</h2>
-      <p class="sub">${escHtml(WACC_DCF_METHODOLOGY_COPY)}</p>
+      <p class="sub">${escHtml(T(WACC_DCF_METHODOLOGY_COPY, WACC_DCF_METHODOLOGY_COPY_EN))}</p>
     </div>
     <div class="page-stack">
       <section class="page-section page-section--wacc">
         <div class="dcf-wacc-layout">
-          <div class="dcf-wacc-side"><div class="box box-chart-visible"><h3>הרכב WACC</h3>${buildEquifyWaccDonutSvg(data.waccSegments, data.waccPct)}</div>${(data.privateLayerLines ?? []).map((l) => `<p class="note wacc-note private-layer-line">${escHtml(l)}</p>`).join('')}</div>
+          <div class="dcf-wacc-side"><div class="box box-chart-visible"><h3>${T('הרכב WACC', 'WACC build-up')}</h3>${buildEquifyWaccDonutSvg(data.waccSegments, data.waccPct)}</div>${(data.privateLayerLines ?? []).map((l) => `<p class="note wacc-note private-layer-line">${escHtml(l)}</p>`).join('')}</div>
           <div class="dcf-wacc-table-wrap">
             <table class="report-table report-table--wacc">
               ${reportColgroup([...WACC_TABLE_WIDTHS])}
-              <tr><th>רכיב</th><th>שיעור</th></tr>${waccRows}<tr class="sum"><td>WACC אפקטיבי</td><td class="n">${f.pct(data.waccPct)}</td></tr>
+              <tr><th>${T('רכיב', 'Component')}</th><th>${T('שיעור', 'Rate')}</th></tr>${waccRows}<tr class="sum"><td>${T('WACC אפקטיבי', 'Effective WACC')}</td><td class="n">${f.pct(data.waccPct)}</td></tr>
             </table>
             ${waccNoteHtml}
           </div>
@@ -388,13 +410,13 @@ function buildPage4Dcf(data: ValuationData): string {
       <section class="page-section page-section--horizon">
         <table class="report-table report-table--dcf">
           ${reportColgroup(dcfHorizonTableWidths(data.dcfRows.length))}
-          <tr><th>${unitLabel}</th>${dcfCols}<th>טרמינלי</th></tr>
-          <tr><td>FCFF חזוי</td>${fcffRow}<td class="n">${data.dcfRows.at(-1) ? f.fixed(data.dcfRows.at(-1)!.fcffM, 2) : ''}</td></tr>
-          <tr><td>פקטור היוון (אמצע שנה)</td>${dfRow}<td class="n"></td></tr>
-          <tr><td>שווי נוכחי</td>${pvRow}<td class="n">${f.fixed(data.terminalPvM, 2)}*</td></tr>
-          <tr class="sum"><td>${data.dcfMarketableEv != null ? 'שווי DCF לפני הנחת סחירות' : 'שווי פעילות לפי DCF'}</td>${emptyCells(data.dcfRows.length)}<td class="n">${f.money(data.dcfMarketableEv ?? data.dcfEv)}</td></tr>
+          <tr><th>${unitLabel}</th>${dcfCols}<th>${T('טרמינלי', 'Terminal')}</th></tr>
+          <tr><td>${T('FCFF חזוי', 'Forecast FCFF')}</td>${fcffRow}<td class="n">${data.dcfRows.at(-1) ? f.fixed(data.dcfRows.at(-1)!.fcffM, 2) : ''}</td></tr>
+          <tr><td>${T('פקטור היוון (אמצע שנה)', 'Discount factor (mid-year)')}</td>${dfRow}<td class="n"></td></tr>
+          <tr><td>${T('שווי נוכחי', 'Present value')}</td>${pvRow}<td class="n">${f.fixed(data.terminalPvM, 2)}*</td></tr>
+          <tr class="sum"><td>${data.dcfMarketableEv != null ? T('שווי DCF לפני הנחת סחירות', 'DCF value before the marketability discount') : T('שווי פעילות לפי DCF', 'Enterprise value by DCF')}</td>${emptyCells(data.dcfRows.length)}<td class="n">${f.money(data.dcfMarketableEv ?? data.dcfEv)}</td></tr>
         </table>
-        <p class="note">* ערך טרמינלי מהווה ${f.pct(data.terminalSharePct, 0)} מסך שווי ה DCF.${data.dcfNote ? ` ${escHtml(data.dcfNote)}` : ''}</p>
+        <p class="note">${T(`* ערך טרמינלי מהווה ${f.pct(data.terminalSharePct, 0)} מסך שווי ה DCF.`, `* The terminal value is ${f.pct(data.terminalSharePct, 0)} of the total DCF value.`)}${data.dcfNote ? ` ${escHtml(data.dcfNote)}` : ''}</p>
       </section>
     </div>
   </div>`;
@@ -403,6 +425,7 @@ function buildPage4Dcf(data: ValuationData): string {
 
 function multiplesInterpretation(data: ValuationData): string {
   const f = pdfFmt(data);
+  const T = tr(data);
   const ebitdaInterp = escHtml(
     ebitdaMultipleInterpretationCopy({
       locale: data.locale,
@@ -415,27 +438,34 @@ function multiplesInterpretation(data: ValuationData): string {
   const im = data.industryMultiples;
   if (!im) {
     // No sourced industry data: show the company multiples only (finding 7).
-    return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">אין נתון</td><td class="interp-cell">${ebitdaInterp}</td></tr>
-    <tr><td>מכפיל הכנסות</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">אין נתון</td><td class="interp-cell">אין נתון ענפי עם מקור</td></tr>`;
+    return `<tr><td>${T('מכפיל EBITDA', 'EBITDA multiple')}</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${T('אין נתון', 'n/a')}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
+    <tr><td>${T('מכפיל הכנסות', 'Revenue multiple')}</td><td class="n">${f.multiple(data.revenueMultiple)}</td><td class="n">${T('אין נתון', 'n/a')}</td><td class="interp-cell">${T('אין נתון ענפי עם מקור', 'No sourced sector data')}</td></tr>`;
   }
   // Round 4 (part D, display only): the raw Damodaran range is public companies; when the engine
   // applies private company factors, the adjusted range is shown next to it, and the position is
   // stated against both.
   const pf = im.privateFactor;
   const range = (lo: number, hi: number) =>
-    `<span dir="rtl">${f.multiple(lo)} עד ${f.multiple(hi)}</span>${pf ? `<br><span dir="rtl" class="private-range" style="font-size:8.5px;color:var(--dim);white-space:nowrap">חברה פרטית: ${f.multiple(lo * pf)} עד ${f.multiple(hi * pf)}</span>` : ''}`;
+    data.locale === 'en'
+      ? `<span dir="ltr">${f.multiple(lo)} to ${f.multiple(hi)}</span>${pf ? `<br><span dir="ltr" class="private-range" style="font-size:8.5px;color:var(--dim);white-space:nowrap">Private company: ${f.multiple(lo * pf)} to ${f.multiple(hi * pf)}</span>` : ''}`
+      : `<span dir="rtl">${f.multiple(lo)} עד ${f.multiple(hi)}</span>${pf ? `<br><span dir="rtl" class="private-range" style="font-size:8.5px;color:var(--dim);white-space:nowrap">חברה פרטית: ${f.multiple(lo * pf)} עד ${f.multiple(hi * pf)}</span>` : ''}`;
+  const en = data.locale === 'en';
   const where = (v: number, lo: number, hi: number, of: string) =>
-    v < lo ? `מתחת לטווח ${of}` : v > hi ? `מעל הטווח ${of}` : `בתוך הטווח ${of}`;
+    en
+      ? v < lo ? `below the range ${of}` : v > hi ? `above the range ${of}` : `within the range ${of}`
+      : v < lo ? `מתחת לטווח ${of}` : v > hi ? `מעל הטווח ${of}` : `בתוך הטווח ${of}`;
   const position = (v: number, lo: number, hi: number) =>
     pf
-      ? `${where(v, lo, hi, 'של חברות ציבוריות')}, ו${where(v, lo * pf, hi * pf, 'אחרי התאמות לחברה פרטית')}`
-      : where(v, lo, hi, 'של חברות ציבוריות');
-  const revLabel = im.revenueMultipleKind === 'leg' ? 'מכפיל הכנסות' : 'EV/Sales משתמע';
+      ? en
+        ? `${where(v, lo, hi, 'of public companies')}, and ${where(v, lo * pf, hi * pf, 'after the private company adjustments')}`
+        : `${where(v, lo, hi, 'של חברות ציבוריות')}, ו${where(v, lo * pf, hi * pf, 'אחרי התאמות לחברה פרטית')}`
+      : where(v, lo, hi, en ? 'of public companies' : 'של חברות ציבוריות');
+  const revLabel = im.revenueMultipleKind === 'leg' ? T('מכפיל הכנסות', 'Revenue multiple') : T('EV/Sales משתמע', 'Implied EV/Sales');
   const revInterp =
     im.revenueMultipleKind === 'leg'
-      ? `מכפיל ההכנסות שבשימוש בשווי, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`
-      : `שווי הפעילות חלקי ההכנסות. לא נכנס לשווי, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`;
-  return `<tr><td>מכפיל EBITDA</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${range(im.evEbitdaLow, im.evEbitdaHigh)}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
+      ? T(`מכפיל ההכנסות שבשימוש בשווי, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`, `The revenue multiple used in the value, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`)
+      : T(`שווי הפעילות חלקי ההכנסות. לא נכנס לשווי, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`, `Enterprise value divided by revenue. Not part of the value, ${position(im.companyRevenueMultiple, im.evSalesLow, im.evSalesHigh)}.`);
+  return `<tr><td>${T('מכפיל EBITDA', 'EBITDA multiple')}</td><td class="n">${f.multiple(data.effectiveMult)}</td><td class="n">${range(im.evEbitdaLow, im.evEbitdaHigh)}</td><td class="interp-cell">${ebitdaInterp}</td></tr>
     <tr><td>${revLabel}</td><td class="n">${f.multiple(im.companyRevenueMultiple)}</td><td class="n">${range(im.evSalesLow, im.evSalesHigh)}</td><td class="interp-cell">${escHtml(revInterp)}</td></tr>`;
 }
 
@@ -452,32 +482,34 @@ function buildCompsTable(data: ValuationData): string {
   const evHeader = f.evHeader;
   return `<table class="report-table report-table--comps">
     ${reportColgroup(compsTableWidths())}
-    <tr><th>#</th><th>עסקה</th><th>שנה</th><th>${evHeader}</th><th>EV/EBITDA</th><th>EV/Rev</th><th>EBITDA%</th><th>הערה</th></tr>${rows}</table>`;
+    <tr><th>#</th><th>${tr(data)('עסקה', 'Transaction')}</th><th>${tr(data)('שנה', 'Year')}</th><th>${evHeader}</th><th>EV/EBITDA</th><th>EV/Rev</th><th>EBITDA%</th><th>${tr(data)('הערה', 'Note')}</th></tr>${rows}</table>`;
 }
 
 function buildPage5Multiples(data: ValuationData): string {
   const compsTable = buildCompsTable(data);
+  const T = tr(data);
+  const sectorName = data.sectorLabel || data.sector || T('הרלוונטי', 'concerned');
   const body = `
   ${head(`<bdi>#${escHtml(data.reportId)}</bdi> | ${escHtml(data.companyName)}`)}
   <div class="rule-grad"></div>
   <div class="body page-body--multiples page-body--distributed">
     <div class="page-intro">
-      <span class="eyebrow">05 | מכפילי שוק</span>
-      <h2>מיקום מול מכפילי הענף</h2>
-      <p class="sub">${escHtml(data.multiplesIntro ?? multiplesMethodologyCopy(`בענף ${data.sectorLabel || data.sector || 'הרלוונטי'}`))}</p>
+      <span class="eyebrow">05 | ${T('מכפילי שוק', 'Market multiples')}</span>
+      <h2>${T('מיקום מול מכפילי הענף', 'Position against sector multiples')}</h2>
+      <p class="sub">${escHtml(data.multiplesIntro ?? (data.locale === 'en' ? multiplesMethodologyCopyEn(sectorName) : multiplesMethodologyCopy(`בענף ${sectorName}`)))}</p>
     </div>
     <div class="page-stack">
       <section class="page-section page-section--tracks">
         <div class="box box-chart-visible">
-          <h3>מיקום מול מכפילי חברות ציבוריות (Damodaran)</h3>
-          <div class="multiples-tracks-chart">${buildEquifyMultiplesTracksSvg(data.multiplesPositions, data.currency)}</div>
+          <h3>${T('מיקום מול מכפילי חברות ציבוריות (Damodaran)', 'Position against public company multiples (Damodaran)')}</h3>
+          <div class="multiples-tracks-chart">${buildEquifyMultiplesTracksSvg(data.multiplesPositions, data.currency, data.locale === 'en' ? 'en' : 'he')}</div>
         </div>
       </section>
       ${compsTable ? `<section class="page-section page-section--comps">${compsTable}</section>` : ''}
       <section class="page-section page-section--compare">
         <table class="report-table report-table--multiples multiples-compare-table">
           ${reportColgroup([...MULTIPLES_COMPARE_WIDTHS])}
-          <tr><th>פרמטר</th><th>החברה</th><th>${data.industryMultiples ? 'חברות ציבוריות (Damodaran)' : 'הענף (Damodaran)'}</th><th>פרשנות</th></tr>${multiplesInterpretation(data)}
+          <tr><th>${T('פרמטר', 'Measure')}</th><th>${T('החברה', 'Company')}</th><th>${data.industryMultiples ? T('חברות ציבוריות (Damodaran)', 'Public companies (Damodaran)') : T('הענף (Damodaran)', 'Sector (Damodaran)')}</th><th>${T('פרשנות', 'Reading')}</th></tr>${multiplesInterpretation(data)}
         </table>
         ${data.industryMultiples ? `<p class="note sens-note">${escHtml(data.industryMultiples.footnote)}</p>` : ''}
       </section>

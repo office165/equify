@@ -45,10 +45,10 @@ const nextConfig = {
   images: {
     unoptimized: process.env.CAPACITOR_BUILD === 'true',
   },
-  // Round 12 (CONTENT_HUB): with the hub on, /llms.txt also lists the guides and articles (app/api/llms). With it off there is no
+  // Round 12 (CONTENT_HUB) and 13 (EN_SITE): /llms.txt also lists the guides and articles, and the English site. With both off there is no
   // rewrite and public/llms.txt is served as it was. Read at build time, like the other site flags.
   rewrites: async () => ({
-    beforeFiles: process.env.CONTENT_HUB?.trim().toLowerCase() === 'on' ? [{ source: '/llms.txt', destination: '/api/llms' }] : [],
+    beforeFiles: ['CONTENT_HUB', 'EN_SITE'].some((f) => process.env[f]?.trim().toLowerCase() === 'on') ? [{ source: '/llms.txt', destination: '/api/llms' }] : [],
     afterFiles: [],
     fallback: [],
   }),

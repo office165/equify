@@ -28,6 +28,7 @@ import { run as runRound9 } from './suites/round9';
 import { run as runRound10 } from './suites/round10';
 import { run as runRound11 } from './suites/round11';
 import { run as runRound12 } from './suites/round12';
+import { run as runRound13 } from './suites/round13';
 import type { MethodVersion } from '../lib/valuation/method_v2';
 
 const ROOT = path.join(__dirname, '..');
@@ -96,6 +97,7 @@ async function main(): Promise<void> {
     ['round10', runRound10, ['v1']],
     ['round11', runRound11, ['v1']],
     ['round12', runRound12, ['v1']],
+    ['round13', runRound13, ['v1']],
   ];
   const methodArg = process.argv.includes('--method') ? process.argv[process.argv.indexOf('--method') + 1] : null;
   const methods: MethodVersion[] = methodArg === 'v1' || methodArg === 'v2' ? [methodArg] : ['v1', 'v2'];

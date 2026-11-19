@@ -48,7 +48,7 @@ import {
 import { postValidatePromoCode } from '../../../lib/payments/promo_client';
 import type { PromoValidateResponse } from '../../../lib/payments/promo_client';
 import { postEnsureWizardUser } from '../../../lib/payments/ensure_wizard_user_client';
-import { HOSTED_BUTTON_ID_FULL } from '../../../lib/payments/paypal_hosted_button_ids';
+import { checkoutButton } from '../../../lib/payments/paypal_hosted_button_ids';
 import { normalizePromoCode } from '../../../lib/wizard/vip_promo';
 import { EQUIFY_DISPATCH_TOKEN_KEY } from '../../../lib/payments/dispatch_token_storage';
 import {
@@ -102,7 +102,9 @@ function EquifyWizardShell({
   const locale = localeProp ?? ctxLocale;
   const isHe = locale === 'he';
   const { copyV2, tx } = useCopyText(locale === 'he' ? 'he' : 'en');
-  const { siteV2 } = useSiteFlags();
+  const { siteV2, enSite } = useSiteFlags();
+  // Round 13: English checkout is the $349 USD button when EN_SITE is on and the button is set; otherwise today's ILS button.
+  const checkout = checkoutButton(isHe ? 'he' : 'en', enSite);
   const copy = getEquifyWizardCopy(locale, copyV2);
   const steps = getEquifyWizardSteps(locale);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -237,7 +239,7 @@ function EquifyWizardShell({
             console.warn('[wizard] Free promo Monday update failed', err);
           });
 
-          window.location.assign('/results');
+          window.location.assign(`${languagePrefix()}/results`);
         } catch {
           setSubmitPhase('idle');
           setHostedButtonId(null);
@@ -284,7 +286,7 @@ function EquifyWizardShell({
         });
 
         clearWizardDraft();
-        setHostedButtonId(HOSTED_BUTTON_ID_FULL);
+        setHostedButtonId(checkout.id);
         setSubmitPhase('checkout-ready');
       } catch {
         setSubmitPhase('idle');
@@ -358,7 +360,7 @@ function EquifyWizardShell({
           console.warn('[wizard] Free promo Monday update failed', err);
         });
 
-        window.location.assign('/results');
+        window.location.assign(`${languagePrefix()}/results`);
       } catch {
         setLocalSubmitError(promoDenyMessage({ valid: false, reason: 'server_error' }, isHe));
         setSubmitPhase('checkout-ready');
@@ -541,6 +543,7 @@ function EquifyWizardShell({
                 submitError={localSubmitError ?? submitError}
                 promoNotice={promoNotice}
                 hostedButtonId={hostedButtonId}
+                checkoutCurrency={checkout.currency}
               />
             )}
           </section>
@@ -562,6 +565,13 @@ function EquifyWizardShell({
       </div>
     </div>
   );
+}
+
+/** Round 13: '/en' when the wizard runs under /en (the results page of the same language), '' on the Hebrew addresses. */
+function languagePrefix(): string {
+  if (typeof window === 'undefined') return '';
+  const m = window.location.pathname.match(/^\/([a-z]{2})(?:\/|$)/);
+  return m && m[1] !== 'he' ? `/${m[1]}` : '';
 }
 
 export default function EquifyWizard(props: EquifyWizardProps) {

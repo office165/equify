@@ -46,6 +46,8 @@ export interface Step4GoalProps {
   promoNotice?: string | null;
   /** When set, replaces the CTA with the PayPal hosted button (after email confirm). */
   hostedButtonId?: string | null;
+  /** Round 13: the currency of the hosted button (USD for the English $349 button). */
+  checkoutCurrency?: 'ILS' | 'USD';
 }
 
 export function Step4Goal({
@@ -57,6 +59,7 @@ export function Step4Goal({
   submitError,
   promoNotice,
   hostedButtonId = null,
+  checkoutCurrency = 'ILS',
 }: Step4GoalProps) {
   const { shell, steps: t, isHe, locale } = useEquifyStrings();
   const { state, setGoal, setAgreedToTerms, updateProfile } = useWizardValuation();
@@ -369,7 +372,7 @@ export function Step4Goal({
                     ? 'המייל אושר. השלימו את התשלום המאובטח. לאחר האישור תועברו לדוח.'
                     : 'Email confirmed. Complete secure checkout. You will reach the report after payment.'}
                 </p>
-                <PayPalHostedButton hostedButtonId={hostedButtonId} />
+                <PayPalHostedButton hostedButtonId={hostedButtonId} currency={checkoutCurrency} />
                 {isUpayUiEnabled() ? <UpayCheckout email={checkoutEmail} /> : null}
               </>
             )}

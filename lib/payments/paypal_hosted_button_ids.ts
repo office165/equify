@@ -15,3 +15,17 @@ export const HOSTED_BUTTON_ID_FULL =
 /** Kept for env compatibility; unused by current wizard checkout. */
 export const HOSTED_BUTTON_ID_PROMO =
   process.env.NEXT_PUBLIC_PAYPAL_HOSTED_BUTTON_ID_PROMO?.trim() || 'LG4MDNKQ63HEY';
+
+/**
+ * Round 13 (EN_SITE): the English price, $349, is a separate PayPal hosted button priced in USD (created in PayPal by the owner,
+ * like the ILS one). Until NEXT_PUBLIC_PAYPAL_HOSTED_BUTTON_ID_FULL_USD is set, English checkout uses the ILS button, as today.
+ * The webhook accepts USD captures only with PAYPAL_USD=on (lib/payments/paypal_amount_policy.ts, minimum $349).
+ */
+export const HOSTED_BUTTON_ID_FULL_USD = process.env.NEXT_PUBLIC_PAYPAL_HOSTED_BUTTON_ID_FULL_USD?.trim() || '';
+
+export type CheckoutCurrency = 'ILS' | 'USD';
+
+export function checkoutButton(locale: 'he' | 'en', enSite: boolean, usdId: string = HOSTED_BUTTON_ID_FULL_USD): { id: string; currency: CheckoutCurrency } {
+  if (enSite && locale === 'en' && usdId) return { id: usdId, currency: 'USD' };
+  return { id: HOSTED_BUTTON_ID_FULL, currency: 'ILS' };
+}

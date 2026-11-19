@@ -11,7 +11,7 @@ export function CookieSettingsLink({ label = 'הגדרות עוגיות' }: { la
   // The home page and the hub pages (round 12) have it in their own footer.
   if (path === '/' || path === '/en' || /^\/(en\/)?(guides|articles)(\/|$)/.test(path ?? '')) return null;
   return (
-    <div className="eq-cc-foot" dir="rtl">
+    <div className="eq-cc-foot" dir={label === 'הגדרות עוגיות' ? 'rtl' : 'ltr'}>
       <button type="button" className="eq-cc-foot-btn" data-cookie-settings="">
         {label}
       </button>

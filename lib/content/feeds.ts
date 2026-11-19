@@ -1,7 +1,9 @@
 /** Round 12 (CONTENT_HUB): the RSS feed and llms.txt, built from the posts (served by app/feed and app/api/llms). */
 import fs from 'fs';
 import path from 'path';
-import { allPosts, postPath } from './posts';
+import { allPosts, postLang, postPath } from './posts';
+import { readSiteFlags } from '../flags/site_flags';
+import { siteLanguage } from '../i18n/site';
 import { HUB } from './hub';
 import { SITE_ORIGIN, absoluteUrl } from '../seo/site';
 
@@ -9,7 +11,8 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const cdata = (s: string) => `<![CDATA[${s.replace(/]]>/g, ']]]]><![CDATA[>')}]]>`;
 
 export async function buildFeed(): Promise<string> {
-  const posts = (await allPosts()).slice(0, 20);
+  // The Hebrew feed: Hebrew posts only (a post in another language has its own address under /<code>).
+  const posts = (await allPosts()).filter((p) => postLang(p) === 'he').slice(0, 20);
   const items = posts
     .map((p) => {
       const link = absoluteUrl(postPath(p));
@@ -30,9 +33,18 @@ ${items}
 </rss>`;
 }
 
-export async function buildLlms(): Promise<string> {
+export async function buildLlms(opts: { hub?: boolean; enSite?: boolean } = {}): Promise<string> {
+  const flags = readSiteFlags();
+  const hub = opts.hub ?? flags.contentHub;
+  const enSite = opts.enSite ?? flags.enSite;
   const base = fs.readFileSync(path.join(process.cwd(), 'public', 'llms.txt'), 'utf8').replace(/\s+$/, '');
-  const posts = await allPosts();
+  // Round 13: the English site and its price.
+  const en = siteLanguage('en');
+  const english = enSite
+    ? ['', '## English', '', `- [equify BY SBC in English](${absoluteUrl('/en')}): ${en.dict(true).meta.description}`, `- Price in English: ${en.def.price.display} (USD), paid by PayPal. The Hebrew site: ₪999.`]
+    : [];
+  if (!hub) return [base, ...english, ''].join('\n');
+  const posts = (await allPosts()).filter((p) => postLang(p) === 'he');
   const line = (p: { title: string; slug: string; desk: string; excerpt: string }) => `- [${p.title}](${absoluteUrl(postPath(p))}): ${p.excerpt}`;
   const guides = posts.filter((p) => p.desk === 'guide');
   const articles = posts.filter((p) => p.desk !== 'guide');
@@ -43,6 +55,7 @@ export async function buildLlms(): Promise<string> {
     '',
     ...guides.map(line),
     ...(articles.length ? ['', '## כתבות', '', ...articles.slice(0, 50).map(line)] : []),
+    ...english,
     '',
     `RSS: ${absoluteUrl('/feed')}`,
     '',

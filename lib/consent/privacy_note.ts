@@ -6,5 +6,5 @@ export const STEP1_PRIVACY_NOTE = {
   he: 'הפרטים שמוקלדים כאן נשמרים כבר בזמן ההקלדה, ומשמשים את SBC כדי ליצור איתך קשר בנוגע לדוח ולשירותים קשורים.',
   linkHe: 'מדיניות הפרטיות',
   en: 'The details you type here are saved as you type, and SBC uses them to contact you about the report and related services.',
-  linkEn: 'Privacy policy',
+  linkEn: 'Privacy policy (Hebrew)',
 } as const;

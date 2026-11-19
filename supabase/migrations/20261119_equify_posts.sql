@@ -20,7 +20,9 @@ create table if not exists public.equify_posts (
   status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
   summary text,
   faq jsonb check (faq is null or jsonb_typeof(faq) = 'array'),
-  seo_title text
+  seo_title text,
+  -- Round 13: the post's language. /en/guides and /en/articles show only 'en' rows.
+  lang text not null default 'he' check (lang ~ '^[a-z]{2}$')
 );
 
 comment on table public.equify_posts is

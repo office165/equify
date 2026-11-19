@@ -218,16 +218,23 @@ export function equityTriCurrencyCoverHtml(data: {
   const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(fxRaw);
   const fxDate = escHtml(iso ? `${iso[3]}.${iso[2]}.${iso[1]}` : fxRaw);
 
+  // Round 13: the English report says the same in English.
+  const en = (data as { locale?: string }).locale === 'en';
+  const rateWord = en ? 'rate' : 'שער';
   const secondaryLines = [
-    usd ? `<div class="cv-fx-line">≈ ${usd} USD${usdRate ? ` <span class="cv-fx-rate">(שער: ${numHtml(usdRate)})</span>` : ''}</div>` : '',
-    eur ? `<div class="cv-fx-line">≈ ${eur} EUR${eurRate ? ` <span class="cv-fx-rate">(שער: ${numHtml(eurRate)})</span>` : ''}</div>` : '',
+    usd ? `<div class="cv-fx-line">≈ ${usd} USD${usdRate ? ` <span class="cv-fx-rate">(${rateWord}: ${numHtml(usdRate)})</span>` : ''}</div>` : '',
+    eur ? `<div class="cv-fx-line">≈ ${eur} EUR${eurRate ? ` <span class="cv-fx-rate">(${rateWord}: ${numHtml(eurRate)})</span>` : ''}</div>` : '',
   ]
     .filter(Boolean)
     .join('');
 
-  const footnote = isFallback
-    ? `<div class="cv-fx-footnote">שער גיבוי, נכון ליום ${fxDate}</div>`
-    : `<div class="cv-fx-footnote">שערי המרה נכונים ליום ${fxDate}, לפי השוק הבינלאומי</div>`;
+  const footnote = en
+    ? isFallback
+      ? `<div class="cv-fx-footnote">Fallback rate, as of ${fxDate}</div>`
+      : `<div class="cv-fx-footnote">Exchange rates as of ${fxDate}, international market</div>`
+    : isFallback
+      ? `<div class="cv-fx-footnote">שער גיבוי, נכון ליום ${fxDate}</div>`
+      : `<div class="cv-fx-footnote">שערי המרה נכונים ליום ${fxDate}, לפי השוק הבינלאומי</div>`;
 
   return `<div class="cv-tri-currency">${primary}${secondaryLines ? `<div class="cv-fx-secondary">${secondaryLines}</div>` : ''}${footnote}</div>`;
 }

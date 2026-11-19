@@ -9,22 +9,14 @@ import { LEGAL_ROUTES } from '../../lib/legal/routes';
  * bottom, never blocks the page. "אישור הכל", "הגדרות" (measurement and marketing apart) and "רק הכרחיות". Until a choice is made
  * nothing beyond what the site needs is loaded. Any element with data-cookie-settings (the "הגדרות עוגיות" link) opens it again.
  */
-export const CONSENT_TEXT = {
-  region: 'הסכמה לעוגיות',
-  text: 'האתר משתמש בעוגיות ובכלים דומים. כלי מדידה ושיווק נטענים רק באישורך.',
-  policy: 'מדיניות הפרטיות',
-  settings: 'הגדרות עוגיות',
-  necessary: 'הכרחיות: הפעלת האתר והאשף. תמיד פעילות',
-  measurement: 'מדידה: Vercel Analytics ו Speed Insights, סטטיסטיקה של שימוש ומהירות',
-  marketing: 'שיווק: אין כרגע כלי שיווק באתר. אם יתווסף, הוא ייטען רק באישורך',
-  acceptAll: 'אישור הכל',
-  more: 'הגדרות',
-  necessaryOnly: 'רק הכרחיות',
-  save: 'שמירת הבחירה',
-} as const;
+export { CONSENT_TEXT, CONSENT_TEXT_EN } from '../../lib/consent/consent_text';
+import { CONSENT_TEXT, CONSENT_TEXT_EN } from '../../lib/consent/consent_text';
 
-export function CookieConsent() {
-  const t = CONSENT_TEXT;
+
+
+export function CookieConsent({ lang = 'he' }: { lang?: string } = {}) {
+  const t = lang === 'he' ? CONSENT_TEXT : CONSENT_TEXT_EN;
+  const he = lang === 'he';
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState(false);
   const [a, setA] = useState(false);
@@ -55,10 +47,12 @@ export function CookieConsent() {
 
   if (!open) return null;
   return (
-    <div ref={box} className="eq-cc" role="region" aria-label={t.region} data-nosnippet="" dir="rtl" lang="he">
+    <div ref={box} className="eq-cc" role="region" aria-label={t.region} data-nosnippet="" dir={he ? 'rtl' : 'ltr'} lang={he ? 'he' : lang}>
       <p className="eq-cc-text">
         {t.text}{' '}
-        <a href={LEGAL_ROUTES.privacy}>{t.policy}</a>
+        <a href={LEGAL_ROUTES.privacy} hrefLang={he ? undefined : 'he'}>
+          {t.policy}
+        </a>
       </p>
       {settings && (
         <fieldset className="eq-cc-set">

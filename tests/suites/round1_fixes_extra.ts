@@ -203,8 +203,10 @@ function paypalChecks(suite: Suite): void {
   const env = {} as unknown as NodeJS.ProcessEnv;
   suite.check('paypal-ils-paid', 'c6', evaluatePaypalAmount(999, 'ILS', env).kind === 'paid');
   suite.check('paypal-ils-underpaid', 'c6', evaluatePaypalAmount(500, 'ILS', env).kind === 'underpaid');
-  suite.check('paypal-usd-paid', 'c6', evaluatePaypalAmount(299, 'USD', env).kind === 'paid');
-  suite.check('paypal-usd-not-read-as-ils', 'c6', evaluatePaypalAmount(299, 'usd', env).kind === 'paid');
+  // Round 13: the English price is $349 (was 299).
+  suite.check('paypal-usd-paid', 'c6', evaluatePaypalAmount(349, 'USD', env).kind === 'paid');
+  suite.check('paypal-usd-not-read-as-ils', 'c6', evaluatePaypalAmount(349, 'usd', env).kind === 'paid');
+  suite.check('paypal-usd-299-underpaid', 'c6', evaluatePaypalAmount(299, 'USD', env).kind === 'underpaid');
   suite.check('paypal-usd-underpaid', 'c6', evaluatePaypalAmount(100, 'USD', env).kind === 'underpaid');
   suite.check('paypal-unknown-currency', 'c6', evaluatePaypalAmount(999, 'EUR', env).kind === 'unsupported_currency');
   suite.check('paypal-missing-currency', 'c6', evaluatePaypalAmount(999, undefined, env).kind === 'unsupported_currency');

@@ -10,7 +10,8 @@ export interface AccessibilityStatementLinkProps {
 /** Footer link to full accessibility statement page */
 export function AccessibilityStatementLink({
   className,
-}: AccessibilityStatementLinkProps) {
+  label = 'הצהרת נגישות',
+}: AccessibilityStatementLinkProps & { label?: string }) {
   return (
     <Link
       href={LEGAL_ROUTES.accessibility}
@@ -18,8 +19,9 @@ export function AccessibilityStatementLink({
         className ??
         'text-xs text-mint-400 underline-offset-2 transition hover:text-mint-400 hover:underline'
       }
+      hrefLang={label === 'הצהרת נגישות' ? undefined : 'he'}
     >
-      הצהרת נגישות
+      {label}
     </Link>
   );
 }

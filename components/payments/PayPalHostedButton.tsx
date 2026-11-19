@@ -15,11 +15,11 @@ declare global {
   }
 }
 
-function sdkSrc(clientId: string): string {
-  return `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&components=hosted-buttons&disable-funding=venmo&currency=ILS`;
+function sdkSrc(clientId: string, currency: 'ILS' | 'USD' = 'ILS'): string {
+  return `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&components=hosted-buttons&disable-funding=venmo&currency=${currency}`;
 }
 
-function loadPaypalSdk(clientId: string): Promise<void> {
+function loadPaypalSdk(clientId: string, currency: 'ILS' | 'USD' = 'ILS'): Promise<void> {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('ssr'));
   }
@@ -27,7 +27,7 @@ function loadPaypalSdk(clientId: string): Promise<void> {
     return Promise.resolve();
   }
 
-  const src = sdkSrc(clientId);
+  const src = sdkSrc(clientId, currency);
   const existing = document.querySelector<HTMLScriptElement>(
     `script[src="${src}"]`,
   );
@@ -58,9 +58,11 @@ function loadPaypalSdk(clientId: string): Promise<void> {
 
 export interface PayPalHostedButtonProps {
   hostedButtonId: string;
+  /** Round 13: 'USD' for the English $349 button; ILS (today) by default. */
+  currency?: 'ILS' | 'USD';
 }
 
-export function PayPalHostedButton({ hostedButtonId }: PayPalHostedButtonProps) {
+export function PayPalHostedButton({ hostedButtonId, currency = 'ILS' }: PayPalHostedButtonProps) {
   const containerId = `paypal-container-${hostedButtonId}`;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -81,7 +83,7 @@ export function PayPalHostedButton({ hostedButtonId }: PayPalHostedButtonProps) 
       if (container) container.innerHTML = '';
 
       try {
-        await loadPaypalSdk(CLIENT_ID);
+        await loadPaypalSdk(CLIENT_ID, currency);
         if (cancelled) return;
         if (!window.paypal?.HostedButtons) {
           setError(true);
@@ -111,7 +113,7 @@ export function PayPalHostedButton({ hostedButtonId }: PayPalHostedButtonProps) 
       const node = document.getElementById(containerId);
       if (node) node.innerHTML = '';
     };
-  }, [hostedButtonId, containerId]);
+  }, [hostedButtonId, containerId, currency]);
 
   return (
     <div className="equify-paypal-hosted-button w-full" data-hosted-button-id={hostedButtonId}>

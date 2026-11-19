@@ -723,20 +723,31 @@ export function formatValuationCurrency(
   }
 }
 
+/** Round 13: the language fixed by a language's address (/en), for nested providers. Undefined on the Hebrew addresses. */
+const FixedLocaleContext = createContext<ValuationLocale | undefined>(undefined);
+
 const ValuationI18nContext = createContext<{
   locale: ValuationLocale;
   setLocale: (locale: ValuationLocale) => void;
   i18n: ValuationTranslations;
 } | null>(null);
 
-export function ValuationI18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<ValuationLocale>('he');
+/**
+ * Round 13: `initialLocale` fixes the language for a language's own addresses (/en), on the server too; without it (every Hebrew
+ * page) the provider behaves as before: Hebrew on the server, then the visitor's stored choice.
+ */
+export function ValuationI18nProvider({ children, initialLocale: ownInitial }: { children: React.ReactNode; initialLocale?: ValuationLocale }) {
+  // A page that wraps itself in another provider (the wizard, the results page) keeps the language its address fixed (/en).
+  const fixedByParent = useContext(FixedLocaleContext);
+  const initialLocale = ownInitial ?? fixedByParent;
+  const [locale, setLocaleState] = useState<ValuationLocale>(initialLocale ?? 'he');
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setLocaleState(readValuationLocale());
+    if (initialLocale) writeValuationLocale(initialLocale);
+    else setLocaleState(readValuationLocale());
     setHydrated(true);
-  }, []);
+  }, [initialLocale]);
 
   useEffect(() => {
     if (!hydrated || typeof document === 'undefined') return;
@@ -756,9 +767,8 @@ export function ValuationI18nProvider({ children }: { children: React.ReactNode 
     [locale, setLocale, i18n],
   );
 
-  return (
-    <ValuationI18nContext.Provider value={value}>{children}</ValuationI18nContext.Provider>
-  );
+  const provider = <ValuationI18nContext.Provider value={value}>{children}</ValuationI18nContext.Provider>;
+  return initialLocale ? <FixedLocaleContext.Provider value={initialLocale}>{provider}</FixedLocaleContext.Provider> : provider;
 }
 
 export function useValuationI18n() {

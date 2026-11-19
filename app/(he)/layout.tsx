@@ -1,0 +1,86 @@
+import type { Metadata, Viewport } from 'next';
+import { Assistant, IBM_Plex_Mono } from 'next/font/google';
+import '../globals.css';
+import { BRAND_NAME } from '../../lib/brand/brand-identity';
+import { rootMetadata } from '../site-metadata';
+import { AppProviders } from '../../components/shared/AppProviders';
+import { SiteAnalytics } from '../../components/analytics/SiteAnalytics';
+import { SiteFlagsProvider } from '../../components/shared/SiteFlagsContext';
+import { ConsentRoot } from '../../components/consent/ConsentRoot';
+import { anySiteFlagOn, readSiteFlags } from '../../lib/flags/site_flags';
+import { THEME_BOOT, themeBoot } from '../../components/site-v2/theme_boot';
+
+const assistant = Assistant({
+  subsets: ['hebrew', 'latin'],
+  weight: ['300', '400', '600', '700'],
+  variable: '--font-equify',
+  display: 'swap',
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-mono',
+  display: 'swap',
+});
+
+export const metadata: Metadata = {
+  ...rootMetadata,
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    title: BRAND_NAME,
+    statusBarStyle: 'black-translucent',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#020504' },
+    { media: '(prefers-color-scheme: light)', color: '#020504' },
+  ],
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  colorScheme: 'dark',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Round 10: with every site flag off nothing below changes (no provider, no banner), so the page is what it was.
+  const flags = readSiteFlags();
+  const app = <AppProviders>{children}</AppProviders>;
+  return (
+    <html lang="he" dir="rtl" suppressHydrationWarning {...(flags.siteV2 ? { className: 'eq-v2' } : {})}>
+      {/* Round 10 and 11: the styles of the banner and of the new design are files in public/site-v2, linked only when their flag is
+          on, so with the flags off the page has exactly the styles it had. The theme is set before the first paint (no flash). */}
+      {flags.siteV2 || flags.consentBanner || flags.contentHub ? (
+        <head>
+          {flags.siteV2 ? <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} /> : null}
+          {/* Round 12: the hub pages are always in the new design; with SITE_V2 off only the theme is set, not the design elsewhere. */}
+          {!flags.siteV2 && flags.contentHub ? <script dangerouslySetInnerHTML={{ __html: themeBoot(false) }} /> : null}
+          {flags.siteV2 || flags.contentHub ? (
+            <>
+              <link rel="stylesheet" href="/site-v2/v2.css" />
+              <link rel="stylesheet" href="/site-v2/wizard-light.css" />
+              <link rel="stylesheet" href="/site-v2/results-light.css" />
+            </>
+          ) : null}
+          {flags.consentBanner ? <link rel="stylesheet" href="/site-v2/consent.css" /> : null}
+        </head>
+      ) : null}
+      <body
+        className={`${assistant.variable} ${ibmPlexMono.variable} ${assistant.className} min-h-[100dvh] bg-[#020504] pb-safe text-slate-50 antialiased`}
+      >
+        {anySiteFlagOn(flags) ? <SiteFlagsProvider value={flags}>{app}</SiteFlagsProvider> : app}
+        {flags.consentBanner ? <ConsentRoot /> : <SiteAnalytics />}
+      </body>
+    </html>
+  );
+}

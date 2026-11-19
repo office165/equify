@@ -1,0 +1,79 @@
+'use client';
+
+import { EquifyResultsReport } from '../../../components/results/EquifyResultsReport';
+import { useReportHydration } from '../../../components/results/useReportHydration';
+import { readWhatsAppSupportBase } from '../../../lib/wizard/whatsapp_support';
+import { ValuationI18nProvider, useValuationI18n } from '../../../valuation_i18n';
+
+function ReportContent() {
+  const { locale } = useValuationI18n();
+  const { matrix, equifyState, loading, error, paymentVerifyStatus } =
+    useReportHydration(locale);
+  const isHe = locale === 'he';
+  const waUrl = readWhatsAppSupportBase();
+
+  if (loading || paymentVerifyStatus === 'verifying') {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-4 text-center text-sm text-[var(--dim,#94a3b8)]">
+        <p>
+          {paymentVerifyStatus === 'verifying'
+            ? isHe
+              ? 'מאמתים את התשלום...'
+              : 'Verifying your payment...'
+            : isHe
+              ? 'טוען דוח...'
+              : 'Loading report...'}
+        </p>
+      </div>
+    );
+  }
+
+  if (paymentVerifyStatus === 'timeout') {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+        <p className="text-sm text-slate-300">
+          {isHe
+            ? 'עדיין לא אימתנו את התשלום. אפשר לרענן את העמוד או לפנות אלינו בוואטסאפ.'
+            : 'We could not verify payment yet. Refresh the page or contact us on WhatsApp.'}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            className="rounded-full border border-slate-700/50 bg-[#111815] px-5 py-2 text-sm text-slate-100 transition hover:border-emerald-500/20"
+            onClick={() => window.location.reload()}
+          >
+            {isHe ? 'רענון' : 'Refresh'}
+          </button>
+          {waUrl ? (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-[#00F5A0] px-5 py-2 text-sm font-semibold text-[#020504] transition hover:opacity-90"
+            >
+              WhatsApp
+            </a>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-red-300">
+        {error}
+      </div>
+    );
+  }
+
+  return <EquifyResultsReport matrix={matrix} equifyState={equifyState} />;
+}
+
+export default function ReportPage() {
+  return (
+    <ValuationI18nProvider>
+      <ReportContent />
+    </ValuationI18nProvider>
+  );
+}

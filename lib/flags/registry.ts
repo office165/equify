@@ -19,6 +19,7 @@ export const FEATURE_FLAGS = [
   'CONSENT_BANNER',
   'SITE_V2',
   'CONTENT_HUB',
+  'EN_SITE',
 ] as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number];

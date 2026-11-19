@@ -26,6 +26,10 @@ const MULTIPLE_TITLES: Record<string, string> = {
   margin: 'שיעור EBITDA',
   dcf: 'DCF (להשוואה)',
 };
+/** Round 13: the English report's labels (direction set per label below). */
+const MULTIPLE_TITLES_EN: Record<string, string> = { ebitda: 'EBITDA multiple', revenue: 'Revenue multiple', margin: 'EBITDA margin', dcf: 'DCF (for comparison)' };
+let titlesLocale: 'he' | 'en' = 'he';
+const titleOf = (id: string, fallback?: string): string => (titlesLocale === 'en' ? MULTIPLE_TITLES_EN[id] : MULTIPLE_TITLES[id]) ?? fallback ?? '';
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -33,8 +37,9 @@ function escapeHtml(text: string): string {
 
 /** RTL-safe label cell — nowrap + min-width for Hebrew PDF renderers. */
 export function multiplesTrackLabelSvg(title: string, y: number): string {
+  const style = titlesLocale === 'en' ? MULTIPLES_LABEL_STYLE.replace('direction:rtl;text-align:right;', 'direction:ltr;text-align:left;') : MULTIPLES_LABEL_STYLE;
   return `<foreignObject x="${MULTIPLES_LABEL_X}" y="${y - 12}" width="${MULTIPLES_LABEL_W}" height="30" overflow="visible">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="${MULTIPLES_LABEL_STYLE}">${escapeHtml(title)}</div>
+    <div xmlns="http://www.w3.org/1999/xhtml" style="${style}">${escapeHtml(title)}</div>
   </foreignObject>`;
 }
 
@@ -104,7 +109,7 @@ export function buildEquifyWaccDonutSvg(segments: WaccSegment[], waccPct: number
 }
 
 function multiplesRowSvg(row: MultiplePositionRow, y: number, titleY: number, currency = 'ILS'): string {
-  const title = MULTIPLE_TITLES[row.id] ?? row.title;
+  const title = titleOf(row.id, row.title);
   const cx = trackX(row.multiple, row.rangeMin, row.rangeMax);
   const bandX = trackX(row.marketMin, row.rangeMin, row.rangeMax);
   const bandEnd = trackX(row.marketMax, row.rangeMin, row.rangeMax);
@@ -144,7 +149,17 @@ function multiplesRowSvg(row: MultiplePositionRow, y: number, titleY: number, cu
 export function buildEquifyMultiplesTracksSvg(
   rows: MultiplePositionRow[],
   currency = 'ILS',
+  locale: 'he' | 'en' = 'he',
 ): string {
+  titlesLocale = locale;
+  try {
+    return buildTracks(rows, currency);
+  } finally {
+    titlesLocale = 'he';
+  }
+}
+
+function buildTracks(rows: MultiplePositionRow[], currency: string): string {
   const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
   const ebitda = byId.ebitda ?? rows[0]!;
   const revenue = byId.revenue ?? rows[1] ?? rows[0]!;
@@ -167,7 +182,7 @@ export function buildEquifyMultiplesTracksSvg(
   const thirdSvg =
     third.id === 'margin'
       ? multiplesRowSvg(third, thirdY, thirdTitleY, currency)
-      : `${multiplesTrackLabelSvg(MULTIPLE_TITLES.dcf, thirdTitleY)}
+      : `${multiplesTrackLabelSvg(titleOf('dcf'), thirdTitleY)}
     <rect x="${MULTIPLES_TRACK_X}" y="${thirdY}" width="${MULTIPLES_TRACK_W}" height="10" rx="5" fill="#F0F8F6"/>
     <circle cx="${dcfCx.toFixed(1)}" cy="${thirdY + 5}" r="8" fill="${thirdColor}"/>
     <text class="axis" x="${MULTIPLES_TRACK_X}" y="${thirdY + 26}">${fmtMoneyCompact(third.rangeMin * 1_000_000, currency)}</text>

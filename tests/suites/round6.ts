@@ -111,14 +111,14 @@ export async function run(): Promise<SuiteResult> {
     textOk(s, `title ${p}`, String(og?.title));
     textOk(s, `description ${p}`, description);
     if (p !== '/') {
-      const src = fs.readFileSync(path.join(ROOT, 'app', p.slice(1), 'page.tsx'), 'utf8');
+      const src = fs.readFileSync(path.join(ROOT, 'app', '(he)', p.slice(1), 'page.tsx'), 'utf8');
       s.check('metadata', `wired ${p}`, src.includes(`publicPageMetadata({ path: '${p}'`));
     }
   }
-  s.check('metadata', 'wired /', fs.readFileSync(path.join(ROOT, 'app/page.tsx'), 'utf8').includes("publicPageMetadata({ path: '/'"));
+  s.check('metadata', 'wired /', fs.readFileSync(path.join(ROOT, 'app/(he)/page.tsx'), 'utf8').includes("publicPageMetadata({ path: '/'"));
   s.check('metadata', 'title-template', (rootMetadata.title as { template?: string }).template === '%s | equify BY SBC');
   for (const d of ['wizard', 'results', 'report']) {
-    const src = fs.readFileSync(path.join(ROOT, 'app', d, 'layout.tsx'), 'utf8');
+    const src = fs.readFileSync(path.join(ROOT, 'app', '(he)', d, 'layout.tsx'), 'utf8');
     s.check('noindex', d, src.includes('NOINDEX_METADATA'));
   }
   const nr = NOINDEX_METADATA.robots as { index?: boolean; follow?: boolean };
