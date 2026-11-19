@@ -51,6 +51,10 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | `PULSE_TOKEN` (לא דגל, מפתח) | פרטים ב `/api/pulse`. בלעדיו רק `{"ok":true}` | 8 |
 | `UPAY` (וגם `NEXT_PUBLIC_UPAY` לכפתור באשף) | תשלום upay בתוך העמוד (`lib/payments/upay/`). לא משחרר דוח עד שיש מאמת עסקה מ upay. מיגרציה `20261118_upay_orders_and_invoices.sql` | 9 |
 | `GREEN_INVOICE` | חשבונית מס / קבלה בחשבונית ירוקה אחרי תשלום מאומת (`lib/invoices/green_invoice.ts`) | 9 |
+| `COPY_V2` | הטענות המתוקנות בעמוד הבית, באשף ובעמוד התוצאה, והטקסט בלי הסימנים האסורים (`lib/copy/`, `equify-data.ts`). גם ה JSON-LD | 10 |
+| `CONSENT_BANNER` | באנר עוגיות, "הגדרות עוגיות" בתחתית כל עמוד, אנליטיקס רק אחרי הסכמה, ושורת שקיפות בשלב 1 (`components/consent/`, `lib/consent/`) | 10 |
+
+דגלי האתר מסבב 10 ואילך (`COPY_V2`, `CONSENT_BANNER`, `SITE_V2`, `CONTENT_HUB`, `EN_SITE`) נקראים בשרת ב `lib/flags/site_flags.ts`, ו `app/layout.tsx` מעביר אותם לדפדפן (`SiteFlagsProvider`, `useSiteFlags`). אין גרסת `NEXT_PUBLIC`. נקראים בזמן הבנייה, ולכן הדלקה דורשת redeploy. כשכולם כבויים ה layout לא מרנדר provider, וה HTML זהה.
 
 SEO: `app/robots.ts`, `app/sitemap.ts`, `lib/seo/` (דומיין canonical קבוע equify.co.il, metadata, JSON-LD), `public/llms.txt`.
 כללי הכתיבה בדוח נבדקים ב `npm test` (סוויטה `round5`, `lib/report/report_text_rules.ts`).

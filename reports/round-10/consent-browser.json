@@ -1,0 +1,67 @@
+[
+ [
+  "banner shown on first visit",
+  true,
+  ""
+ ],
+ [
+  "three buttons",
+  true,
+  "[\"אישור הכל\",\"הגדרות\",\"רק הכרחיות\"]"
+ ],
+ [
+  "no analytics before consent",
+  true,
+  ""
+ ],
+ [
+  "banner at the bottom, not blocking",
+  true,
+  ""
+ ],
+ [
+  "analytics after accept, same visit",
+  true,
+  "http://localhost:3100/_vercel/insights/script.js http://localhost:3100/_vercel/speed-insights/script.js"
+ ],
+ [
+  "banner closed",
+  true,
+  ""
+ ],
+ [
+  "choice stored",
+  true,
+  "{\"v\":1,\"a\":true,\"m\":true,\"t\":\"2026-11-19T00:43:39.533Z\"}"
+ ],
+ [
+  "no banner after reload",
+  true,
+  ""
+ ],
+ [
+  "analytics after reload",
+  true,
+  ""
+ ],
+ [
+  "necessary only: no analytics, no banner",
+  true,
+  ""
+ ],
+ [
+  "\"הגדרות עוגיות\" link at the bottom of an inner page",
+  true,
+  ""
+ ],
+ [
+  "settings reopen with the saved choice",
+  true,
+  "[true,false,false]"
+ ],
+ [
+  "step 1 transparency line",
+  true,
+  "הפרטים שמוקלדים כאן נשמרים כבר בזמן ההקלדה, ומשמשים את SBC כדי ליצור איתך קשר בנוגע לדוח ולשירותים קשורים. מדיניות הפרטיות"
+ ]
+]
