@@ -1,6 +1,18 @@
 # אקוויפי: מצב בעמוד אחד
 
-עודכן: 19.11.2026, 04:27, אחרי סבב 13 (סוף לילה 2). סיכום הלילה: `reports/night2-summary.md`. פירוט: `reports/round-10.md` עד `reports/round-13.md`.
+עודכן: 19.11.2026, 12:31, אחרי סבב 14א. פירוט: `reports/round-14/report.md`.
+
+## סבב 14א: מוכנים לתשובות של upay ושל אורלי
+
+| נושא | מצב |
+|---|---|
+| ענף | `round-14` (מתוך round-13), לא נדחף. קומיטים: שלב 1 `de32c14`, שלב 2 `c08c262`, ותיעוד |
+| upay (שלב 1) | נעשה. שלושה מאמתים מוכנים, `UPAY_VERIFIER` בוחר (ברירת מחדל `none`, לא משחרר). קובץ אחד לתשובה של upay: `lib/payments/upay/upay_answer_config.ts`. מצב demo וסקריפט עסקת בדיקה. 349$ דרך upay. `/internal/payments`. ביום שעונים: `reports/round-14/upay-plug.md` |
+| אורלי (שלב 2) | נעשה. טבלת הענפים ב `data/credit/sectors.json` עם "לאישור אורלי" וכוכבית בדוח. `CREDIT_CFADS` ו `CREDIT_DISCOUNTING`. בדוגמה שלה: שנתי 7,393,000, חודשי 7,477,000. מסמך לשליחה: `reports/round-14/orly-questions.md` (וטבלה מצורפת). PDF של CAL-001 בארבעה צירופים ב `sbc_sync/calibration/round-14-credit/` |
+| עיצוב (שלב 3) | לא נעשה, בוטל לפי צור. העבודה החלקית ב git stash, לא בענף |
+| בדיקות | value-lock 385 מתוך 385, `npm test` בשתי המתודולוגיות ועם `CREDIT_CHAPTER=on`, build ירוק, אחרי שלבים 1 ו 2 |
+
+**הצעד הבא:** צור דוחף את `round-14`, שולח לאורלי את `orly-questions.md` ולבקשות ל upay את ההודעה ב `reports/round-9.md`. כשהתשובות מגיעות: קובץ הגדרות ומשתנה סביבה, לפי `upay-plug.md` ולפי `data/credit/sectors.json`. העיצוב בסבב נפרד.
 
 ## לילה 19.11: סבבים 10 עד 13
 
