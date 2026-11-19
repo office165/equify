@@ -22,7 +22,12 @@ export type VerifierAnswer =
   | { status: 'failed' | 'cancelled' }
   | { status: 'unknown'; reason: string };
 
-export type UpayVerifier = (order: UpayOrder) => Promise<VerifierAnswer>;
+/** Round 14: what the verifier may look at besides the order. The IPN is passed only from the IPN route. */
+export interface VerifyContext {
+  ipn?: { ip: string | null; query: Record<string, string>; body: string; fields: Record<string, string> };
+}
+
+export type UpayVerifier = (order: UpayOrder, ctx?: VerifyContext) => Promise<VerifierAnswer>;
 
 /** The status query is not in upay's document; until it is, nothing can be verified. */
 export const UNDOCUMENTED_STATUS_VERIFIER: UpayVerifier = async () => ({
@@ -37,7 +42,7 @@ export const releaseViaPaypalMechanism: ReleaseFn = async (order, cashierId) => 
     captureId: `upay:${cashierId}`,
     payerEmail: order.email,
     gatewayAmountIls: order.currency === 'ILS' ? order.amount : null,
-    gatewayStatus: 'upay_verified',
+    gatewayStatus: order.currency === 'USD' ? 'upay_verified_usd' : 'upay_verified',
   });
   return r.ok ? { ok: true, dispatchToken: r.dispatchToken } : { ok: false, reason: r.reason };
 };
@@ -57,12 +62,12 @@ export type SettleOutcome =
 
 export async function settleUpayOrder(
   orderId: string,
-  deps: { store: UpayOrderStore; verify?: UpayVerifier; release?: ReleaseFn; afterPaid?: AfterPaidFn },
+  deps: { store: UpayOrderStore; verify?: UpayVerifier; release?: ReleaseFn; afterPaid?: AfterPaidFn; ctx?: VerifyContext },
 ): Promise<{ outcome: SettleOutcome; detail?: string }> {
   const order = await deps.store.get(orderId);
   if (!order) return { outcome: 'no_order' };
   if (order.releasedAt) return { outcome: 'already_released' };
-  const answer = await (deps.verify ?? UNDOCUMENTED_STATUS_VERIFIER)(order);
+  const answer = await (deps.verify ?? UNDOCUMENTED_STATUS_VERIFIER)(order, deps.ctx);
   if (answer.status === 'unknown') return { outcome: 'not_verified', detail: answer.reason };
   if (answer.status !== 'paid') {
     await deps.store.transition(orderId, ['created', 'redirected'], { status: answer.status });

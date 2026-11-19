@@ -51,15 +51,18 @@ export interface InvoiceRequest {
 
 /** The 999 price on the site includes VAT, so income rows use vatType 1 (included). To confirm with the accountant. */
 export function buildInvoiceBody(r: InvoiceRequest): Record<string, unknown> {
+  // Round 14: a dollar payment (the English site) gets the document in English. pendingApproval: the two
+  // English descriptions are new customer text, on Liron's list.
+  const en = r.currency === 'USD';
   return {
     type: 320,
-    lang: 'he',
+    lang: en ? 'en' : 'he',
     currency: r.currency,
     vatType: 0,
-    description: 'דוח הערכת שווי',
+    description: en ? 'Valuation report' : 'דוח הערכת שווי',
     remarks: `equify ${r.orderKey}`,
     client: { name: r.customerName || r.customerEmail, emails: [r.customerEmail] },
-    income: [{ description: 'דוח הערכת שווי equify', quantity: 1, price: r.amount, currency: r.currency, vatType: 1 }],
+    income: [{ description: en ? 'equify valuation report' : 'דוח הערכת שווי equify', quantity: 1, price: r.amount, currency: r.currency, vatType: 1 }],
     payment: [
       {
         date: r.date,

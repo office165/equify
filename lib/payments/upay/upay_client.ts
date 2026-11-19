@@ -18,6 +18,8 @@
  * The card number never passes through our server: DEPOSITCREDITCARDTRANSFER is not used.
  */
 
+import { ON_DEMAND_AMOUNT_ILS } from '../paypal_claim_mint';
+
 export const UPAY_LIVE_URL = 'https://app.upay.co.il/API6/clientsecure/json.php';
 /** The document names https://demo.upay.co.il/ as the test server; the path is assumed to be the same (to verify). */
 export const UPAY_TEST_URL = 'https://demo.upay.co.il/API6/clientsecure/json.php';
@@ -26,6 +28,16 @@ export interface UpayConfig {
   email: string;
   key: string;
   live: boolean;
+  /** Round 14: UPAY_ENV=demo (demo.upay.co.il, livesystem 0). */
+  demo?: boolean;
+}
+
+export type UpayEnvMode = 'demo' | 'live' | 'legacy';
+
+/** Round 14: UPAY_ENV=demo or live. Unset keeps round 9's UPAY_LIVE ("1" live, anything else test). */
+export function upayEnvMode(env: NodeJS.ProcessEnv = process.env): UpayEnvMode {
+  const m = env.UPAY_ENV?.trim().toLowerCase();
+  return m === 'demo' || m === 'live' ? m : 'legacy';
 }
 
 export function isUpayEnabled(value = process.env.UPAY): boolean {
@@ -37,7 +49,19 @@ export function readUpayConfig(env: NodeJS.ProcessEnv = process.env): UpayConfig
   const email = env.UPAY_EMAIL?.trim();
   const key = env.UPAY_API_KEY?.trim();
   if (!email || !key) return null;
-  return { email, key, live: env.UPAY_LIVE?.trim() === '1' };
+  const mode = upayEnvMode(env);
+  const live = mode === 'live' ? true : mode === 'demo' ? false : env.UPAY_LIVE?.trim() === '1';
+  return { email, key, live, demo: mode === 'demo' };
+}
+
+/** Round 14: the dollar price of the English site (lib/i18n/site/en.ts). */
+export const UPAY_USD_AMOUNT = 349;
+export const UPAY_ILS_AMOUNT = ON_DEMAND_AMOUNT_ILS;
+
+/** The price of one report in this currency, or null when the currency is not sold (USD only with EN_SITE=on). */
+export function upayPrice(currency: 'ILS' | 'USD', env: NodeJS.ProcessEnv = process.env): { amount: number; currency: 'ILS' | 'USD' } | null {
+  if (currency === 'ILS') return { amount: UPAY_ILS_AMOUNT, currency };
+  return env.EN_SITE?.trim().toLowerCase() === 'on' ? { amount: UPAY_USD_AMOUNT, currency } : null;
 }
 
 export function upayUrl(cfg: UpayConfig): string {

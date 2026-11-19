@@ -1,0 +1,27 @@
+[
+ {
+  "header": {
+   "errorcode": "20001000",
+   "errormessage": ""
+  },
+  "result": {
+   "sessionid": "test-session"
+  }
+ },
+ {
+  "header": {
+   "errorcode": "30001400",
+   "errormessage": ""
+  },
+  "result": {
+   "transactions": [
+    {
+     "cashierid": "999999",
+     "status": "approved",
+     "totalamount": "999.00",
+     "currency": "ILS"
+    }
+   ]
+  }
+ }
+]

@@ -4,7 +4,8 @@
  */
 import { issueInvoiceOnce } from '../../invoices/green_invoice';
 import { defaultUpayOrderStore, type UpayOrderStore } from './upay_orders';
-import { UNDOCUMENTED_STATUS_VERIFIER, releaseViaPaypalMechanism, settleUpayOrder, type AfterPaidFn, type UpayVerifier } from './upay_settle';
+import { releaseViaPaypalMechanism, settleUpayOrder, type AfterPaidFn, type UpayVerifier } from './upay_settle';
+import { selectUpayVerifier } from './upay_verifiers';
 
 export const greenInvoiceAfterUpay: AfterPaidFn = async (order, paid) => {
   await issueInvoiceOnce({
@@ -23,7 +24,8 @@ export const greenInvoiceAfterUpay: AfterPaidFn = async (order, paid) => {
 export function settleWithDefaults(orderId: string, opts: { store?: UpayOrderStore; verify?: UpayVerifier } = {}) {
   return settleUpayOrder(orderId, {
     store: opts.store ?? defaultUpayOrderStore(),
-    verify: opts.verify ?? UNDOCUMENTED_STATUS_VERIFIER,
+    // Round 14: UPAY_VERIFIER picks the verifier; the default "none" releases nothing.
+    verify: opts.verify ?? selectUpayVerifier(),
     release: releaseViaPaypalMechanism,
     afterPaid: greenInvoiceAfterUpay,
   });

@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { jsonError } from '../../../../../../lib/api/http';
-import { ON_DEMAND_AMOUNT_ILS } from '../../../../../../lib/payments/paypal_claim_mint';
-import { createUpayPayment, isUpayEnabled, readUpayConfig } from '../../../../../../lib/payments/upay/upay_client';
+import { createUpayPayment, isUpayEnabled, readUpayConfig, upayPrice } from '../../../../../../lib/payments/upay/upay_client';
 import { defaultUpayOrderStore, newOrderId, signOrderId } from '../../../../../../lib/payments/upay/upay_orders';
 import { SITE_ORIGIN } from '../../../../../../lib/seo/site';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const body = z.object({ email: z.string().email().max(254) });
+const body = z.object({ email: z.string().email().max(254), currency: z.enum(['ILS', 'USD']).optional() });
 
 /** Round 9 (UPAY): creates an order and a upay payment page. 404 while the flag is off. */
 export async function POST(request: Request) {
@@ -18,14 +17,18 @@ export async function POST(request: Request) {
   if (!cfg) return jsonError('Payment is not configured.', 503, 'UPAY_NOT_CONFIGURED');
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return jsonError('Validation failed.', 400, 'VALIDATION_ERROR');
+  // Round 14: $349 through upay, the same flow as 999 ILS (currency USD in the request). Only while the
+  // English site is on, the one place that sells in dollars. PayPal stays as the fallback.
+  const price = upayPrice(parsed.data.currency ?? 'ILS', process.env);
+  if (!price) return jsonError('Currency not available.', 400, 'CURRENCY_NOT_AVAILABLE');
   const store = defaultUpayOrderStore();
   const id = newOrderId();
   const sig = signOrderId(id);
-  await store.create({ id, email: parsed.data.email.trim().toLowerCase(), amount: ON_DEMAND_AMOUNT_ILS, currency: 'ILS', status: 'created', createdAt: new Date().toISOString() });
+  await store.create({ id, email: parsed.data.email.trim().toLowerCase(), amount: price.amount, currency: price.currency, status: 'created', createdAt: new Date().toISOString() });
   const res = await createUpayPayment(cfg, {
     orderId: id,
-    amount: ON_DEMAND_AMOUNT_ILS,
-    currency: 'ILS',
+    amount: price.amount,
+    currency: price.currency,
     returnUrl: `${SITE_ORIGIN}/payment/upay/return?order=${id}&sig=${sig}`,
   });
   if (!res.ok) {

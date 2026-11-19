@@ -373,7 +373,7 @@ export function Step4Goal({
                     : 'Email confirmed. Complete secure checkout. You will reach the report after payment.'}
                 </p>
                 <PayPalHostedButton hostedButtonId={hostedButtonId} currency={checkoutCurrency} />
-                {isUpayUiEnabled() ? <UpayCheckout email={checkoutEmail} /> : null}
+                {isUpayUiEnabled() ? <UpayCheckout email={checkoutEmail} currency={checkoutCurrency} /> : null}
               </>
             )}
           </div>

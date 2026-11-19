@@ -1,0 +1,18 @@
+[
+ {
+  "header": {
+   "errorcode": "20001000",
+   "errormessage": ""
+  },
+  "result": {
+   "sessionid": "test-session"
+  }
+ },
+ {
+  "header": {
+   "errorcode": "30001401",
+   "errormessage": "transaction not found"
+  },
+  "result": {}
+ }
+]
