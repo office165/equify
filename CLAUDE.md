@@ -15,7 +15,7 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 
 | נושא | מיקום |
 |---|---|
-| אשף | `app/wizard/page.tsx`, `lib/wizard/`, `components/` |
+| אשף | `app/(he)/wizard/page.tsx`, `lib/wizard/`, `components/` |
 | קריאה לשרת מהלקוח | `/api_client.ts` (חי, 83 מייבאים, למרות שהוא בשורש) |
 | חישוב בשרת | `POST /api/v1/valuation/calculate` ← `lib/api/handlers/valuation_generate.ts` ← `lib/api/valuation_execution.ts` ← `lib/valuation/in_memory_engine.ts` (WACC) ← `lib/valuation/engine.ts` |
 | ליבת המנוע (לקוח ותוצאות) | `lib/valuation/valuation_engine.ts` (דרך `lib/valuation.ts` ו `valuationEngine.ts`), `compute_final_enterprise_value.ts`, `canonical_valuation.ts`, `equity_bridge.ts` (DLOM) |
@@ -24,7 +24,7 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | EBITDA | `blended_ebitda.ts`, `normalized_ebitda.ts`, `multiples.ts`, `adaptive_calibration.ts` |
 | שיטת נכסים | אין שיטה אמיתית. רק תווית nav ב `sub_sector_default_multiple.ts` |
 | נתוני שוק | `lib/market-data/` (Damodaran, Yahoo, FMP), קרון יומי `/api/cron/refresh-market-data` |
-| דוח PDF (לקוח) | `lib/pdf-template.ts` + `lib/pdf-template/equify-pdf-pages.ts`, דרך `/api/generate-pdf` ו `/api/generate-html` |
+| דוח PDF (לקוח) | `lib/pdf-template.ts` + `lib/pdf-template/equify-pdf-pages.ts`, דרך `/api/generate-pdf` ו `/api/generate-html`. באנגלית: עמודים 1, 2, 4, 5 ו 6 (`tr(data)` בקובץ) |
 | דוח PDF (נתיב v1) | `lib/pdf/valuation_report_pdf.ts` + `lib/pdf/buildPdfHtml.ts` (בונה HTML שני, כפילות) |
 | טקסט הדוח | תבניות קבועות בלבד: `lib/i18n/equify_report_copy.ts`, `lib/pdf-template/exec-summary-html.ts`, `lib/pdf/executive_bullets.ts` |
 | שליחת דוח במייל | `/api/reports/deliver` ← `lib/reports/deliver_equify_report.ts` ← `send_customer_report.ts`, וגם העלאה למאנדיי |
@@ -33,7 +33,7 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | לידים | `app/api/leads/route.ts` ← `lib/crm/` (Monday, בורד 18393484200), תור ניסיון חוזר וקרון `/api/cron/replay-pending-leads` |
 | בריאות | `app/api/leads/health/route.ts` |
 | אירועי מוצר | `lib/analytics/track_event.ts` לטבלת `events` בסופאבייס (אין GA ואין Vercel Analytics) |
-| משפטי | `lib/legal/` (פרטיות, תנאים, הצהרת נגישות), עמודים ב `app/privacy`, `app/terms`, `app/accessibility` |
+| משפטי | `lib/legal/` (פרטיות, תנאים, הצהרת נגישות), עמודים ב `app/(he)/privacy`, `app/(he)/terms`, `app/(he)/accessibility` |
 | מטא ו SEO | `app/site-metadata.ts`, `app/layout.tsx`, אימות Search Console ב `public/google14add48e078b922c.html` |
 | מיגרציות | `supabase/migrations/` (הנוכחי). `migrations/` ו `schema.sql` ישנים |
 
@@ -55,8 +55,18 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | `CONSENT_BANNER` | באנר עוגיות, "הגדרות עוגיות" בתחתית כל עמוד, אנליטיקס רק אחרי הסכמה, ושורת שקיפות בשלב 1 (`components/consent/`, `lib/consent/`) | 10 |
 | `SITE_V2` | עמוד הבית בשפת העיצוב של sbc-site בצבעי אקוויפי, מתג יום ולילה, והאשף ועמוד התוצאה באותם טוקנים (`components/site-v2/`, `public/site-v2/`). ה CSS מקושר רק כשהדגל דלוק | 11 |
 | `CONTENT_HUB` | `/guides`, `/articles`, עמוד לכל פריט, `/feed`, וכתבות ב sitemap וב llms.txt (`lib/content/`, `components/content-hub/`). מקור: טבלה `equify_posts` (מיגרציה `20261119_equify_posts.sql`) עם גיבוי ב `content/posts.json`. רענון: `CONTENT_REVALIDATE_SECRET`. IndexNow: `INDEXNOW_ENABLED` | 12 |
+| `EN_SITE` | האתר באנגלית תחת `/en` (בית, אשף, תוצאה, תשתית מרכז התוכן), hreflang, sitemap ו llms.txt. מחיר 349$: כפתור PayPal דולרי ב `NEXT_PUBLIC_PAYPAL_HOSTED_BUTTON_ID_FULL_USD`, ו webhook עם `PAYPAL_USD` (מינימום 349) | 13 |
 
-דגלי האתר מסבב 10 ואילך (`COPY_V2`, `CONSENT_BANNER`, `SITE_V2`, `CONTENT_HUB`, `EN_SITE`) נקראים בשרת ב `lib/flags/site_flags.ts`, ו `app/layout.tsx` מעביר אותם לדפדפן (`SiteFlagsProvider`, `useSiteFlags`). אין גרסת `NEXT_PUBLIC`. נקראים בזמן הבנייה, ולכן הדלקה דורשת redeploy. כשכולם כבויים ה layout לא מרנדר provider, וה HTML זהה.
+דגלי האתר מסבב 10 ואילך (`COPY_V2`, `CONSENT_BANNER`, `SITE_V2`, `CONTENT_HUB`, `EN_SITE`) נקראים בשרת ב `lib/flags/site_flags.ts`, ו `app/(he)/layout.tsx` (ו `app/(intl)/[lang]/layout.tsx`) מעביר אותם לדפדפן (`SiteFlagsProvider`, `useSiteFlags`). אין גרסת `NEXT_PUBLIC`. נקראים בזמן הבנייה, ולכן הדלקה דורשת redeploy. כשכולם כבויים ה layout לא מרנדר provider, וה HTML זהה.
+
+## שפות (מסבב 13)
+
+העמודים העבריים ב `app/(he)/` (בלי קידומת, RTL). שאר השפות ב `app/(intl)/[lang]/` (קידומת `/en`, `<html lang dir>` משלהן), כמו ב sbc-site. רשימת השפות: `lib/i18n/site/index.ts`. המילים של האתר: קובץ אחד לכל שפה, `lib/i18n/site/<code>.ts`.
+
+**איך מוסיפים שפה (למשל צרפתית):**
+1. להעתיק את `lib/i18n/site/en.ts` ל `lib/i18n/site/fr.ts`, ולתרגם. `def`: הקוד, השם, הכיוון, hreflang, locale, `appLocale` (`'en'` עד שלאשף ולדוח יהיו טבלאות בצרפתית) והמחיר.
+2. שורה אחת ב `lib/i18n/site/index.ts`: `import fr from './fr'` והוספה ל `SITE_LANGUAGES`.
+3. זהו. הנתיב `/fr`, hreflang וה sitemap נבנים מהרשימה (מאחורי `EN_SITE`). `npm test` (סוויטה `round13`) בודק שלקובץ החדש יש את כל המפתחות. כתבות בשפה: שורות עם `lang = 'fr'` ב `equify_posts`.
 
 SEO: `app/robots.ts`, `app/sitemap.ts`, `lib/seo/` (דומיין canonical קבוע equify.co.il, metadata, JSON-LD), `public/llms.txt`.
 כללי הכתיבה בדוח נבדקים ב `npm test` (סוויטה `round5`, `lib/report/report_text_rules.ts`).

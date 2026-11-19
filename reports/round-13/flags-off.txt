@@ -1,0 +1,12 @@
+HTML /: DIFFERENT first difference at 863: before "next/static/X" data-precedence="next"/><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#020504"/>" after "next/static/X" data-precedence="next"/><link rel="stylesheet" href="/_next/static/X" data-precedence="next"/><meta name="
+HTML /wizard: DIFFERENT first difference at 863: before "next/static/X" data-precedence="next"/><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#020504"/>" after "next/static/X" data-precedence="next"/><link rel="stylesheet" href="/_next/static/X" data-precedence="next"/><meta name="
+HTML /privacy: identical markup and identical CSS rules (the same rules split into one more stylesheet file)
+HTML /terms: identical markup and identical CSS rules (the same rules split into one more stylesheet file)
+HTML /accessibility: identical markup and identical CSS rules (the same rules split into one more stylesheet file)
+HTML /results: DIFFERENT first difference at 802: before "next/static/X" data-precedence="next"/><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#020504"/>" after "next/static/X" data-precedence="next"/><link rel="stylesheet" href="/_next/static/X" data-precedence="next"/><meta name="
+pixels home-desktop: identical (1440x900)
+pixels home-mobile: identical (390x844)
+pixels wizard-desktop: identical (1440x900)
+pixels wizard-mobile: identical (390x844)
+pixels privacy-desktop: identical (1440x900)
+pixels privacy-mobile: identical (390x844)
