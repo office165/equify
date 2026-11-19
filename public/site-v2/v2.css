@@ -367,3 +367,5 @@ html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-teal-100"]
 html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="bg-slate-9"], html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="bg-black"] { background: var(--bg-surface) !important }
 html.eq-v2 .equify-scroll-report .logo .v2-lg-word { font-size: 24px }
 
+/* the scenario value is coloured inline for the night ground; by day it takes the text accent */
+html.eq-v2[data-eq-theme="light"] .equify-scroll-report .sc-val { color: var(--teal) !important }

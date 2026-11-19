@@ -53,6 +53,7 @@ Resend למיילים, PayPal NCP לתשלום, Monday ללידים, Anthropic A
 | `GREEN_INVOICE` | חשבונית מס / קבלה בחשבונית ירוקה אחרי תשלום מאומת (`lib/invoices/green_invoice.ts`) | 9 |
 | `COPY_V2` | הטענות המתוקנות בעמוד הבית, באשף ובעמוד התוצאה, והטקסט בלי הסימנים האסורים (`lib/copy/`, `equify-data.ts`). גם ה JSON-LD | 10 |
 | `CONSENT_BANNER` | באנר עוגיות, "הגדרות עוגיות" בתחתית כל עמוד, אנליטיקס רק אחרי הסכמה, ושורת שקיפות בשלב 1 (`components/consent/`, `lib/consent/`) | 10 |
+| `SITE_V2` | עמוד הבית בשפת העיצוב של sbc-site בצבעי אקוויפי, מתג יום ולילה, והאשף ועמוד התוצאה באותם טוקנים (`components/site-v2/`, `public/site-v2/`). ה CSS מקושר רק כשהדגל דלוק | 11 |
 
 דגלי האתר מסבב 10 ואילך (`COPY_V2`, `CONSENT_BANNER`, `SITE_V2`, `CONTENT_HUB`, `EN_SITE`) נקראים בשרת ב `lib/flags/site_flags.ts`, ו `app/layout.tsx` מעביר אותם לדפדפן (`SiteFlagsProvider`, `useSiteFlags`). אין גרסת `NEXT_PUBLIC`. נקראים בזמן הבנייה, ולכן הדלקה דורשת redeploy. כשכולם כבויים ה layout לא מרנדר provider, וה HTML זהה.
 
@@ -81,6 +82,7 @@ SEO: `app/robots.ts`, `app/sitemap.ts`, `lib/seo/` (דומיין canonical קב�
 דורשות כרום: `test-maximal-pdf`, `test-sample-report-pdf`, `test-legal-close-puppeteer`.
 pre-commit (`.githooks/pre-commit`): `npm test` ואז `scripts/guard-no-manual-currency-sign.sh`.
 build: `npm run build` (tsc ואז next build). next build צריך גישה ל Google Fonts.
+**שרת או בנייה מקומיים רק דרך `bash scripts/round-11/safe-env.sh <פקודה>`**: `next start` טוען את `.env` ו `.env.local`, ושם יש מפתחות אמיתיים (Monday, Supabase). העטיפה מרוקנת אותם.
 
 ## הכללים
 
