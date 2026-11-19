@@ -14,7 +14,11 @@ async function main(): Promise<void> {
   let total = 0;
   try {
     const seed = process.env.SEED_STATE ? JSON.parse(fs.readFileSync(process.env.SEED_STATE, 'utf8')).state : null;
-    for (const [name, url] of [['home', '/'], ['wizard', '/wizard'], ...(seed ? [['results', '/results']] : [])] as const) {
+    // AXE_PAGES="name:/path,name2:/path2" checks other pages instead (round 12: the hub).
+    const pages: Array<readonly [string, string]> = process.env.AXE_PAGES
+      ? process.env.AXE_PAGES.split(',').map((x) => x.split(':') as [string, string])
+      : [['home', '/'], ['wizard', '/wizard'], ...(seed ? ([['results', '/results']] as const) : [])];
+    for (const [name, url] of pages) {
       for (const theme of ['dark', 'light'] as const) {
         for (const [vp, w, h] of [['desktop', 1366, 900], ['mobile', 390, 844]] as const) {
           const ctx = await browser.createBrowserContext();

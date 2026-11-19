@@ -16,7 +16,7 @@
 @font-face { font-family: 'Heebo'; font-style: normal; font-weight: 800; font-display: swap; src: url('/site-v2/fonts/heebo-latin-800-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212 }
 
 /* ---------- tokens: the same names as sbc-site (app/vault.css), equify's values (black, turquoise, green) ---------- */
-html.eq-v2, html.eq-v2[data-eq-theme="dark"] {
+html.eq-v2, html.eq-v2[data-eq-theme="dark"], .eq-hub {
   --bg-primary: #050F0D; --ink: #050F0D; --bg-deep: #020504;
   --bg-surface: #091C18; --bottle: #091C18; --bottle-2: #163530; --bg-card: #091C18;
   --text-primary: #E8F2F0; --bone: #E8F2F0;
@@ -32,7 +32,7 @@ html.eq-v2, html.eq-v2[data-eq-theme="dark"] {
   --fs-h1: clamp(32px, 3.9vw, 54px); --fs-h2: clamp(25px, 2.7vw, 38px); --fs-h3: clamp(18px, 1.35vw, 19.5px); --fs-body: clamp(16.5px, 1.2vw, 18px);
   color-scheme: dark;
 }
-html.eq-v2[data-eq-theme="light"] {
+html.eq-v2[data-eq-theme="light"], html[data-eq-theme="light"] .eq-hub {
   --bg-primary: #F6FAF9; --ink: #F6FAF9; --bg-deep: #EAF2F0;
   --bg-surface: #FFFFFF; --bottle: #FFFFFF; --bottle-2: #DDEBE8; --bg-card: #FFFFFF;
   --text-primary: #08201C; --bone: #08201C;
@@ -46,7 +46,7 @@ html.eq-v2[data-eq-theme="light"] {
 }
 
 /* The font tokens read the next/font variables, which are set on <body> (app/layout.tsx), so they are declared there. */
-html.eq-v2 body {
+html.eq-v2 body, .eq-hub {
   --font-body: var(--font-equify), 'Assistant', sans-serif;
   --font-display: 'Heebo', var(--font-equify), 'Assistant', sans-serif;
   --font-data: var(--font-mono), 'IBM Plex Mono', monospace;
@@ -369,3 +369,47 @@ html.eq-v2 .equify-scroll-report .logo .v2-lg-word { font-size: 24px }
 
 /* the scenario value is coloured inline for the night ground; by day it takes the text accent */
 html.eq-v2[data-eq-theme="light"] .equify-scroll-report .sc-val { color: var(--teal) !important }
+
+/* ---------- round 12 (CONTENT_HUB): the guides and the articles, after sbc-site's article and index pages (.page, .crumbs, .reader-art, .related) ---------- */
+.eq-hub { min-height: 100vh; font-family: var(--font-body) }
+html.eq-v2 .theme-toggle, .eq-hub .theme-toggle { color: var(--bone) }
+.hub-page { padding: clamp(110px, 14vw, 150px) 0 clamp(70px, 9vw, 110px) }
+.hub-wrap { max-width: 1120px }
+.hub-article { max-width: 780px }
+.hub-crumbs { display: flex; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--bone-dim); margin-bottom: 22px }
+.hub-crumbs a { color: var(--teal); text-decoration: underline; text-underline-offset: 3px }
+.hub-title { font-weight: 800; font-size: var(--fs-h1); line-height: 1.15; margin-bottom: 16px }
+.v2 .hub-lede { color: var(--bone-dim); font-size: clamp(17px, 1.4vw, 19px); line-height: 1.8; max-width: 62ch; margin-bottom: 36px }
+.hub-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px }
+.hub-list[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+@media (max-width: 960px) { .hub-list, .hub-list[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 620px) { .hub-list, .hub-list[data-cols="2"] { grid-template-columns: 1fr } }
+.hub-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-surface); padding: clamp(20px, 2.2vw, 28px); display: flex; flex-direction: column; gap: 10px; transition: border-color .3s ease }
+.hub-card:hover { border-color: var(--line-strong) }
+.hub-card h2, .hub-card h3 { font-size: var(--fs-h3); font-weight: 700; line-height: 1.4 }
+.hub-card h2 a, .hub-card h3 a { color: var(--bone) }
+.hub-card h2 a:hover, .hub-card h3 a:hover { color: var(--teal) }
+.v2 .hub-card p { color: var(--bone-dim); font-size: 15.5px; line-height: 1.7 }
+.hub-meta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; font-size: 13.5px; color: var(--bone-dim) }
+.hub-desk { color: var(--teal); border: 1px solid var(--line-strong); border-radius: 100px; padding: 2px 10px; font-size: 12.5px; font-weight: 600 }
+.v2 .hub-empty { color: var(--bone-dim) }
+.hub-cta { margin-top: 44px; padding-top: 26px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 14px 20px; align-items: center }
+.v2 .hub-cta p { color: var(--bone-dim); font-size: 14px }
+.hub-byline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 0; color: var(--bone-dim); font-size: 14.5px; margin-bottom: 26px }
+.hub-sep { width: 1px; height: 14px; background: var(--line-strong); margin-inline: 12px }
+.v2 .hub-summary { font-size: clamp(17px, 1.4vw, 19px); line-height: 1.8; padding-inline-start: 20px; border-inline-start: 2px solid var(--teal); margin-bottom: 30px }
+.hub-body { font-size: var(--fs-body); line-height: 1.95; color: var(--bone) }
+.v2 .hub-body p { margin: 0 0 18px; color: var(--bone) }
+.hub-body h2 { font-family: var(--font-display); font-size: var(--fs-h2); font-weight: 700; line-height: 1.25; margin: 40px 0 14px }
+.hub-body h3 { font-family: var(--font-display); font-size: var(--fs-h3); font-weight: 700; margin: 28px 0 10px }
+.hub-body ul, .hub-body ol { margin: 0 0 18px; padding-inline-start: 22px }
+.hub-body li { margin-bottom: 8px }
+.hub-body a { color: var(--teal); text-decoration: underline; text-underline-offset: 3px; font-weight: 600 }
+.hub-body strong { color: var(--bone); font-weight: 700 }
+.hub-body .eq-post-cta { margin-top: 36px; border: 1px solid var(--line); border-inline-start: 3px solid var(--teal); border-radius: 14px; padding: 20px 22px; background: var(--bg-surface) }
+.hub-body .eq-post-cta h3 { margin-top: 0 }
+.hub-body .eq-post-cta p:last-child { margin-bottom: 0 }
+.hub-faq { margin-top: 40px; display: grid; gap: 12px }
+.hub-faq h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 6px }
+.hub-related { max-width: 1120px; margin-top: 70px }
+.hub-related h2 { font-size: var(--fs-h2); font-weight: 700; margin-bottom: 24px }

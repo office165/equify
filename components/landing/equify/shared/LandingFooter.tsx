@@ -1,6 +1,7 @@
 'use client';
 
 import { useSiteFlags } from '../../../shared/SiteFlagsContext';
+import { HUB_NAV } from '../../../../lib/content/hub_nav';
 import Link from 'next/link';
 import { AccessibilityStatementLink } from '../../../AccessibilityStatementDialog';
 import { LEGAL_ROUTES } from '../../../../lib/legal/routes';
@@ -8,7 +9,7 @@ import { FooterFeedback } from './FooterFeedback';
 
 /** פוטר דף הנחיתה */
 export function LandingFooter() {
-  const { consentBanner } = useSiteFlags();
+  const { consentBanner, contentHub } = useSiteFlags();
   return (
     <footer>
       <div className="wrap">
@@ -19,6 +20,7 @@ export function LandingFooter() {
           </Link>
           <div className="f-links">
             <Link href="/wizard">התחל הערכה</Link>
+            {contentHub ? HUB_NAV.map(([href, label]) => <Link key={href} href={href}>{label}</Link>) : null}
             <Link href={LEGAL_ROUTES.terms}>תנאי שימוש</Link>
             <Link href={LEGAL_ROUTES.privacy}>פרטיות</Link>
             <AccessibilityStatementLink />

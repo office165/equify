@@ -2,16 +2,14 @@
 
 import Link from 'next/link';
 import { INDUSTRY_CONFIG } from '../../lib/constants/industry_config';
-import { LEGAL_ROUTES } from '../../lib/legal/routes';
-import { AccessibilityStatementLink } from '../AccessibilityStatementDialog';
 import { useSiteFlags } from '../shared/SiteFlagsContext';
 import { BidiNumberUnit, DurationValue, durationUnit } from '../landing/shared/BidiNumberUnit';
 import { MicroCalculator } from '../landing/v2/MicroCalculator';
 import { VALUATION_METHODOLOGY_COPY } from '../landing/equify/equify-data';
 import { useLandingCopy } from '../landing/equify/use_landing_copy';
-import { FooterFeedback } from '../landing/equify/shared/FooterFeedback';
 import { NavV2 } from './NavV2';
-import { V2Logo } from './V2Logo';
+import { FooterV2 } from './FooterV2';
+import { HUB_NAV } from '../../lib/content/hub_nav';
 
 /**
  * Round 11 (SITE_V2): the home page in the structure of the SBC site (bands with straight edges, section heads with a hairline,
@@ -39,7 +37,9 @@ const SUB_SECTORS = countUniqueSubSectorIds();
 const SPARK = 'M0 70 L40 64 L80 66 L120 58 L160 55 L200 50 L240 52 L280 41 L320 37 L360 30 L400 22';
 
 export function HomeV2() {
-  const { copyV2, consentBanner } = useSiteFlags();
+  const { copyV2, consentBanner, contentHub } = useSiteFlags();
+  // Round 12: the guides and articles are linked only when CONTENT_HUB is on.
+  const navItems = contentHub ? [...NAV_ITEMS, ...HUB_NAV] : NAV_ITEMS;
   const { marquee, models, faq, steps, pricing } = useLandingCopy();
 
   return (
@@ -47,7 +47,7 @@ export function HomeV2() {
       <a className="v2-skip" href="#main">
         דלג לתוכן הראשי
       </a>
-      <NavV2 items={NAV_ITEMS} cta="התחל הערכה" />
+      <NavV2 items={navItems} cta="התחל הערכה" />
 
       <main id="main">
         {/* 1. hero */}
@@ -298,42 +298,7 @@ export function HomeV2() {
         </section>
       </main>
 
-      <footer className="v2-foot">
-        <div className="v2-foot-grid">
-          <div className="v2-foot-brand">
-            <Link href="/" className="v2-logo">
-              <V2Logo suffix=", דף הבית" />
-            </Link>
-          </div>
-          <div>
-            {NAV_ITEMS.map(([href, label]) => (
-              <a key={href} href={href}>
-                {label}
-              </a>
-            ))}
-          </div>
-          <div>
-            <Link href="/wizard">התחל הערכה</Link>
-            <Link href={LEGAL_ROUTES.terms}>תנאי שימוש</Link>
-            <Link href={LEGAL_ROUTES.privacy}>פרטיות</Link>
-            <AccessibilityStatementLink />
-            {consentBanner ? (
-              <button type="button" className="eq-cc-foot-btn" data-cookie-settings="">
-                הגדרות עוגיות
-              </button>
-            ) : null}
-          </div>
-          <div>
-            <a href="mailto:hello@equify.co.il">hello@equify.co.il</a>
-          </div>
-        </div>
-        <div className="ff">
-          <FooterFeedback />
-        </div>
-        <div className="v2-foot-legal">
-          <span>© {new Date().getFullYear()} equify BY SBC</span>
-        </div>
-      </footer>
+      <FooterV2 items={navItems} consentBanner={consentBanner} />
     </div>
   );
 }

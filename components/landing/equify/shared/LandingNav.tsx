@@ -1,5 +1,7 @@
 'use client';
 
+import { useSiteFlags } from '../../../shared/SiteFlagsContext';
+import { HUB_NAV } from '../../../../lib/content/hub_nav';
 import Link from 'next/link';
 import type { RefObject } from 'react';
 import { EquifyLogo } from '../../../brand/EquifyLogo';
@@ -23,6 +25,9 @@ const NAV_LINKS = [
 /** ניווט קבוע + תפריט מובייל */
 export function LandingNav({ navRef, menuOpen, onOpenMenu, onCloseMenu }: LandingNavProps) {
   const mobile = useIsMobile();
+  // Round 12: the guides and articles are linked only when CONTENT_HUB is on.
+  const { contentHub } = useSiteFlags();
+  const links = contentHub ? [...NAV_LINKS, ...HUB_NAV] : NAV_LINKS;
 
   return (
     <>
@@ -32,7 +37,7 @@ export function LandingNav({ navRef, menuOpen, onOpenMenu, onCloseMenu }: Landin
             <EquifyLogo variant="dark-bg" compact={mobile} decorative />
           </Link>
           <nav className="nav-links" aria-label="ניווט ראשי">
-            {NAV_LINKS.map(([href, label]) => (
+            {links.map(([href, label]) => (
               <a key={href} href={href}>
                 {label}
               </a>
@@ -59,7 +64,7 @@ export function LandingNav({ navRef, menuOpen, onOpenMenu, onCloseMenu }: Landin
         <button type="button" className="close" aria-label="סגור" onClick={onCloseMenu}>
           ✕
         </button>
-        {NAV_LINKS.map(([href, label]) => (
+        {links.map(([href, label]) => (
           <a key={href} href={href} onClick={onCloseMenu}>
             {label}
           </a>

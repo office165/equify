@@ -61,7 +61,7 @@ export async function run(): Promise<SuiteResult> {
   s.check('robots', 'local-is-production-rules', isIndexableDeployment(undefined) && !isIndexableDeployment('development'));
 
   // sitemap.xml
-  const sm = sitemap();
+  const sm = await sitemap(); // async since round 12 (the hub posts)
   s.check('sitemap', 'count', sm.length === PUBLIC_PAGES.length, String(sm.length));
   for (const e of sm) {
     s.check('sitemap', e.url, e.url.startsWith('https://equify.co.il/') && !NON_PUBLIC_PATHS.some((p) => new URL(e.url).pathname.startsWith(p.replace(/\/$/, ''))));

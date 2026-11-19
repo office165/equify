@@ -103,8 +103,8 @@ export async function run(): Promise<SuiteResult> {
 
   // tokens and contrast
   const css = fs.readFileSync(path.join(ROOT, 'public', 'site-v2', 'v2.css'), 'utf8');
-  const dark = tokens(css, 'html.eq-v2, html.eq-v2[data-eq-theme="dark"]');
-  const light = { ...dark, ...tokens(css, 'html.eq-v2[data-eq-theme="light"] {') };
+  const dark = tokens(css, 'html.eq-v2, html.eq-v2[data-eq-theme="dark"], .eq-hub');
+  const light = { ...dark, ...tokens(css, 'html.eq-v2[data-eq-theme="light"], html[data-eq-theme="light"] .eq-hub {') };
   const names = ['--bg-primary', '--bg-surface', '--bone', '--bone-dim', '--teal', '--gold', '--line', '--line-strong', '--on-accent', '--bg-deep'];
   s.check('tokens', 'both-themes', names.every((n) => dark[n] && light[n]), JSON.stringify(names.filter((n) => !dark[n] || !light[n])));
   s.check('tokens', 'equify-colours', dark['--teal'] === '#00C2B8' && dark['--gold'] === '#00F5A0' && dark['--bg-primary'] === '#050F0D' && dark['--bg-deep'] === '#020504');
