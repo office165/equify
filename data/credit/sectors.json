@@ -1,0 +1,394 @@
+{
+ "_readme": "סבב 14: טבלת הענפים של פרק כושר האשראי. קובץ הנתונים היחיד: ממלאים כאן את התשובה של אורלי, בלי קוד. לכל ערך: value (הערך), source (המקור), pendingOrly (true = לאישור אורלי). ערך עם pendingOrly true מסומן בדוח \"הערכת SBC\". כשאורלי מאשרת ערך: משנים את value אם צריך, את source ל \"אושר על ידי אורלי, <תאריך>\", ואת pendingOrly ל false. ענף ריק בתת ענף נלקח מהענף. הבדיקה: npm test (סוויטות credit-capacity, round4 ו round14-credit).",
+ "sources": {
+  "standard": "תקן SBC לבקשות אשראי, 18.10.2026",
+  "estimate": "הערכת SBC, לאישור"
+ },
+ "sectors": {
+  "hospitality": {
+   "nameHe": "מלונאות ותיירות",
+   "volatility": "volatile",
+   "termYears": {
+    "value": 10,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     1.5,
+     3
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.6,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "saas": {
+   "nameHe": "תוכנה (SaaS)",
+   "volatility": "volatile",
+   "termYears": {
+    "value": 5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     2,
+     4
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "fintech": {
+   "nameHe": "פינטק",
+   "volatility": "volatile",
+   "termYears": {
+    "value": 5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     2,
+     4
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "cyber": {
+   "nameHe": "סייבר",
+   "volatility": "volatile",
+   "termYears": {
+    "value": 5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     2,
+     4
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "health": {
+   "nameHe": "בריאות",
+   "volatility": "stable",
+   "termYears": {
+    "value": 7,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     1,
+     2.5
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.25,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.65,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "services": {
+   "nameHe": "שירותים",
+   "volatility": "stable",
+   "termYears": {
+    "value": 5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     1.5,
+     3
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.25,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.6,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "industry": {
+   "nameHe": "תעשייה וייצור",
+   "volatility": "stable",
+   "termYears": {
+    "value": 7,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     1,
+     2.5
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.25,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.7,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "retail_unified": {
+   "nameHe": "קמעונאות",
+   "volatility": "volatile",
+   "termYears": {
+    "value": 5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     1.5,
+     3
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.55,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "food_service": {
+   "nameHe": "מזון ומסעדות",
+   "volatility": "volatile",
+   "termYears": {
+    "value": 5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     2,
+     3.5
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "energy": {
+   "nameHe": "אנרגיה",
+   "volatility": "stable",
+   "termYears": {
+    "value": 10,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     0.5,
+     2
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.25,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.75,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "defense_aerospace": {
+   "nameHe": "ביטחון ותעופה",
+   "volatility": "stable",
+   "termYears": {
+    "value": 7,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     1,
+     2.5
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.25,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.65,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "real_estate": {
+   "nameHe": "נדל\"ן",
+   "volatility": "stable",
+   "termYears": {
+    "value": 15,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     0.5,
+     2
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.25,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.7,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  },
+  "other": {
+   "nameHe": "אחר",
+   "volatility": "volatile",
+   "termYears": {
+    "value": 5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     1.5,
+     3
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.5,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.55,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   }
+  }
+ },
+ "subSectors": {
+  "energy/solar": {
+   "nameHe": "אנרגיה סולארית",
+   "volatility": "stable",
+   "termYears": {
+    "value": 25,
+    "source": "תקן SBC לבקשות אשראי, 18.10.2026",
+    "pendingOrly": false
+   },
+   "spreadOverPrimePp": {
+    "value": [
+     0.5,
+     2
+    ],
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "minDscr": {
+    "value": 1.25,
+    "source": "הערכת SBC, לאישור",
+    "pendingOrly": true
+   },
+   "ceilingPctOfCapacity": {
+    "value": 0.8,
+    "source": "תקן SBC לבקשות אשראי, 18.10.2026",
+    "pendingOrly": false
+   },
+   "setupCostFinancingPct": {
+    "value": 0.8,
+    "source": "תקן SBC לבקשות אשראי, 18.10.2026",
+    "pendingOrly": false
+   }
+  }
+ }
+}

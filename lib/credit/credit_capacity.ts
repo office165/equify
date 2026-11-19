@@ -17,7 +17,13 @@
  *   Net debt two ways: owner loans as debt, and without them (assuming a subordination letter).
  *   Blocker: a floating lien or a lien on all assets in favor of another bank.
  *   Rate range: prime + the sector spread range. A range, never a promise.
+ *
+ * Round 14, two options waiting for Orly (defaults are round 4's, so nothing changes unless set):
+ *   cfadsDefinition: "tax_and_capex" (EBITDA - tax - maintenance CAPEX) or "capex_only" (no tax).
+ *   discounting: "annual" (the standard's example) or "monthly" (a twelfth of the CFADS each month
+ *     at a twelfth of the rate). In the example: 7,393,000 annual, 7,477,000 monthly.
  */
+import type { CfadsDefinition, CreditDiscounting } from './flag';
 import type { SectorCreditTerms } from './sector_credit_table';
 
 export type LienHolder = 'bank' | 'non_bank' | 'other';
@@ -60,6 +66,10 @@ export interface CreditCapacityInput {
   termYears?: number;
   /** The first stage is rounded down to this step. Default 10,000. */
   roundTo?: number;
+  /** Round 14: default "tax_and_capex". */
+  cfadsDefinition?: CfadsDefinition;
+  /** Round 14: default "annual". */
+  discounting?: CreditDiscounting;
 }
 
 export interface CfadsParts {
@@ -122,6 +132,12 @@ export function presentValueAnnual(annualFlow: number, annualRatePct: number, ye
   return (annualFlow * (1 - (1 + r) ** -years)) / r;
 }
 
+/** Round 14: present value of a level annual flow paid as twelve equal monthly amounts (monthly discounting, end of month). */
+export function presentValueMonthly(annualFlow: number, annualRatePct: number, years: number): number {
+  if (annualFlow <= 0 || years <= 0) return 0;
+  return principalForMonthlyPayment(annualFlow / 12, annualRatePct, years);
+}
+
 /** Principal whose monthly payment is the given amount. */
 export function principalForMonthlyPayment(payment: number, annualRatePct: number, years: number): number {
   const n = Math.round(years * 12);
@@ -131,11 +147,11 @@ export function principalForMonthlyPayment(payment: number, annualRatePct: numbe
   return (payment * (1 - (1 + r) ** -n)) / r;
 }
 
-function cfadsOf(y: CfadsYearInput, taxRate: number): CfadsParts {
+function cfadsOf(y: CfadsYearInput, taxRate: number, definition: CfadsDefinition = 'tax_and_capex'): CfadsParts {
   const ebitda = Number.isFinite(y.ebitda) ? y.ebitda : 0;
   const capex = Math.max(0, Number.isFinite(y.maintenanceCapex) ? y.maintenanceCapex : 0);
   const dep = Math.max(0, y.depreciation ?? capex);
-  const tax = y.tax != null ? Math.max(0, y.tax) : Math.max(0, ebitda - dep) * Math.max(0, taxRate);
+  const tax = definition === 'capex_only' ? 0 : y.tax != null ? Math.max(0, y.tax) : Math.max(0, ebitda - dep) * Math.max(0, taxRate);
   return { ebitda, tax, maintenanceCapex: capex, cfads: ebitda - tax - capex, label: y.label };
 }
 
@@ -143,6 +159,10 @@ const round2 = (x: number) => Math.round(x * 100) / 100;
 
 export const NO_CAPACITY_EXPLANATION_HE =
   'התזרים לשירות חוב של העסק היום (EBITDA מנורמל פחות מס והשקעות שוטפות) אינו חיובי, ולכן אין כושר החזר לחישוב ואין שלב ראשון מוצע. מימון בשלב הזה ייבחן בעיקר לפי ביטחונות, הון עצמי ותוכנית עסקית, ואפשר לחזור לחישוב כשהתזרים יהיה חיובי.';
+
+/** Round 14 (CREDIT_CFADS=capex_only). pendingApproval: new report text, on Liron's list. */
+export const NO_CAPACITY_EXPLANATION_CAPEX_ONLY_HE =
+  'התזרים לשירות חוב של העסק היום (EBITDA מנורמל פחות השקעות שוטפות) אינו חיובי, ולכן אין כושר החזר לחישוב ואין שלב ראשון מוצע. מימון בשלב הזה ייבחן בעיקר לפי ביטחונות, הון עצמי ותוכנית עסקית, ואפשר לחזור לחישוב כשהתזרים יהיה חיובי.';
 
 export const NO_ROOM_EXPLANATION_HE =
   'ההחזר החודשי על ההלוואות הקיימות כבר מנצל את התזרים לשירות חוב עד רף יחס הכיסוי של הענף, ולכן אין שלב ראשון מוצע בלי מחזור של החוב הקיים או גידול בתזרים.';
@@ -157,8 +177,10 @@ export function computeCreditCapacity(input: CreditCapacityInput): CreditCapacit
   const ratePct = input.annualRatePct ?? round2((rateRangePct[0] + rateRangePct[1]) / 2);
   const roundTo = input.roundTo ?? 10_000;
 
-  const today = cfadsOf(input.today, input.taxRate);
-  const peak = cfadsOf(input.peak ?? input.today, input.taxRate);
+  const definition = input.cfadsDefinition ?? 'tax_and_capex';
+  const today = cfadsOf(input.today, input.taxRate, definition);
+  const peak = cfadsOf(input.peak ?? input.today, input.taxRate, definition);
+  const pv = input.discounting === 'monthly' ? presentValueMonthly : presentValueAnnual;
 
   const existingMonthly = Math.max(0, input.existingMonthlyDebtService || 0);
   const existingAnnual = existingMonthly * 12;
@@ -178,8 +200,8 @@ export function computeCreditCapacity(input: CreditCapacityInput): CreditCapacit
     ? { active: true, reasonHe: 'נדרש אישור הבנק הקיים לפני כל מימון חדש.' }
     : { active: false };
 
-  const capacity = today.cfads > 0 ? presentValueAnnual(today.cfads, ratePct, termYears) : 0;
-  const capacityPeak = peak.cfads > 0 ? presentValueAnnual(peak.cfads, ratePct, termYears) : 0;
+  const capacity = today.cfads > 0 ? pv(today.cfads, ratePct, termYears) : 0;
+  const capacityPeak = peak.cfads > 0 ? pv(peak.cfads, ratePct, termYears) : 0;
   const ceiling = capacity * terms.ceilingPctOfCapacity;
 
   const base = {
@@ -206,7 +228,7 @@ export function computeCreditCapacity(input: CreditCapacityInput): CreditCapacit
     return {
       ...base,
       status: 'no_capacity',
-      explanationHe: NO_CAPACITY_EXPLANATION_HE,
+      explanationHe: definition === 'capex_only' ? NO_CAPACITY_EXPLANATION_CAPEX_ONLY_HE : NO_CAPACITY_EXPLANATION_HE,
       firstStage: 0,
       firstStageMonthly: 0,
       firstStageAnnual: 0,

@@ -15,7 +15,8 @@ import { resolveSectorMethodologyConfig } from '../valuation/sector_methodology_
 import type { EquifyWizardState } from '../wizard/map_equify_wizard';
 import { BOI_POLICY_RATE, primeRatePct } from '../market-data/boi_policy_rate';
 import { computeCreditCapacity, type CreditStatus } from './credit_capacity';
-import { SBC_STANDARD_SOURCE, resolveSectorCreditTerms } from './sector_credit_table';
+import { creditCfadsDefinition, creditDiscounting, type CfadsDefinition, type CreditDiscounting } from './flag';
+import { SBC_STANDARD_SOURCE, pendingOrlyFields, resolveSectorCreditTerms, type CreditTermField } from './sector_credit_table';
 
 /** SBC website for the closing call to action (financing advice). Verify before turning the flag on. */
 export const SBC_SITE_URL = process.env.SBC_SITE_URL?.trim() || 'https://sbc-il.co.il';
@@ -64,6 +65,11 @@ export interface CreditChapterData {
   sourcesHe: string;
   /** One line for the executive summary, same numbers as the chapter. */
   summaryLineHe: string;
+  /** Round 14: CREDIT_CFADS and CREDIT_DISCOUNTING as used for this chapter. */
+  cfadsDefinition?: CfadsDefinition;
+  discounting?: CreditDiscounting;
+  /** Round 14: sector values still waiting for Orly's approval; marked "הערכת SBC" on the page. */
+  pendingOrly?: CreditTermField[];
 }
 
 const r0 = (x: number) => Math.round(x);
@@ -151,6 +157,8 @@ export function buildCreditChapterData(params: {
     },
     terms,
     primeRatePct: prime,
+    cfadsDefinition: creditCfadsDefinition(),
+    discounting: creditDiscounting(),
   });
 
   // Display rounding, once: monthly payment to whole units, annual = 12 x monthly.
@@ -181,8 +189,8 @@ export function buildCreditChapterData(params: {
     status: res.status,
     currency,
     explanationHe: res.explanationHe,
-    today: { label: labels.today, ebitda: t.ebitda, tax: t.tax, maintenanceCapex: t.maintenanceCapex, cfads: r0(res.today.cfads), capacity },
-    peak: { label: labels.peak, ebitda: p.ebitda, tax: p.tax, maintenanceCapex: p.maintenanceCapex, cfads: r0(res.peak.cfads), capacity: r0(res.capacityPeak) },
+    today: { label: labels.today, ebitda: t.ebitda, tax: r0(res.today.tax), maintenanceCapex: t.maintenanceCapex, cfads: r0(res.today.cfads), capacity },
+    peak: { label: labels.peak, ebitda: p.ebitda, tax: r0(res.peak.tax), maintenanceCapex: p.maintenanceCapex, cfads: r0(res.peak.cfads), capacity: r0(res.capacityPeak) },
     termYears: res.termYears,
     ratePct: res.ratePct,
     rateRangePct: res.rateRangePct,
@@ -209,6 +217,9 @@ export function buildCreditChapterData(params: {
     liens: { has: credit.liens.has, holder: credit.liens.holder || undefined, type: credit.liens.type || undefined },
     sourcesHe,
     summaryLineHe,
+    cfadsDefinition: creditCfadsDefinition(),
+    discounting: creditDiscounting(),
+    pendingOrly: pendingOrlyFields(terms),
   };
 }
 

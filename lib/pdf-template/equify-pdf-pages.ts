@@ -691,7 +691,11 @@ function buildCreditChapterPage(data: ValuationData): string {
   const minus = (v: number) => (v > 0 ? numHtml(formatCreditAmount(-v, c.currency)) : amt(0));
   const pct = (v: number, d = 2) => numHtml(`${v.toFixed(d)}%`);
   const ratio = (v: number) => numHtml(v.toFixed(2));
-  const termLabel = `${c.termYears} שנה, ריבית ${c.ratePct.toFixed(2)}%`;
+  // Round 14: a sector value still waiting for Orly's approval gets "*" and the line "* הערכת SBC" (pendingApproval: new text).
+  const est = (f: string) => (c.pendingOrly?.includes(f as never) ? '*' : '');
+  const anyEst = (c.pendingOrly?.length ?? 0) > 0;
+  const capexOnly = c.cfadsDefinition === 'capex_only';
+  const termLabel = `${c.termYears} שנה${est('termYears')}, ריבית ${c.ratePct.toFixed(2)}%${c.discounting === 'monthly' ? ', היוון חודשי' : ''}`;
 
   const blocker = c.blocker.active
     ? `<div class="callout red credit-blocker"><b>נדרש אישור הבנק הקיים לפני כל מימון חדש.</b> לעסק יש ${escHtml(LIEN_TYPE_HE[c.liens.type ?? ''] ?? 'שעבוד')} לטובת בנק, ולכן כל מימון חדש מחייב את הסכמתו.</div>`
@@ -704,7 +708,7 @@ function buildCreditChapterPage(data: ValuationData): string {
     <table class="report-table report-table--credit">
       <tr><th>תזרים לשירות חוב</th><th>היום (${escHtml(c.today.label)})</th><th>בשיא (${escHtml(c.peak.label)})</th></tr>
       <tr><td>EBITDA מנורמל</td><td class="n">${amt(c.today.ebitda)}</td><td class="n">${amt(c.peak.ebitda)}</td></tr>
-      <tr><td>מס</td><td class="n">${minus(c.today.tax)}</td><td class="n">${minus(c.peak.tax)}</td></tr>
+      ${capexOnly ? '' : `<tr><td>מס</td><td class="n">${minus(c.today.tax)}</td><td class="n">${minus(c.peak.tax)}</td></tr>`}
       <tr><td>השקעות שוטפות</td><td class="n">${minus(c.today.maintenanceCapex)}</td><td class="n">${minus(c.peak.maintenanceCapex)}</td></tr>
       <tr class="sum"><td>תזרים לשירות חוב (CFADS)</td><td class="n">${amt(c.today.cfads)}</td><td class="n">${amt(c.peak.cfads)}</td></tr>
       <tr><td>כושר החזר (${escHtml(termLabel)})</td><td class="n">${amt(c.today.capacity)}</td><td class="n">${amt(c.peak.capacity)}</td></tr>
@@ -714,13 +718,13 @@ function buildCreditChapterPage(data: ValuationData): string {
         ? `<div class="callout credit-explanation">${escHtml(c.explanationHe ?? '')}</div>`
         : `<table class="report-table report-table--credit">
       <tr><th>שלב ראשון (לפי התזרים של היום)</th><th>סכום</th></tr>
-      <tr><td>תקרה לפי ענף (${pct(c.ceilingPct * 100, 0)} מכושר ההחזר)</td><td class="n">${amt(c.ceiling)}</td></tr>
+      <tr><td>תקרה לפי ענף (${pct(c.ceilingPct * 100, 0)}${est('ceilingPctOfCapacity')} מכושר ההחזר)</td><td class="n">${amt(c.ceiling)}</td></tr>
       <tr class="sum"><td>שלב ראשון מוצע</td><td class="n">${amt(c.firstStage)}</td></tr>
       <tr><td>החזר חודשי על השלב הראשון</td><td class="n">${amt(c.firstStageMonthly)}</td></tr>
       <tr><td>החזר שנתי על השלב הראשון</td><td class="n">${amt(c.firstStageAnnual)}</td></tr>
       <tr><td>החזר שנתי על ההלוואות הקיימות</td><td class="n">${amt(c.existingAnnual)}</td></tr>
       <tr class="sum"><td>סך ההחזר השנתי</td><td class="n">${amt(c.totalAnnual)}</td></tr>
-      <tr><td>יחס כיסוי (רף הענף ${ratio(c.minDscr)})</td><td class="n">${c.dscr != null ? ratio(c.dscr) : ''}</td></tr>
+      <tr><td>יחס כיסוי (רף הענף ${ratio(c.minDscr)}${est('minDscr')})</td><td class="n">${c.dscr != null ? ratio(c.dscr) : ''}</td></tr>
     </table>`
     }`;
 
@@ -730,7 +734,7 @@ function buildCreditChapterPage(data: ValuationData): string {
       <table class="report-table report-table--credit"><tr><td>חוב נטו עם הלוואות הבעלים</td><td class="n">${amt(c.netDebtWithOwnerLoans)}</td></tr><tr><td>חוב נטו בלעדיהן (בהנחת כתב נחיתות)</td><td class="n">${amt(c.netDebtWithoutOwnerLoans)}</td></tr></table></div>`
       : '';
 
-  const debtLine = `<p class="note">החוב היום: חוב ברוטו של ${amt(c.grossDebt)} ומזומן של ${amt(c.cash)}. טווח ריבית סביר לענף: ${pct(c.rateRangePct[0])} עד ${pct(c.rateRangePct[1])} (פריים ${pct(c.primeRatePct)} ועוד מרווח הענף). זה טווח להערכה בלבד, והריבית בפועל נקבעת על ידי הגוף המממן.</p>`;
+  const debtLine = `<p class="note">החוב היום: חוב ברוטו של ${amt(c.grossDebt)} ומזומן של ${amt(c.cash)}. טווח ריבית סביר לענף: ${pct(c.rateRangePct[0])} עד ${pct(c.rateRangePct[1])}${est('spreadOverPrimePp')} (פריים ${pct(c.primeRatePct)} ועוד מרווח הענף). זה טווח להערכה בלבד, והריבית בפועל נקבעת על ידי הגוף המממן.</p>`;
 
   const cta = `<div class="callout gold credit-cta"><b>רוצים שנבדוק את זה מול כ 40 גופים מממנים?</b> ב SBC אנחנו מלווים עסקים בייעוץ מימון: בונים את בקשת האשראי, מתאימים את מבנה המימון לעסק ומציגים אותו לגופים המממנים המתאימים. הבדיקה לא מבטיחה אישור, סכום או ריבית. <a href="${escHtml(SBC_SITE_URL)}" style="color:var(--pine);font-weight:700">${escHtml(SBC_SITE_URL.replace(/^https?:\/\//, ''))}</a></div>`;
 
@@ -746,7 +750,7 @@ function buildCreditChapterPage(data: ValuationData): string {
     ${debtLine}
     ${ownerBox}
     ${cta}
-    <p class="note sens-note">${escHtml(c.sourcesHe)} החישוב הוא אינדיקציה ולא התחייבות למימון.</p>
+    <p class="note sens-note">${escHtml(c.sourcesHe)} החישוב הוא אינדיקציה ולא התחייבות למימון.${anyEst ? ' * הערכת SBC, ממתינה לאישור.' : ''}</p>
   </div>`;
   return wrapSheet(4, '', body, data.locale);
 }
