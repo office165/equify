@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 const FEATURES = [
-  'DCF + WACC (Damodaran CRP) ומכפילי שוק ישראליים',
+  'DCF + WACC (Damodaran CRP) ומכפילי שוק (Damodaran)',
   'שווי משולב עם מטריצות רגישות',
   'דוח PDF מובנה בן 8 עמודים',
   'תרחישי Bear / Base / Bull',

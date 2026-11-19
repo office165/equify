@@ -1,9 +1,11 @@
 'use client';
 
-import { LANDING_MODELS, VALUATION_METHODOLOGY_COPY } from '../equify-data';
+import { VALUATION_METHODOLOGY_COPY } from '../equify-data';
+import { useLandingCopy } from '../use_landing_copy';
 
 /** רשת כרטיסי מודלים — DCF, מכפילים, תרחישים */
 export function ModelsSection() {
+  const { models } = useLandingCopy();
   return (
     <section className="sec" id="models">
       <div className="wrap">
@@ -16,7 +18,7 @@ export function ModelsSection() {
           <p className="sec-sub rv">{VALUATION_METHODOLOGY_COPY}</p>
         </div>
         <div className="models-grid">
-          {LANDING_MODELS.map((m) => (
+          {models.map((m) => (
             <div key={m.title} className="mcard rv">
               <div className="mc-glow" />
               <h4>

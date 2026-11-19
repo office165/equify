@@ -1,9 +1,10 @@
 'use client';
 
-import { LANDING_FAQ } from '../equify-data';
+import { useLandingCopy } from '../use_landing_copy';
 
 /** שאלות נפוצות — פתיחה/סגירה חלקה דרך GSAP */
 export function FaqSection() {
+  const { faq } = useLandingCopy();
   return (
     <section className="sec" id="faq">
       <div className="wrap">
@@ -14,7 +15,7 @@ export function FaqSection() {
           </h2>
         </div>
         <div className="faq-list">
-          {LANDING_FAQ.map((item) => (
+          {faq.map((item) => (
             <details key={item.q} className="faq rv">
               <summary>
                 {item.q}

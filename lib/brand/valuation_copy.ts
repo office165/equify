@@ -10,7 +10,7 @@ const COPY = {
       'שורת מחיר אינדיקטיבית לבעלי המניות במכירה מלאה, לאחר כיסוי התחייבויות פיננסיות נטו, בהתאם למתודולוגיית שקלול תזרים ומכפילים.',
     weightedIndication: 'אינדיקציית השווי המשוקללת',
     weightedIndicationNote:
-      'טווח השוואה מבוסס מכפילי עסקאות ותזרים מהוון: הקשר משלים לשורת המחיר, בהתאם לסטנדרט דוחות הערכת שווי.',
+      'טווח השוואה מבוסס מכפילי שוק (Damodaran) ותזרים מהוון: הקשר משלים לשורת המחיר.',
     waterfallSection: 'גשר שווי לבעלים',
     howWeArrived: 'מתודולוגיית הגעה לאינדיקציית השווי',
   },
@@ -21,7 +21,7 @@ const COPY = {
       'Indicative equity price line in a full sale, after net financial obligations, per DCF and multiples weighting.',
     weightedIndication: 'Weighted valuation indication',
     weightedIndicationNote:
-      'Transaction-multiples and DCF comparison range: supplementary context per Big-4 valuation reporting standards.',
+      'Market multiples (Damodaran) and DCF comparison range: supplementary context to the price line.',
     waterfallSection: 'Equity value bridge',
     howWeArrived: 'Methodology to the weighted indication',
   },

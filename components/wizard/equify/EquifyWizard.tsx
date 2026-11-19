@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopyText } from '../../../lib/copy/use_copy_text';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ValuationLocale } from '../../../api_client';
@@ -97,7 +98,8 @@ function EquifyWizardShell({
   const { locale: ctxLocale } = useValuationI18n();
   const locale = localeProp ?? ctxLocale;
   const isHe = locale === 'he';
-  const copy = getEquifyWizardCopy(locale);
+  const { copyV2, tx } = useCopyText(locale === 'he' ? 'he' : 'en');
+  const copy = getEquifyWizardCopy(locale, copyV2);
   const steps = getEquifyWizardSteps(locale);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const topbarRef = useRef<HTMLDivElement>(null);
@@ -496,7 +498,7 @@ function EquifyWizardShell({
                   type="button"
                   className={cls}
                   onClick={() => n <= step && goStep(n)}
-                  aria-label={`${s.label} — ${s.desc}`}
+                  aria-label={tx(`${s.label} — ${s.desc}`)}
                   aria-current={step === n ? 'step' : undefined}
                 />
               );

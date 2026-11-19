@@ -1,7 +1,7 @@
 'use client';
 
 import type { RefObject } from 'react';
-import { LANDING_STEPS } from '../equify-data';
+import { useLandingCopy } from '../use_landing_copy';
 
 interface StepsSectionProps {
   stepsGridRef: RefObject<HTMLDivElement>;
@@ -10,6 +10,7 @@ interface StepsSectionProps {
 
 /** ארבעה שלבי האשף — עם קרן התקדמות מונפשת */
 export function StepsSection({ stepsGridRef, beamRef }: StepsSectionProps) {
+  const { steps } = useLandingCopy();
   return (
     <section className="sec steps" id="how">
       <div className="wrap">
@@ -28,7 +29,7 @@ export function StepsSection({ stepsGridRef, beamRef }: StepsSectionProps) {
           <div className="steps-beam">
             <i id="beam" ref={beamRef} />
           </div>
-          {LANDING_STEPS.map(([num, title, body, tag]) => (
+          {steps.map(([num, title, body, tag]) => (
             <div key={num} className="step rv" data-step={num}>
               <span className="st-num">{num}</span>
               <h3>{title}</h3>

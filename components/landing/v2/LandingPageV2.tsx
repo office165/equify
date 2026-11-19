@@ -18,7 +18,7 @@ const MARQUEE_ITEMS = [
   'מכפיל הכנסות',
   'פרמיית סיכון מדינה: Damodaran',
   'תרחישי Bear / Base / Bull',
-  'נתוני M&A ישראל 2023–2026',
+  'מכפילי Damodaran',
   'Quality Score',
   'שווי משולב',
 ];
@@ -30,15 +30,11 @@ const MODELS = [
   },
   {
     title: 'מכפיל EBITDA',
-    body: 'מכויל מול 12 עסקאות M&A ישראליות אמיתיות מהשנים 2023–2026.',
+    body: 'מכפילי הענף לפי נתוני Damodaran של חברות ציבוריות, עם הנחת סחירות וגודל לחברה פרטית.',
   },
   {
     title: 'מכפיל הכנסות',
     body: 'לעסקים בצמיחה מהירה או לפני רווחיות, עם התאמת ענף ושלב.',
-  },
-  {
-    title: 'שווי נכסי',
-    body: 'רצפת שווי על בסיס נכסים מוחשיים, מלאי והון חוזר.',
   },
   {
     title: 'Quality Score',
@@ -377,8 +373,8 @@ export function LandingPageV2() {
               <span className="hl">ראה את השווי זז.</span>
             </h2>
             <p className="sec-sub rv">
-              אינדיקציה ראשונית בזמן אמת על בסיס מכפילי שוק ישראליים. הדוח המלא מריץ 11 מודלים; זה רק
-              הטיזר.
+              אינדיקציה ראשונית בזמן אמת על בסיס מכפילי שוק (Damodaran). הדוח המלא משלב DCF, מכפיל EBITDA
+              ומכפיל הכנסות.
             </p>
           </div>
           <MicroCalculator />
@@ -390,7 +386,7 @@ export function LandingPageV2() {
           <div className="sec-head">
             <span className="eyebrow rv">המנוע</span>
             <h2 className="sec-title rv">
-              11 מודלים. <span className="hl">דוח אחד.</span>
+              שלוש שיטות. <span className="hl">דוח אחד.</span>
             </h2>
             <p className="sec-sub rv">
               כל הערכה מריצה את מלוא הסוללה הפיננסית ומשקללת לשווי משולב אחד עם טווח רגישות.

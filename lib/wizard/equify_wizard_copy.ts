@@ -1,5 +1,6 @@
 import type { ValuationLocale } from '../../api_client';
 import type { TranslationKey } from '../../valuation_i18n';
+import { cleanMarksDeep } from '../copy/marks';
 
 /** Hardcoded fallbacks — wizard never collapses if i18n key is missing */
 export const EQUIFY_WIZARD_COPY_HE = {
@@ -110,10 +111,31 @@ export const EQUIFY_WIZARD_COPY_EN: Record<keyof typeof EQUIFY_WIZARD_COPY_HE, s
 
 export type EquifyWizardCopyKey = keyof typeof EQUIFY_WIZARD_COPY_HE;
 
+/**
+ * Round 10 (COPY_V2): the claims that are not true today, corrected. The live card does not use fixed weights (it shows the weights
+ * of the case), and the market section compares with public company multiples (Damodaran), not with transactions.
+ */
+const COPY_V2_OVERRIDES_HE: Partial<Record<keyof typeof EQUIFY_WIZARD_COPY_HE, string>> = {
+  reportMarketHeadline: 'מיקום מול מכפילי השוק (Damodaran)',
+  dcfWeight: 'DCF',
+  ebitdaWeight: 'מכפיל EBITDA',
+  revWeight: 'מכפיל הכנסות',
+};
+const COPY_V2_OVERRIDES_EN: Partial<Record<keyof typeof EQUIFY_WIZARD_COPY_HE, string>> = {
+  reportMarketHeadline: 'Position vs market multiples (Damodaran)',
+  dcfWeight: 'DCF',
+  ebitdaWeight: 'EBITDA multiple',
+  revWeight: 'Revenue multiple',
+};
+
 export function getEquifyWizardCopy(
   locale: ValuationLocale,
-): Record<EquifyWizardCopyKey, string> {
-  return locale === 'he' ? EQUIFY_WIZARD_COPY_HE : EQUIFY_WIZARD_COPY_EN;
+  copyV2 = false,
+): Record<keyof typeof EQUIFY_WIZARD_COPY_HE, string> {
+  const base = locale === 'he' ? EQUIFY_WIZARD_COPY_HE : EQUIFY_WIZARD_COPY_EN;
+  if (!copyV2) return base;
+  const lang = locale === 'he' ? 'he' : 'en';
+  return cleanMarksDeep({ ...base, ...(lang === 'he' ? COPY_V2_OVERRIDES_HE : COPY_V2_OVERRIDES_EN) }, lang);
 }
 
 export const EQUIFY_WIZARD_STEPS_HE = [

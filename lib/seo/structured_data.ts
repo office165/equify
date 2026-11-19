@@ -11,7 +11,7 @@
  *                 neither is true today, see reports/round-6.md) and "אבטחת מידע" (claims not checked).
  * No reviews, ratings or invented questions.
  */
-import { LANDING_FAQ } from '../../components/landing/equify/equify-data';
+import { LANDING_FAQ, LANDING_FAQ_V2 } from '../../components/landing/equify/equify-data';
 import { BRAND_NAME, HOME_DESCRIPTION } from '../brand/brand-identity';
 import { SITE_ORIGIN } from './site';
 
@@ -71,8 +71,9 @@ export function serviceJsonLd(): Json {
   };
 }
 
-export function faqJsonLd(): Json {
-  const items = LANDING_FAQ.filter((f) => (FAQ_JSONLD_QUESTIONS as readonly string[]).includes(f.q));
+/** Round 10: with COPY_V2 the page shows LANDING_FAQ_V2, so the JSON-LD follows it, word for word (the same four questions). */
+export function faqJsonLd(copyV2 = false): Json {
+  const items = (copyV2 ? LANDING_FAQ_V2 : LANDING_FAQ).filter((f) => (FAQ_JSONLD_QUESTIONS as readonly string[]).includes(f.q));
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -84,8 +85,8 @@ export function faqJsonLd(): Json {
   };
 }
 
-export function homeJsonLd(): Json[] {
-  return [organizationJsonLd(), websiteJsonLd(), serviceJsonLd(), faqJsonLd()];
+export function homeJsonLd(copyV2 = false): Json[] {
+  return [organizationJsonLd(), websiteJsonLd(), serviceJsonLd(), faqJsonLd(copyV2)];
 }
 
 /** JSON for a <script type="application/ld+json">, with "<" escaped so it cannot close the tag. */

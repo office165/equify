@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopyText } from '../../../lib/copy/use_copy_text';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import {
@@ -36,6 +37,7 @@ function LockIcon() {
 }
 
 export function MicroCalculator() {
+  const { tx, copyV2 } = useCopyText('he');
   const [revenueK, setRevenueK] = useState(8000);
   const [marginPct, setMarginPct] = useState(18);
   const [growthPct, setGrowthPct] = useState(12);
@@ -137,7 +139,7 @@ export function MicroCalculator() {
         <div className="co-range co-range-primary">
           <div className="co-range-hero" dir="ltr">
             <span id="crLow">₪{result.lowM.toFixed(1)}M</span>
-            <span className="co-range-sep">–</span>
+            <span className="co-range-sep">{copyV2 ? 'עד' : '–'}</span>
             <span id="crHigh">₪{result.highM.toFixed(1)}M</span>
           </div>
           <p className="co-spread" dir="rtl">
@@ -181,7 +183,7 @@ export function MicroCalculator() {
             {FULL_REPORT_LINES.map((line) => (
               <li key={line}>
                 <LockIcon />
-                <span>{line}</span>
+                <span>{tx(line)}</span>
               </li>
             ))}
           </ul>
@@ -193,7 +195,7 @@ export function MicroCalculator() {
           </Link>
         </div>
         <p className="co-disc">
-          אינדיקציה אלגוריתמית בלבד · אינה ייעוץ השקעות או חוות דעת חשבונאית
+          {tx('אינדיקציה אלגוריתמית בלבד · אינה ייעוץ השקעות או חוות דעת חשבונאית')}
         </p>
       </div>
     </div>

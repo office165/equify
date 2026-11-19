@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import { useCopyText } from '../../../lib/copy/use_copy_text';
 import { formatNetDebtLine } from '../../../lib/format/currency';
 import {
   fmtEquitySidebarM,
@@ -21,6 +22,7 @@ export function ResultsScreen({
   isDownloadingPdf = false,
 }: ResultsScreenProps) {
   const { computed, scenarios, state } = useWizardValuation();
+  const { tx, v2 } = useCopyText('he');
   const { financials } = state;
   const reportingCurrency = state.profile.currency;
   const fmtAmount = (k: number) => fmtK(k, 'he', reportingCurrency);
@@ -46,7 +48,7 @@ export function ResultsScreen({
   return (
     <section className="eqw-results" aria-label="תוצאות הערכת השווי">
       <div className="res-hero">
-        <div className="res-eyebrow">שווי לבעלים · תרחיש בסיס</div>
+        <div className="res-eyebrow">{tx('שווי לבעלים · תרחיש בסיס')}</div>
         <div className="res-val mono">{fmtEquitySidebarM(computed.equity, 'he', reportingCurrency)}</div>
         <div className="res-cap">
           שווי פעילות <span className="mono">{fmtAmount(computed.ev)}</span> בניכוי חוב
@@ -92,7 +94,7 @@ export function ResultsScreen({
           <div
             className="rc-val mono"
             style={{ color: 'var(--gold)' }}
-          >{`${computed.qsGrade} · ${computed.qs}`}</div>
+          >{tx(`${computed.qsGrade} · ${computed.qs}`)}</div>
           <div className="rc-lbl">Quality Score</div>
           <div className="rc-sub">Risk-adjusted</div>
         </div>
@@ -104,7 +106,7 @@ export function ResultsScreen({
       </div>
 
       <div className="waterfall stagger">
-        <h3>מ-EV לשווי לבעלים</h3>
+        <h3>{tx('מ-EV לשווי לבעלים')}</h3>
         <div className="wf-row">
           <span className="wl">שווי פעילות (EV)</span>
           <div className="wf-track">
@@ -148,8 +150,7 @@ export function ResultsScreen({
             <div>
               <div className="mr-name">מתודולוגיית Inflection (צבר הזמנות)</div>
               <div className="mr-desc">
-                DCF {Math.round(computed.blendWeights.dcf * 100)}% · מכפיל EBITDA{' '}
-                {Math.round(computed.blendWeights.ebitda * 100)}% · בסיס{' '}
+                {tx(`DCF ${Math.round(computed.blendWeights.dcf * 100)}% · מכפיל EBITDA ${Math.round(computed.blendWeights.ebitda * 100)}% · בסיס `)}
                 {fmtAmount(computed.baseEbitdaForMultiple)}
               </div>
             </div>
@@ -174,24 +175,26 @@ export function ResultsScreen({
         <div className="ml-row">
           <div>
             <div className="mr-name">DCF + WACC</div>
-            <div className="mr-desc">היוון תזרים · ערך טרמינלי · Damodaran CRP</div>
+            <div className="mr-desc">{tx('היוון תזרים · ערך טרמינלי · Damodaran CRP')}</div>
           </div>
           <div style={{ textAlign: 'left' }}>
             <div className="mr-val mono">{fmtAmount(computed.dcf)}</div>
             <div className="mr-weight">
-              {Math.round(computed.blendWeights.dcf * 100)}% · EV
+              {tx(`${Math.round(computed.blendWeights.dcf * 100)}% · EV`)}
             </div>
           </div>
         </div>
         <div className="ml-row">
           <div>
             <div className="mr-name">מכפיל EBITDA</div>
-            <div className="mr-desc">מכויל מ-12 עסקאות M&A ישראליות 2023–2026</div>
+            <div className="mr-desc">
+              {v2('מכויל מ-12 עסקאות M&A ישראליות 2023–2026', 'מכפילי ענף לפי Damodaran (חברות ציבוריות), עם התאמה לחברה פרטית')}
+            </div>
           </div>
           <div style={{ textAlign: 'left' }}>
             <div className="mr-val mono">{fmtAmount(computed.ebtMult)}</div>
             <div className="mr-weight">
-              {Math.round(computed.blendWeights.ebitda * 100)}% · EV
+              {tx(`${Math.round(computed.blendWeights.ebitda * 100)}% · EV`)}
             </div>
           </div>
         </div>
@@ -204,7 +207,7 @@ export function ResultsScreen({
             <div style={{ textAlign: 'left' }}>
               <div className="mr-val mono">{fmtAmount(computed.revMult)}</div>
               <div className="mr-weight">
-                {Math.round(computed.blendWeights.rev * 100)}% · EV
+                {tx(`${Math.round(computed.blendWeights.rev * 100)}% · EV`)}
               </div>
             </div>
           </div>
@@ -273,8 +276,13 @@ export function ResultsScreen({
       </div>
 
       <p className="disclaimer">
-        אינדיקציה אלגוריתמית בלבד · לא ייעוץ השקעות · לא חוות דעת חשבונאית · ©
-        2026 equify BY SBC
+        {v2(
+          <>
+            אינדיקציה אלגוריתמית בלבד · לא ייעוץ השקעות · לא חוות דעת חשבונאית · ©
+            2026 equify BY SBC
+          </>,
+          <>אינדיקציה אלגוריתמית בלבד. לא ייעוץ השקעות ולא חוות דעת חשבונאית. © 2026 equify BY SBC</>,
+        )}
       </p>
     </section>
   );

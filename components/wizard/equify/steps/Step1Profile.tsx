@@ -1,5 +1,8 @@
 'use client';
 
+import { useSiteFlags } from '../../../shared/SiteFlagsContext';
+import { LEGAL_ROUTES } from '../../../../lib/legal/routes';
+import { STEP1_PRIVACY_NOTE } from '../../../../lib/consent/privacy_note';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { EquifyLifecycleKey } from '../../../../lib/valuation';
 import { coerceWizardSectorSelection } from '../../../../lib/constants/industry_config';
@@ -46,6 +49,7 @@ export interface Step1ProfileProps {
 
 export function Step1Profile({ onNext }: Step1ProfileProps) {
   const { shell, steps: t, isHe, locale } = useEquifyStrings();
+  const { consentBanner } = useSiteFlags();
   const lifecycles = isHe ? LIFECYCLES_HE : LIFECYCLES_EN;
   const { state, updateProfile, setSectorSelection, setLifecycle } =
     useWizardValuation();
@@ -277,6 +281,14 @@ export function Step1Profile({ onNext }: Step1ProfileProps) {
           />
         </div>
       </div>
+      {consentBanner ? (
+        <p className="eq-privacy-note" data-testid="step1-privacy-note">
+          {isHe ? STEP1_PRIVACY_NOTE.he : STEP1_PRIVACY_NOTE.en}{' '}
+          <a href={LEGAL_ROUTES.privacy} target="_blank" rel="noopener">
+            {isHe ? STEP1_PRIVACY_NOTE.linkHe : STEP1_PRIVACY_NOTE.linkEn}
+          </a>
+        </p>
+      ) : null}
 
       <SectorPicker
         sector={profile.sector}

@@ -1,0 +1,29 @@
+/* Round 10 (CONSENT_BANNER): the cookie banner, after the SBC site's .cc block (app/site.css there), in equify's colors. */
+.eq-cc {
+  position: fixed; z-index: 945; bottom: max(16px, env(safe-area-inset-bottom)); right: 16px; left: 84px; max-width: 460px;
+  padding: 16px 18px; border-radius: 14px; background: #091c18; color: #e8f2f0; border: 1px solid rgba(232, 242, 240, 0.22);
+  box-shadow: 0 14px 40px -12px rgba(0, 0, 0, 0.6); font-family: var(--font-equify), 'Assistant', sans-serif; font-size: 14.5px; line-height: 1.55;
+}
+.eq-cc-text { margin: 0 0 12px }
+.eq-cc-text a { color: #4dd6ce; text-decoration: underline; text-underline-offset: 3px }
+.eq-cc-set { border: 0; margin: 0 0 12px; padding: 0; display: grid; gap: 8px }
+.eq-cc-legend { font-weight: 700; margin-bottom: 6px; padding: 0 }
+.eq-cc-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer }
+.eq-cc-row input { width: 18px; height: 18px; margin-top: 2px; accent-color: #00c2b8; flex: none }
+.eq-cc-btns { display: flex; flex-wrap: wrap; gap: 8px }
+.eq-cc-btn {
+  min-height: 44px; padding: 8px 18px; border-radius: 999px; border: 1px solid rgba(232, 242, 240, 0.3); background: transparent;
+  color: #e8f2f0; font: inherit; font-weight: 600; cursor: pointer;
+}
+.eq-cc-btn:hover { border-color: #00c2b8 }
+.eq-cc-yes { background: #00c2b8; border-color: #00c2b8; color: #020504 }
+.eq-cc-btn:focus-visible, .eq-cc-row input:focus-visible, .eq-cc-text a:focus-visible, .eq-cc-foot-btn:focus-visible { outline: 2px solid #4dd6ce; outline-offset: 2px }
+.eq-cc-foot { display: flex; justify-content: center; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); font-size: 13.5px }
+.eq-cc-foot-btn, .f-links .eq-cc-foot-btn { background: none; border: 0; padding: 0; font: inherit; color: #7fa8a2; cursor: pointer; text-decoration: underline; text-underline-offset: 3px }
+.eq-cc-foot-btn:hover { color: #00c2b8 }
+html[data-eq-theme='light'] .eq-cc { background: #ffffff; color: #0b1f1b; border-color: rgba(11, 31, 27, 0.22); box-shadow: 0 14px 40px -12px rgba(11, 31, 27, 0.18) }
+html[data-eq-theme='light'] .eq-cc-text a { color: #00756f }
+html[data-eq-theme='light'] .eq-cc-btn { color: #0b1f1b; border-color: rgba(11, 31, 27, 0.3) }
+html[data-eq-theme='light'] .eq-cc-yes { background: #00756f; border-color: #00756f; color: #ffffff }
+html[data-eq-theme='light'] .eq-cc-foot-btn { color: #3d5650 }
+@media (max-width: 520px) { .eq-cc { left: 12px; right: 12px; max-width: none } }

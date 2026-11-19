@@ -1,5 +1,6 @@
 'use client';
 
+import { useSiteFlags } from '../../../shared/SiteFlagsContext';
 import Link from 'next/link';
 import type { RefObject } from 'react';
 import { DurationValue } from '../../shared/BidiNumberUnit';
@@ -20,12 +21,13 @@ export function HeroSection({
   sparkFillRef,
   tiltCardRef,
 }: HeroSectionProps) {
+  const { copyV2 } = useSiteFlags();
   return (
     <section className="hero">
       <div id="terrain" ref={terrainRef} aria-hidden="true" />
       <div className="wrap hero-in">
         <div>
-          <span className="eyebrow rv">equify BY SBC · שוק ישראל 2026</span>
+          <span className="eyebrow rv">{copyV2 ? 'equify BY SBC, שוק ישראל 2026' : 'equify BY SBC · שוק ישראל 2026'}</span>
           <h1 className="h-title">
             <span className="ln">
               <span>שווי העסק שלך.</span>
@@ -34,10 +36,17 @@ export function HeroSection({
               <span className="hl">בנתונים.</span>
             </span>
           </h1>
-          <p className="h-sub rv">
-            הדוח משלב DCF, מכפילי שוק מכוילים וציון איכות. השווי המוצג הוא ממוצע משוקלל שמשקף את
-            מעשי השוק, לא תיאוריה אקדמית.
-          </p>
+          {copyV2 ? (
+            <p className="h-sub rv">
+              הדוח משלב DCF, מכפילי שוק לפי Damodaran וציון איכות. השווי המוצג הוא ממוצע משוקלל, והמשקל של כל
+              שיטה תלוי בענף, בשלב החיים ובגודל העסק.
+            </p>
+          ) : (
+            <p className="h-sub rv">
+              הדוח משלב DCF, מכפילי שוק מכוילים וציון איכות. השווי המוצג הוא ממוצע משוקלל שמשקף את
+              מעשי השוק, לא תיאוריה אקדמית.
+            </p>
+          )}
           <div className="h-cta rv">
             <Link className="btn magnetic" href="/wizard">
               התחל הערכת שווי <span className="arr">←</span>
@@ -55,18 +64,19 @@ export function HeroSection({
               <DurationValue variant="long" />
             </span>
             <span>
-              <i />דוח PDF · 8 עמודים
+              <i />
+              {copyV2 ? 'דוח PDF, 8 עמודים' : 'דוח PDF · 8 עמודים'}
             </span>
           </div>
         </div>
 
         <div className="tick-card rv-l" id="tiltCard" ref={tiltCardRef}>
-          <span className="tc-badge">דוח לדוגמה · 8 עמודים</span>
+          <span className="tc-badge">{copyV2 ? 'דוגמה להמחשה, לא עסק אמיתי' : 'דוח לדוגמה · 8 עמודים'}</span>
           <div className="tc-top">
-            <span>שווי לבעלים · תרחיש בסיס</span>
+            <span>{copyV2 ? 'שווי לבעלים, תרחיש בסיס' : 'שווי לבעלים · תרחיש בסיס'}</span>
             <span className="tc-live">
               <i />
-              LIVE
+              {copyV2 ? 'דוגמה' : 'LIVE'}
             </span>
           </div>
           <div className="tc-val">
@@ -75,7 +85,11 @@ export function HeroSection({
             </span>
             M ₪
           </div>
-          <div className="tc-cap">שקלול DCF 50% · מכפיל EBITDA 30% · מכפיל הכנסות 20%</div>
+          <div className="tc-cap">
+            {copyV2
+              ? 'משקלות לדוגמה: DCF 50%, EBITDA 30%, הכנסות 20%. בדוח הם לפי הענף'
+              : 'שקלול DCF 50% · מכפיל EBITDA 30% · מכפיל הכנסות 20%'}
+          </div>
           <svg className="tc-spark" viewBox="0 0 400 90" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">

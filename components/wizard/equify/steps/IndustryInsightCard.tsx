@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopyText } from '../../../../lib/copy/use_copy_text';
 import React, { useEffect, useMemo, useState } from 'react';
 import { LineChart } from 'lucide-react';
 import {
@@ -108,6 +109,7 @@ export function IndustryInsightCard({
 
   const marketContext = state.financials.marketContext;
   const isHe = locale === 'he';
+  const { tx } = useCopyText(isHe ? 'he' : 'en');
 
   useEffect(() => {
     if (!sector || !subSector) {
@@ -168,7 +170,7 @@ export function IndustryInsightCard({
           subSectorLabel,
           multipleLabel:
             primaryMultiple === 'nav' ? copy.navMultiple : copy.pbvMultiple,
-          displayValue: formatRange(adjustedRange),
+          displayValue: tx(formatRange(adjustedRange)),
           showRangeLabel: true,
           disclaimer:
             (isHe ? disclaimerHe : disclaimerEn) ??
@@ -196,7 +198,7 @@ export function IndustryInsightCard({
               ? copy.revenueMultiple
               : copy.ebitdaMultiple,
           displayValue: multipleRange
-            ? formatRange(multipleRange)
+            ? tx(formatRange(multipleRange))
             : `${formatMultiple(adjusted)}x`,
           showRangeLabel: Boolean(multipleRange),
           disclaimer:

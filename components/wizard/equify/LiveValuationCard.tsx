@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopyText } from '../../../lib/copy/use_copy_text';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { Lock } from 'lucide-react';
 import { fmtEquitySidebarM, fmtK } from '../../../lib/valuation';
@@ -59,6 +60,9 @@ export function LiveValuationCard({
   breakdownTeaser = false,
 }: LiveValuationCardProps) {
   const { locale, steps: t, shell } = useEquifyStrings();
+  const { copyV2, tx } = useCopyText(locale === 'he' ? 'he' : 'en');
+  // Round 10 (COPY_V2): an empty value is said in words, not with a long dash.
+  const EMPTY = copyV2 ? (locale === 'he' ? 'אין נתון' : 'n/a') : '—';
   const { state, computed, scenarios, updateFinancials } = useWizardValuation();
   const { reportingCurrency, currencySymbol } = useReportingCurrency();
   const { financials, profile } = state;
@@ -79,10 +83,10 @@ export function LiveValuationCard({
 
   const fmtBlendRowAmount = useCallback(
     (k: number | null | undefined) => {
-      if (k == null || !Number.isFinite(k)) return '—';
+      if (k == null || !Number.isFinite(k)) return EMPTY;
       return fmtLiveK(k);
     },
-    [fmtLiveK],
+    [fmtLiveK, EMPTY],
   );
 
   const hasPastYearForBlend =
@@ -134,7 +138,7 @@ export function LiveValuationCard({
   const ebitdaWeightPct = Math.round(blendWeights.ebitda * 100);
   const revWeightPct = Math.round(blendWeights.rev * 100);
   const weightLabel = (base: string, w: number) =>
-    w > 0 ? `${base} · ${Math.round(w * 100)}%` : base;
+    w > 0 ? tx(`${base} · ${Math.round(w * 100)}%`) : base;
   const weightBarWidth = (w: number) => `${Math.round(w * 100)}%`;
   const wEbitda = BLENDED_EBITDA_WEIGHTS;
   const qsArc = (computed.qs / 100) * 163.4;
@@ -319,13 +323,13 @@ export function LiveValuationCard({
               Math.round(wEbitda.past * 100),
               hasPastYearForBlend
                 ? fmtBlendRowAmount(ebitdaBlend?.past ?? null)
-                : '—',
+                : EMPTY,
             )}
           </div>
           <div className="cl-ebitda-blend-row">
             {t.step2.blendedEbitdaCurrent(
               Math.round(wEbitda.current * 100),
-              hasLiveInputs ? fmtBlendRowAmount(ebitdaBlend?.current ?? null) : '—',
+              hasLiveInputs ? fmtBlendRowAmount(ebitdaBlend?.current ?? null) : EMPTY,
             )}
           </div>
           <div className="cl-ebitda-blend-row">
@@ -333,7 +337,7 @@ export function LiveValuationCard({
               Math.round(wEbitda.projected * 100),
               hasProjectedBlend
                 ? fmtBlendRowAmount(ebitdaBlend?.projected ?? null)
-                : '—',
+                : EMPTY,
               (ebitdaBlend?.dcfGrowthPct ?? 0).toFixed(1),
             )}
           </div>

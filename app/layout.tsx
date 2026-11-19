@@ -5,6 +5,9 @@ import { BRAND_NAME } from '../lib/brand/brand-identity';
 import { rootMetadata } from './site-metadata';
 import { AppProviders } from '../components/shared/AppProviders';
 import { SiteAnalytics } from '../components/analytics/SiteAnalytics';
+import { SiteFlagsProvider } from '../components/shared/SiteFlagsContext';
+import { ConsentRoot } from '../components/consent/ConsentRoot';
+import { anySiteFlagOn, readSiteFlags } from '../lib/flags/site_flags';
 
 const assistant = Assistant({
   subsets: ['hebrew', 'latin'],
@@ -49,13 +52,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Round 10: with every site flag off nothing below changes (no provider, no banner), so the page is what it was.
+  const flags = readSiteFlags();
+  const app = <AppProviders>{children}</AppProviders>;
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning>
       <body
         className={`${assistant.variable} ${ibmPlexMono.variable} ${assistant.className} min-h-[100dvh] bg-[#020504] pb-safe text-slate-50 antialiased`}
       >
-        <AppProviders>{children}</AppProviders>
-        <SiteAnalytics />
+        {anySiteFlagOn(flags) ? <SiteFlagsProvider value={flags}>{app}</SiteFlagsProvider> : app}
+        {flags.consentBanner ? <ConsentRoot /> : <SiteAnalytics />}
       </body>
     </html>
   );

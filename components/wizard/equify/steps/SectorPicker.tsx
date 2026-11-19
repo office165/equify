@@ -1,5 +1,6 @@
 'use client';
 
+import { useCopyText } from '../../../../lib/copy/use_copy_text';
 import React, {
   useCallback,
   useEffect,
@@ -93,6 +94,7 @@ export function SectorPicker({
   onSelect,
 }: SectorPickerProps) {
   const reducedMotion = usePrefersReducedMotion();
+  const { tx } = useCopyText(isHe ? 'he' : 'en');
   const subSectorCount = useMemo(() => countUniqueSubSectors(), []);
 
   const [mode, setMode] = useState<PickerMode>('fast');
@@ -602,8 +604,7 @@ export function SectorPicker({
                               </span>
                             ) : null}
                             <span className="sp-suggest-title">
-                              {sectorLabel} ·{' '}
-                              {isHe ? hit.labelHe : hit.labelEn}
+                              {tx(`${sectorLabel} · ${isHe ? hit.labelHe : hit.labelEn}`)}
                             </span>
                             <span className="sp-suggest-reason">
                               {isHe ? hit.reasonHe : hit.reasonEn}
@@ -635,7 +636,7 @@ export function SectorPicker({
                         {isHe
                           ? INDUSTRY_CONFIG[activeFastHit.sector].chipLabelHe
                           : INDUSTRY_CONFIG[activeFastHit.sector].chipLabelEn}
-                        {' · '}
+                        {tx(' · ')}
                         {isHe ? activeFastHit.labelHe : activeFastHit.labelEn}
                       </p>
                     ) : null}
@@ -727,7 +728,7 @@ export function SectorPicker({
                     ? 'קורא את התיאור'
                     : 'Reading your description'
                   : isHe
-                    ? `מתאים מול ${subSectorCount} תתי-ענפים`
+                    ? tx(`מתאים מול ${subSectorCount} תתי-ענפים`)
                     : `Matching against ${subSectorCount} sub-sectors`}
                 <span className="sp-dots" aria-hidden>
                   <span />
@@ -765,7 +766,7 @@ export function SectorPicker({
                       }
                     >
                       <span className="sp-suggest-title">
-                        {sectorLabel} · {isHe ? hit.labelHe : hit.labelEn}
+                        {tx(`${sectorLabel} · ${isHe ? hit.labelHe : hit.labelEn}`)}
                       </span>
                       {hit.reason ? (
                         <span className="sp-suggest-reason">{hit.reason}</span>
@@ -828,8 +829,8 @@ export function SectorPicker({
             <div className="sp-range-confirm" aria-live="polite">
               <p className="sp-range-text">
                 {isHe
-                  ? `עסקים בענף הזה נסחרים בטווח ${formatMultiple(multipleMeta.range[0])}x–${formatMultiple(multipleMeta.range[1])}x ${multipleMeta.unit}. האם זה נשמע הגיוני לעסק שלך?`
-                  : `Businesses in this sector typically trade at ${formatMultiple(multipleMeta.range[0])}x–${formatMultiple(multipleMeta.range[1])}x ${multipleMeta.unit}. Does that sound right for yours?`}
+                  ? tx(`עסקים בענף הזה נסחרים בטווח ${formatMultiple(multipleMeta.range[0])}x–${formatMultiple(multipleMeta.range[1])}x ${multipleMeta.unit}. האם זה נשמע הגיוני לעסק שלך?`)
+                  : tx(`Businesses in this sector typically trade at ${formatMultiple(multipleMeta.range[0])}x–${formatMultiple(multipleMeta.range[1])}x ${multipleMeta.unit}. Does that sound right for yours?`)}
               </p>
               <div className="sp-range-actions">
                 <button
