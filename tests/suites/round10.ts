@@ -87,6 +87,7 @@ export async function run(): Promise<SuiteResult> {
     const bad = strs.filter((x) => FORBIDDEN_MARKS.test(x));
     s.check('copy-v2', `wizard-strings-no-marks ${loc}`, bad.length === 0, JSON.stringify(bad.slice(0, 5)));
   }
+  s.check('copy-v2', 'results-market-title', !/עסקאות|M&A/.test(buildEquifyStrings('he', true).results.multTitle + buildEquifyStrings('he', true).results.multTitleHl) && !/M&A/.test(buildEquifyStrings('en', true).results.multTitleHl));
   s.check('copy-v2', 'wizard-market-headline', !/עסקאות/.test(getEquifyWizardCopy('he', true).reportMarketHeadline));
   s.check('copy-v2', 'wizard-no-fixed-weights', !/50%|30%|20%/.test(Object.values(getEquifyWizardCopy('he', true)).join(' ')));
   const step1v2 = visibleText(renderStep1({ copyV2: true }));

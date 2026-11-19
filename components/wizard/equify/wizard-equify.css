@@ -3514,7 +3514,3 @@ body.equify-slider-dragging {
   font-size: 13.5px;
   line-height: 1.55;
 }
-
-/* Round 10 (CONSENT_BANNER): the transparency line under the details fields in step 1. */
-.eq-privacy-note { margin: 10px 0 18px; font-size: 13.5px; line-height: 1.6; color: var(--dim, #7fa8a2) }
-.eq-privacy-note a { color: var(--soft, #4dd6ce); text-decoration: underline; text-underline-offset: 3px }

@@ -1,0 +1,369 @@
+/*
+ * Round 11 (SITE_V2): the structure and design language of the SBC site (sbc-site: app/vault.css tokens, app/r31.css scale,
+ * app/home7.css bands, components/Nav.tsx and Footer.tsx), in equify's own colours. Linked from app/layout.tsx only when
+ * SITE_V2 is on, so with the flag off this file is not on the page at all.
+ * Dark ("night") and light ("day"): html[data-eq-theme], set before paint by the boot script (components/site-v2/theme_boot.ts).
+ * Following sbc-brand: flat grounds and hairlines, one accent (turquoise) for action, green only as a small seasoning for numbers,
+ * no glows, no gradient fills on buttons or text, no moving band, no tracked mono capitals, one easing.
+ */
+
+/* ---------- Heebo for headlines (SIL Open Font License, fonts/OFL.txt), split by script like sbc-site/app/heebo.ts ---------- */
+@font-face { font-family: 'Heebo'; font-style: normal; font-weight: 500; font-display: swap; src: url('/site-v2/fonts/heebo-hebrew-500-normal.woff2') format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F }
+@font-face { font-family: 'Heebo'; font-style: normal; font-weight: 700; font-display: swap; src: url('/site-v2/fonts/heebo-hebrew-700-normal.woff2') format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F }
+@font-face { font-family: 'Heebo'; font-style: normal; font-weight: 800; font-display: swap; src: url('/site-v2/fonts/heebo-hebrew-800-normal.woff2') format('woff2'); unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F }
+@font-face { font-family: 'Heebo'; font-style: normal; font-weight: 500; font-display: swap; src: url('/site-v2/fonts/heebo-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212 }
+@font-face { font-family: 'Heebo'; font-style: normal; font-weight: 700; font-display: swap; src: url('/site-v2/fonts/heebo-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212 }
+@font-face { font-family: 'Heebo'; font-style: normal; font-weight: 800; font-display: swap; src: url('/site-v2/fonts/heebo-latin-800-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212 }
+
+/* ---------- tokens: the same names as sbc-site (app/vault.css), equify's values (black, turquoise, green) ---------- */
+html.eq-v2, html.eq-v2[data-eq-theme="dark"] {
+  --bg-primary: #050F0D; --ink: #050F0D; --bg-deep: #020504;
+  --bg-surface: #091C18; --bottle: #091C18; --bottle-2: #163530; --bg-card: #091C18;
+  --text-primary: #E8F2F0; --bone: #E8F2F0;
+  --text-secondary: rgba(232, 242, 240, .70); --bone-dim: rgba(232, 242, 240, .70); --bone-faint: rgba(232, 242, 240, .62);
+  --teal: #00C2B8; --teal-2: #4DD6CE; --accent-teal: #00C2B8;
+  --gold: #00F5A0; --gold-2: #9EEEE6; --accent-gold: #00F5A0;
+  --line: rgba(232, 242, 240, .10); --line-strong: rgba(232, 242, 240, .18); --border-subtle: rgba(232, 242, 240, .10);
+  --shadow-color: rgba(0, 0, 0, .55); --glass-bg: rgba(9, 28, 24, .62); --glass: rgba(9, 28, 24, .62);
+  --on-accent: #050F0D; --neg: #E59A9A;
+  --logo-gold: #A8842E;
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --radius: 18px;
+  --fs-h1: clamp(32px, 3.9vw, 54px); --fs-h2: clamp(25px, 2.7vw, 38px); --fs-h3: clamp(18px, 1.35vw, 19.5px); --fs-body: clamp(16.5px, 1.2vw, 18px);
+  color-scheme: dark;
+}
+html.eq-v2[data-eq-theme="light"] {
+  --bg-primary: #F6FAF9; --ink: #F6FAF9; --bg-deep: #EAF2F0;
+  --bg-surface: #FFFFFF; --bottle: #FFFFFF; --bottle-2: #DDEBE8; --bg-card: #FFFFFF;
+  --text-primary: #08201C; --bone: #08201C;
+  --text-secondary: #3B5652; --bone-dim: #3B5652; --bone-faint: #3B5652;
+  --teal: #00756F; --teal-2: #005F5A; --accent-teal: #00756F;
+  --gold: #00704A; --gold-2: #005A3C; --accent-gold: #00704A;
+  --line: rgba(8, 32, 28, .10); --line-strong: rgba(8, 32, 28, .22); --border-subtle: rgba(8, 32, 28, .10);
+  --shadow-color: rgba(8, 32, 28, .14); --glass-bg: rgba(255, 255, 255, .72); --glass: rgba(255, 255, 255, .72);
+  --on-accent: #FFFFFF; --neg: #A8322F; --logo-gold: #6B5216;
+  color-scheme: light;
+}
+
+/* The font tokens read the next/font variables, which are set on <body> (app/layout.tsx), so they are declared there. */
+html.eq-v2 body {
+  --font-body: var(--font-equify), 'Assistant', sans-serif;
+  --font-display: 'Heebo', var(--font-equify), 'Assistant', sans-serif;
+  --font-data: var(--font-mono), 'IBM Plex Mono', monospace;
+  background: var(--bg-primary) !important; color: var(--bone) !important; font-family: var(--font-body);
+}
+html.eq-v2 ::selection { background: var(--teal); color: var(--on-accent) }
+html.eq-v2 :focus-visible { outline: 2px solid var(--teal); outline-offset: 3px }
+
+/* ---------- the page ---------- */
+.v2 { background: var(--bg-primary); color: var(--bone); line-height: 1.65; overflow-x: clip; -webkit-font-smoothing: antialiased }
+.v2 a { color: inherit; text-decoration: none }
+.v2 a.v2-btn, .v2-btn { color: var(--on-accent) }
+.v2 a.v2-btn.ghost { color: var(--bone) }
+.v2 a.v2-btn.ghost:hover { color: var(--teal) }
+.v2 h1, .v2 h2, .v2 h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: 0 }
+.v2 p { text-wrap: pretty; margin: 0 }
+.v2 .num { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums }
+.v2-skip { position: absolute; inset-inline-start: -9999px; top: 8px; z-index: 600; background: var(--teal); color: var(--on-accent); padding: 10px 16px; border-radius: 8px; font-weight: 700 }
+.v2-skip:focus { inset-inline-start: 16px }
+.v2-wrap { max-width: 1280px; margin-inline: auto; padding-inline: clamp(20px, 5vw, 64px) }
+.v2-band { padding: clamp(80px, 9vw, 128px) 0; border-top: 1px solid var(--line); scroll-margin-top: 72px }
+.v2-band.alt { background: var(--bg-deep) }
+.v2-label { display: inline-block; font-size: 14px; font-weight: 600; color: var(--teal); margin-bottom: 16px }
+/* The section head: the heading and, beside it, its paragraph after a hairline (sbc-site .h7-head). */
+.v2-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px clamp(32px, 5vw, 96px); align-items: end; margin-bottom: clamp(40px, 5vw, 64px) }
+.v2-head.solo { grid-template-columns: 1fr }
+.v2-head h2 { font-weight: 700; font-size: var(--fs-h2); line-height: 1.2; max-width: 16em }
+.v2-head h2 .hl { color: var(--teal) }
+.v2-head p { padding-inline-start: clamp(20px, 2.4vw, 32px); border-inline-start: 1px solid var(--line-strong); color: var(--bone-dim); font-size: var(--fs-body); line-height: 1.8; max-width: 56ch }
+@media (max-width: 860px) { .v2-head { grid-template-columns: 1fr } }
+
+/* ---------- buttons and links ---------- */
+.v2-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 26px; border-radius: 100px; font: inherit; font-size: 15.5px; font-weight: 700; border: 1px solid var(--teal); background: var(--teal); color: var(--on-accent); cursor: pointer; transition: transform 160ms var(--ease-out), background-color .2s ease, border-color .2s ease, color .2s ease }
+.v2-btn:hover { background: var(--teal-2); border-color: var(--teal-2) }
+.v2-btn:active { transform: scale(.97) }
+.v2-btn.ghost { background: transparent; color: var(--bone); border-color: var(--line-strong) }
+.v2-btn.ghost:hover { border-color: var(--teal); color: var(--teal) }
+.v2-btn .arr { display: inline-block; transition: transform .2s var(--ease-out) }
+@media (hover: hover) and (pointer: fine) { html[dir="rtl"] .v2-btn:hover .arr { transform: translateX(-3px) } html[dir="ltr"] .v2-btn:hover .arr { transform: translateX(3px) } }
+.v2-link { display: inline-flex; align-items: center; gap: 10px; color: var(--teal); font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid currentColor }
+
+/* ---------- the header (sbc-site components/Nav.tsx, app/vault.css nav, app/r31.css .nav-actions) ---------- */
+#eqv2-nav { position: fixed; top: 0; right: 0; left: 0; z-index: 520; display: flex; align-items: center; gap: 24px; padding: 20px clamp(20px, 4vw, 56px); border-bottom: 1px solid transparent; transition: background-color .4s ease, padding .4s var(--ease-out), border-color .4s ease }
+#eqv2-nav.scrolled { background: color-mix(in srgb, var(--bg-primary) 90%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); padding-block: 12px; border-color: var(--line) }
+.v2-logo { display: inline-flex; align-items: baseline; gap: 6px; font-family: var(--font-display); font-weight: 800; font-size: 26px; line-height: 1; color: var(--bone); letter-spacing: 0; direction: ltr }
+.v2-logo em { font-style: normal; color: var(--teal) }
+.v2-logo small { font-family: var(--font-body); font-size: 11px; font-weight: 700; color: var(--bone-dim); letter-spacing: .04em }
+.v2-links { display: flex; gap: 30px; align-items: center; margin-inline-start: auto }
+.v2-links a { position: relative; font-size: 15px; font-weight: 500; color: var(--bone-dim); transition: color .25s ease; padding: 10px 0 }
+.v2-links a::after { content: ""; position: absolute; bottom: 4px; inset-inline-start: 0; width: 100%; height: 1px; background: var(--teal); transform: scaleX(0); transform-origin: var(--x-origin, right); transition: transform .3s var(--ease-out) }
+html[dir="ltr"] .v2-links a::after { --x-origin: left }
+.v2-links a:hover { color: var(--bone) }
+.v2-links a:hover::after { transform: scaleX(1) }
+.v2-actions { display: flex; align-items: center; gap: 10px; flex: none }
+.v2-links + .v2-actions { margin-inline-start: 8px }
+.v2-actions .v2-btn { min-height: 40px; height: 40px; padding: 0 20px; font-size: 14px }
+.theme-toggle { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid var(--line-strong); background: transparent; color: var(--bone); display: grid; place-items: center; position: relative; cursor: pointer; transition: border-color .25s ease, color .25s ease }
+.theme-toggle:hover { border-color: var(--teal); color: var(--teal) }
+.theme-toggle svg { position: absolute; width: 19px; height: 19px; transition: transform .3s ease, opacity .3s ease }
+html[data-eq-theme="dark"] .theme-toggle .ic-sun { opacity: 1; transform: rotate(0) }
+html[data-eq-theme="dark"] .theme-toggle .ic-moon { opacity: 0; transform: rotate(90deg) }
+html[data-eq-theme="light"] .theme-toggle .ic-sun { opacity: 0; transform: rotate(-90deg) }
+html[data-eq-theme="light"] .theme-toggle .ic-moon { opacity: 1; transform: rotate(0) }
+#eqv2-burger { display: none; width: 44px; height: 44px; position: relative; border: 0; background: none; cursor: pointer; z-index: 530 }
+#eqv2-burger span { position: absolute; inset-inline-end: 8px; width: 26px; height: 2px; background: var(--bone); transition: transform .35s var(--ease-out), opacity .2s ease, top .35s var(--ease-out) }
+#eqv2-burger span:nth-child(1) { top: 14px } #eqv2-burger span:nth-child(2) { top: 21px } #eqv2-burger span:nth-child(3) { top: 28px }
+#eqv2-burger[aria-expanded="true"] span:nth-child(1) { top: 21px; transform: rotate(45deg) }
+#eqv2-burger[aria-expanded="true"] span:nth-child(2) { opacity: 0 }
+#eqv2-burger[aria-expanded="true"] span:nth-child(3) { top: 21px; transform: rotate(-45deg) }
+#eqv2-menu { position: fixed; inset: 0; z-index: 515; background: color-mix(in srgb, var(--bg-primary) 97%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; opacity: 0; visibility: hidden; transition: opacity .4s ease, visibility .4s }
+#eqv2-menu.open { opacity: 1; visibility: visible }
+#eqv2-menu a { font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--bone-dim); min-height: 44px }
+#eqv2-menu a:hover { color: var(--teal) }
+@media (max-width: 960px) {
+  .v2-links { display: none }
+  #eqv2-burger { display: block }
+  .v2-actions { margin-inline-start: auto }
+}
+@media (max-width: 560px) { .v2-actions .v2-btn { display: none } }
+
+/* ---------- 1. hero ---------- */
+.v2-hero { position: relative; min-height: max(92svh, 640px); display: flex; align-items: center; padding: 120px 0 72px; background: var(--bg-primary) }
+.v2-hero-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(36px, 5vw, 88px); align-items: center; width: 100% }
+.v2-hero h1 { font-weight: 800; font-size: clamp(42px, 5.6vw, 84px); line-height: 1.04 }
+.v2-hero h1 .ln { display: block; overflow: hidden; padding-block: .04em }
+.v2-hero h1 .ln > span { display: inline-block }
+.v2-hero h1 .hl { color: var(--teal) }
+.v2-hero-sub { margin-top: 26px; max-width: 34em; font-size: clamp(17px, 1.4vw, 20px); line-height: 1.75; color: var(--bone-dim) }
+.v2-hero-ctas { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-top: 36px }
+.v2-hero-meta { display: flex; flex-wrap: wrap; gap: 8px 0; margin: 30px 0 0; padding: 0; list-style: none; color: var(--bone-dim); font-size: 14.5px }
+.v2-hero-meta li { display: inline-flex; align-items: center }
+.v2-hero-meta li + li::before { content: ""; width: 1px; height: 14px; background: var(--line-strong); margin-inline: 14px }
+/* the illustration card: a file, flat, hairline, marked as an example (sbc-site .h7-card) */
+.v2-sample { position: relative; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--bg-surface); padding: 26px 26px 22px; box-shadow: 0 30px 70px -40px var(--shadow-color) }
+.v2-sample-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13.5px; color: var(--bone-dim); margin-bottom: 14px }
+.v2-sample-tag { font-size: 12px; font-weight: 600; color: var(--bone-dim); padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 999px }
+.v2-sample-val { font-family: var(--font-display); font-weight: 800; font-size: clamp(40px, 4.2vw, 60px); line-height: 1; color: var(--bone) }
+.v2-sample-val small { font-size: .45em; font-weight: 700; color: var(--bone-dim); margin-inline-start: 6px }
+.v2-sample-cap { margin-top: 10px; font-size: 13.5px; color: var(--bone-dim) }
+.v2-sample svg { display: block; width: 100%; height: 72px; margin: 18px 0 6px }
+.v2-sample svg path { fill: none; stroke: var(--teal); stroke-width: 1.6; vector-effect: non-scaling-stroke }
+.v2-sample-rows { margin: 0; border-top: 1px solid var(--line) }
+.v2-sample-rows div { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; color: var(--bone-dim) }
+.v2-sample-rows dd { margin: 0; font-family: var(--font-data); color: var(--bone) }
+.v2-sample-rows .neg { color: var(--neg) }
+.v2-sample-rows .total dt, .v2-sample-rows .total dd { font-weight: 700; color: var(--bone) }
+.v2-sample-rows .total dd { color: var(--gold) }
+@media (max-width: 960px) { .v2-hero-grid { grid-template-columns: 1fr } .v2-hero { min-height: auto; padding-top: 112px } }
+
+/* hero motion: in by CSS, so the headline never waits for a script (sbc-site app/site.css) */
+@keyframes v2LineUp { from { transform: translateY(110%) } to { transform: none } }
+@keyframes v2LineSoft { from { opacity: .01; transform: translateY(22px) } to { opacity: 1; transform: none } }
+@keyframes v2Rise { from { opacity: .01; transform: translateY(24px) } to { opacity: 1; transform: none } }
+html.eq-anim .v2-hero h1 .ln > span { animation: v2LineUp 1.05s var(--ease-out) both }
+html.eq-anim .v2-hero h1 .ln:nth-child(2) > span { animation-delay: .1s }
+html.eq-anim .v2-hero .rv { animation: v2Rise .8s var(--ease-out) both; animation-delay: .35s }
+html.eq-anim .v2-hero .v2-hero-ctas.rv { animation-delay: .45s }
+html.eq-anim .v2-hero .v2-hero-meta.rv { animation-delay: .55s }
+html.eq-anim .v2-hero .v2-sample.rv { animation-delay: .5s }
+@media (max-width: 768px) {
+  html.eq-anim .v2-hero h1 .ln > span { animation-name: v2LineSoft; animation-duration: .7s }
+  html.eq-anim .v2-hero .rv { animation-duration: .55s }
+}
+
+/* ---------- 2. the methods, as one quiet line (the moving band is gone, sbc-brand) ---------- */
+.v2-methods { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 18px 0; background: var(--bg-deep) }
+.v2-methods ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 0; margin: 0; padding: 0; list-style: none; font-size: 14.5px; color: var(--bone-dim) }
+.v2-methods li { display: inline-flex; align-items: center }
+.v2-methods li + li::before { content: ""; width: 1px; height: 14px; background: var(--line-strong); margin-inline: 16px }
+
+/* ---------- 3. why equify: numbers as rows (sbc-site .bridge / .bl) ---------- */
+.v2-bridge { margin: 0; border-top: 1px solid var(--line) }
+.v2-bl { display: flex; align-items: baseline; gap: clamp(18px, 3vw, 40px); padding: clamp(20px, 2.6vw, 30px) 4px; border-bottom: 1px solid var(--line) }
+.v2-bl-val { flex: none; min-width: clamp(96px, 12vw, 170px); direction: ltr; unicode-bidi: isolate; text-align: end; font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 3.4vw, 46px); line-height: 1; color: var(--bone) }
+html[dir="rtl"] .v2-bl-val { text-align: right }
+.v2-bl-val em { font-style: normal; font-size: .5em; color: var(--bone-dim); margin-inline-start: 4px }
+.v2-bl-txt { font-size: clamp(16px, 1.5vw, 19px); color: var(--bone); line-height: 1.6 }
+.v2-bl-txt span { display: block; color: var(--bone-dim); font-size: 15px }
+
+/* ---------- 4. the steps: a sequence, so numbered; rows with hairlines, not boxes (sbc-site .h7-index) ---------- */
+.v2-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(32px, 5vw, 96px) }
+.v2-steps li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 6px 18px; padding: 26px 0; border-top: 1px solid var(--line-strong) }
+.v2-steps .n { grid-row: 1 / span 3; font-family: var(--font-data); font-size: 14px; color: var(--teal); padding-top: 4px }
+.v2-steps h3 { font-size: var(--fs-h3); font-weight: 700; line-height: 1.35 }
+.v2-steps p { color: var(--bone-dim); font-size: 15.5px; line-height: 1.7 }
+.v2-steps .t { font-size: 13.5px; color: var(--bone-dim) }
+@media (max-width: 760px) { .v2-steps { grid-template-columns: 1fr } }
+
+/* ---------- 5. the calculator (components/landing/v2/MicroCalculator.tsx), on the tokens ---------- */
+.v2 .calc-box { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--bg-surface); overflow: hidden }
+.v2 .calc-ctrl { padding: clamp(24px, 3vw, 40px); border-inline-end: 1px solid var(--line) }
+.v2 .calc-ctrl h3 { font-size: var(--fs-h3); font-weight: 700 }
+.v2 .c-note { color: var(--bone-dim); font-size: 14px; margin: 6px 0 22px }
+.v2 .cfield { margin-bottom: 22px }
+.v2 .cf-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px }
+.v2 .cf-top label { font-size: 15px; font-weight: 600; color: var(--bone) }
+.v2 .cf-top output { font-family: var(--font-data); font-size: 15px; color: var(--teal); direction: ltr }
+.v2 .cfield input[type="range"] { width: 100%; height: 44px; background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; accent-color: var(--teal) }
+.v2 .cfield input[type="range"]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(to left, var(--teal) var(--p, 50%), var(--line-strong) var(--p, 50%)) }
+html[dir="ltr"] .v2 .cfield input[type="range"]::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--teal) var(--p, 50%), var(--line-strong) var(--p, 50%)) }
+.v2 .cfield input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; margin-top: -9px; border-radius: 50%; background: var(--bg-primary); border: 2px solid var(--teal) }
+.v2 .cfield input[type="range"]::-moz-range-track { height: 4px; border-radius: 4px; background: var(--line-strong) }
+.v2 .cfield input[type="range"]::-moz-range-progress { height: 4px; border-radius: 4px; background: var(--teal) }
+.v2 .cfield input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--bg-primary); border: 2px solid var(--teal) }
+.v2 .cseg { display: flex; flex-wrap: wrap; gap: 8px }
+.v2 .cseg button { min-height: 44px; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--line-strong); background: transparent; color: var(--bone-dim); font: inherit; font-size: 14.5px; cursor: pointer; transition: border-color .2s ease, color .2s ease, background-color .2s ease }
+.v2 .cseg button:hover { border-color: var(--teal); color: var(--bone) }
+.v2 .cseg button.on { background: var(--teal); border-color: var(--teal); color: var(--on-accent); font-weight: 700 }
+.v2 .calc-out { padding: clamp(24px, 3vw, 40px); display: flex; flex-direction: column; gap: 18px }
+.v2 .co-label { font-size: 14px; color: var(--bone-dim) }
+.v2 .co-range-hero { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 3.6vw, 52px); line-height: 1.05; color: var(--bone) }
+.v2 .co-range-sep { color: var(--bone-dim); font-weight: 500; font-size: .6em }
+.v2 .co-spread { color: var(--bone-dim); font-size: 14.5px }
+.v2 .co-spread-val { color: var(--bone); font-family: var(--font-data) }
+.v2 .co-val-note { font-size: 13.5px; color: var(--bone-dim) }
+.v2 .co-rows, .v2 .co-meta { border-top: 1px solid var(--line) }
+.v2 .calc-out [class^="co-row"], .v2 .calc-out .co-meta > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; color: var(--bone-dim) }
+.v2 .calc-out b, .v2 .calc-out strong { color: var(--bone); font-weight: 700 }
+.v2 .co-locked { border-top: 1px solid var(--line); padding-top: 16px }
+.v2 .co-locked-title { font-weight: 700; color: var(--bone); margin-bottom: 10px }
+.v2 .co-locked-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; color: var(--bone-dim); font-size: 14.5px }
+.v2 .co-locked-list li { display: flex; gap: 10px; align-items: flex-start }
+.v2 .co-lock-icon { flex: none; margin-top: 4px; color: var(--teal) }
+.v2 .co-cta .btn { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 24px; border-radius: 100px; background: var(--teal); color: var(--on-accent); font-weight: 700 }
+.v2 .co-disc { font-size: 12.5px; color: var(--bone-dim) }
+@media (max-width: 860px) { .v2 .calc-box { grid-template-columns: 1fr } .v2 .calc-ctrl { border-inline-end: 0; border-bottom: 1px solid var(--line) } }
+
+/* ---------- 6. the methods: cards (sbc-site .card): hairline, 18px radius, no glow ---------- */
+.v2-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px }
+.v2-cards[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+.v2-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-surface); padding: clamp(22px, 2.4vw, 32px); transition: border-color .3s ease }
+.v2-card:hover { border-color: var(--line-strong) }
+.v2-card h3 { font-size: var(--fs-h3); font-weight: 700; line-height: 1.35; margin-bottom: 10px }
+.v2-card p { color: var(--bone-dim); font-size: 15.5px; line-height: 1.8 }
+@media (max-width: 960px) { .v2-cards, .v2-cards[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)) } }
+@media (max-width: 620px) { .v2-cards, .v2-cards[data-cols="2"] { grid-template-columns: 1fr } }
+
+/* ---------- 7. the price ---------- */
+.v2-price { max-width: 560px; margin-inline: auto; border: 1px solid var(--line-strong); border-radius: 22px; background: var(--bg-surface); padding: clamp(28px, 3.4vw, 44px) }
+.v2-price-flag { display: inline-block; font-size: 13px; font-weight: 600; color: var(--teal); border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px 12px; margin-bottom: 18px }
+.v2-price h3 { font-size: clamp(22px, 2vw, 28px); font-weight: 700 }
+.v2-price-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin: 18px 0 22px }
+.v2-price-old { color: var(--bone-dim); text-decoration: line-through; font-size: 18px }
+.v2-price-new { font-family: var(--font-display); font-weight: 800; font-size: clamp(44px, 4.6vw, 64px); line-height: 1; color: var(--bone) }
+.v2-price-per { color: var(--bone-dim); font-size: 15px }
+.v2-price ul { list-style: none; margin: 0 0 26px; padding: 0; border-top: 1px solid var(--line) }
+.v2-price li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--bone-dim); font-size: 15.5px; line-height: 1.6 }
+.v2-price li svg { flex: none; margin-top: 4px; color: var(--teal) }
+.v2-price .v2-btn { width: 100% }
+.v2-price-disc { margin-top: 14px; font-size: 13px; color: var(--bone-dim); text-align: center }
+
+/* ---------- 8. questions (sbc-site .r31-q) ---------- */
+.v2-faq { max-width: 880px; display: grid; gap: 12px }
+.v2-q { border: 1px solid var(--line); border-radius: 16px; background: var(--bg-surface); transition: border-color .3s ease }
+.v2-q[open] { border-color: var(--line-strong) }
+.v2-q summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; min-height: 44px; font-family: var(--font-display); font-weight: 700; font-size: 17px }
+.v2-q summary::-webkit-details-marker { display: none }
+.v2-q summary::after { content: ""; width: 10px; height: 10px; flex: none; border-inline-end: 2px solid var(--teal); border-bottom: 2px solid var(--teal); transform: rotate(45deg); transition: transform .3s var(--ease-out) }
+.v2-q[open] summary::after { transform: rotate(-135deg); margin-top: 6px }
+.v2-q summary:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 16px }
+.v2-q p { padding: 0 22px 20px; color: var(--bone-dim); line-height: 1.85; font-size: 16px }
+
+/* ---------- 9. the last call ---------- */
+.v2-final { text-align: center }
+.v2-final h2 { font-weight: 800; font-size: clamp(36px, 4.4vw, 64px); line-height: 1.08 }
+.v2-final h2 .hl { color: var(--teal) }
+.v2-final p { margin: 18px auto 30px; max-width: 32rem; color: var(--bone-dim); font-size: var(--fs-body) }
+
+/* ---------- footer (sbc-site components/Footer.tsx, app/vault.css footer) ---------- */
+.v2-foot { border-top: 1px solid var(--line); background: var(--bg-deep); padding: 56px clamp(20px, 4vw, 56px) max(36px, env(safe-area-inset-bottom)) }
+.v2-foot-grid { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px }
+.v2-foot-brand p { color: var(--bone-dim); font-size: 14px; max-width: 340px; margin-top: 16px }
+.v2-foot-h { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--bone); margin: 0 0 14px }
+.v2-foot-grid a, .v2-foot-grid button.eq-cc-foot-btn { display: block; font-size: 14.5px; color: var(--bone-dim); padding: 6px 0; transition: color .25s ease; text-decoration: none }
+.v2-foot-grid a:hover, .v2-foot-grid button.eq-cc-foot-btn:hover { color: var(--teal) }
+.v2-foot-legal { max-width: 1280px; margin: 34px auto 0; padding-top: 20px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--bone-dim) }
+.v2-foot .ff { max-width: 1280px; margin: 30px auto 0 }
+@media (max-width: 860px) { .v2-foot-grid { grid-template-columns: 1fr 1fr } .v2-foot-brand { grid-column: 1 / -1 } }
+@media (max-width: 480px) { .v2-foot-grid { grid-template-columns: 1fr } }
+/* the suggestion form of today's footer (components/landing/equify/shared/FooterFeedback.tsx), on the tokens */
+.v2-foot .foot-feedback { max-width: 30rem; display: flex; flex-direction: column; gap: 10px; padding: 0; border: 0 !important; background: none }
+.v2-foot .foot-feedback-title { font-size: 14.5px; font-weight: 600; color: var(--bone) }
+.v2-foot .foot-feedback textarea, .v2-foot .foot-feedback input[type="email"] { width: 100%; background: var(--bg-surface); color: var(--bone); border: 1px solid var(--line-strong); border-radius: 12px; padding: 10px 14px; font: inherit; font-size: 14.5px; min-height: 44px; resize: vertical }
+.v2-foot .foot-feedback textarea::placeholder, .v2-foot .foot-feedback input::placeholder { color: var(--bone-dim); opacity: 1 }
+.v2-foot .foot-feedback button[type="submit"] { align-self: flex-start; min-height: 44px; padding: 0 20px; border-radius: 100px; border: 1px solid var(--teal); background: transparent; color: var(--teal); font: inherit; font-weight: 700; cursor: pointer }
+.v2-foot .foot-feedback-thanks, .v2-foot .foot-feedback-err { font-size: 14px; color: var(--bone-dim) }
+
+/* today's reveal classes wait for the motion script; this design has none (sbc-brand: one orchestrated moment, the hero) */
+.v2 .rv, .v2 .rv-l { opacity: 1; transform: none }
+
+/* ---------- reduced motion, and the accessibility menu's "stop animations" ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html.eq-v2 *, html.eq-v2 *::before, html.eq-v2 *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important }
+}
+html.eq-v2[data-a11y-reduce-motion="true"] *, html.eq-v2[data-a11y-reduce-motion="true"] *::before { animation: none !important; transition: none !important }
+
+/* ---------- the wizard and its results screen: the same tokens, the same switch ---------- */
+html.eq-v2 .equify-wizard {
+  --ink: var(--bg-primary); --ink-2: var(--bg-surface); --pine: var(--bottle-2); --brand: var(--bottle-2);
+  --turq: var(--teal); --soft: var(--teal-2); --mint: var(--gold-2); --gold: var(--gold); --gold-lt: var(--gold-2);
+  --paper: var(--bone); --dim: var(--bone-dim); --line: var(--line-strong); --red: var(--neg); --green: var(--gold);
+  --display: var(--font-display);
+  background: var(--bg-primary); color: var(--bone);
+}
+html.eq-v2 .equify-wizard #bg-canvas { display: none }
+html.eq-v2 .equify-wizard .pane-title, html.eq-v2 .equify-wizard h1, html.eq-v2 .equify-wizard h2, html.eq-v2 .equify-wizard h3 { font-family: var(--font-display) }
+html.eq-v2 .equify-wizard .pane-title .hl { background: none; -webkit-text-fill-color: currentColor; color: var(--teal) }
+html.eq-v2 .eqv2-wiz-toggle { display: inline-grid }
+.eqv2-wiz-toggle { display: none }
+
+/* One logo per theme, both in the page, CSS shows the one of the theme (sbc-site app/site.css) */
+.v2-logo { color: var(--bone) }
+.v2-lg { display: inline-flex; flex-direction: column; align-items: center; line-height: 1; font-family: var(--font-body) }
+.v2-lg-row { display: inline-flex; align-items: center; gap: 4px }
+.v2-lg-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); margin-bottom: 6px }
+.v2-lg-word { font-weight: 700; font-size: 30px; letter-spacing: -.02em; color: currentColor }
+.v2-lg-by { margin-top: 6px; font-size: 9px; font-weight: 600; letter-spacing: .22em; color: var(--logo-gold) }
+.v2-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap }
+html.eq-v2 .equify-wizard .logo { color: var(--bone) }
+
+/* the wizard: labels in the body font, no tracked mono capitals (sbc-brand), the logo at its size */
+html.eq-v2 .equify-wizard .pane-eyebrow, html.eq-v2 .equify-wizard .step-badge { font-family: var(--font-body); letter-spacing: 0; font-size: 14px; font-weight: 600 }
+html.eq-v2 .equify-wizard .pane-eyebrow::before { background: var(--teal) }
+
+html.eq-v2 .equify-wizard .topbar { background: color-mix(in srgb, var(--bg-primary) 88%, transparent) !important }
+html.eq-v2 .equify-wizard .sidebar { background: var(--bg-deep) }
+
+@media (max-width: 560px) {
+  .v2-hero-meta { flex-direction: column; gap: 6px }
+  .v2-hero-meta li + li::before, .v2-methods li + li::before { display: none }
+  .v2-methods ul { gap: 8px 18px }
+}
+
+/* the wizard's Tailwind text colours meant for a dark ground, on the day ground */
+html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-teal-50"], html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-white"],
+html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-slate-50"], html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-slate-100"],
+html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-slate-200"] { color: var(--bone) !important }
+html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-teal-100"], html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-slate-300"],
+html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-slate-400"] { color: var(--bone-dim) !important }
+html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-teal-200"], html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="text-teal-300"] { color: var(--teal) !important }
+html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="bg-teal-9"], html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="bg-slate-9"], html.eq-v2[data-eq-theme="light"] .equify-wizard [class*="bg-black"] { background: var(--bg-surface) !important }
+
+/* the results page (components/results/EquifyResultsReport.tsx): the same tokens and switch; the glowing orb is not part of this language */
+html.eq-v2 .equify-scroll-report {
+  --ink: var(--bg-primary); --ink-2: var(--bg-surface); --pine: var(--bottle-2); --brand: var(--bottle-2);
+  --turq: var(--teal); --turq-soft: var(--teal-2); --mint: var(--gold-2); --gold: var(--gold); --paper: var(--bone); --dim: var(--bone-dim);
+  --line: var(--line-strong); --red: var(--neg); --display: var(--font-display);
+  background: var(--bg-primary); color: var(--bone);
+}
+html.eq-v2 .equify-scroll-report #orb, html.eq-v2 .rr-orb-host { display: none !important }
+html.eq-v2 .equify-scroll-report h1, html.eq-v2 .equify-scroll-report h2, html.eq-v2 .equify-scroll-report h3 { font-family: var(--font-display) }
+html.eq-v2 .equify-scroll-report .bar { background: color-mix(in srgb, var(--bg-primary) 88%, transparent) !important; border-color: var(--line) !important }
+html.eq-v2 .equify-scroll-report .bar .theme-toggle { flex: none }
+html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-teal-50"], html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-white"],
+html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-slate-100"], html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-slate-200"] { color: var(--bone) !important }
+html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-slate-300"], html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-slate-400"],
+html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="text-teal-100"] { color: var(--bone-dim) !important }
+html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="bg-slate-9"], html.eq-v2[data-eq-theme="light"] .equify-scroll-report [class*="bg-black"] { background: var(--bg-surface) !important }
+html.eq-v2 .equify-scroll-report .logo .v2-lg-word { font-size: 24px }
+

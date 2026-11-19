@@ -1,5 +1,8 @@
 'use client';
 
+import { useSiteFlags } from '../shared/SiteFlagsContext';
+import { ThemeToggle } from '../site-v2/ThemeToggle';
+import { V2Logo } from '../site-v2/V2Logo';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import type { ForecastMatrixWithDiagnostics } from '../../valuation_forecast';
@@ -127,6 +130,7 @@ export function EquifyResultsReport({
   equifyState: equifyStateProp,
 }: EquifyResultsReportProps) {
   const { shell, results: rs, isHe, locale } = useEquifyStrings();
+  const { siteV2 } = useSiteFlags();
   const [scenario, setScenario] = useState<ValuationScenario>('base');
   const [scVal, setScVal] = useState<string | null>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -486,13 +490,18 @@ export function EquifyResultsReport({
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
       >
         <div className="bar-in wrap flex min-h-0 w-full flex-row flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-4">
-          <Link href="/" className="logo shrink-0" aria-label={shell.homeAria}>
-            <EquifyLogo variant="dark-bg" compact decorative />
+          <Link href="/" className="logo shrink-0" aria-label={siteV2 ? undefined : shell.homeAria}>
+            {siteV2 ? (
+              <V2Logo suffix={shell.homeAria.replace(/^equify BY SBC\s*[—,]?\s*/, ', ')} />
+            ) : (
+              <EquifyLogo variant="dark-bg" compact decorative />
+            )}
           </Link>
           <span className="doc-id hidden min-w-0 flex-1 text-end sm:inline">
             REPORT #{vm.reportId} · {displayCompanyName}
           </span>
           <div className="bar-actions flex min-w-0 flex-1 basis-full flex-row items-center justify-between gap-2 sm:basis-auto sm:justify-end">
+            {siteV2 ? <ThemeToggle lang={isHe ? 'he' : 'en'} /> : null}
             <EquifyLanguageToggle className="shrink-0" />
             <ReportDownloadButtons
               variant="bar"

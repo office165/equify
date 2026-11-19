@@ -1,6 +1,9 @@
 'use client';
 
 import { useCopyText } from '../../../lib/copy/use_copy_text';
+import { useSiteFlags } from '../../shared/SiteFlagsContext';
+import { ThemeToggle } from '../../site-v2/ThemeToggle';
+import { V2Logo } from '../../site-v2/V2Logo';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ValuationLocale } from '../../../api_client';
@@ -99,6 +102,7 @@ function EquifyWizardShell({
   const locale = localeProp ?? ctxLocale;
   const isHe = locale === 'he';
   const { copyV2, tx } = useCopyText(locale === 'he' ? 'he' : 'en');
+  const { siteV2 } = useSiteFlags();
   const copy = getEquifyWizardCopy(locale, copyV2);
   const steps = getEquifyWizardSteps(locale);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -379,12 +383,17 @@ function EquifyWizardShell({
       dir={isHe ? 'rtl' : 'ltr'}
       lang={isHe ? 'he' : 'en'}
     >
-      <canvas ref={canvasRef} id="bg-canvas" aria-hidden="true" />
+      {/* Round 11: the moving WebGL ground is not part of the SITE_V2 language; without the canvas its hook does nothing. */}
+      {siteV2 ? null : <canvas ref={canvasRef} id="bg-canvas" aria-hidden="true" />}
 
       <div className="shell">
         <aside className="sidebar">
-          <Link href="/" className="logo" aria-label={copy.homeAria}>
-            <EquifyLogo variant="dark-bg" compact decorative />
+          <Link href="/" className="logo" aria-label={siteV2 ? undefined : copy.homeAria}>
+            {siteV2 ? (
+              <V2Logo className="eqv2-wiz-logo" suffix={copy.homeAria.replace(/^equify BY SBC\s*[—,]?\s*/, ', ')} />
+            ) : (
+              <EquifyLogo variant="dark-bg" compact decorative />
+            )}
           </Link>
 
           <nav className="steps" aria-label={copy.stepNavLabel}>
@@ -430,6 +439,7 @@ function EquifyWizardShell({
               {copy.stepBadge} <b>{step}</b> {copy.stepOf}
             </span>
             <div className="topbar-actions">
+              {siteV2 ? <ThemeToggle lang={isHe ? 'he' : 'en'} className="eqv2-wiz-toggle" /> : null}
               <EquifyLanguageToggle />
               {step > 1 && (
                 <button

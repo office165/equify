@@ -4,6 +4,8 @@ import { LandingPage } from '../components/landing/LandingPage';
 import { HOME_DESCRIPTION, HOME_TITLE } from '../lib/brand/brand-identity';
 import { publicPageMetadata } from '../lib/seo/page_metadata';
 import { HomeStructuredData } from '../components/seo/HomeStructuredData';
+import { HomeV2 } from '../components/site-v2/HomeV2';
+import { readSiteFlags } from '../lib/flags/site_flags';
 
 export const metadata: Metadata = publicPageMetadata({ path: '/', title: HOME_TITLE, description: HOME_DESCRIPTION, fullTitle: true });
 
@@ -18,7 +20,8 @@ export default function Home() {
   return (
     <div className={landingMono.variable}>
       <HomeStructuredData />
-      <LandingPage />
+      {/* Round 11: SITE_V2 shows the same content in the SBC site's design (components/site-v2/HomeV2.tsx). */}
+      {readSiteFlags().siteV2 ? <HomeV2 /> : <LandingPage />}
     </div>
   );
 }

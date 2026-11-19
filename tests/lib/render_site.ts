@@ -3,6 +3,7 @@ import './css_stub';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { EquifyLandingPage } from '../../components/landing/equify/EquifyLandingPage';
+import { HomeV2 } from '../../components/site-v2/HomeV2';
 import { SiteFlagsProvider } from '../../components/shared/SiteFlagsContext';
 import { WizardValuationProvider } from '../../components/wizard/equify/WizardValuationContext';
 import { Step1Profile } from '../../components/wizard/equify/steps/Step1Profile';
@@ -21,6 +22,10 @@ function wrap(node: React.ReactElement, flags: Partial<SiteFlags> | null): React
 
 export function renderLanding(flags: Partial<SiteFlags> | null): string {
   return withQuietConsole(() => renderToString(wrap(h(EquifyLandingPage), flags)));
+}
+
+export function renderHomeV2(flags: Partial<SiteFlags>): string {
+  return withQuietConsole(() => renderToString(wrap(h(HomeV2), { siteV2: true, ...flags })));
 }
 
 export function renderStep1(flags: Partial<SiteFlags> | null): string {

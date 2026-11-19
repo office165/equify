@@ -17,6 +17,7 @@ export const FEATURE_FLAGS = [
   'GREEN_INVOICE',
   'COPY_V2',
   'CONSENT_BANNER',
+  'SITE_V2',
 ] as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAGS)[number];

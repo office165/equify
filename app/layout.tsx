@@ -8,6 +8,7 @@ import { SiteAnalytics } from '../components/analytics/SiteAnalytics';
 import { SiteFlagsProvider } from '../components/shared/SiteFlagsContext';
 import { ConsentRoot } from '../components/consent/ConsentRoot';
 import { anySiteFlagOn, readSiteFlags } from '../lib/flags/site_flags';
+import { THEME_BOOT } from '../components/site-v2/theme_boot';
 
 const assistant = Assistant({
   subsets: ['hebrew', 'latin'],
@@ -56,7 +57,22 @@ export default function RootLayout({
   const flags = readSiteFlags();
   const app = <AppProviders>{children}</AppProviders>;
   return (
-    <html lang="he" dir="rtl" suppressHydrationWarning>
+    <html lang="he" dir="rtl" suppressHydrationWarning {...(flags.siteV2 ? { className: 'eq-v2' } : {})}>
+      {/* Round 10 and 11: the styles of the banner and of the new design are files in public/site-v2, linked only when their flag is
+          on, so with the flags off the page has exactly the styles it had. The theme is set before the first paint (no flash). */}
+      {flags.siteV2 || flags.consentBanner ? (
+        <head>
+          {flags.siteV2 ? <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} /> : null}
+          {flags.siteV2 ? (
+            <>
+              <link rel="stylesheet" href="/site-v2/v2.css" />
+              <link rel="stylesheet" href="/site-v2/wizard-light.css" />
+              <link rel="stylesheet" href="/site-v2/results-light.css" />
+            </>
+          ) : null}
+          {flags.consentBanner ? <link rel="stylesheet" href="/site-v2/consent.css" /> : null}
+        </head>
+      ) : null}
       <body
         className={`${assistant.variable} ${ibmPlexMono.variable} ${assistant.className} min-h-[100dvh] bg-[#020504] pb-safe text-slate-50 antialiased`}
       >

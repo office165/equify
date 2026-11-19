@@ -104,11 +104,13 @@ function resolveChrome(): string {
   throw new Error('No Chrome found. Set PUPPETEER_EXECUTABLE_PATH.');
 }
 
-export async function launch(): Promise<Browser> {
+export async function launch(opts: { webgl?: boolean } = {}): Promise<Browser> {
+  // Round 11: pages with a WebGL scene (the results page) need a software GL in headless Chrome; the PDF runs keep --disable-gpu.
+  const gl = opts.webgl ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--disable-gpu'];
   return puppeteer.launch({
     headless: true,
     executablePath: resolveChrome(),
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', ...gl],
   });
 }
 
